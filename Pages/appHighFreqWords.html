@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语高频词快速刷词 App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Serif+Thai:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --primary: #2563eb; /* Royal blue */
+            --primary-light: #eff6ff;
+            --primary-glow: rgba(37, 99, 235, 0.1);
+            --text-main: #0f172a; /* Deep slate */
+            --text-sub: #64748b; /* Muted slate */
+            --correct: #10b981;
+            --wrong: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Serif Thai', 'Noto Sans SC', sans-serif;
+            background: #f8fafc;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        #app {
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Clean Panel */
+        .glass-panel {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Header info */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .streak-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .stat-badge {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            padding: 8px 16px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);
+        }
+
+        .stat-badge i {
+            font-size: 18px;
+        }
+
+        .stat-badge.fire i {
+            color: #f97316; /* Warm Orange for fire */
+            filter: drop-shadow(0 0 2px rgba(249, 115, 22, 0.2));
+            animation: pulse 1s infinite alternate;
+        }
+
+        .stat-badge.trophy i {
+            color: #eab308;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.15); }
+        }
+
+        /* Start screen view */
+        .view-start {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            flex: 1;
+            gap: 32px;
+            padding: 40px 20px;
+        }
+
+        .logo-area {
+            position: relative;
+        }
+
+        .logo-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 140px;
+            height: 140px;
+            background: rgba(37, 99, 235, 0.08);
+            border-radius: 50%;
+            filter: blur(30px);
+            z-index: -1;
+        }
+
+        .logo-icon {
+            width: 100px;
+            height: 100px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: var(--primary);
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+        }
+
+        .intro-text h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-main);
+        }
+
+        .intro-text p {
+            color: var(--text-sub);
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* Buttons */
+        .btn {
+            height: 48px;
+            border-radius: 24px;
+            padding: 0 32px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            user-select: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #ffffff;
+            border: 1px solid var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+            border-color: #1d4ed8;
+            transform: translateY(-1.5px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+        }
+
+        .btn-primary:active {
+            transform: translateY(-0.5px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary-light);
+            transform: translateY(-1.5px);
+        }
+
+        .btn-secondary:active {
+            transform: translateY(-0.5px);
+        }
+
+        /* Active Session view */
+        .view-game {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            gap: 20px;
+        }
+
+        .session-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 500;
+            color: #94a3b8;
+            letter-spacing: 0.5px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .card-word {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 140px;
+            text-align: center;
+            position: relative;
+            background: transparent;
+            border: none;
+            padding: 10px 0;
+            margin-bottom: 8px;
+        }
+
+        .card-word .thai {
+            font-size: 68px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 2px;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .card-word .thai:hover {
+            color: var(--primary);
+            transform: scale(1.03);
+        }
+
+        .card-word .thai:active {
+            transform: scale(0.98);
+        }
+
+        .card-word .ipa {
+            font-size: 20px;
+            color: var(--text-sub);
+            font-style: italic;
+            font-weight: 400;
+            background: transparent;
+            padding: 0;
+            border-radius: 0;
+        }
+
+        /* Learning Visual Card */
+        .learning-visual-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 24px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+            text-align: center;
+        }
+
+        .meaning-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .meaning-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #94a3b8;
+            letter-spacing: 1px;
+        }
+
+        .meaning-text {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .card-divider {
+            height: 1px;
+            background: #e2e8f0;
+            width: 100%;
+        }
+
+        .examples-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .examples-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .examples-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+            max-h: 240px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+
+        .example-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            text-align: center;
+            padding: 8px 0;
+            position: relative;
+        }
+
+        .example-item:not(:first-child) {
+            border-top: 1px dashed #e2e8f0;
+            padding-top: 16px;
+        }
+
+        .example-thai {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1e3a8a; /* Deep blue highlight */
+            font-family: 'Noto Serif Thai', sans-serif;
+            line-height: 1.5;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .example-thai:hover {
+            color: var(--primary);
+            transform: scale(1.02);
+        }
+
+        .example-chinese {
+            font-size: 15px;
+            color: var(--text-sub);
+            font-weight: 400;
+        }
+
+        /* Translation Visual Card */
+        .translation-visual-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 28px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+            text-align: center;
+        }
+
+        .translation-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .translation-thai-sentence {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e3a8a;
+            font-family: 'Noto Serif Thai', sans-serif;
+            line-height: 1.6;
+            margin: 8px 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .translation-thai-sentence:hover {
+            color: var(--primary);
+            transform: scale(1.02);
+        }
+
+        .translation-input {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 14px;
+            padding: 12px 18px;
+            font-size: 16px;
+            color: var(--text-main);
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .translation-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .translation-input:disabled,
+        .translation-input[readonly] {
+            background: #f1f5f9;
+            color: var(--text-sub);
+            cursor: not-allowed;
+        }
+
+        .translation-input[readonly]:focus {
+            box-shadow: none;
+            border-color: #cbd5e1;
+        }
+
+        .trans-feedback-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            border-top: 1px dashed #e2e8f0;
+            padding-top: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #94a3b8;
+            letter-spacing: 1px;
+        }
+
+        .feedback-chinese {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .feedback-hint {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Quiz Choices */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .option-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 16px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-main);
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.01);
+        }
+
+        .option-card:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            transform: translateX(4px);
+        }
+
+        .option-card.correct {
+            background: rgba(16, 185, 129, 0.08) !important;
+            border-color: var(--correct) !important;
+            color: var(--correct) !important;
+            font-weight: 600;
+        }
+
+        .option-card.wrong {
+            background: rgba(239, 68, 68, 0.08) !important;
+            border-color: var(--wrong) !important;
+            color: var(--wrong) !important;
+            animation: shake 0.4s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        /* Completed screen view */
+        .view-completed {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 40px 20px;
+            gap: 24px;
+        }
+
+        .complete-icon {
+            font-size: 72px;
+            color: var(--correct);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .stats-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            width: 100%;
+            margin-top: 16px;
+        }
+
+        .stat-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 18px;
+            border-radius: 18px;
+        }
+
+        .stat-box h4 {
+            font-size: 12px;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .stat-box p {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Hidden helpers */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Settings Button & Modal Styles */
+        .setting-btn {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            padding: 8px 16px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .setting-btn:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-container {
+            background: #ffffff;
+            border-radius: 24px;
+            max-width: 550px;
+            width: 100%;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            animation: modalFadeIn 0.2s ease-out;
+            border: 1px solid #e2e8f0;
+        }
+
+        @keyframes modalFadeIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-sub);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .modal-close-btn:hover {
+            background: #f1f5f9;
+            color: var(--text-main);
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .session-log-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            background: #f8fafc;
+            text-align: left;
+        }
+
+        .session-log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 12px;
+            color: var(--text-sub);
+            font-weight: 500;
+        }
+
+        .batch-tag {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .log-status {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 11px;
+        }
+
+        .log-status.started {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .log-status.completed {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .log-status.terminated {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .word-group {
+            margin-top: 10px;
+        }
+
+        .word-group-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .word-badge-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .word-badge {
+            font-size: 12px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: var(--text-main);
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        .word-badge.new {
+            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.05);
+            color: #047857;
+        }
+
+        .word-badge.old {
+            border-color: rgba(37, 99, 235, 0.3);
+            background: rgba(37, 99, 235, 0.05);
+            color: #1d4ed8;
+        }
+
+        .log-summary-details {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header>
+            <div class="streak-container">
+                <div class="stat-badge fire">
+                    <i class="ph-fill ph-fire"></i>
+                    <span id="headerStreak">0</span> 天连击
+                </div>
+                <div class="stat-badge trophy">
+                    <i class="ph-fill ph-trophy"></i>
+                    今日 Streak: <span id="headerTodayStreak">0</span>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button id="btnSettings" onclick="openSettingsModal()" class="setting-btn">
+                    <i class="ph ph-gear"></i>
+                    <span>算法调试</span>
+                </button>
+                <div id="sessionTimer" class="stat-badge hidden">
+                    <i class="ph ph-clock"></i>
+                    <span id="timerText">15:00</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- View 1: Start Screen -->
+        <div id="viewStart" class="glass-panel view-start">
+            <div class="logo-area">
+                <div class="logo-glow"></div>
+                <div class="logo-icon">
+                    <i class="ph ph-lightning"></i>
+                </div>
+            </div>
+            <div class="intro-text">
+                <h2>高频词汇快速刷词</h2>
+                <p>总共 500 个 A2 级别核心词汇。每次 15 分钟/15 题短时曝光复习，使用 Pimsleur 算法新老混学，帮您在碎片时间快速提升词汇量！</p>
+            </div>
+            <button onclick="startHFSession()" class="btn btn-primary">
+                <i class="ph-fill ph-play"></i> 开始刷词 Session
+            </button>
+        </div>
+
+        <!-- View 2: Game Board -->
+        <div id="viewGame" class="glass-panel view-game hidden">
+            <div class="session-header">
+                <span id="sessionProgressText">卡片: 1 / 15</span>
+                <span id="microQueueInfo">队列剩余: 15</span>
+            </div>
+            <div class="progress-bar-container">
+                <div id="progressBarFill" class="progress-bar-fill"></div>
+            </div>
+            
+            <div class="card-word">
+                <span id="currentWordText" class="thai" onclick="playAudioDirect(this.textContent)" title="点击播放音频">คน</span>
+                <span id="currentWordIpa" class="ipa">/khon/</span>
+            </div>
+
+            <!-- Section 1: Example Learning Container -->
+            <div id="learnSectionContainer" class="flex flex-col w-full mt-2 pb-2">
+                <div class="learning-visual-card">
+                    <!-- Meaning block inside card -->
+                    <div class="meaning-block">
+                        <span class="meaning-title">核心释义</span>
+                        <div id="learnMeaningText" class="meaning-text">人 / 人类</div>
+                    </div>
+                    
+                    <!-- Divider line -->
+                    <div class="card-divider"></div>
+                    
+                    <!-- Examples block inside card -->
+                    <div class="examples-block">
+                        <span class="examples-title">
+                            <i class="ph ph-book-open"></i> 核心例句
+                        </span>
+                        <div id="learnExamplesContainer" class="examples-list-container custom-scrollbar">
+                            <!-- Dynamic examples loaded here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Centered bottom button -->
+                <div class="flex justify-center mt-8">
+                    <button onclick="goToNextSectionFromLearn()" class="btn btn-primary px-8 h-[48px] rounded-full text-sm font-semibold shrink-0">
+                        <span>我知道了，开始自我测验 →</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Section 1.5: Example Translation Container -->
+            <div id="translationSectionContainer" class="hidden flex flex-col w-full mt-2">
+                <div class="translation-visual-card">
+                    <span class="translation-title" id="translationTitle">
+                        <i class="ph ph-question"></i> 根据下方例句，回答单词意思
+                    </span>
+                    
+                    <div id="transThaiSentence" class="translation-thai-sentence"></div>
+                    
+                    <!-- Question Prompt for Word Meaning -->
+                    <div id="transQuestionPrompt" style="font-size: 18px; font-weight: 700; color: var(--text-main); margin: 8px 0;"></div>
+                    
+                    <!-- Input field -->
+                    <input type="text" id="transInput" class="translation-input" placeholder="输入单词的意思..." autocomplete="off">
+                    
+                    <!-- Feedback showing the correct answer -->
+                    <div id="transFeedback" class="hidden trans-feedback-box">
+                        <span class="feedback-title">参考答案</span>
+                        <div id="transCorrectChinese" class="feedback-chinese"></div>
+                        <div class="feedback-hint">
+                            <i class="ph ph-keyboard"></i> 再次按 ENTER 或点击下方按钮继续
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Centered bottom button group -->
+                <div class="flex justify-center gap-4 mt-8 w-full px-4">
+                    <button id="transSecondaryBtn" onclick="showTranslationReference()" class="btn btn-secondary flex-1 max-w-[180px] h-[48px] rounded-full text-sm font-semibold">
+                        <span>查看参考</span>
+                    </button>
+                    <button id="transSubmitBtn" onclick="handleTranslationSubmit()" class="btn btn-primary flex-1 max-w-[180px] h-[48px] rounded-full text-sm font-semibold">
+                        <span>提交答案 (Enter)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Section 2: Multiple Choice Quiz Container -->
+            <div id="quizSectionContainer" class="hidden flex flex-col gap-3 w-full mt-2">
+                <div class="text-xs text-slate-400 font-semibold flex items-center gap-1.5 mb-1">
+                    <i class="ph ph-question"></i> 选择正确的中文释义
+                </div>
+                <div class="options-grid" id="optionsContainer">
+                    <!-- Dynamic choices loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- View 3: Complete Screen -->
+        <div id="viewCompleted" class="glass-panel view-completed hidden">
+            <i class="ph-fill ph-check-circle complete-icon"></i>
+            <div class="intro-text">
+                <h2>Session 顺利完成！</h2>
+                <p>恭喜，您已完成这一轮 15 分钟高频词刷词训练！</p>
+            </div>
+            
+            <div class="stats-summary">
+                <div class="stat-box">
+                    <h4>今日连达标</h4>
+                    <p id="resultStreakToday">1 Streak</p>
+                </div>
+                <div class="stat-box">
+                    <h4>正确率</h4>
+                    <p id="resultAccuracy">100%</p>
+                </div>
+            </div>
+
+            <button onclick="showStartScreen()" class="btn btn-primary" style="margin-top: 20px;">
+                <i class="ph ph-arrow-counter-clockwise"></i> 返回主界面
+            </button>
+        </div>
+    </div>
+
+    <!-- Settings / Scheduling Stats Modal -->
+    <div id="settingsModal" class="modal-overlay hidden">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>算法调度与 Session 历史</h3>
+                <button onclick="closeSettingsModal()" class="modal-close-btn">
+                    <i class="ph ph-x"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="settingsModalBody">
+                <div class="text-center py-8 text-slate-400 italic">
+                    正在加载历史记录...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const userId = "default_user"; // Simple default user for the app
+        let currentCard = null;
+        let sessionTimerInterval = null;
+        let totalQuestionsAnswered = 0;
+        let correctAnswersCount = 0;
+        let timeRemaining = 900; // 15 mins = 900 seconds
+        let translationSubmitted = false;
+
+        let db = null;
+        const DB_NAME = 'ThaiNotesDB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'sessions';
+        let currentSessionRecord = null;
+
+        window.playAudioDirect = (text) => {
+            if (!text) return;
+            const url = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(text)}`;
+            new Audio(url).play().catch(err => console.error("Audio playback error:", err));
+        };
+
+        function initIndexedDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onerror = (event) => {
+                    console.error('Database error: ', event.target.error);
+                    reject(event.target.error);
+                };
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    console.log('Database opened successfully');
+                    resolve(db);
+                };
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+            });
+        }
+
+        async function saveSessionToDB(activeQueue) {
+            if (!db) {
+                try {
+                    await initIndexedDB();
+                } catch (e) {
+                    console.error("IndexedDB initialization failed", e);
+                    return;
+                }
+            }
+
+            const timestamp = Date.now();
+            const batchId = `Batch #${new Date(timestamp).toLocaleTimeString()}`;
+            const startTimeStr = new Date(timestamp).toLocaleString();
+
+            const oldWords = activeQueue.filter(w => w.type === 'old');
+            const newWords = activeQueue.filter(w => w.type === 'new');
+
+            const sessionRecord = {
+                id: `session_${timestamp}`,
+                batchId: batchId,
+                startTime: startTimeStr,
+                timestamp: timestamp,
+                oldWords: oldWords.map(w => w.word),
+                newWords: newWords.map(w => w.word),
+                totalWordsCount: activeQueue.length,
+                oldWordsCount: oldWords.length,
+                newWordsCount: newWords.length,
+                status: 'started',
+                accuracy: 0,
+                correctAnswersCount: 0,
+                totalQuestionsAnswered: 0,
+                durationSeconds: 0
+            };
+
+            currentSessionRecord = sessionRecord;
+
+            try {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                store.put(sessionRecord);
+                console.log("Session saved to IndexedDB:", sessionRecord);
+            } catch (e) {
+                console.error("Failed to save session to IndexedDB", e);
+            }
+        }
+
+        async function updateSessionStatus(status) {
+            if (!currentSessionRecord || !db) return;
+            
+            currentSessionRecord.status = status;
+            currentSessionRecord.endTime = new Date().toLocaleString();
+            currentSessionRecord.accuracy = totalQuestionsAnswered > 0 ? Math.round((correctAnswersCount / totalQuestionsAnswered) * 100) : 100;
+            currentSessionRecord.correctAnswersCount = correctAnswersCount;
+            currentSessionRecord.totalQuestionsAnswered = totalQuestionsAnswered;
+            currentSessionRecord.durationSeconds = Math.round((Date.now() - currentSessionRecord.timestamp) / 1000);
+
+            try {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                store.put(currentSessionRecord);
+                console.log("Session record updated in IndexedDB:", currentSessionRecord);
+            } catch (e) {
+                console.error("Failed to update session in IndexedDB", e);
+            }
+
+            await saveAlgoDebugLogToServer();
+        }
+
+        async function saveAlgoDebugLogToServer() {
+            if (!currentSessionRecord) return;
+            
+            const payload = {
+                sessionId: currentSessionRecord.id,
+                userId: userId,
+                totalWords: currentSessionRecord.totalWordsCount,
+                oldWordsCount: currentSessionRecord.oldWordsCount,
+                newWordsCount: currentSessionRecord.newWordsCount,
+                totalAttempts: currentSessionRecord.totalQuestionsAnswered,
+                correctAttempts: currentSessionRecord.correctAnswersCount,
+                accuracy: currentSessionRecord.accuracy,
+                durationSeconds: currentSessionRecord.durationSeconds,
+                queueLogJson: JSON.stringify({
+                    status: currentSessionRecord.status,
+                    startTime: currentSessionRecord.startTime,
+                    endTime: currentSessionRecord.endTime,
+                    oldWords: currentSessionRecord.oldWords,
+                    newWords: currentSessionRecord.newWords
+                })
+            };
+
+            try {
+                const res = await fetch('/api/reviews/algo-debug/log', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    console.log("Algorithm debug data written to SQLite successfully.");
+                } else {
+                    console.error("Failed to write algorithm debug data to SQLite.");
+                }
+            } catch (e) {
+                console.error("Failed to post algorithm debug log", e);
+            }
+        }
+
+        window.openSettingsModal = function() {
+            document.getElementById('settingsModal').classList.remove('hidden');
+            loadSessionsHistory();
+        };
+
+        window.closeSettingsModal = function() {
+            document.getElementById('settingsModal').classList.add('hidden');
+        };
+
+        async function loadSessionsHistory() {
+            const body = document.getElementById('settingsModalBody');
+            body.innerHTML = '<div class="text-center py-8 text-slate-400 italic">正在读取 IndexedDB 记录与数据库统计...</div>';
+            
+            if (!db) {
+                try {
+                    await initIndexedDB();
+                } catch (e) {
+                    body.innerHTML = `<div class="text-center py-8 text-rose-500 font-semibold">初始化 IndexedDB 失败: ${e.message}</div>`;
+                    return;
+                }
+            }
+
+            // 1. Fetch backend stats from SQLite
+            let statsData = { totalWords: '-', remainingNewWords: '-' };
+            try {
+                const statsRes = await fetch(`/api/high-frequency-words/stats?userId=${userId}`);
+                if (statsRes.ok) {
+                    const resJson = await statsRes.json();
+                    if (resJson.success) {
+                        statsData.totalWords = resJson.totalWords;
+                        statsData.remainingNewWords = resJson.remainingNewWords;
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load backend stats", err);
+            }
+
+            // 2. Fetch session history logs from IndexedDB
+            try {
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.getAll();
+
+                request.onsuccess = (event) => {
+                    const logs = event.target.result || [];
+                    logs.sort((a, b) => b.timestamp - a.timestamp);
+
+                    // Determine current/latest session's new words count
+                    let currentNewCount = 0;
+                    if (currentSessionRecord) {
+                        currentNewCount = currentSessionRecord.newWordsCount;
+                    } else if (logs.length > 0) {
+                        currentNewCount = logs[0].newWordsCount;
+                    }
+
+                    // Create the stats banner
+                    const statsBannerHtml = `
+                        <div class="stats-banner" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; text-align: center;">
+                            <div style="background: var(--primary-light); padding: 12px; border-radius: 16px; border: 1px solid rgba(37,99,235,0.15);">
+                                <div style="font-size: 10px; color: var(--text-sub); font-weight: 600; text-transform: uppercase;">词库单词总数</div>
+                                <div style="font-size: 20px; font-weight: bold; color: var(--primary); margin-top: 4px;">${statsData.totalWords}</div>
+                            </div>
+                            <div style="background: #f0fdf4; padding: 12px; border-radius: 16px; border: 1px solid rgba(16,185,129,0.15);">
+                                <div style="font-size: 10px; color: #15803d; font-weight: 600; text-transform: uppercase;">未学新词总数</div>
+                                <div style="font-size: 20px; font-weight: bold; color: #16a34a; margin-top: 4px;">${statsData.remainingNewWords}</div>
+                            </div>
+                            <div style="background: #fff7ed; padding: 12px; border-radius: 16px; border: 1px solid rgba(249,115,22,0.15);">
+                                <div style="font-size: 10px; color: #c2410c; font-weight: 600; text-transform: uppercase;">本轮复习新词数</div>
+                                <div style="font-size: 20px; font-weight: bold; color: #ea580c; margin-top: 4px;">${currentNewCount}</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">刷词会话历史记录</div>
+                    `;
+
+                    body.innerHTML = statsBannerHtml;
+
+                    if (logs.length === 0) {
+                        const emptyDiv = document.createElement('div');
+                        emptyDiv.className = 'text-center py-12 text-slate-400';
+                        emptyDiv.innerHTML = `
+                            <i class="ph ph-info" style="font-size: 32px; margin-bottom: 8px; display: block; color: var(--primary);"></i>
+                            暂无记录的 Session。请开始一次刷词会话。
+                        `;
+                        body.appendChild(emptyDiv);
+                        return;
+                    }
+
+                    logs.forEach(log => {
+                        const card = document.createElement('div');
+                        card.className = 'session-log-card';
+
+                        const statusText = log.status === 'completed' ? '已完成' : log.status === 'started' ? '进行中' : '超时/中断';
+                        const statusClass = log.status === 'completed' ? 'completed' : log.status === 'started' ? 'started' : 'terminated';
+
+                        const oldBadges = log.oldWords.length > 0 
+                            ? log.oldWords.map(w => `<span class="word-badge old">${w}</span>`).join('')
+                            : '<span class="text-xs text-slate-400 italic">无复习旧词</span>';
+
+                        const newBadges = log.newWords.length > 0 
+                            ? log.newWords.map(w => `<span class="word-badge new">${w}</span>`).join('')
+                            : '<span class="text-xs text-slate-400 italic">无新词</span>';
+
+                        card.innerHTML = `
+                            <div class="session-log-header">
+                                <span class="batch-tag">${log.batchId}</span>
+                                <span class="log-status ${statusClass}">${statusText}</span>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-sub); margin-bottom: 10px;">
+                                开始时间: ${log.startTime}
+                            </div>
+                            <div class="word-group">
+                                <div class="word-group-title">
+                                    <span style="color: var(--primary); font-weight: bold;">●</span> 
+                                    复习旧词 (${log.oldWordsCount} 个)
+                                </div>
+                                <div class="word-badge-list">${oldBadges}</div>
+                            </div>
+                            <div class="word-group" style="margin-top: 12px;">
+                                <div class="word-group-title">
+                                    <span style="color: var(--correct); font-weight: bold;">●</span> 
+                                    新词汇 (${log.newWordsCount} 个)
+                                </div>
+                                <div class="word-badge-list">${newBadges}</div>
+                            </div>
+                            <div class="log-summary-details">
+                                <span>答题数: ${log.totalQuestionsAnswered}</span>
+                                <span>正确: ${log.correctAnswersCount}</span>
+                                <span>正确率: ${log.accuracy}%</span>
+                                <span>用时: ${log.durationSeconds} 秒</span>
+                            </div>
+                        `;
+                        body.appendChild(card);
+                    });
+                };
+
+                request.onerror = (event) => {
+                    body.innerHTML = `<div class="text-center py-8 text-rose-500 font-semibold">读取记录失败</div>`;
+                };
+
+            } catch (e) {
+                console.error(e);
+                body.innerHTML = `<div class="text-center py-8 text-rose-500 font-semibold">读取记录失败: ${e.message}</div>`;
+            }
+        }
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStreakInfo();
+            initIndexedDB().catch(err => console.error("Could not init IndexedDB", err));
+            
+            // Add keydown listener to the translation input
+            const transInput = document.getElementById('transInput');
+            if (transInput) {
+                transInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleTranslationSubmit();
+                    }
+                });
+            }
+        });
+
+        // Load Streak Progress
+        async function loadStreakInfo() {
+            try {
+                const res = await fetch(`/api/reviews/streak?userId=${userId}&sessionType=high_freq_speed`);
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('headerStreak').textContent = data.currentStreakDays;
+                    document.getElementById('headerTodayStreak').textContent = data.completedStreaksToday;
+                }
+            } catch (err) {
+                console.error("Failed to load streak details", err);
+            }
+        }
+
+        // Start 15 minutes Session
+        async function startHFSession() {
+            try {
+                const res = await fetch('/api/reviews/session/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, type: 'high_freq' })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    currentCard = data.firstCard;
+                    
+                    // Save to IndexedDB
+                    if (data.activeQueue) {
+                        saveSessionToDB(data.activeQueue);
+                    }
+                    
+                    // Switch views
+                    document.getElementById('viewStart').classList.add('hidden');
+                    document.getElementById('viewGame').classList.remove('hidden');
+                    document.getElementById('sessionTimer').classList.remove('hidden');
+
+                    // Reset stats
+                    totalQuestionsAnswered = 0;
+                    correctAnswersCount = 0;
+                    timeRemaining = 900;
+
+                    // Start timer
+                    startTimer();
+                    renderCard();
+                } else {
+                    alert("无法启动刷词会话，请确认后台服务已运行。");
+                }
+            } catch (e) {
+                console.error("Error starting session", e);
+                alert("网络连接失败，请重试。");
+            }
+        }
+
+        // Timer
+        function startTimer() {
+            if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+            updateTimerDisplay();
+            sessionTimerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                if (timeRemaining <= 0) {
+                    endSessionForcefully();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            document.getElementById('timerText').textContent = 
+                `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        // Render current card question
+        function renderCard() {
+            if (!currentCard) {
+                endSessionSuccessfully();
+                return;
+            }
+
+            document.getElementById('currentWordText').textContent = currentCard.word;
+            document.getElementById('currentWordIpa').textContent = currentCard.ipa ? `/${currentCard.ipa}/` : '';
+            
+            // Progress details
+            const progressPct = (currentCard.progressIndex / currentCard.totalTarget) * 100;
+            document.getElementById('progressBarFill').style.width = `${progressPct}%`;
+            document.getElementById('sessionProgressText').textContent = `卡片进度: ${currentCard.progressIndex} / ${currentCard.totalTarget}`;
+            document.getElementById('microQueueInfo').textContent = `队列卡片数: ${currentCard.queueLength}`;
+
+            // Reset Sub-sections view to Step 1 (Example Learning)
+            document.getElementById('learnSectionContainer').classList.remove('hidden');
+            document.getElementById('translationSectionContainer').classList.add('hidden');
+            document.getElementById('quizSectionContainer').classList.add('hidden');
+
+            // Reset translation state
+            translationSubmitted = false;
+            const transInput = document.getElementById('transInput');
+            if (transInput) {
+                transInput.value = '';
+                transInput.disabled = false;
+                transInput.readOnly = false;
+            }
+            const transFeedback = document.getElementById('transFeedback');
+            if (transFeedback) {
+                transFeedback.classList.add('hidden');
+            }
+            const transSubmitBtn = document.getElementById('transSubmitBtn');
+            if (transSubmitBtn) {
+                transSubmitBtn.querySelector('span').textContent = '提交答案 (Enter)';
+            }
+            const secondaryBtn = document.getElementById('transSecondaryBtn');
+            if (secondaryBtn) {
+                secondaryBtn.classList.remove('hidden');
+            }
+
+            // Set learning content
+            document.getElementById('learnMeaningText').textContent = currentCard.meaning || '';
+
+            const examplesContainer = document.getElementById('learnExamplesContainer');
+            examplesContainer.innerHTML = '';
+            if (currentCard.examples && currentCard.examples.length > 0) {
+                currentCard.examples.forEach(ex => {
+                    const div = document.createElement('div');
+                    div.className = 'example-item';
+                    div.innerHTML = `
+                        <div class="example-thai" data-sentence="${ex.thai}" onclick="playAudioDirect(this.dataset.sentence)" title="点击播放音频">“ ${ex.thai} ”</div>
+                        <div class="example-chinese">${ex.chinese}</div>
+                    `;
+                    examplesContainer.appendChild(div);
+                });
+
+                // Populate values for translation section
+                const transThaiSentence = document.getElementById('transThaiSentence');
+                const transQuestionPrompt = document.getElementById('transQuestionPrompt');
+                const transCorrectChinese = document.getElementById('transCorrectChinese');
+                if (transThaiSentence && transCorrectChinese) {
+                    transThaiSentence.textContent = currentCard.examples[0].thai;
+                    transThaiSentence.onclick = () => playAudioDirect(currentCard.examples[0].thai);
+                    transThaiSentence.title = "点击播放音频";
+                    if (transQuestionPrompt) {
+                        transQuestionPrompt.innerHTML = `“<span style="color: var(--primary);">${currentCard.word}</span>” 单词的意思是什么？`;
+                    }
+                    transCorrectChinese.innerHTML = `
+                        <div style="font-size: 20px; font-weight: 700; color: var(--text-main);">${currentCard.meaning}</div>
+                        <div style="font-size: 14px; color: var(--text-sub); margin-top: 8px; border-top: 1px dashed #e2e8f0; padding-top: 8px; font-weight: normal;">
+                            例句翻译：${currentCard.examples[0].chinese}
+                        </div>
+                    `;
+                }
+            } else {
+                examplesContainer.innerHTML = `
+                    <div class="text-center py-6 text-slate-400 text-sm italic bg-slate-50 border border-dashed border-slate-200 rounded-xl">
+                        暂无推荐例句，请直接开始测验
+                    </div>
+                `;
+            }
+
+            // Prep Quiz options
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+            
+            // Create a shuffled copy of currentCard.options
+            const shuffledOptions = [...currentCard.options].sort(() => Math.random() - 0.5);
+            
+            shuffledOptions.forEach((optText) => {
+                const optBtn = document.createElement('button');
+                optBtn.className = 'option-card';
+                optBtn.dataset.option = optText;
+                optBtn.innerHTML = `
+                    <span>${optText}</span>
+                    <i class="ph-circle ph text-slate-500"></i>
+                `;
+                optBtn.onclick = () => selectOption(optBtn, optText);
+                container.appendChild(optBtn);
+            });
+        }
+
+        function goToNextSectionFromLearn() {
+            if (currentCard.examples && currentCard.examples.length > 0) {
+                // Show translation section
+                document.getElementById('learnSectionContainer').classList.add('hidden');
+                document.getElementById('translationSectionContainer').classList.remove('hidden');
+                document.getElementById('quizSectionContainer').classList.add('hidden');
+                // Focus on the input field
+                setTimeout(() => {
+                    const transInput = document.getElementById('transInput');
+                    if (transInput) transInput.focus();
+                }, 100);
+            } else {
+                // No examples, skip translation and go directly to quiz section
+                goToQuizSection();
+            }
+        }
+
+        function showTranslationReference() {
+            translationSubmitted = true;
+            const transFeedback = document.getElementById('transFeedback');
+            if (transFeedback) transFeedback.classList.remove('hidden');
+            
+            // Hide secondary button, change primary button text
+            const secondaryBtn = document.getElementById('transSecondaryBtn');
+            if (secondaryBtn) secondaryBtn.classList.add('hidden');
+            
+            const transSubmitBtn = document.getElementById('transSubmitBtn');
+            if (transSubmitBtn) {
+                transSubmitBtn.querySelector('span').textContent = '开始测验 (Enter) →';
+            }
+            
+            const transInput = document.getElementById('transInput');
+            if (transInput) {
+                transInput.readOnly = true;
+                transInput.focus();
+            }
+        }
+
+        function handleTranslationSubmit() {
+            if (!translationSubmitted) {
+                // First Enter: Show feedback
+                translationSubmitted = true;
+                const transFeedback = document.getElementById('transFeedback');
+                if (transFeedback) transFeedback.classList.remove('hidden');
+                
+                // Hide secondary button, change primary button text
+                const secondaryBtn = document.getElementById('transSecondaryBtn');
+                if (secondaryBtn) secondaryBtn.classList.add('hidden');
+                
+                const transSubmitBtn = document.getElementById('transSubmitBtn');
+                if (transSubmitBtn) {
+                    transSubmitBtn.querySelector('span').textContent = '开始测验 (Enter) →';
+                }
+                
+                const transInput = document.getElementById('transInput');
+                if (transInput) {
+                    transInput.readOnly = true;
+                    transInput.focus();
+                }
+            } else {
+                // Second Enter: Go to quiz section
+                goToQuizSection();
+            }
+        }
+
+        // Section transition
+        function goToQuizSection() {
+            document.getElementById('learnSectionContainer').classList.add('hidden');
+            document.getElementById('translationSectionContainer').classList.add('hidden');
+            document.getElementById('quizSectionContainer').classList.remove('hidden');
+        }
+
+        // Select Option Check
+        async function selectOption(btnElement, selectedText) {
+            // Disable other options to prevent multiple clicking
+            const allOptionBtns = document.querySelectorAll('.option-card');
+            allOptionBtns.forEach(btn => btn.disabled = true);
+
+            const isCorrect = (selectedText === currentCard.options[0]); // Seeding correctly sets correct option as first index
+            totalQuestionsAnswered++;
+
+            if (isCorrect) {
+                correctAnswersCount++;
+                btnElement.classList.add('correct');
+                btnElement.querySelector('i').className = 'ph-check-circle ph-fill';
+            } else {
+                btnElement.classList.add('wrong');
+                btnElement.querySelector('i').className = 'ph-x-circle ph-fill';
+                
+                // Highlight the correct one
+                allOptionBtns.forEach(btn => {
+                    if (btn.dataset.option === currentCard.options[0]) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+
+            // Submit single question result to Pimsleur Micro-queue
+            setTimeout(async () => {
+                try {
+                    const res = await fetch('/api/reviews/session/submit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            userId,
+                            itemType: 'high_freq',
+                            itemId: currentCard.id,
+                            sessionType: 'high_freq_speed',
+                            singleAttempt: { correct: isCorrect }
+                        })
+                    });
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.sessionCompleted) {
+                            endSessionSuccessfully(data.streakStats);
+                        } else {
+                            currentCard = data.nextCard;
+                            renderCard();
+                        }
+                    }
+                } catch (e) {
+                    console.error("Submit error", e);
+                }
+            }, 1000);
+        }
+
+        // Successfully completed session
+        function endSessionSuccessfully(streakStats) {
+            clearInterval(sessionTimerInterval);
+            updateSessionStatus('completed');
+            
+            document.getElementById('viewGame').classList.add('hidden');
+            document.getElementById('sessionTimer').classList.add('hidden');
+            document.getElementById('viewCompleted').classList.remove('hidden');
+
+            const accuracy = totalQuestionsAnswered > 0 ? Math.round((correctAnswersCount / totalQuestionsAnswered) * 100) : 100;
+            document.getElementById('resultAccuracy').textContent = `${accuracy}%`;
+
+            if (streakStats) {
+                document.getElementById('resultStreakToday').textContent = `${streakStats.completedStreaksToday} Streak`;
+                document.getElementById('headerStreak').textContent = streakStats.currentStreakDays;
+                document.getElementById('headerTodayStreak').textContent = streakStats.completedStreaksToday;
+            } else {
+                loadStreakInfo();
+            }
+        }
+
+        // Exited or Force closed
+        function endSessionForcefully() {
+            clearInterval(sessionTimerInterval);
+            updateSessionStatus('terminated');
+            alert("15分钟会话已经结束，或者您已超时。");
+            showStartScreen();
+        }
+
+        function showStartScreen() {
+            document.getElementById('viewGame').classList.add('hidden');
+            document.getElementById('viewCompleted').classList.add('hidden');
+            document.getElementById('sessionTimer').classList.add('hidden');
+            document.getElementById('viewStart').classList.remove('hidden');
+            loadStreakInfo();
+        }
+    </script>
+</body>
+</html>

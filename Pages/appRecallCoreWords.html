@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>核心低分词汇短时强化记忆 - vCourse.ThaiNotes</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Serif+Thai:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Noto Sans SC', 'sans-serif'],
+                        thai: ['Noto Serif Thai', 'Outfit', 'sans-serif'],
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --primary: #f59e0b;
+            --primary-dark: #d97706;
+            --indigo-main: #4f46e5;
+            --emerald-main: #10b981;
+            --rose-main: #f43f5e;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            min-height: 100vh;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(241, 245, 249, 0.7);
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* 3D 闪卡翻转动效 */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .flashcard-card {
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        }
+        .flashcard-card:hover {
+            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 消除与留队微动画 */
+        @keyframes eliminateOut {
+            0% { transform: scale(1) translateY(0); opacity: 1; }
+            40% { transform: scale(1.04) translateY(-10px); opacity: 0.9; box-shadow: 0 0 30px rgba(16, 185, 129, 0.3); }
+            100% { transform: scale(0.9) translateY(-40px); opacity: 0; }
+        }
+        .animate-eliminate {
+            animation: eliminateOut 0.38s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes loopShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
+        }
+        .animate-loop-shake {
+            animation: loopShake 0.4s ease-in-out;
+        }
+
+        @keyframes cardPopIn {
+            0% { opacity: 0; transform: scale(0.94) translateY(12px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-card-enter {
+            animation: cardPopIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); opacity: 0.85; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+        .speaker-pulse {
+            animation: pulseGlow 1.8s infinite ease-in-out;
+        }
+
+        .kbd-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-weight: 700;
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Top Sticky Header Navigation & Progress Bar -->
+    <header class="bg-white/95 backdrop-blur-md border-b border-slate-200/90 sticky top-0 z-40 shadow-xs">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3.5 flex flex-col md:flex-row items-center justify-between gap-3">
+            
+            <!-- Left Info & Breadcrumb -->
+            <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
+                <a href="appCoreWords.html" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 transition" title="返回课时核心词汇主页面">
+                    <i class="ph-bold ph-arrow-left text-sm"></i>
+                    <span>返回核心词库</span>
+                </a>
+
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                        <i class="ph-bold ph-lightning text-amber-500"></i>
+                        <span id="session-title-badge">短时强化记忆</span>
+                    </span>
+                    <span id="session-date-badge" class="text-[11px] text-slate-400 hidden sm:inline-block font-mono">--</span>
+                </div>
+            </div>
+
+            <!-- Center/Right Progress & Counters -->
+            <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                <!-- Round Badge -->
+                <div class="flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-xl text-xs font-bold text-slate-700 border border-slate-200/80">
+                    <i class="ph-bold ph-arrows-clockwise text-indigo-600 text-sm"></i>
+                    <span>循环 <span id="current-round-text" class="text-indigo-600 font-black">1</span> 轮</span>
+                </div>
+
+                <!-- Elimination Stats Counter -->
+                <div class="text-right">
+                    <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5 justify-end">
+                        <span>已消除:</span>
+                        <span id="stat-eliminated" class="text-emerald-600 font-extrabold font-mono text-sm">0</span>
+                        <span class="text-slate-400">/</span>
+                        <span id="stat-total" class="font-mono text-slate-600 font-bold">0</span>
+                        <span id="stat-percentage" class="ml-1 text-[11px] font-bold px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">0%</span>
+                    </div>
+                </div>
+
+                <!-- Auto Audio Toggle Button -->
+                <button id="toggle-audio-btn" onclick="toggleAutoAudio()" type="button" class="px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100" title="切换是否在新卡片出现时自动播放泰语发音">
+                    <i id="toggle-audio-icon" class="ph-bold ph-speaker-high text-indigo-600"></i>
+                    <span id="toggle-audio-label" class="hidden sm:inline">自动朗读: 开</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Progress Bar Strip -->
+        <div class="w-full bg-slate-100 h-1.5 overflow-hidden">
+            <div id="top-progress-bar" class="h-full bg-gradient-to-r from-amber-500 via-indigo-500 to-emerald-500 transition-all duration-300" style="width: 0%;"></div>
+        </div>
+    </header>
+
+    <!-- Main Content Workspace Container -->
+    <main class="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col justify-center">
+
+        <!-- VIEW 1: Loading State -->
+        <div id="view-loading" class="flex flex-col items-center justify-center py-24 text-center">
+            <div class="h-14 w-14 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center text-2xl mb-4 animate-bounce">
+                <i class="ph-bold ph-lightning"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-800">正在从 IndexedDB 读取低分错词数据...</h3>
+            <p class="text-xs text-slate-400 mt-1">准备就绪后即可开启循环闪卡逐一攻克！</p>
+        </div>
+
+        <!-- VIEW 2: Active Flashcard Loop Screen -->
+        <div id="view-flashcard" class="hidden flex flex-col gap-6">
+            
+            <!-- Cards Queue Header Status -->
+            <div class="flex items-center justify-between px-2 text-xs font-medium text-slate-500">
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 font-bold border border-rose-200">
+                        <i class="ph-bold ph-fire"></i>
+                        <span>待消除错词: <span id="queue-remaining-count" class="font-mono font-black text-sm">0</span> 词</span>
+                    </span>
+                    <span id="queue-streak-tip" class="hidden text-[11px] text-slate-400 sm:inline">循环强化直至队列完全清空</span>
+                </div>
+                <div class="text-slate-400 text-xs">
+                    卡片序号: <span id="card-index-tip" class="font-mono font-bold text-slate-700">1</span>
+                </div>
+            </div>
+
+            <!-- The Big Interactive Flashcard -->
+            <div id="flashcard-container" class="perspective-1000 relative">
+                <div id="flashcard-box" class="flashcard-card animate-card-enter bg-white rounded-3xl border-2 border-slate-200 shadow-md p-6 sm:p-10 flex flex-col justify-between min-h-[380px] sm:min-h-[420px] relative overflow-hidden">
+                    
+                    <!-- Decorative Corner Accent -->
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-100/40 via-indigo-50/30 to-transparent rounded-bl-full pointer-events-none"></div>
+
+                    <!-- Flashcard Top Meta: Original Score & Status -->
+                    <div class="flex items-center justify-between gap-2 pb-4 border-b border-slate-100 relative z-10">
+                        <div id="card-original-score-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                            <span class="text-amber-500 text-[11px] tracking-tight">★☆☆☆☆</span>
+                            <span>原得分: 1分 (需重学)</span>
+                        </div>
+
+                        <!-- Repetition Count for this word -->
+                        <div id="card-repetition-tag" class="text-xs font-semibold text-slate-400 flex items-center gap-1">
+                            <i class="ph ph-clock-counter-clockwise"></i>
+                            <span>本轮已循环 <span id="card-loop-times" class="font-bold text-slate-700">0</span> 次</span>
+                        </div>
+                    </div>
+
+                    <!-- Flashcard Center: Thai Word & Audio -->
+                    <div class="flex-grow flex flex-col items-center justify-center py-8 text-center relative z-10 cursor-pointer select-none" onclick="toggleCardReveal()" title="点击卡片翻转显示释义 (快捷键: 空格键)">
+                        
+                        <!-- Big Thai Word -->
+                        <h1 id="card-thai-word" class="text-4xl sm:text-5xl font-thai font-black text-slate-900 tracking-wide select-text hover:text-indigo-600 transition">
+                            --
+                        </h1>
+
+                        <!-- IPA & Audio Player -->
+                        <div class="flex items-center justify-center gap-3 mt-3">
+                            <span id="card-ipa-text" class="font-mono text-base sm:text-lg text-slate-400 select-text">
+                                /--/
+                            </span>
+                            <button onclick="event.stopPropagation(); playCurrentWordAudio()" type="button" class="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 transition active:scale-95 cursor-pointer shadow-xs" title="播放泰语发音 (快捷键: P 或 空格)">
+                                <i class="ph-bold ph-speaker-high text-xl"></i>
+                            </button>
+                        </div>
+
+                        <!-- Card Reveal Prompt (Shown when unrevealed) -->
+                        <div id="prompt-reveal-area" class="mt-8 transition-all">
+                            <button type="button" onclick="event.stopPropagation(); revealCardDetails()" class="px-5 py-2.5 rounded-2xl bg-slate-100 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-slate-600 hover:text-indigo-600 text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer">
+                                <i class="ph-bold ph-eye text-sm"></i>
+                                <span>点击揭晓中文释义与例句</span>
+                                <span class="kbd-badge ml-1">空格</span>
+                            </button>
+                        </div>
+
+                        <!-- Revealed Meaning & Detail Container (Hidden until revealed) -->
+                        <div id="revealed-details-area" class="hidden w-full mt-6 text-left space-y-4 pt-4 border-t border-slate-100">
+                            
+                            <!-- Main Meaning Banner -->
+                            <div class="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-4">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span id="card-pos-badge" class="px-2 py-0.5 rounded-md bg-indigo-600 text-white text-[11px] font-bold font-mono">词性</span>
+                                    <span class="text-xs text-indigo-400 font-semibold uppercase tracking-wider">中文释义</span>
+                                </div>
+                                <div id="card-chinese-meaning" class="text-xl sm:text-2xl font-bold text-indigo-950 select-text">
+                                    --
+                                </div>
+                            </div>
+
+                            <!-- Additional Meanings List (if multi-meaning) -->
+                            <div id="card-meanings-list" class="space-y-2 hidden"></div>
+
+                            <!-- Examples List -->
+                            <div id="card-examples-section" class="space-y-2">
+                                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                    <i class="ph ph-book-open text-indigo-500"></i>
+                                    <span>语境例句对照</span>
+                                </div>
+                                <div id="card-examples-list" class="space-y-2 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
+                                    <!-- Injected dynamically -->
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Flashcard Bottom Action Bar -->
+                    <div id="action-buttons-unrevealed" class="pt-4 border-t border-slate-100 flex items-center justify-between relative z-10">
+                        <div class="text-[11px] text-slate-400">
+                            💡 先在脑海中回忆该词的泰语读音与汉语释义
+                        </div>
+                        <button onclick="revealCardDetails()" type="button" class="px-5 py-2.5 rounded-xl bg-slate-900 text-white hover:bg-indigo-600 text-xs font-bold transition flex items-center gap-2 shadow-md shadow-slate-900/10 cursor-pointer">
+                            <span>显示答案自我评判</span>
+                            <span class="kbd-badge bg-slate-700 text-slate-200 border-slate-600">Enter</span>
+                        </button>
+                    </div>
+
+                    <!-- Action Buttons (Shown after card is revealed) -->
+                    <div id="action-buttons-revealed" class="hidden pt-4 border-t border-slate-100 grid grid-cols-2 gap-4 relative z-10">
+                        
+                        <!-- Button 1: Still Don't Know -> Keep in Loop -->
+                        <button id="btn-keep-in-loop" onclick="handleKeepInLoop()" type="button" class="py-3.5 px-4 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 border-2 border-rose-200 hover:border-rose-300 text-xs sm:text-sm font-bold transition duration-150 flex flex-col sm:flex-row items-center justify-center gap-1.5 shadow-sm active:scale-98 cursor-pointer group">
+                            <div class="flex items-center gap-1.5">
+                                <i class="ph-bold ph-x-circle text-rose-600 text-lg group-hover:scale-110 transition"></i>
+                                <span>没记住 · 留在循环</span>
+                            </div>
+                            <div class="flex items-center gap-1 text-[10px] text-rose-500 font-mono">
+                                <span>[快捷键:</span>
+                                <span class="kbd-badge bg-rose-100 border-rose-300 text-rose-800">1</span>
+                                <span>或 ←]</span>
+                            </div>
+                        </button>
+
+                        <!-- Button 2: Remembered -> Eliminate from Queue! -->
+                        <button id="btn-eliminate-word" onclick="handleEliminateWord()" type="button" class="py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white border-2 border-emerald-600 hover:border-emerald-700 text-xs sm:text-sm font-bold transition duration-150 flex flex-col sm:flex-row items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 active:scale-98 cursor-pointer group">
+                            <div class="flex items-center gap-1.5">
+                                <i class="ph-bold ph-check-circle text-white text-lg group-hover:scale-110 transition"></i>
+                                <span>记住了 · 彻底消除！</span>
+                            </div>
+                            <div class="flex items-center gap-1 text-[10px] text-emerald-200 font-mono">
+                                <span>[快捷键:</span>
+                                <span class="kbd-badge bg-emerald-700 border-emerald-500 text-white">2</span>
+                                <span>或 Enter]</span>
+                            </div>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Bottom Keyboard Hints Strip -->
+            <div class="flex items-center justify-center gap-4 text-slate-400 text-xs flex-wrap">
+                <span class="flex items-center gap-1">
+                    <span class="kbd-badge">空格</span> 翻开 / 朗读
+                </span>
+                <span class="flex items-center gap-1">
+                    <span class="kbd-badge">1</span> 或 <span class="kbd-badge">←</span> 留在循环
+                </span>
+                <span class="flex items-center gap-1">
+                    <span class="kbd-badge">2</span> 或 <span class="kbd-badge">→</span> 消除错词
+                </span>
+            </div>
+
+        </div>
+
+        <!-- VIEW 3: All Eliminated Victory Screen -->
+        <div id="view-victory" class="hidden bg-white rounded-3xl border-2 border-emerald-200 shadow-xl p-8 sm:p-12 text-center max-w-2xl mx-auto flex flex-col items-center animate-card-enter">
+            
+            <!-- Confetti / Trophy Badge -->
+            <div class="h-20 w-20 rounded-3xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center text-4xl mb-4 shadow-sm shadow-emerald-500/10">
+                <i class="ph-fill ph-trophy"></i>
+            </div>
+
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 font-mono">
+                MISSION ACCOMPLISHED
+            </span>
+
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-3">
+                错词全歼！强化记忆圆满达成！
+            </h2>
+            <p class="text-sm text-slate-500 mt-1.5 max-w-md">
+                恭喜您！本组词汇集中所有评分低于 3 分的低分错词，已在循环闪卡中被全部攻克消除！
+            </p>
+
+            <!-- Score / Round Summary Grid -->
+            <div class="grid grid-cols-3 gap-3 w-full my-6 font-sans">
+                <div class="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 text-center">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">攻克错词数</span>
+                    <span id="victory-total-words" class="text-2xl font-black text-slate-800">0</span>
+                </div>
+                <div class="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 text-center">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">经历轮次</span>
+                    <span id="victory-total-rounds" class="text-2xl font-black text-indigo-600">1</span>
+                </div>
+                <div class="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 text-center">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">消除达成率</span>
+                    <span class="text-2xl font-black text-emerald-600">100%</span>
+                </div>
+            </div>
+
+            <!-- Sync Back to ThaiCoreWordsReviewDB Banner -->
+            <div id="sync-banner" class="w-full bg-gradient-to-r from-indigo-50 to-emerald-50 border border-indigo-200 rounded-2xl p-4 mb-6 text-left flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                    <div class="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                        <i class="ph-bold ph-database text-indigo-600"></i>
+                        <span>同步掌握度至核心词汇库</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-0.5">
+                        可一键将本次消除的错词在本地 IndexedDB 中的评分统一提升至 3 分（巩固）。
+                    </p>
+                </div>
+                <button id="btn-sync-scores" onclick="syncMasteryScoresToCoreDB()" type="button" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-1.5 shadow-md shadow-indigo-600/15 cursor-pointer">
+                    <i class="ph-bold ph-check-double"></i>
+                    <span>同步提分至 3分</span>
+                </button>
+            </div>
+
+            <!-- Eliminated Words Overview Table Accordion -->
+            <div class="w-full text-left mb-6">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                        <i class="ph ph-list-checks text-emerald-500"></i> 本次攻克的词汇清单
+                    </span>
+                    <span id="eliminated-words-count-badge" class="text-[11px] font-mono text-slate-500">共 0 词</span>
+                </div>
+                <div id="eliminated-words-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[220px] overflow-y-auto custom-scrollbar pr-1">
+                    <!-- Dynamic Badges Injected -->
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row items-center gap-3 w-full">
+                <button onclick="restartFullRecallSession()" type="button" class="w-full sm:flex-1 py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i class="ph-bold ph-arrow-counter-clockwise"></i>
+                    <span>再强化一轮 (打乱重练)</span>
+                </button>
+                <a href="appCoreWords.html" class="w-full sm:flex-1 py-3 px-4 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-md shadow-slate-900/10 cursor-pointer">
+                    <i class="ph-bold ph-arrow-left"></i>
+                    <span>返回核心词汇学习页</span>
+                </a>
+            </div>
+
+        </div>
+
+        <!-- VIEW 4: Error State (e.g. Session not found or empty) -->
+        <div id="view-error" class="hidden bg-white rounded-3xl border border-slate-200 shadow-lg p-8 sm:p-12 text-center max-w-lg mx-auto flex flex-col items-center">
+            <div class="h-16 w-16 rounded-2xl bg-rose-50 text-rose-500 border border-rose-200 flex items-center justify-center text-3xl mb-4">
+                <i class="ph-bold ph-warning"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800">未找到低分词汇强化数据</h3>
+            <p id="error-desc-text" class="text-xs text-slate-500 mt-1 max-w-sm">
+                可能未指定有效的数据 ID，或该临时错词强化记录已被清理。
+            </p>
+
+            <!-- Recent Sessions Selector (if available) -->
+            <div id="recent-sessions-container" class="w-full mt-6 text-left hidden">
+                <span class="text-xs font-bold text-slate-400 block mb-2">本地历史强化记录：</span>
+                <div id="recent-sessions-list" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar"></div>
+            </div>
+
+            <a href="appCoreWords.html" class="mt-6 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-indigo-600/15">
+                <i class="ph-bold ph-arrow-left"></i>
+                <span>返回课时核心词汇</span>
+            </a>
+        </div>
+
+    </main>
+
+    <!-- Script Block -->
+    <script>
+        // ==========================================
+        // IndexedDB Configuration for ThaiCoreWordsRecallDB
+        // ==========================================
+        const RECALL_DB_NAME = 'ThaiCoreWordsRecallDB';
+        const RECALL_DB_VERSION = 1;
+        const RECALL_STORE_NAME = 'recallSessions';
+
+        // ThaiCoreWordsReviewDB for progress synchronization
+        const PROGRESS_DB_NAME = 'ThaiCoreWordsReviewDB';
+        const PROGRESS_DB_VERSION = 3;
+        const PROGRESS_STORE_NAME = 'coreWordProgress';
+
+        function openRecallDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(RECALL_DB_NAME, RECALL_DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(RECALL_STORE_NAME)) {
+                        const store = db.createObjectStore(RECALL_STORE_NAME, { keyPath: 'id' });
+                        store.createIndex('timestamp', 'timestamp', { unique: false });
+                        store.createIndex('wordsetId', 'wordsetId', { unique: false });
+                        store.createIndex('lessonId', 'lessonId', { unique: false });
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function getRecallSessionFromIndexedDB(sessionId) {
+            const db = await openRecallDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction([RECALL_STORE_NAME], 'readonly');
+                const store = tx.objectStore(RECALL_STORE_NAME);
+                const req = store.get(sessionId);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function getAllRecentRecallSessions() {
+            try {
+                const db = await openRecallDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction([RECALL_STORE_NAME], 'readonly');
+                    const store = tx.objectStore(RECALL_STORE_NAME);
+                    const req = store.getAll();
+                    req.onsuccess = () => {
+                        const list = req.result || [];
+                        list.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                        resolve(list);
+                    };
+                    req.onerror = () => resolve([]);
+                });
+            } catch (err) {
+                return [];
+            }
+        }
+
+        // ==========================================
+        // Session State & Data
+        // ==========================================
+        let sessionData = null;
+        let originalWords = [];        // 初始错词数据 (全量)
+        let recallQueue = [];          // 当前待攻克错词队列 (循环中)
+        let eliminatedWords = [];       // 已成功消除的错词数组
+        let currentWord = null;         // 当前正在复习的单词对象
+        let currentRound = 1;          // 循环轮次
+        let isCardRevealed = false;    // 当前卡片是否已翻开揭示答案
+        let isProcessingAction = false;// 防止快捷键连续误触发
+        let loopCounterMap = {};       // 记录每个词在本复习会话中循环留队的次数
+
+        // Preferences
+        let autoAudioEnabled = true;
+
+        // ==========================================
+        // TTS Pronunciation Audio Player
+        // ==========================================
+        window.playAudioDirect = (text) => {
+            if (!text) return;
+            const cleanText = text.replace(/“|”/g, '').trim();
+            const url = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(cleanText || text)}`;
+            new Audio(url).play().catch(err => {
+                console.warn("Direct TTS error, falling back to Web Speech API:", err);
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utter = new SpeechSynthesisUtterance(cleanText || text);
+                    utter.lang = 'th-TH';
+                    utter.rate = 0.9;
+                    window.speechSynthesis.speak(utter);
+                }
+            });
+        };
+
+        function playCurrentWordAudio() {
+            if (!currentWord) return;
+            const wordText = currentWord.word || currentWord.headword || '';
+            playAudioDirect(wordText);
+        }
+
+        function toggleAutoAudio() {
+            autoAudioEnabled = !autoAudioEnabled;
+            const labelEl = document.getElementById('toggle-audio-label');
+            const iconEl = document.getElementById('toggle-audio-icon');
+            const btnEl = document.getElementById('toggle-audio-btn');
+            
+            if (autoAudioEnabled) {
+                if (labelEl) labelEl.textContent = '自动朗读: 开';
+                if (iconEl) iconEl.className = 'ph-bold ph-speaker-high text-indigo-600';
+                btnEl.classList.remove('opacity-60');
+            } else {
+                if (labelEl) labelEl.textContent = '自动朗读: 关';
+                if (iconEl) iconEl.className = 'ph-bold ph-speaker-slash text-slate-400';
+                btnEl.classList.add('opacity-60');
+            }
+        }
+
+        // ==========================================
+        // Application Startup & Data Fetching
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', async () => {
+            setupKeyboardShortcuts();
+            await initRecallSession();
+        });
+
+        async function initRecallSession() {
+            const params = new URLSearchParams(window.location.search);
+            const sessionId = params.get('id') || params.get('sessionId');
+
+            try {
+                if (sessionId) {
+                    sessionData = await getRecallSessionFromIndexedDB(sessionId);
+                }
+
+                if (!sessionData || !Array.isArray(sessionData.words) || sessionData.words.length === 0) {
+                    // Try fallback to the latest stored session if any
+                    const recentSessions = await getAllRecentRecallSessions();
+                    if (recentSessions.length > 0) {
+                        renderRecentSessionsList(recentSessions);
+                    }
+                    showView('error');
+                    return;
+                }
+
+                // Session Loaded Successfully!
+                originalWords = sessionData.words;
+                document.getElementById('session-title-badge').textContent = sessionData.title || sessionData.wordsetTitle || '核心低分词强化';
+                document.getElementById('session-date-badge').textContent = sessionData.date || '';
+
+                startRecallQueue(originalWords);
+            } catch (err) {
+                console.error("加载错词强化数据异常:", err);
+                showView('error');
+            }
+        }
+
+        function startRecallQueue(words) {
+            originalWords = [...words];
+            // 打乱或保留队列
+            recallQueue = [...originalWords];
+            eliminatedWords = [];
+            currentRound = 1;
+            loopCounterMap = {};
+
+            originalWords.forEach(w => {
+                loopCounterMap[w.id] = 0;
+            });
+
+            updateProgressUI();
+            showView('flashcard');
+            renderNextCard();
+        }
+
+        // ==========================================
+        // Helper: Extract Word Meaning and Part of Speech
+        // ==========================================
+        function getWordMeaning(word) {
+            if (!word) return '暂无释义';
+            // 1. 如果有顶层 meaning 字符串
+            if (typeof word.meaning === 'string' && word.meaning.trim()) {
+                return word.meaning.trim();
+            }
+            // 2. 如果有 meanings 数组 (tblCoreWords 标准结构)
+            if (Array.isArray(word.meanings) && word.meanings.length > 0) {
+                const parts = word.meanings
+                    .map(m => (typeof m === 'string' ? m : (m.meaning || m.chinese || m.definition || '')))
+                    .filter(Boolean);
+                if (parts.length > 0) {
+                    return parts.join('； ');
+                }
+            }
+            // 3. 兼容其他字段 chinese / meanCh / definition / translation
+            if (word.chinese && typeof word.chinese === 'string') return word.chinese.trim();
+            if (word.meanCh && typeof word.meanCh === 'string') return word.meanCh.trim();
+            if (word.definition && typeof word.definition === 'string') return word.definition.trim();
+            if (word.translation && typeof word.translation === 'string') return word.translation.trim();
+            return '暂无释义';
+        }
+
+        function getWordPos(word) {
+            if (!word) return '核心词';
+            if (word.pos && typeof word.pos === 'string' && word.pos.trim()) return word.pos.trim();
+            if (word.part_of_speech && typeof word.part_of_speech === 'string') return word.part_of_speech.trim();
+            if (Array.isArray(word.meanings) && word.meanings.length > 0) {
+                const firstPos = word.meanings[0]?.part_of_speech || word.meanings[0]?.pos;
+                if (firstPos && typeof firstPos === 'string' && firstPos.trim()) return firstPos.trim();
+            }
+            return '核心词';
+        }
+
+        // ==========================================
+        // Flashcard Rendering & Flow Control
+        // ==========================================
+        function renderNextCard() {
+            if (recallQueue.length === 0) {
+                triggerVictory();
+                return;
+            }
+
+            isProcessingAction = false;
+            isCardRevealed = false;
+            currentWord = recallQueue[0];
+
+            const loopTimes = loopCounterMap[currentWord.id] || 0;
+
+            // Reset Card Animation & State
+            const cardBox = document.getElementById('flashcard-box');
+            cardBox.classList.remove('animate-eliminate', 'animate-loop-shake');
+            void cardBox.offsetWidth; // Trigger reflow for animation reset
+            cardBox.classList.add('animate-card-enter');
+
+            // Render Thai Word & IPA
+            const displayWord = currentWord.word || currentWord.headword || '';
+            document.getElementById('card-thai-word').textContent = displayWord;
+            document.getElementById('card-ipa-text').textContent = currentWord.ipa ? `/${currentWord.ipa}/` : '';
+
+            // Render Score & Loop Badge
+            const score = currentWord.masteryScore !== undefined ? currentWord.masteryScore : (currentWord.score !== undefined ? currentWord.score : 1);
+            const scoreBadgeEl = document.getElementById('card-original-score-badge');
+            if (score <= 1) {
+                scoreBadgeEl.innerHTML = `<span class="text-amber-500 text-[11px] tracking-tight">★☆☆☆☆</span><span>原得分: 1分 (需重学)</span>`;
+                scoreBadgeEl.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200';
+            } else if (score === 2) {
+                scoreBadgeEl.innerHTML = `<span class="text-amber-500 text-[11px] tracking-tight">★★☆☆☆</span><span>原得分: 2分 (模糊)</span>`;
+                scoreBadgeEl.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200';
+            } else {
+                scoreBadgeEl.innerHTML = `<span class="text-amber-500 text-[11px] tracking-tight">★★★☆☆</span><span>得分: ${score}分 (待强化)</span>`;
+                scoreBadgeEl.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200';
+            }
+
+            document.getElementById('card-loop-times').textContent = loopTimes;
+
+            // Render Meaning & POS (自动从 meanings 数组或字段中提取)
+            const coreMeaning = getWordMeaning(currentWord);
+            const corePos = getWordPos(currentWord);
+
+            document.getElementById('card-pos-badge').textContent = corePos;
+            document.getElementById('card-chinese-meaning').textContent = coreMeaning;
+
+            // Multi-meanings list if present
+            const meaningsListEl = document.getElementById('card-meanings-list');
+            if (Array.isArray(currentWord.meanings) && currentWord.meanings.length > 1) {
+                meaningsListEl.innerHTML = currentWord.meanings.map(m => `
+                    <div class="flex items-center gap-2 text-xs text-slate-700 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                        <span class="px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 font-bold font-mono text-[10px]">${m.part_of_speech || '释义'}</span>
+                        <span class="font-bold">${m.meaning || m.chinese || ''}</span>
+                    </div>
+                `).join('');
+                meaningsListEl.classList.remove('hidden');
+            } else {
+                meaningsListEl.innerHTML = '';
+                meaningsListEl.classList.add('hidden');
+            }
+
+            // Render Examples
+            const examplesListEl = document.getElementById('card-examples-list');
+            const examplesSection = document.getElementById('card-examples-section');
+            let combinedExamples = [];
+            if (Array.isArray(currentWord.examples) && currentWord.examples.length > 0) {
+                combinedExamples = [...currentWord.examples];
+            } else if (Array.isArray(currentWord.meanings)) {
+                currentWord.meanings.forEach(m => {
+                    if (Array.isArray(m.examples)) combinedExamples.push(...m.examples);
+                });
+            }
+
+            if (combinedExamples.length > 0) {
+                examplesSection.classList.remove('hidden');
+                examplesListEl.innerHTML = combinedExamples.map(ex => {
+                    const safeSentence = (ex.sentence || '').replace(/'/g, "\\'");
+                    return `
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70 flex items-start justify-between gap-3">
+                            <div class="select-text">
+                                <div class="font-thai text-sm font-semibold text-slate-900">${ex.sentence}</div>
+                                <div class="text-xs text-slate-500 mt-0.5">${ex.meaning || ''}</div>
+                            </div>
+                            <button onclick="event.stopPropagation(); playAudioDirect('${safeSentence}')" type="button" class="p-1 text-slate-400 hover:text-indigo-600 rounded transition shrink-0" title="朗读例句">
+                                <i class="ph-bold ph-speaker-high text-sm"></i>
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                examplesSection.classList.add('hidden');
+                examplesListEl.innerHTML = '';
+            }
+
+            // Reset Reveal Visibility
+            document.getElementById('prompt-reveal-area').classList.remove('hidden');
+            document.getElementById('revealed-details-area').classList.add('hidden');
+            document.getElementById('action-buttons-unrevealed').classList.remove('hidden');
+            document.getElementById('action-buttons-revealed').classList.add('hidden');
+
+            // Auto Play Audio if enabled
+            if (autoAudioEnabled) {
+                setTimeout(() => {
+                    playCurrentWordAudio();
+                }, 150);
+            }
+
+            updateProgressUI();
+        }
+
+        function toggleCardReveal() {
+            if (!isCardRevealed) {
+                revealCardDetails();
+            }
+        }
+
+        function revealCardDetails() {
+            if (isCardRevealed) return;
+            isCardRevealed = true;
+
+            document.getElementById('prompt-reveal-area').classList.add('hidden');
+            document.getElementById('revealed-details-area').classList.remove('hidden');
+            document.getElementById('action-buttons-unrevealed').classList.add('hidden');
+            document.getElementById('action-buttons-revealed').classList.remove('hidden');
+        }
+
+        // ==========================================
+        // Elimination / Loop Action Handlers
+        // ==========================================
+
+        // Action 1: 没记住 -> 留在循环中继续强化
+        function handleKeepInLoop() {
+            if (isProcessingAction || !currentWord) return;
+            isProcessingAction = true;
+
+            const cardBox = document.getElementById('flashcard-box');
+            cardBox.classList.add('animate-loop-shake');
+
+            // 增加该词的循环计数
+            loopCounterMap[currentWord.id] = (loopCounterMap[currentWord.id] || 0) + 1;
+
+            setTimeout(() => {
+                // 将队首单词移出，重新 push 到队列末尾（或隔几张后）
+                const failedWord = recallQueue.shift();
+                recallQueue.push(failedWord);
+
+                // 判断是否完成了一整轮循环
+                checkRoundProgression();
+
+                renderNextCard();
+            }, 250);
+        }
+
+        // Action 2: 记住了 -> 彻底消除！
+        function handleEliminateWord() {
+            if (isProcessingAction || !currentWord) return;
+            isProcessingAction = true;
+
+            const cardBox = document.getElementById('flashcard-box');
+            cardBox.classList.add('animate-eliminate');
+
+            setTimeout(() => {
+                // 彻底移出队列并加入已消除列表
+                const clearedWord = recallQueue.shift();
+                eliminatedWords.push(clearedWord);
+
+                updateProgressUI();
+
+                if (recallQueue.length === 0) {
+                    triggerVictory();
+                } else {
+                    checkRoundProgression();
+                    renderNextCard();
+                }
+            }, 300);
+        }
+
+        function checkRoundProgression() {
+            // 如果所有剩余单词都经历过了本轮
+            const allPassedRound = recallQueue.every(w => (loopCounterMap[w.id] || 0) >= currentRound);
+            if (allPassedRound && recallQueue.length > 0) {
+                currentRound++;
+                document.getElementById('current-round-text').textContent = currentRound;
+            }
+        }
+
+        function updateProgressUI() {
+            const total = originalWords.length;
+            const eliminated = eliminatedWords.length;
+            const remaining = recallQueue.length;
+            const pct = total > 0 ? Math.round((eliminated / total) * 100) : 0;
+
+            document.getElementById('stat-eliminated').textContent = eliminated;
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-percentage').textContent = `${pct}%`;
+            document.getElementById('queue-remaining-count').textContent = remaining;
+            document.getElementById('current-round-text').textContent = currentRound;
+            document.getElementById('card-index-tip').textContent = `${eliminated + 1} / ${total}`;
+
+            const topBar = document.getElementById('top-progress-bar');
+            if (topBar) topBar.style.width = `${pct}%`;
+        }
+
+        // ==========================================
+        // Victory Screen & Core Progress Synchronization
+        // ==========================================
+        function triggerVictory() {
+            showView('victory');
+
+            document.getElementById('victory-total-words').textContent = originalWords.length;
+            document.getElementById('victory-total-rounds').textContent = currentRound;
+            document.getElementById('eliminated-words-count-badge').textContent = `共 ${eliminatedWords.length} 词已攻克`;
+
+            // Render Eliminated Words Grid
+            const gridEl = document.getElementById('eliminated-words-grid');
+            gridEl.innerHTML = eliminatedWords.map(w => {
+                const safeWord = (w.word || w.headword || '').replace(/'/g, "\\'");
+                const origScore = w.masteryScore !== undefined ? w.masteryScore : (w.score !== undefined ? w.score : 1);
+                return `
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex items-center justify-between gap-2 hover:bg-emerald-50/40 hover:border-emerald-200 transition">
+                        <div class="select-text">
+                            <div class="flex items-center gap-2">
+                                <span class="font-thai font-bold text-base text-slate-800">${w.word || w.headword}</span>
+                                ${w.ipa ? `<span class="font-mono text-xs text-slate-400">/${w.ipa}/</span>` : ''}
+                            </div>
+                            <div class="text-xs text-slate-600 mt-0.5">${getWordMeaning(w)}</div>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
+                                攻克消除
+                            </span>
+                            <button onclick="playAudioDirect('${safeWord}')" class="p-1 text-slate-400 hover:text-emerald-600 rounded transition" title="朗读">
+                                <i class="ph-bold ph-speaker-high text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 一键将本次消除的所有词汇在 ThaiCoreWordsReviewDB 中将分数提升为 3 分（巩固）
+        async function syncMasteryScoresToCoreDB() {
+            const btn = document.getElementById('btn-sync-scores');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> 正在同步...`;
+
+            try {
+                const req = indexedDB.open(PROGRESS_DB_NAME, PROGRESS_DB_VERSION);
+                req.onsuccess = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(PROGRESS_STORE_NAME)) {
+                        alert("未找到核心词复习进度存储库。");
+                        btn.disabled = false;
+                        btn.innerHTML = `<i class="ph-bold ph-check-double"></i> 同步提分至 3分`;
+                        return;
+                    }
+
+                    const tx = db.transaction([PROGRESS_STORE_NAME], 'readwrite');
+                    const store = tx.objectStore(PROGRESS_STORE_NAME);
+
+                    eliminatedWords.forEach(w => {
+                        const rec = {
+                            wordId: w.id,
+                            lessonId: w.lessonId || sessionData.lessonId || 'lesson_001',
+                            status: 'reviewed',
+                            masteryScore: 3, // 提升至巩固 3 分
+                            lastReviewedAt: Date.now(),
+                            reviewCount: 2
+                        };
+                        store.put(rec);
+                    });
+
+                    tx.oncomplete = () => {
+                        btn.className = 'px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold shrink-0 flex items-center gap-1.5 shadow-md shadow-emerald-600/15 cursor-default';
+                        btn.innerHTML = `<i class="ph-bold ph-check text-sm"></i> 已成功提升至 3 分！`;
+                        alert("太棒了！本次消除的低分错词已全部在本地 IndexedDB 进度中提升为“巩固 (3分)”！返回核心词汇页刷新即可看到更新！");
+                    };
+                    tx.onerror = (err) => {
+                        console.error("Tx error:", err);
+                        alert("同步失败，请检查浏览器权限。");
+                        btn.disabled = false;
+                        btn.innerHTML = `<i class="ph-bold ph-check-double"></i> 同步提分至 3分`;
+                    };
+                };
+                req.onerror = (e) => {
+                    console.error("Open error:", e);
+                    alert("无法打开本地复习库。");
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="ph-bold ph-check-double"></i> 同步提分至 3分`;
+                };
+            } catch (err) {
+                console.error("Sync error:", err);
+                btn.disabled = false;
+                btn.innerHTML = `<i class="ph-bold ph-check-double"></i> 同步提分至 3分`;
+            }
+        }
+
+        function restartFullRecallSession() {
+            if (originalWords.length === 0) return;
+            // 打乱顺序重新开始
+            const shuffled = [...originalWords].sort(() => 0.5 - Math.random());
+            startRecallQueue(shuffled);
+        }
+
+        // ==========================================
+        // Keyboard Shortcuts Manager
+        // ==========================================
+        function setupKeyboardShortcuts() {
+            window.addEventListener('keydown', (e) => {
+                // If input or textarea is focused, ignore
+                if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+                const key = e.key;
+
+                // Space key: reveal answer or play speech
+                if (key === ' ' || e.code === 'Space') {
+                    e.preventDefault();
+                    if (!isCardRevealed) {
+                        revealCardDetails();
+                    } else {
+                        playCurrentWordAudio();
+                    }
+                    return;
+                }
+
+                // Key '1' or Left Arrow: Keep in loop (没记住)
+                if (key === '1' || key === 'ArrowLeft') {
+                    e.preventDefault();
+                    if (!isCardRevealed) revealCardDetails();
+                    handleKeepInLoop();
+                    return;
+                }
+
+                // Key '2' or Right Arrow or Enter: Eliminate (记住了)
+                if (key === '2' || key === 'ArrowRight' || key === 'Enter') {
+                    e.preventDefault();
+                    if (!isCardRevealed) {
+                        revealCardDetails();
+                    } else {
+                        handleEliminateWord();
+                    }
+                    return;
+                }
+
+                // Key 'p' or 'P': Play audio
+                if (key.toLowerCase() === 'p') {
+                    playCurrentWordAudio();
+                }
+            });
+        }
+
+        // ==========================================
+        // View Switcher Helper
+        // ==========================================
+        function showView(viewName) {
+            document.getElementById('view-loading').classList.add('hidden');
+            document.getElementById('view-flashcard').classList.add('hidden');
+            document.getElementById('view-victory').classList.add('hidden');
+            document.getElementById('view-error').classList.add('hidden');
+
+            if (viewName === 'flashcard') {
+                document.getElementById('view-flashcard').classList.remove('hidden');
+            } else if (viewName === 'victory') {
+                document.getElementById('view-victory').classList.remove('hidden');
+            } else if (viewName === 'error') {
+                document.getElementById('view-error').classList.remove('hidden');
+            } else {
+                document.getElementById('view-loading').classList.remove('hidden');
+            }
+        }
+
+        function renderRecentSessionsList(sessions) {
+            const container = document.getElementById('recent-sessions-container');
+            const listEl = document.getElementById('recent-sessions-list');
+            if (!container || !listEl) return;
+
+            container.classList.remove('hidden');
+            listEl.innerHTML = sessions.slice(0, 5).map(s => `
+                <a href="appRecallCoreWords.html?id=${encodeURIComponent(s.id)}" class="p-3 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-xl flex items-center justify-between transition group text-xs">
+                    <div>
+                        <div class="font-bold text-slate-800 group-hover:text-indigo-600">${s.title || '错词强化记录'}</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">${s.date || ''} · 共 ${s.words?.length || 0} 个低分词</div>
+                    </div>
+                    <i class="ph-bold ph-arrow-right text-slate-300 group-hover:text-indigo-600 text-sm"></i>
+                </a>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

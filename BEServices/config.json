@@ -1,0 +1,13 @@
+{
+  "taskWeights": {
+    "firstAttemptCorrect": 1.0,
+    "firstAttemptIncorrectSecondAttemptCorrect": 0.6,
+    "hintsUsedCorrect": 0.5,
+    "failed": 0.0
+  },
+  "highFreqSession": {
+    "targetCount": 15,
+    "newWordRatio": 0.5
+  },
+  "dictationApiKey": "thainotes_api_key_2026"
+}

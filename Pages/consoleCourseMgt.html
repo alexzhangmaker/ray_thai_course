@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科目课时配置后台 - vCourse.ThaiNotes</title>
+    <!-- Google Fonts: Outfit & Sarabun -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS (via CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Sarabun', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at top right, #1a1b35 0%, #0c0e17 100%);
+            --glass-bg: rgba(30, 41, 59, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: rgba(0, 0, 0, 0.4);
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.2);
+            --text-main: #f1f5f9;
+            --text-sub: #94a3b8;
+        }
+
+        body {
+            font-family: 'Outfit', 'Sarabun', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px var(--glass-shadow);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .glass-card.active {
+            background: rgba(99, 102, 241, 0.08);
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .accent-gradient {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.3);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.5);
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden select-none">
+
+    <!-- Header -->
+    <header class="glass-panel border-b border-slate-800 px-6 py-4 flex items-center justify-between shrink-0 z-10">
+        <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-xl accent-gradient flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-indigo-500/20">
+                <i class="ph ph-books text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-base font-bold leading-none tracking-tight">vCourse.ThaiNotes</h1>
+                <span class="text-xs text-indigo-400 font-semibold uppercase tracking-wider block mt-1">科目课时关系配置中心</span>
+            </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <div class="flex items-center gap-6">
+            <!-- Connection Status -->
+            <div id="connection-status" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>数据服务器已连接</span>
+            </div>
+
+            <!-- Quick Navigation links -->
+            <nav class="flex items-center gap-2">
+                <a href="/Pages/consoleCourseware.html" class="px-4 py-2 text-xs text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-presentation"></i>
+                    <span>课件后台</span>
+                </a>
+                <a href="/Pages/consoleCourseStudio.html" class="px-4 py-2 text-xs text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-sparkle"></i>
+                    <span>课件工作室</span>
+                </a>
+                <a href="/Pages/consoleCourseReview.html" class="px-4 py-2 text-xs text-sky-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-sky-500/20">
+                    <i class="ph ph-house"></i>
+                    <span>主控制台</span>
+                </a>
+                <a href="/Pages/appPortal.html" target="_blank" class="px-4 py-2 text-xs text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5">
+                    <span>打开应用入口</span>
+                    <i class="ph ph-arrow-square-out"></i>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex-grow flex overflow-hidden min-h-0">
+        
+        <!-- ========================================== -->
+        <!-- LEFT COLUMN: Courses Management -->
+        <!-- ========================================== -->
+        <aside class="w-80 border-r border-slate-800 flex flex-col bg-slate-950/20 shrink-0">
+            <!-- Search & Actions Header -->
+            <div class="p-4 border-b border-slate-800 space-y-3 font-sans shrink-0">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs uppercase font-extrabold tracking-wider text-slate-400">科目列表 (Courses)</h3>
+                    <button onclick="openCourseModal(true)" 
+                        class="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[10px] font-bold flex items-center gap-1 transition-all">
+                        <i class="ph ph-plus-bold"></i><span>新增科目</span>
+                    </button>
+                </div>
+                <div class="relative">
+                    <input type="text" id="course-search" oninput="filterCourses()" placeholder="搜索科目名称..." 
+                        class="w-full bg-slate-900/50 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
+                    <i class="ph ph-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                </div>
+            </div>
+
+            <!-- Scrollable Course Card List -->
+            <div id="courses-list-container" class="flex-grow overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                <!-- Loader -->
+                <div class="text-center py-12 text-slate-500 text-xs">
+                    <i class="ph ph-spinner animate-spin text-lg mb-2"></i>
+                    <p>加载科目中...</p>
+                </div>
+            </div>
+
+            <!-- Count Footer -->
+            <div class="p-3 border-t border-slate-800/80 bg-slate-900/20 text-[10px] text-slate-500 font-semibold text-center shrink-0">
+                科目总量: <span id="courses-total-count" class="font-bold text-slate-400">0</span> 个
+            </div>
+        </aside>
+
+        <!-- ========================================== -->
+        <!-- RIGHT COLUMN: Lessons Management -->
+        <!-- ========================================== -->
+        <main class="flex-1 flex flex-col overflow-hidden bg-slate-950/10">
+            <!-- Header status of Selected Course -->
+            <div class="h-14 border-b border-slate-800 px-6 flex items-center justify-between shrink-0 select-none bg-slate-900/10">
+                <div class="flex items-center gap-2.5">
+                    <span class="h-2.5 w-2.5 rounded bg-indigo-500"></span>
+                    <h2 id="selected-course-title" class="text-sm font-bold text-slate-300">请选择一个科目</h2>
+                    <span id="selected-course-id-badge" class="hidden text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-500 border border-slate-700 font-mono"></span>
+                </div>
+                <div id="lesson-actions" class="hidden">
+                    <button onclick="openLessonModal(true)"
+                        class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-indigo-600/10">
+                        <i class="ph ph-plus-circle-bold"></i>
+                        <span>在科目下新增课时章节</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Lessons workspace -->
+            <div id="lessons-list-container" class="flex-grow overflow-y-auto p-6 custom-scrollbar">
+                <!-- Empty State -->
+                <div id="lessons-empty-state" class="h-full flex flex-col items-center justify-center text-slate-500 text-xs">
+                    <i class="ph ph-folders text-4xl mb-3 text-slate-700"></i>
+                    <p class="font-medium text-slate-400">尚未选择任何科目</p>
+                    <p class="text-[10px] text-slate-600 mt-1">请在左侧科目列表中点击选择一个科目来查看和维护它的课时章节</p>
+                </div>
+
+                <!-- Lessons Grid -->
+                <div id="lessons-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 hidden"></div>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODALS: Add/Edit Forms -->
+    <!-- ========================================== -->
+
+    <!-- 1. Course Add/Edit Modal -->
+    <div id="course-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="glass-panel w-[400px] rounded-2xl border border-slate-700/60 shadow-2xl p-6 flex flex-col gap-4 text-slate-100">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <i class="ph ph-notebook text-indigo-400 text-lg"></i>
+                    <h3 id="course-modal-title" class="text-sm font-bold">新增课程科目</h3>
+                </div>
+                <button onclick="closeCourseModal()" class="text-slate-500 hover:text-slate-300 transition text-lg">
+                    <i class="ph ph-x"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleCourseSubmit(event)" class="space-y-4">
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">科目唯一 ID (物理主键)</label>
+                    <input type="text" id="course-id-input" placeholder="例如: course_002" required
+                        class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition">
+                    <span class="text-[9px] text-slate-500 block">创建后不可修改，建议采用 `course_` 开头的流水号。</span>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">科目名称</label>
+                    <input type="text" id="course-name-input" placeholder="例如: 基础泰语3" required
+                        class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">科目说明/描述</label>
+                    <textarea id="course-desc-input" rows="3" placeholder="简要描述这门学科的教学方向与大纲..."
+                        class="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition resize-none"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 border-t border-slate-800 pt-4">
+                    <button type="button" onclick="closeCourseModal()" class="px-4 py-2 border border-slate-800 text-slate-400 hover:text-white rounded-lg text-xs transition">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition">保存科目</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. Lesson Add/Edit Modal -->
+    <div id="lesson-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="glass-panel w-[450px] rounded-2xl border border-slate-700/60 shadow-2xl p-6 flex flex-col gap-4 text-slate-100">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <i class="ph ph-folder text-indigo-400 text-lg"></i>
+                    <h3 id="lesson-modal-title" class="text-sm font-bold">新增课时章节</h3>
+                </div>
+                <button onclick="closeLessonModal()" class="text-slate-500 hover:text-slate-300 transition text-lg">
+                    <i class="ph ph-x"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleLessonSubmit(event)" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">课时 ID (逻辑主键)</label>
+                        <input type="text" id="lesson-id-input" placeholder="例如: lesson_011" required
+                            class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">课时排序权重 (Sort Order)</label>
+                        <input type="number" id="lesson-sort-input" required min="1"
+                            class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">课时章节标题</label>
+                    <input type="text" id="lesson-title-input" placeholder="例如: 第11课：泰语基础日常会话" required
+                        class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition">
+                </div>
+
+                <div class="border-t border-slate-850 pt-3 space-y-3">
+                    <div class="text-[10px] font-bold text-indigo-400">词汇与语法点关联绑定 (非必填)</div>
+                    
+                    <div class="space-y-1.5">
+                        <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">关联单词 ID 列表 (半角逗号分隔)：</label>
+                        <input type="text" id="lesson-vocabs-input" placeholder="例如: vp_008, vp_009"
+                            class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-700 focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">关联语法 ID 列表 (半角逗号分隔)：</label>
+                        <input type="text" id="lesson-grammars-input" placeholder="例如: gn_001, gn_002"
+                            class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-700 focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 border-t border-slate-800 pt-4">
+                    <button type="button" onclick="closeLessonModal()" class="px-4 py-2 border border-slate-800 text-slate-400 hover:text-white rounded-lg text-xs transition">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition">保存课时</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT STATE & LOGIC -->
+    <!-- ========================================== -->
+    <script>
+        // Global state variables
+        const state = {
+            courses: [],
+            lessons: [],
+            selectedCourse: null,
+            isEditingCourse: false,
+            isEditingLesson: false
+        };
+
+        // DOM caching
+        const coursesListContainer = document.getElementById('courses-list-container');
+        const coursesTotalCount = document.getElementById('courses-total-count');
+        const courseSearch = document.getElementById('course-search');
+        
+        const selectedCourseTitle = document.getElementById('selected-course-title');
+        const selectedCourseIdBadge = document.getElementById('selected-course-id-badge');
+        const lessonActions = document.getElementById('lesson-actions');
+        const lessonsEmptyState = document.getElementById('lessons-empty-state');
+        const lessonsGrid = document.getElementById('lessons-grid');
+        const lessonsListContainer = document.getElementById('lessons-list-container');
+
+        // Modals DOM
+        const courseModal = document.getElementById('course-modal');
+        const courseModalTitle = document.getElementById('course-modal-title');
+        const courseIdInput = document.getElementById('course-id-input');
+        const courseNameInput = document.getElementById('course-name-input');
+        const courseDescInput = document.getElementById('course-desc-input');
+
+        const lessonModal = document.getElementById('lesson-modal');
+        const lessonModalTitle = document.getElementById('lesson-modal-title');
+        const lessonIdInput = document.getElementById('lesson-id-input');
+        const lessonSortInput = document.getElementById('lesson-sort-input');
+        const lessonTitleInput = document.getElementById('lesson-title-input');
+        const lessonVocabsInput = document.getElementById('lesson-vocabs-input');
+        const lessonGrammarsInput = document.getElementById('lesson-grammars-input');
+
+        // --- Initialization ---
+        window.addEventListener('DOMContentLoaded', async () => {
+            await fetchCourses();
+        });
+
+        // ==========================================
+        // COURSES CRUD OPERATIONS
+        // ==========================================
+        async function fetchCourses() {
+            try {
+                const res = await fetch('/api/courses');
+                if (!res.ok) throw new Error("获取科目列表失败");
+                state.courses = await res.json();
+                renderCoursesList();
+            } catch (err) {
+                console.error(err);
+                coursesListContainer.innerHTML = `<div class="text-center py-6 text-rose-450 text-xs">加载科目出错: ${err.message}</div>`;
+            }
+        }
+
+        function renderCoursesList(filterQuery = '') {
+            coursesListContainer.innerHTML = '';
+            const query = filterQuery.toLowerCase().trim();
+            const filtered = state.courses.filter(c => c.name.toLowerCase().includes(query));
+
+            coursesTotalCount.textContent = state.courses.length;
+
+            if (filtered.length === 0) {
+                coursesListContainer.innerHTML = `
+                    <div class="text-center py-12 text-slate-500 text-xs">
+                        <i class="ph ph-folder-open text-xl mb-1.5 block"></i>
+                        <span>暂无科目数据</span>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(c => {
+                const isSelected = state.selectedCourse && state.selectedCourse.id === c.id;
+                const card = document.createElement('div');
+                card.className = `glass-card p-3 rounded-xl cursor-pointer border relative flex flex-col gap-1 transition ${
+                    isSelected ? 'active' : 'border-slate-800'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start gap-2">
+                        <span class="font-bold text-xs text-slate-200 line-clamp-1 truncate max-w-[170px]" title="${c.name}">${c.name}</span>
+                        <div class="flex items-center gap-1.5 select-none opacity-0 hover:opacity-100 group-hover:opacity-100 transition duration-150">
+                            <!-- Edit course -->
+                            <button onclick="editCourse(event, '${c.id}')" class="text-sky-400 hover:text-sky-300 text-xs" title="编辑科目">
+                                <i class="ph ph-pencil-simple"></i>
+                            </button>
+                            <!-- Delete course -->
+                            <button onclick="deleteCourse(event, '${c.id}')" class="text-rose-500 hover:text-rose-400 text-xs" title="删除科目">
+                                <i class="ph ph-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-slate-500 leading-normal line-clamp-2 mt-0.5" title="${c.description || '无描述'}">
+                        ${c.description || '暂无该科目说明描述。'}
+                    </p>
+                    <div class="flex justify-between items-center text-[9px] text-slate-650 font-mono mt-1 pt-1 border-t border-slate-900/30">
+                        <span>ID: ${c.id}</span>
+                        <span>${c.created_at ? c.created_at.split(' ')[0] : ''}</span>
+                    </div>
+                `;
+
+                // Hover visibility workaround (toggle buttons display)
+                card.addEventListener('mouseenter', () => {
+                    card.querySelector('.flex.items-center.gap-1.5').classList.remove('opacity-0');
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.querySelector('.flex.items-center.gap-1.5').classList.add('opacity-0');
+                });
+
+                card.addEventListener('click', () => selectCourse(c.id));
+                coursesListContainer.appendChild(card);
+            });
+        }
+
+        function filterCourses() {
+            renderCoursesList(courseSearch.value);
+        }
+
+        function selectCourse(id) {
+            const course = state.courses.find(c => c.id === id);
+            if (!course) return;
+
+            state.selectedCourse = course;
+            
+            // Highlight list selection
+            renderCoursesList(courseSearch.value);
+
+            // Bind title
+            selectedCourseTitle.textContent = course.name;
+            selectedCourseIdBadge.textContent = course.id;
+            selectedCourseIdBadge.classList.remove('hidden');
+            
+            // Show action triggers
+            lessonActions.classList.remove('hidden');
+            lessonsEmptyState.classList.add('hidden');
+            lessonsGrid.classList.remove('hidden');
+
+            // Load lessons
+            fetchLessons(course.id);
+        }
+
+        // --- Course Modal Form Handlers ---
+        function openCourseModal(isNew = true, id = '') {
+            state.isEditingCourse = !isNew;
+            
+            if (isNew) {
+                courseModalTitle.textContent = "创建新课程科目";
+                courseIdInput.value = "";
+                courseIdInput.disabled = false;
+                courseNameInput.value = "";
+                courseDescInput.value = "";
+            } else {
+                const c = state.courses.find(item => item.id === id);
+                if (!c) return;
+                courseModalTitle.textContent = "编辑课程科目信息";
+                courseIdInput.value = c.id;
+                courseIdInput.disabled = true; // Primary keys cannot be updated
+                courseNameInput.value = c.name;
+                courseDescInput.value = c.description || "";
+            }
+            
+            courseModal.classList.remove('hidden');
+        }
+
+        function closeCourseModal() {
+            courseModal.classList.add('hidden');
+        }
+
+        async function handleCourseSubmit(e) {
+            e.preventDefault();
+
+            const id = courseIdInput.value.trim();
+            const name = courseNameInput.value.trim();
+            const description = courseDescInput.value.trim();
+
+            const payload = { id, name, description };
+            const url = state.isEditingCourse ? `/api/courses/${id}` : `/api/courses`;
+            const method = state.isEditingCourse ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || "操作失败");
+                }
+
+                closeCourseModal();
+                await fetchCourses();
+                
+                if (!state.isEditingCourse) {
+                    // Automatically focus/select new course
+                    selectCourse(id);
+                } else if (state.selectedCourse && state.selectedCourse.id === id) {
+                    // Update active title if we edited the active course
+                    selectedCourseTitle.textContent = name;
+                }
+                
+                alert("✓ 科目保存成功！");
+            } catch (err) {
+                console.error(err);
+                alert("保存科目发生错误: " + err.message);
+            }
+        }
+
+        function editCourse(e, id) {
+            e.stopPropagation();
+            openCourseModal(false, id);
+        }
+
+        async function deleteCourse(e, id) {
+            e.stopPropagation();
+            const c = state.courses.find(item => item.id === id);
+            if (!c) return;
+
+            const confirmMsg = `【危险警告】您确定要彻底删除科目《${c.name}》吗？\n此操作将级联删除该科目下的所有课时章节，且不可撤销恢复！`;
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                const res = await fetch(`/api/courses/${id}`, { method: 'DELETE' });
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || "删除失败");
+                }
+
+                alert(`✓ 科目《${c.name}》及其下所有章节课时已成功删除。`);
+                
+                // Reset active focus if we deleted the selected course
+                if (state.selectedCourse && state.selectedCourse.id === id) {
+                    state.selectedCourse = null;
+                    selectedCourseTitle.textContent = "请选择一个科目";
+                    selectedCourseIdBadge.classList.add('hidden');
+                    lessonActions.classList.add('hidden');
+                    lessonsEmptyState.classList.remove('hidden');
+                    lessonsGrid.classList.add('hidden');
+                }
+
+                await fetchCourses();
+            } catch (err) {
+                console.error(err);
+                alert("删除科目失败: " + err.message);
+            }
+        }
+
+        // ==========================================
+        // LESSONS CRUD OPERATIONS
+        // ==========================================
+        async function fetchLessons(courseId) {
+            try {
+                lessonsGrid.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-slate-500 text-xs">
+                        <i class="ph ph-spinner animate-spin text-lg mb-2"></i>
+                        <p>加载课时列表中...</p>
+                    </div>
+                `;
+                
+                const res = await fetch(`/api/lessons?courseId=${courseId}`);
+                if (!res.ok) throw new Error("获取课时数据失败");
+                state.lessons = await res.json();
+                renderLessonsGrid();
+            } catch (err) {
+                console.error(err);
+                lessonsGrid.innerHTML = `<div class="col-span-full text-center py-6 text-rose-400 text-xs">加载课时列表失败: ${err.message}</div>`;
+            }
+        }
+
+        function renderLessonsGrid() {
+            lessonsGrid.innerHTML = '';
+            
+            if (state.lessons.length === 0) {
+                lessonsGrid.innerHTML = `
+                    <div class="col-span-full text-center py-16 border border-dashed border-slate-800 rounded-2xl bg-slate-900/10 text-slate-500 text-xs">
+                        <i class="ph ph-folder text-2xl mb-1.5 block"></i>
+                        <span>该科目下尚无课时章节数据</span>
+                        <p class="text-[10px] text-slate-600 mt-1">请点击右上角新增课时，开始完善教学大纲。</p>
+                    </div>
+                `;
+                return;
+            }
+
+            state.lessons.forEach(l => {
+                const card = document.createElement('div');
+                card.className = "glass-panel p-4 rounded-2xl border border-slate-800 relative flex flex-col justify-between gap-3 bg-slate-900/10 hover:border-slate-700 transition duration-150";
+                
+                const vocabsCount = (l.content && l.content.vocabularyIds) ? l.content.vocabularyIds.length : 0;
+                const grammarsCount = (l.content && l.content.grammarNoteIds) ? l.content.grammarNoteIds.length : 0;
+
+                card.innerHTML = `
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between items-start gap-2">
+                            <span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-400 font-mono font-semibold border border-indigo-500/25">排序权重: ${l.sort_order}</span>
+                            <span class="text-[9px] font-mono text-slate-550">${l.id}</span>
+                        </div>
+                        <h4 class="font-bold text-xs text-slate-200 leading-snug line-clamp-2 pt-1" title="${l.title}">${l.title}</h4>
+                    </div>
+
+                    <div class="flex items-center gap-3 py-1 bg-slate-950/20 px-2 rounded-lg text-[9px] text-slate-450 border border-slate-800/60 font-semibold select-none">
+                        <div class="flex items-center gap-1" title="随堂词汇量">
+                            <i class="ph ph-textbox text-xs text-emerald-450"></i>
+                            <span>词汇: <strong class="text-emerald-400 font-bold">${vocabsCount}</strong> 个</span>
+                        </div>
+                        <div class="flex items-center gap-1" title="随堂语法知识点">
+                            <i class="ph ph-code text-xs text-sky-400"></i>
+                            <span>语法: <strong class="text-sky-400 font-bold">${grammarsCount}</strong> 个</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center border-t border-slate-850 pt-2 text-[10px] text-slate-500">
+                        <span>${l.updated_at ? l.updated_at.split(' ')[0] : ''}</span>
+                        <div class="flex items-center gap-2 select-none">
+                            <button onclick="editLesson('${l.id}')" class="px-2.5 py-1 text-[10px] bg-slate-850 hover:bg-slate-800 text-sky-400 rounded-md border border-slate-800 flex items-center gap-1 transition">
+                                <i class="ph ph-pencil-simple"></i><span>编辑</span>
+                            </button>
+                            <button onclick="deleteLesson('${l.id}')" class="px-2.5 py-1 text-[10px] bg-slate-850 hover:bg-slate-800 text-rose-450 rounded-md border border-slate-800 flex items-center gap-1 transition">
+                                <i class="ph ph-trash"></i><span>删除</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                lessonsGrid.appendChild(card);
+            });
+        }
+
+        // --- Lesson Modal Form Handlers ---
+        function openLessonModal(isNew = true, id = '') {
+            if (!state.selectedCourse) return;
+            state.isEditingLesson = !isNew;
+
+            if (isNew) {
+                lessonModalTitle.textContent = "创建新章节课时";
+                
+                // Auto generate sequential sort_order and unique ID (UUID-like)
+                const nextSort = state.lessons.length + 1;
+                const uniqueId = 'les_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+                
+                lessonIdInput.value = uniqueId;
+                lessonIdInput.disabled = false;
+                lessonSortInput.value = nextSort;
+                lessonTitleInput.value = `第${nextSort}课：`;
+                lessonVocabsInput.value = "";
+                lessonGrammarsInput.value = "";
+            } else {
+                const l = state.lessons.find(item => item.id === id);
+                if (!l) return;
+
+                lessonModalTitle.textContent = "编辑课时章节信息";
+                lessonIdInput.value = l.id;
+                lessonIdInput.disabled = true; // Primary keys cannot be updated
+                lessonSortInput.value = l.sort_order;
+                lessonTitleInput.value = l.title;
+                
+                // Populate commas lists
+                const vocabs = (l.content && l.content.vocabularyIds) ? l.content.vocabularyIds.join(', ') : '';
+                const grammars = (l.content && l.content.grammarNoteIds) ? l.content.grammarNoteIds.join(', ') : '';
+                
+                lessonVocabsInput.value = vocabs;
+                lessonGrammarsInput.value = grammars;
+            }
+
+            lessonModal.classList.remove('hidden');
+        }
+
+        function closeLessonModal() {
+            lessonModal.classList.add('hidden');
+        }
+
+        async function handleLessonSubmit(e) {
+            e.preventDefault();
+
+            if (!state.selectedCourse) return;
+            const courseId = state.selectedCourse.id;
+
+            const id = lessonIdInput.value.trim();
+            const sortOrder = parseInt(lessonSortInput.value);
+            const title = lessonTitleInput.value.trim();
+            
+            // Build content json arrays from comma lists
+            const vocabularyIds = lessonVocabsInput.value.split(',')
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+                
+            const grammarNoteIds = lessonGrammarsInput.value.split(',')
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+
+            const payload = {
+                id,
+                courseId,
+                sortOrder,
+                title,
+                content: { vocabularyIds, grammarNoteIds }
+            };
+
+            const url = state.isEditingLesson ? `/api/lessons/${id}` : `/api/lessons`;
+            const method = state.isEditingLesson ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || "保存失败");
+                }
+
+                closeLessonModal();
+                await fetchLessons(courseId);
+                alert("✓ 课时章节保存成功！");
+            } catch (err) {
+                console.error(err);
+                alert("保存课时章节发生错误: " + err.message);
+            }
+        }
+
+        function editLesson(id) {
+            openLessonModal(false, id);
+        }
+
+        async function deleteLesson(id) {
+            const l = state.lessons.find(item => item.id === id);
+            if (!l) return;
+
+            const confirmMsg = `您确定要删除章节《${l.title}》吗？此操作将使关联该章节的所有单词和讲义变为无关联状态，且无法撤销！`;
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                const res = await fetch(`/api/lessons/${id}`, { method: 'DELETE' });
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || "删除失败");
+                }
+
+                alert(`✓ 课时《${l.title}》已成功删除。`);
+                await fetchLessons(state.selectedCourse.id);
+            } catch (err) {
+                console.error(err);
+                alert("删除章节失败: " + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

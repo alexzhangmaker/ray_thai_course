@@ -1,0 +1,2418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordset Flashcard Review - vCourse.ThaiNotes</title>
+    <!-- Fonts and Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Serif+Thai:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;750&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Noto Sans SC', 'sans-serif'],
+                        thai: ['Noto Serif Thai', 'Outfit', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --primary: #8b5cf6; /* Violet 500 */
+            --primary-light: #f5f3ff;
+            --primary-glow: rgba(139, 92, 246, 0.1);
+            --text-main: #1c1917; /* Warm dark slate */
+            --text-sub: #78716c; /* Stone grey */
+            --correct: #10b981;
+            --wrong: #ef4444;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            background: #fafaf9; /* 复古石泥灰 */
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .glass-panel {
+            background: #ffffff;
+            border: 1px solid #e7e5e4;
+            border-radius: 28px;
+            padding: 32px;
+            box-shadow: 0 10px 30px rgba(120, 113, 108, 0.05), 0 1px 3px rgba(120, 113, 108, 0.02);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .option-card {
+            background: #ffffff;
+            border: 1px solid #e7e5e4;
+            border-radius: 18px;
+            padding: 16px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-main);
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .option-card:hover {
+            background: #fdfdfd;
+            border-color: #d6d3d1;
+            transform: translateX(4px);
+        }
+
+        .option-card.correct {
+            background: rgba(16, 185, 129, 0.08) !important;
+            border-color: var(--correct) !important;
+            color: var(--correct) !important;
+        }
+
+        .option-card.wrong {
+            background: rgba(239, 68, 68, 0.08) !important;
+            border-color: var(--wrong) !important;
+            color: var(--wrong) !important;
+            animation: shake 0.4s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        .learning-visual-card {
+            background: #fafaf9;
+            border: 1px solid #e7e5e4;
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 16px;
+        }
+
+        .example-item {
+            padding: 12px;
+            border-radius: 12px;
+            background: #ffffff;
+            border: 1px solid #f5f5f4;
+            margin-top: 8px;
+        }
+
+        .example-thai {
+            font-family: 'Noto Serif Thai', serif;
+            font-size: 28px;
+            font-weight: 600;
+            color: #7c2d12;
+            line-height: 1.6;
+        }
+
+        /* 选中单词弹出微型工具栏样式 */
+        #selectionToolbar {
+            position: absolute;
+            z-index: 50;
+            background-color: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(51, 65, 85, 0.8);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+        }
+
+        .writing-mode-vertical {
+            writing-mode: vertical-rl;
+            text-combine-upright: all;
+        }
+
+        .font-thai-clickable {
+            cursor: pointer;
+            transition: color 0.15s ease-in-out;
+        }
+        .font-thai-clickable:hover {
+            color: var(--primary);
+        }
+        .font-thai-clickable:hover .ph-speaker-high {
+            color: var(--primary);
+        }
+
+        .example-chinese {
+            font-size: 13px;
+            color: #78716c;
+            margin-top: 4px;
+        }
+
+        .pulse-icon {
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e7e5e4;
+            border-radius: 2px;
+        }
+
+        .shake-wrong {
+            background: rgba(239, 68, 68, 0.08) !important;
+            border-color: var(--wrong) !important;
+            animation: shake 0.4s;
+        }
+        
+        @keyframes spin-slow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .animate-spin-slow {
+            animation: spin-slow 8s linear infinite;
+        }
+    </style>
+</head>
+<body class="h-screen overflow-hidden flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between shrink-0 font-sans z-10">
+        <div class="flex items-center gap-3">
+            <button id="toggleSidebarBtn" class="text-stone-500 hover:text-stone-800 transition p-1.5 rounded-lg hover:bg-stone-100 flex items-center justify-center" title="展开/收起导航栏">
+                <i class="ph ph-list text-xl"></i>
+            </button>
+            <h1 class="text-lg font-bold flex items-center gap-2">
+                <i class="ph ph-cards text-violet-500"></i>
+                <span>泰语词汇集自测</span>
+            </h1>
+        </div>
+        <div class="flex items-center gap-2">
+            <button id="openSettingsBtn" class="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-600 font-semibold text-xs rounded-xl border border-stone-200 transition active:scale-95 flex items-center gap-1.5" title="偏好设置">
+                <i class="ph ph-gear text-sm"></i>
+                <span>偏好设置</span>
+            </button>
+            <a href="/Pages/consoleWordset.html" class="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-600 font-semibold text-xs rounded-xl border border-stone-200 transition active:scale-95 flex items-center gap-1">
+                <i class="ph ph-arrow-square-out"></i>
+                <span>词汇集管理</span>
+            </a>
+            <a href="/Pages/toolQueryWords.html" class="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-600 font-semibold text-xs rounded-xl border border-stone-200 transition active:scale-95 flex items-center gap-1" title="提取生词">
+                <i class="ph ph-file-arrow-up"></i>
+                <span>查词提取工具</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- App Body workspace -->
+    <div class="flex-grow flex w-full min-h-0 overflow-hidden relative">
+        <!-- Left Sidebar: Wordset list (hidden by default) -->
+        <aside id="wordsetSidebar" class="w-0 overflow-hidden border-r-0 bg-white flex flex-col flex-shrink-0 transition-all duration-300 h-full">
+            <div class="p-4 border-b border-stone-200 flex items-center justify-between shrink-0 font-sans">
+                <span class="font-bold text-stone-700">词汇集列表</span>
+            </div>
+            
+            <!-- Search & Tag Filter in Sidebar -->
+            <div class="p-3 border-b border-stone-200 space-y-3 font-sans shrink-0">
+                <div class="relative">
+                    <input type="text" id="search-input" oninput="filterWordsets()" placeholder="搜索标题或标签..." 
+                        class="w-full bg-stone-50 border border-stone-250 rounded-xl pl-9 pr-3 py-1.5 text-xs text-stone-700 placeholder-stone-400 focus:outline-none focus:border-violet-500 transition duration-200">
+                    <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-stone-400 text-sm"></i>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <label class="text-[10px] font-bold text-stone-450 uppercase tracking-wide shrink-0">分类:</label>
+                    <select id="filter-tag" onchange="filterWordsets()" class="w-full bg-stone-50 border border-stone-250 rounded-xl px-2.5 py-1 text-xs text-stone-600 focus:outline-none focus:border-violet-500 transition duration-200">
+                        <option value="">全部标签</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Scrollable list -->
+            <div id="wordsets-list" class="flex-grow overflow-y-auto custom-scrollbar p-3 space-y-2">
+                <div class="flex flex-col items-center justify-center h-40 text-stone-400">
+                    <i class="ph ph-spinner animate-spin text-xl mb-1.5"></i>
+                    <span class="text-xs">加载列表...</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Middle Content Panel: Reviews Board -->
+        <div class="flex-1 flex flex-col min-w-0 overflow-y-auto h-full items-center p-4 md:p-6 bg-stone-50/50">
+            <div id="app" class="w-full max-w-full py-2 md:py-4 my-auto">
+                <!-- View 0: Loading State -->
+                <div id="viewLoading" class="glass-panel max-w-lg mx-auto w-full text-center py-12 flex flex-col items-center justify-center gap-4">
+                    <svg class="animate-spin h-8 w-8 text-violet-500" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="text-sm font-semibold text-slate-500 font-sans">正在加载词汇集数据...</p>
+                </div>
+
+                <!-- View 1: Start Screen -->
+                <div id="viewStart" class="glass-panel max-w-lg mx-auto w-full text-center flex flex-col items-center gap-6 hidden">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-violet-500/10 rounded-full filter blur-xl scale-125 z-0"></div>
+                        <div class="h-16 w-16 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-3xl shadow-md z-10 relative text-violet-500">
+                            <i class="ph ph-cards pulse-icon"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2 font-sans">
+                        <h2 class="text-2xl font-bold tracking-tight text-slate-900" id="list-date">词汇集自测</h2>
+                        <div class="flex items-center justify-center gap-2 mt-2">
+                            <span class="text-xs px-2.5 py-0.5 rounded-full bg-violet-500/10 text-violet-600 font-semibold border border-violet-500/20">
+                                待掌握: <span id="start-word-count">0</span> 个词
+                            </span>
+                        </div>
+                        <p class="text-sm text-stone-500 max-w-sm mx-auto leading-relaxed pt-2">
+                            系统将开启记忆巩固自测。复习采用**完全覆盖**算法，只有回答正确的词汇才会被消灭，回答错误的词汇将重新加入循环，直到全部攻克！
+                        </p>
+                    </div>
+
+                    <!-- Resume container (hidden by default) -->
+                    <div id="resume-container" class="w-full border border-violet-100 bg-violet-50/30 rounded-2xl p-4 space-y-3 hidden">
+                        <div class="flex items-center gap-2 text-violet-700 text-xs font-bold font-sans justify-center">
+                            <i class="ph-bold ph-clock"></i>
+                            <span id="resume-progress-info">上次进度：已攻克 0/0 个词</span>
+                        </div>
+                        <button onclick="resumeSession()" class="w-full py-3 bg-gradient-to-r from-violet-500 to-fuchsia-600 text-white rounded-2xl hover:opacity-95 shadow-lg shadow-violet-500/10 font-bold text-sm transition duration-200 flex items-center justify-center gap-2">
+                            <i class="ph-bold ph-play"></i>
+                            <span>继续上次测试</span>
+                        </button>
+                        <button onclick="startSession()" class="w-full py-2.5 bg-white text-stone-600 hover:bg-stone-50 border border-stone-200 rounded-2xl font-semibold text-xs transition duration-200 flex items-center justify-center gap-2">
+                            <i class="ph ph-arrows-counter-clockwise"></i>
+                            <span>重新开始测试</span>
+                        </button>
+                    </div>
+
+                    <button id="start-session-btn" onclick="startSession()" class="w-full mt-4 py-3 bg-gradient-to-r from-violet-500 to-fuchsia-600 text-white rounded-2xl hover:opacity-95 shadow-lg shadow-violet-500/10 font-bold text-sm transition duration-200 flex items-center justify-center gap-2">
+                        <i class="ph ph-play-bold"></i>
+                        <span>开始测试</span>
+                    </button>
+                </div>
+
+                <!-- View 2: Game Board -->
+                <div id="viewGame" class="flex flex-col gap-4 hidden w-full">
+                    <!-- Progress stats & Bar -->
+                    <div class="glass-panel !py-4 !px-6 rounded-2xl flex flex-col gap-2 shadow-xs">
+                        <div class="flex justify-between items-center text-xs font-bold font-sans text-stone-500">
+                            <span id="progress-text">已攻克: 0 / 0</span>
+                            <span id="queue-text" class="text-violet-500">待解决: 0</span>
+                        </div>
+                        <div class="w-full h-2.5 bg-stone-100 rounded-full overflow-hidden shrink-0 border border-stone-200/50">
+                            <div id="progress-bar-fill" class="h-full bg-gradient-to-r from-violet-500 to-fuchsia-600 transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Two Side-by-Side Cards: Left Card (Word & Step 1/2) & Right Card (Step 3: 巩固例句与跟读) -->
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
+                        <!-- Left Card: Current Word Display, Step 1 & Step 2 -->
+                        <div class="glass-panel md:col-span-5 flex flex-col justify-between h-full gap-4">
+                            <div class="space-y-4">
+                                <!-- Card word display -->
+                                <div class="py-8 px-4 bg-stone-50/50 border border-stone-200/60 rounded-2xl flex flex-col items-center justify-center gap-2 relative select-none">
+                                    <span id="card-word" class="font-thai text-4xl font-bold text-slate-800">อาหาร</span>
+                                    <span id="card-ipa" class="font-mono text-sm text-stone-500">/aa-haan/</span>
+                                    <button onclick="playWordAudioForStep1()" class="absolute bottom-3 right-3 text-stone-400 hover:text-violet-500 p-1.5 transition rounded-full hover:bg-white border border-transparent hover:border-slate-200" title="播放发音">
+                                        <i class="ph-bold ph-speaker-high text-base"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Step 1: Spelling & Follow-along -->
+                                <div id="step1-container" class="space-y-4">
+                                    <div class="learning-visual-card !mt-0">
+                                        <div class="flex justify-between items-center mb-2.5">
+                                            <span class="text-[11px] font-bold text-stone-400 uppercase tracking-wider">步骤 1: 拼读与跟读</span>
+                                        </div>
+                                        <p class="text-xs text-stone-500 mb-4 leading-relaxed">
+                                            请根据泰语单词拼写与 IPA 标注尝试自己拼读。完成后点击下方按钮播放音频进行跟读。
+                                        </p>
+                                        
+                                        <button id="step1-play-btn" onclick="playWordAudioForStep1()" class="w-full py-3 bg-violet-50 text-violet-750 hover:bg-violet-100 border border-violet-200/50 rounded-2xl font-bold text-sm transition flex items-center justify-center gap-2">
+                                            <i class="ph-bold ph-speaker-high text-base"></i>
+                                            <span>播放音频并跟读</span>
+                                        </button>
+
+                                        <div id="step1-meaning-container" class="hidden mt-4 pt-4 border-t border-stone-200/60 space-y-1">
+                                            <span class="text-xs text-stone-400 block font-medium">中文释义</span>
+                                            <span id="step1-meaning-text" class="text-base font-bold text-slate-800 font-sans"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Step 1 Next Button -->
+                                    <button id="step1-next-btn" onclick="goToStep2()" class="w-full py-3 bg-stone-300 text-stone-500 rounded-2xl font-bold text-sm transition flex items-center justify-center gap-1.5 cursor-not-allowed" disabled>
+                                        <span>下一步：选择中文释义</span>
+                                        <i class="ph ph-arrow-right-bold"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Step 2: Options & Question View -->
+                                <div id="quiz-block" class="space-y-3 hidden">
+                                    <div class="text-[11px] font-bold text-stone-400 uppercase tracking-wider flex items-center gap-1">
+                                        <i class="ph ph-question-bold text-violet-500"></i>
+                                        <span>步骤 2: 选择正确的中文释义</span>
+                                    </div>
+                                    <div id="options-container" class="grid grid-cols-1 gap-2.5">
+                                        <!-- Dynamic option cards -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Card: Step 3 Card (步骤 3: 巩固例句与跟读) -->
+                        <div class="glass-panel md:col-span-7 flex flex-col justify-between h-full relative">
+                            <!-- Placeholder State: Displayed during Step 1 & Step 2 until answer is selected -->
+                            <div id="step3-placeholder" class="flex-1 flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-stone-200/80 rounded-2xl bg-stone-50/40 min-h-[360px]">
+                                <div class="h-14 w-14 rounded-2xl bg-white border border-stone-200 shadow-xs flex items-center justify-center text-2xl text-stone-300 mb-3.5">
+                                    <i class="ph ph-book-open"></i>
+                                </div>
+                                <h4 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-1.5">步骤 3: 巩固例句与跟读</h4>
+                                <p class="text-xs text-stone-400 max-w-[220px] leading-relaxed">
+                                    请在左侧完成拼读并选择正确的中文释义，作答后将在此展示巩固例句与跟读任务
+                                </p>
+                            </div>
+
+                            <!-- Feedback Panel (Step 3 & Step 4 contents): Shown when user completes Step 2 selection -->
+                            <div id="feedback-panel" class="hidden flex-1 flex flex-col justify-between space-y-4">
+                                <!-- Step 3: Vocabulary Knowledge Card & Audio Read-along -->
+                                <div id="step2-container" class="space-y-4 flex-1 flex flex-col justify-between">
+                                    <div class="learning-visual-card !mt-0">
+                                        <div class="flex justify-between items-center mb-2.5">
+                                            <span class="text-[11px] font-bold text-stone-400 uppercase tracking-wider">步骤 3: 巩固例句与跟读</span>
+                                            <span id="answer-status-badge" class="px-2 py-0.5 rounded text-[10px] font-bold">正确</span>
+                                        </div>
+
+                                        <!-- Core Meaning -->
+                                        <div>
+                                            <span class="text-xs text-stone-400 block font-medium">中文释义</span>
+                                            <span id="feedback-meaning" class="text-base font-bold text-slate-800 font-sans">食物</span>
+                                        </div>
+
+                                        <!-- Examples with Play Audio Checklist -->
+                                        <div class="border-t border-stone-200/60 mt-3 pt-3" id="step2-examples-section">
+                                            <div class="flex justify-between items-center mb-2">
+                                                <span class="text-xs text-stone-400 block font-medium"><i class="ph ph-book-open"></i> 巩固例句</span>
+                                                <span id="read-along-prompt" class="text-[11px] text-amber-600 font-semibold animate-pulse">
+                                                    📢 请播放所有例句并跟读
+                                                </span>
+                                            </div>
+                                            <div id="feedback-examples" class="space-y-2">
+                                                <!-- Dynamic Examples -->
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Step 3 Next Button -->
+                                    <button id="step2-next-btn" class="w-full py-3 bg-violet-600 text-white hover:bg-violet-750 disabled:bg-stone-300 disabled:text-stone-500 disabled:cursor-not-allowed rounded-2xl font-bold text-sm transition flex items-center justify-center gap-1.5 mt-auto" disabled>
+                                        <span>已跟读，下一步翻译</span>
+                                        <i class="ph ph-arrow-right-bold"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Step 4: Translation Practice -->
+                                <div id="step3-container" class="space-y-4 hidden flex-1 flex flex-col justify-between">
+                                    <div class="learning-visual-card !mt-0">
+                                        <div class="flex justify-between items-center mb-2.5">
+                                            <span class="text-[11px] font-bold text-stone-400 uppercase tracking-wider">步骤 4: 例句翻译练习</span>
+                                            <span class="text-[10px] text-violet-600 font-bold bg-violet-50 px-2 py-0.5 rounded border border-violet-100">中文互译</span>
+                                        </div>
+                                        
+                                        <p class="text-xs text-stone-500 mb-3">请阅读泰文例句，并尝试在下方框中输入中文翻译。</p>
+
+                                        <div id="translation-examples-list" class="space-y-4">
+                                            <!-- Dynamic translation inputs -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Next word button -->
+                                    <button id="next-word-btn" class="w-full py-3 bg-slate-900 text-white hover:bg-slate-800 disabled:bg-stone-300 disabled:text-stone-500 disabled:cursor-not-allowed rounded-2xl font-bold text-sm transition flex items-center justify-center gap-1.5 mt-auto" disabled>
+                                        <span id="next-btn-text">攻克并继续</span>
+                                        <i class="ph ph-arrow-right-bold"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- View 2.5: Round Summary Quiz Screen -->
+                <div id="viewRoundQuiz" class="glass-panel flex flex-col gap-4 hidden">
+                    <!-- Progress stats -->
+                    <div class="flex justify-between items-center text-xs font-bold font-sans text-stone-500">
+                        <span id="quiz-round-title">第 1 轮汇总配对自测</span>
+                        <span id="quiz-batch-progress" class="text-violet-500">第 1 / 1 组</span>
+                    </div>
+
+                    <!-- Batch Progress Bar -->
+                    <div class="w-full h-2 bg-stone-100 rounded-full overflow-hidden shrink-0 border border-stone-200/50">
+                        <div id="quiz-batch-bar-fill" class="h-full bg-gradient-to-r from-violet-500 to-fuchsia-600 transition-all duration-300" style="width: 0%"></div>
+                    </div>
+
+                    <!-- Instructions -->
+                    <div class="p-3 bg-violet-50/50 border border-violet-100 rounded-xl text-xs text-violet-755 font-medium font-sans flex items-center gap-2">
+                        <i class="ph-bold ph-info text-sm"></i>
+                        <span>请拖拽上方**泰语单词**到下方对应的**中文释义**槽中，或者依次点击它们进行配对。</span>
+                    </div>
+
+                    <!-- Match Container -->
+                    <div class="flex flex-col gap-5 mt-2">
+                        <!-- Top Area: Thai Words Bank -->
+                        <div class="space-y-2">
+                            <div class="text-[11px] font-bold text-stone-400 uppercase tracking-wider flex items-center gap-1">
+                                <i class="ph ph-translate-bold"></i>
+                                <span>泰语单词银行 (拖拽或点击)</span>
+                            </div>
+                            <div id="quiz-thai-column" class="flex flex-wrap gap-2.5 p-4 bg-stone-50 border border-stone-200 rounded-2xl min-h-[72px] items-center">
+                                <!-- Draggable Thai Cards -->
+                            </div>
+                        </div>
+
+                        <!-- Bottom Area: Chinese Meanings Grid -->
+                        <div class="space-y-2">
+                            <div class="text-[11px] font-bold text-stone-400 uppercase tracking-wider flex items-center gap-1">
+                                <i class="ph ph-list-checks-bold"></i>
+                                <span>中文释义配对槽</span>
+                            </div>
+                            <div id="quiz-chinese-column" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <!-- Dropzone Chinese Cards -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quiz Actions -->
+                    <button id="quiz-next-batch-btn" class="w-full mt-4 py-3 bg-stone-300 text-stone-500 disabled:bg-stone-300 disabled:text-stone-500 rounded-2xl font-bold text-sm transition flex items-center justify-center gap-1.5" disabled>
+                        <span>进入下一组</span>
+                        <i class="ph ph-arrow-right-bold"></i>
+                    </button>
+                </div>
+
+                <!-- Round Complete Modal -->
+                <div id="roundCompleteModal" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+                    <div class="bg-white border border-stone-200 rounded-[28px] p-6 max-w-md w-full mx-4 shadow-2xl transform scale-95 transition-transform duration-300 relative font-sans text-center">
+                        <div class="h-14 w-14 mx-auto rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-3xl mb-4">
+                            <i class="ph-bold ph-arrows-counter-clockwise animate-spin-slow"></i>
+                        </div>
+                        
+                        <h3 class="text-lg font-bold text-stone-800 mb-2" id="round-complete-title">第 1 轮复习已结束</h3>
+                        
+                        <div class="space-y-3 my-5 text-sm text-stone-600">
+                            <div class="flex justify-between p-2.5 bg-stone-50 rounded-xl border border-stone-150">
+                                <span>卡片错误词数:</span>
+                                <span class="font-bold text-rose-500" id="round-complete-fc-errors">0</span>
+                            </div>
+                            <div class="flex justify-between p-2.5 bg-stone-50 rounded-xl border border-stone-150">
+                                <span>配对错误词数:</span>
+                                <span class="font-bold text-rose-500" id="round-complete-quiz-errors">0</span>
+                            </div>
+                            <div class="flex justify-between p-2.5 bg-violet-50 text-violet-700 rounded-xl border border-violet-150 font-bold">
+                                <span>进入下一轮词数:</span>
+                                <span id="round-complete-total-errors">0</span>
+                            </div>
+                            <div id="round1-anki-sync-status" class="hidden flex justify-between items-center p-2.5 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-200 text-xs font-sans">
+                                <span class="flex items-center gap-1.5 font-medium">
+                                    <i class="ph ph-cloud-arrow-up text-emerald-600 text-sm"></i>
+                                    <span>Anki 每日错词库</span>
+                                </span>
+                                <span id="round1-anki-sync-text" class="font-bold text-emerald-700">正在同步错词...</span>
+                            </div>
+                        </div>
+
+                        <button id="start-next-round-btn" class="w-full py-3 bg-violet-600 hover:bg-violet-750 text-white font-bold text-sm rounded-xl transition duration-150 shadow-md shadow-violet-500/10 active:scale-[0.98]">
+                            <span>开始下一轮复习</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- View 3: Complete Screen -->
+                <div id="viewCompleted" class="glass-panel max-w-lg mx-auto w-full text-center flex flex-col items-center gap-6 hidden">
+                    <div class="h-16 w-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-4xl text-emerald-500">
+                        <i class="ph-fill ph-check-circle"></i>
+                    </div>
+
+                    <div class="space-y-1 font-sans">
+                        <h2 class="text-2xl font-bold tracking-tight text-slate-900">消灭任务顺利达成！</h2>
+                        <p class="text-sm text-stone-500 leading-relaxed">
+                            恭喜您！您已经完全复习并攻克了本清单中的所有词汇。
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2.5 w-full font-sans">
+                        <div class="bg-stone-50 border border-stone-200 p-3.5 rounded-2xl">
+                            <span class="block text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-1">总词汇数</span>
+                            <span id="result-total-words" class="text-xl font-black text-slate-800">0</span>
+                        </div>
+                        <div class="bg-stone-50 border border-stone-200 p-3.5 rounded-2xl">
+                            <span class="block text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-1">答题次数</span>
+                            <span id="result-total-attempts" class="text-xl font-black text-violet-500">0</span>
+                        </div>
+                        <div class="bg-stone-50 border border-stone-200 p-3.5 rounded-2xl">
+                            <span class="block text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-1">重温错误率</span>
+                            <span id="result-error-rate" class="text-xl font-black text-rose-500">0%</span>
+                        </div>
+                    </div>
+
+                    <!-- Failed words log -->
+                    <div id="struggled-words-block" class="w-full text-left bg-stone-50/50 border border-stone-200/60 p-4 rounded-2xl hidden font-sans">
+                        <span class="text-xs font-bold text-stone-400 uppercase tracking-wide block mb-2"><i class="ph ph-warning-circle text-rose-500"></i> 本次复习中答错过得词：</span>
+                        <div id="struggled-words-list" class="flex flex-wrap gap-2">
+                            <!-- Badges -->
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 w-full font-sans">
+                        <button onclick="window.location.reload()" class="flex-1 py-3 bg-stone-100 hover:bg-stone-200 border border-stone-300 text-stone-700 font-bold text-sm rounded-xl transition duration-150 flex items-center justify-center gap-1">
+                            <i class="ph ph-arrow-counter-clockwise-bold"></i>
+                            <span>重新开始</span>
+                        </button>
+                        <a href="/Pages/consoleWordset.html" class="flex-1 py-3 bg-violet-600 hover:bg-violet-750 text-white font-bold text-sm rounded-xl text-center transition duration-150 flex items-center justify-center gap-1 shadow-md shadow-violet-500/10">
+                            <i class="ph ph-cards"></i>
+                            <span>返回管理端</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- View 4: Error State -->
+                <div id="viewError" class="glass-panel max-w-lg mx-auto w-full text-center py-12 flex flex-col items-center justify-center gap-4 hidden">
+                    <span class="text-4xl text-rose-400">⚠️</span>
+                    <h3 class="text-base font-bold text-slate-800">错误状态</h3>
+                    <p id="error-message-text" class="text-sm text-stone-500 max-w-sm font-sans">无法读取数据。</p>
+                    <a href="/Pages/consoleWordset.html" class="mt-4 px-5 py-2.5 bg-stone-800 text-white font-semibold text-xs rounded-xl hover:bg-stone-700 transition">
+                        返回词汇集后台
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- 单词查询侧边栏 -->
+        <aside id="querySidebar" class="w-0 overflow-hidden border-l border-transparent bg-white h-full flex flex-col transition-all duration-300 z-30 flex-shrink-0">
+            <!-- 侧边栏标题栏 -->
+            <div class="p-5 border-b border-stone-200 flex justify-between items-center bg-stone-50 flex-shrink-0">
+                <h3 class="text-base font-bold text-stone-850 flex items-center">
+                    <i class="ph ph-book text-violet-500 mr-2 text-lg"></i> 查询生词列表
+                </h3>
+                <button id="closeSidebarBtn" class="text-stone-400 hover:text-stone-600 transition p-1">
+                    <i class="ph ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <!-- 手动查询输入框与 Worker Auth 配置 -->
+            <div class="p-3.5 border-b border-stone-150 bg-white flex-shrink-0 space-y-2">
+                <div class="flex items-center justify-between gap-2 font-sans">
+                    <div class="flex items-center gap-1.5 text-[11px] text-stone-600 font-semibold shrink-0">
+                        <i class="ph ph-key text-violet-600"></i>
+                        <span>Worker AI 认证:</span>
+                    </div>
+                    <button type="button" onclick="clearWorkerAuthToken()" class="text-[10px] text-stone-400 hover:text-stone-700 underline">
+                        清空 Token
+                    </button>
+                </div>
+                <input 
+                    type="password" 
+                    id="workerAuthToken" 
+                    placeholder="若 Worker 启用了鉴权请输入 Auth Token" 
+                    autocomplete="new-password"
+                    class="w-full text-[11px] bg-stone-50 border border-stone-250 rounded-lg px-2.5 py-1 focus:outline-none focus:border-violet-500 font-mono text-stone-700 placeholder-stone-400"
+                />
+                <div class="flex gap-2 pt-1">
+                    <div class="relative flex-grow font-sans">
+                        <input type="text" id="manualQueryInput" placeholder="输入泰语单词查询..." class="w-full text-xs bg-stone-50 border border-stone-250 rounded-xl pl-8 pr-3 py-2 focus:outline-none focus:border-violet-500">
+                        <i class="ph ph-magnifying-glass absolute left-3 top-3 text-stone-400 text-xs"></i>
+                    </div>
+                    <button id="manualQueryBtn" class="bg-violet-600 hover:bg-violet-750 text-white text-xs font-bold px-3 py-2 rounded-xl transition active:scale-95 flex items-center justify-center font-sans shrink-0">
+                        查询
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 侧边栏查词记录滚动区域 -->
+            <div class="flex-grow overflow-y-auto p-4 space-y-4 hidden custom-scrollbar" id="sidebarListContainer"></div>
+            
+            <!-- 空状态提示 -->
+            <div class="flex-grow flex flex-col items-center justify-center p-6 text-stone-400 text-center select-none font-sans" id="sidebarEmptyState">
+                <i class="ph ph-magnifying-glass text-4xl mb-3 block text-stone-300"></i>
+                <p class="text-xs">在卡片中选中单词并点击</p>
+                <p class="text-xs font-semibold text-violet-600 mt-1">“查询单词”</p>
+            </div>
+        </aside>
+    </div>
+
+    <!-- 侧边栏悬浮开关按钮 -->
+    <button id="sidebarToggleBtn" class="fixed right-0 top-1/3 bg-violet-600 text-white py-4 px-2.5 rounded-l-xl shadow-xl hover:bg-violet-750 transition-all duration-300 flex flex-col items-center gap-1.5 border border-r-0 border-violet-400 select-none z-40">
+        <i class="ph ph-caret-left transition-transform duration-300 text-sm" id="sidebarToggleIcon"></i>
+        <span class="text-xs font-bold tracking-widest writing-mode-vertical mt-0.5">生词释义</span>
+    </button>
+
+    <!-- 选中单词弹出微型工具栏 -->
+    <div id="selectionToolbar" class="fixed hidden text-white rounded-full px-4 py-2 shadow-xl border border-slate-700 items-center gap-2 z-50 transition-all duration-150 text-xs font-semibold select-none">
+        <button id="queryBtn" class="flex items-center gap-1.5 hover:text-violet-300 active:scale-95 transition font-sans">
+            <i class="ph ph-magnifying-glass text-[10px]"></i> 查询单词
+        </button>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white border border-stone-200 rounded-[28px] p-6 max-w-md w-full mx-4 shadow-2xl transform scale-95 transition-transform duration-300 relative font-sans">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-4 border-b border-stone-100">
+                <h3 class="text-base font-bold text-stone-800 flex items-center gap-2">
+                    <i class="ph-bold ph-gear text-violet-500"></i>
+                    <span>测试偏好设置</span>
+                </h3>
+                <button id="closeSettingsBtn" class="text-stone-400 hover:text-stone-700 p-1.5 rounded-lg hover:bg-stone-100 transition">
+                    <i class="ph ph-x text-lg"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Content -->
+            <div class="py-6 space-y-4">
+                <!-- Step 3 Toggle -->
+                <div class="flex items-center justify-between p-4 bg-stone-50 border border-stone-200/60 rounded-2xl">
+                    <div class="space-y-1 pr-4">
+                        <span class="text-sm font-bold text-stone-800 block">启用步骤 3: 词汇跟读</span>
+                        <span class="text-xs text-stone-500 block leading-relaxed">在选择释义后，显示巩固例句并需要播放所有例句发音进行跟读。</span>
+                    </div>
+                    <!-- Switch / Toggle -->
+                    <label class="relative inline-flex items-center cursor-pointer select-none shrink-0">
+                        <input type="checkbox" id="toggleStep2" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-stone-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+                    </label>
+                </div>
+
+                <!-- Step 4 Toggle -->
+                <div class="flex items-center justify-between p-4 bg-stone-50 border border-stone-200/60 rounded-2xl">
+                    <div class="space-y-1 pr-4">
+                        <span class="text-sm font-bold text-stone-800 block">启用步骤 4: 翻译练习</span>
+                        <span class="text-xs text-stone-500 block leading-relaxed">在跟读或词汇学习后，需要手动输入例句翻译并对照参考答案。</span>
+                    </div>
+                    <!-- Switch / Toggle -->
+                    <label class="relative inline-flex items-center cursor-pointer select-none shrink-0">
+                        <input type="checkbox" id="toggleStep3" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-stone-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex gap-3">
+                <button id="saveSettingsBtn" class="flex-1 py-3 bg-violet-600 hover:bg-violet-750 text-white font-bold text-sm rounded-xl text-center transition duration-150 shadow-md shadow-violet-500/10 active:scale-[0.98]">
+                    <span>保存并关闭</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Controllers -->
+    <script>
+        let wordsets = [];            // Sidebar wordsets cache
+        let activeWordset = null;     // Selected wordset metadata
+        
+        let originalWords = [];       // Core words loaded
+        let reviewQueue = [];         // Active queue
+        let completedWords = [];      // Cleared words
+        let struggledWordsSet = new Set(); // Struggled words list
+
+        let currentRoundNumber = 1;   // Current review round
+        let roundWords = [];          // Current round's words
+        let flashcardErrors = new Set(); // Flashcard review errors for current round
+        let quizErrors = new Set();      // Quiz matching errors for current round
+        let phase = 'flashcard';      // 'flashcard' or 'quiz'
+        let currentQuizBatchIndex = 0; // Current batch index in quiz
+
+        let totalUniqueCount = 0;
+        let attemptsCount = 0;
+        let errorsCount = 0;
+
+        let currentWord = null;
+        let hasFailedCurrentTurn = false;
+        let optionClicked = false;
+
+        // Selection Query state and DOM elements
+        let selectedWordText = '';
+        let sidebar = null;
+        let sidebarToggleBtn = null;
+        let sidebarToggleIcon = null;
+        let closeSidebarBtn = null;
+        let sidebarListContainer = null;
+        let sidebarEmptyState = null;
+        let selectionToolbar = null;
+        let queryBtn = null;
+
+        // TTS Pronunciation Direct Play
+        window.playAudioDirect = (text) => {
+            if (!text) return;
+            const cleanText = text.replace(/“|”/g, '').trim();
+            const url = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(cleanText)}`;
+            new Audio(url).play().catch(err => console.error("TTS Audio error:", err));
+        };
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Sidebar Toggle
+            const wordsetSidebarElement = document.getElementById('wordsetSidebar');
+            document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
+                if (wordsetSidebarElement.classList.contains('w-0')) {
+                    wordsetSidebarElement.classList.remove('w-0', 'border-r-0');
+                    wordsetSidebarElement.classList.add('w-80', 'border-r', 'border-stone-200');
+                } else {
+                    wordsetSidebarElement.classList.remove('w-80', 'border-r', 'border-stone-200');
+                    wordsetSidebarElement.classList.add('w-0', 'border-r-0');
+                }
+            });
+
+            // Settings Modal Listeners
+            document.getElementById('openSettingsBtn').addEventListener('click', () => {
+                loadLocalSettings();
+                openSettingsModal();
+            });
+            document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+                closeSettingsModal();
+            });
+            document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+                saveLocalSettings();
+                closeSettingsModal();
+                // Update Step 2 button if currently looking at feedback
+                if (currentWord && !document.getElementById('feedback-panel').classList.contains('hidden') && document.getElementById('step3-container').classList.contains('hidden')) {
+                    checkStep2Completion();
+                }
+            });
+
+            // Load saved settings
+            loadLocalSettings();
+
+            // Selection query DOM elements
+            sidebar = document.getElementById('querySidebar');
+            sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+            sidebarToggleIcon = document.getElementById('sidebarToggleIcon');
+            closeSidebarBtn = document.getElementById('closeSidebarBtn');
+            sidebarListContainer = document.getElementById('sidebarListContainer');
+            sidebarEmptyState = document.getElementById('sidebarEmptyState');
+            selectionToolbar = document.getElementById('selectionToolbar');
+            queryBtn = document.getElementById('queryBtn');
+
+            // Selection query listeners
+            if (sidebarToggleBtn) {
+                sidebarToggleBtn.addEventListener('click', () => toggleSidebar());
+            }
+            if (closeSidebarBtn) {
+                closeSidebarBtn.addEventListener('click', () => toggleSidebar(false));
+            }
+            
+            const manualQueryBtn = document.getElementById('manualQueryBtn');
+            const manualQueryInput = document.getElementById('manualQueryInput');
+            if (manualQueryBtn && manualQueryInput) {
+                manualQueryBtn.addEventListener('click', triggerManualQuery);
+                manualQueryInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        triggerManualQuery();
+                    }
+                });
+            }
+
+            if (queryBtn) {
+                queryBtn.addEventListener('click', async () => {
+                    const word = selectedWordText.trim();
+                    if (!word) return;
+                    selectionToolbar.classList.add('hidden');
+                    window.getSelection().removeAllRanges();
+                    await queryWord(word);
+                });
+            }
+
+            if (sidebarListContainer) {
+                sidebarListContainer.addEventListener('click', (e) => {
+                    const clickable = e.target.closest('.font-thai-clickable');
+                    if (clickable) {
+                        const word = clickable.dataset.word;
+                        if (word) window.playAudioDirect(word);
+                    }
+                    
+                    const deleteBtn = e.target.closest('.delete-history-btn');
+                    if (deleteBtn) {
+                        const id = parseInt(deleteBtn.dataset.id, 10);
+                        if (!isNaN(id)) {
+                            deleteQueryRecord(id).then(() => {
+                                updateSidebarView();
+                            });
+                        }
+                    }
+                });
+            }
+
+            // Initialize sidebar query history view
+            updateSidebarView();
+
+            await initApp();
+        });
+
+        // ==========================================
+        // Load API Data and Router
+        // ==========================================
+        async function initApp() {
+            try {
+                const res = await fetch('/api/wordsets');
+                if (!res.ok) throw new Error("获取词汇集列表失败");
+                wordsets = await res.json();
+                
+                populateTagDropdown();
+                renderSidebarList();
+                
+                // Determine which wordset to load
+                const params = new URLSearchParams(window.location.search);
+                const uuid = params.get('id') || params.get('uuid');
+                
+                let target = null;
+                if (uuid) {
+                    target = wordsets.find(w => w.uuid === uuid);
+                }
+                
+                if (!target && wordsets.length > 0) {
+                    target = wordsets[0];
+                }
+                
+                if (target) {
+                    await loadWordset(target);
+                } else {
+                    showErrorState("未查询到任何词汇集，请先进入词汇集管理端后台创建词包。");
+                }
+            } catch (err) {
+                console.error(err);
+                showErrorState("加载应用数据出错：" + err.message);
+            }
+        }
+
+        async function loadWordset(ws) {
+            activeWordset = ws;
+            originalWords = ws.words || [];
+            
+            // Sync URL parameter without reload
+            const newUrl = `${window.location.pathname}?id=${ws.uuid}`;
+            window.history.pushState({ path: newUrl }, '', newUrl);
+            
+            // Highlight active selection in sidebar
+            highlightActiveSidebar(ws.uuid);
+            
+            // Sync Start Screen
+            document.getElementById('list-date').textContent = ws.title;
+            document.getElementById('start-word-count').textContent = originalWords.length;
+            
+            if (originalWords.length === 0) {
+                showErrorState(`词汇集 "${ws.title}" 中没有包含任何单词。`);
+                return;
+            }
+            
+            // Pre-cache choices/options for each word
+            originalWords.forEach(w => {
+                w.shuffledOptions = generateOptionsForWord(w);
+            });
+            
+            // Check IndexedDB for existing progress
+            const savedProgress = await getReviewProgress(ws.uuid);
+            const resumeContainer = document.getElementById('resume-container');
+            const startSessionBtn = document.getElementById('start-session-btn');
+            
+            if (savedProgress && savedProgress.reviewQueueWords && savedProgress.reviewQueueWords.length > 0) {
+                if (resumeContainer) {
+                    resumeContainer.classList.remove('hidden');
+                    const progressInfo = document.getElementById('resume-progress-info');
+                    if (progressInfo) {
+                        const total = savedProgress.reviewQueueWords.length + (savedProgress.completedWordsWords ? savedProgress.completedWordsWords.length : 0);
+                        const completed = savedProgress.completedWordsWords ? savedProgress.completedWordsWords.length : 0;
+                        progressInfo.textContent = `上次进度：已攻克 ${completed}/${total} 个词 (待解决: ${savedProgress.reviewQueueWords.length})`;
+                    }
+                }
+                if (startSessionBtn) {
+                    startSessionBtn.classList.add('hidden');
+                }
+            } else {
+                if (resumeContainer) {
+                    resumeContainer.classList.add('hidden');
+                }
+                if (startSessionBtn) {
+                    startSessionBtn.classList.remove('hidden');
+                }
+            }
+            
+            showStartView();
+        }
+
+        // ==========================================
+        // Sidebar Controllers
+        // ==========================================
+        function populateTagDropdown() {
+            const dropdown = document.getElementById('filter-tag');
+            if (!dropdown) return;
+            
+            const currentSelected = dropdown.value;
+            const tagsSet = new Set();
+            wordsets.forEach(w => {
+                if (w.tags) {
+                    w.tags.split(',').map(t => t.trim()).forEach(t => {
+                        if (t) tagsSet.add(t);
+                    });
+                }
+            });
+
+            let optionsHtml = '<option value="">全部标签</option>';
+            Array.from(tagsSet).sort().forEach(tag => {
+                optionsHtml += `<option value="${tag}">${tag}</option>`;
+            });
+            dropdown.innerHTML = optionsHtml;
+            dropdown.value = currentSelected;
+        }
+
+        function renderSidebarList() {
+            const listEl = document.getElementById('wordsets-list');
+            const searchVal = document.getElementById('search-input').value.trim().toLowerCase();
+            const tagFilter = document.getElementById('filter-tag').value;
+            
+            let filtered = wordsets;
+            
+            if (tagFilter) {
+                filtered = filtered.filter(w => w.tags && w.tags.split(',').map(t => t.trim()).includes(tagFilter));
+            }
+            
+            if (searchVal) {
+                filtered = filtered.filter(w => 
+                    (w.title || '').toLowerCase().includes(searchVal) || 
+                    (w.tags || '').toLowerCase().includes(searchVal)
+                );
+            }
+            
+            if (filtered.length === 0) {
+                listEl.innerHTML = `<div class="text-center py-8 text-stone-400 text-xs italic">无符合条件的词汇集</div>`;
+                return;
+            }
+            
+            listEl.innerHTML = filtered.map(w => {
+                const isActive = activeWordset && activeWordset.uuid === w.uuid;
+                const count = w.words ? w.words.length : 0;
+                
+                return `
+                    <button class="wordset-item w-full text-left p-3.5 rounded-xl border text-xs transition duration-150 flex flex-col gap-1 hover:bg-stone-50 ${isActive ? 'bg-violet-50/50 border-violet-200 text-violet-700' : 'border-stone-250/60 text-stone-600'}" 
+                        data-uuid="${w.uuid}" 
+                        onclick="selectWordsetFromSidebar('${w.uuid}')">
+                        <span class="font-bold text-stone-850 text-sm truncate w-full">${w.title}</span>
+                        <div class="flex justify-between text-[10px] text-stone-405 mt-1">
+                            <span class="truncate max-w-[150px]">${w.tags || '无分类'}</span>
+                            <span>单词: ${count}</span>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function filterWordsets() {
+            renderSidebarList();
+        }
+
+        window.selectWordsetFromSidebar = async function(uuid) {
+            const ws = wordsets.find(w => w.uuid === uuid);
+            if (ws) {
+                await loadWordset(ws);
+            }
+        }
+
+        function highlightActiveSidebar(uuid) {
+            document.querySelectorAll('.wordset-item').forEach(el => {
+                if (el.dataset.uuid === uuid) {
+                    el.classList.add('bg-violet-50/50', 'border-violet-200', 'text-violet-700');
+                    el.classList.remove('border-stone-250/60', 'text-stone-600');
+                } else {
+                    el.classList.remove('bg-violet-50/50', 'border-violet-200', 'text-violet-700');
+                    el.classList.add('border-stone-250/60', 'text-stone-600');
+                }
+            });
+        }
+
+        // ==========================================
+        // Options Distractors Generator
+        // ==========================================
+        function generateOptionsForWord(word) {
+            let opts = [];
+            if (word.options && word.options.length >= 2) {
+                opts = [...word.options];
+            } else {
+                opts = [word.meaning];
+            }
+
+            // Distractors pad
+            while (opts.length < 4) {
+                const randWord = originalWords[Math.floor(Math.random() * originalWords.length)];
+                if (randWord && randWord.meaning && !opts.includes(randWord.meaning)) {
+                    opts.push(randWord.meaning);
+                } else {
+                    const placeholders = ["生活", "社会", "工作", "学习", "饮食", "食品", "健康", "运动", "旅行", "文化"];
+                    const p = placeholders[Math.floor(Math.random() * placeholders.length)];
+                    if (!opts.includes(p)) opts.push(p);
+                }
+            }
+
+            // Ensure correct meaning is present
+            if (!opts.includes(word.meaning)) {
+                opts[0] = word.meaning;
+            }
+
+            return opts.sort(() => Math.random() - 0.5);
+        }
+
+        // ==========================================
+        // View State Control
+        // ==========================================
+        function hideAllViews() {
+            document.getElementById('viewLoading').classList.add('hidden');
+            document.getElementById('viewStart').classList.add('hidden');
+            document.getElementById('viewGame').classList.add('hidden');
+            document.getElementById('viewCompleted').classList.add('hidden');
+            document.getElementById('viewError').classList.add('hidden');
+            document.getElementById('viewRoundQuiz').classList.add('hidden');
+        }
+
+        function showStartView() {
+            hideAllViews();
+            document.getElementById('viewStart').classList.remove('hidden');
+        }
+
+        function showErrorState(msg) {
+            hideAllViews();
+            document.getElementById('error-message-text').textContent = msg;
+            document.getElementById('viewError').classList.remove('hidden');
+        }
+
+        // ==========================================
+        // Learning Game Loop Actions
+        // ==========================================
+        async function startSession() {
+            hideAllViews();
+            document.getElementById('viewGame').classList.remove('hidden');
+
+            currentRoundNumber = 1;
+            roundWords = [...originalWords];
+            reviewQueue = [...roundWords];
+            completedWords = [];
+            
+            flashcardErrors.clear();
+            quizErrors.clear();
+            struggledWordsSet.clear();
+
+            totalUniqueCount = originalWords.length;
+            attemptsCount = 0;
+            errorsCount = 0;
+            phase = 'flashcard';
+            currentQuizBatchIndex = 0;
+
+            if (activeWordset && activeWordset.uuid) {
+                await deleteReviewProgress(activeWordset.uuid);
+            }
+
+            renderNextCard();
+        }
+
+        async function resumeSession() {
+            if (!activeWordset || !activeWordset.uuid) return;
+            try {
+                const savedProgress = await getReviewProgress(activeWordset.uuid);
+                if (!savedProgress) {
+                    startSession();
+                    return;
+                }
+                
+                hideAllViews();
+                
+                const wordMap = new Map(originalWords.map(w => [w.word, w]));
+                
+                currentRoundNumber = savedProgress.currentRoundNumber || 1;
+                roundWords = (savedProgress.roundWords || []).map(wordStr => wordMap.get(wordStr)).filter(Boolean);
+                if (roundWords.length === 0 && originalWords.length > 0) {
+                    roundWords = [...originalWords];
+                }
+                
+                reviewQueue = (savedProgress.reviewQueueWords || []).map(wordStr => wordMap.get(wordStr)).filter(Boolean);
+                completedWords = (savedProgress.completedWordsWords || []).map(wordStr => wordMap.get(wordStr)).filter(Boolean);
+                
+                flashcardErrors = new Set((savedProgress.flashcardErrors || []).map(wordStr => wordMap.get(wordStr)).filter(Boolean));
+                quizErrors = new Set((savedProgress.quizErrors || []).map(wordStr => wordMap.get(wordStr)).filter(Boolean));
+                
+                phase = savedProgress.phase || 'flashcard';
+                currentQuizBatchIndex = savedProgress.currentQuizBatchIndex || 0;
+                
+                struggledWordsSet.clear();
+                if (savedProgress.struggledWordsWords) {
+                    savedProgress.struggledWordsWords.forEach(wordStr => {
+                        const w = wordMap.get(wordStr);
+                        if (w) struggledWordsSet.add(w);
+                    });
+                }
+                
+                totalUniqueCount = originalWords.length;
+                attemptsCount = savedProgress.attemptsCount || 0;
+                errorsCount = savedProgress.errorsCount || 0;
+                
+                if (phase === 'quiz') {
+                    startRoundQuiz();
+                } else {
+                    document.getElementById('viewGame').classList.remove('hidden');
+                    renderNextCard();
+                }
+            } catch (err) {
+                console.error("Failed to resume session:", err);
+                startSession();
+            }
+        }
+
+        function renderNextCard() {
+            if (reviewQueue.length === 0) {
+                startRoundQuiz();
+                return;
+            }
+
+            currentWord = reviewQueue[0];
+            hasFailedCurrentTurn = false;
+            optionClicked = false;
+
+            const placeholder = document.getElementById('step3-placeholder');
+            const feedbackPanel = document.getElementById('feedback-panel');
+            if (placeholder) placeholder.classList.remove('hidden');
+            if (feedbackPanel) feedbackPanel.classList.add('hidden');
+            
+            // Show Step 1 container, and hide Step 2 (quiz-block)
+            document.getElementById('step1-container').classList.remove('hidden');
+            document.getElementById('quiz-block').classList.add('hidden');
+
+            // Reset Step 1 UI
+            document.getElementById('step1-meaning-container').classList.add('hidden');
+            document.getElementById('step1-meaning-text').textContent = '';
+            
+            const step1NextBtn = document.getElementById('step1-next-btn');
+            step1NextBtn.disabled = true;
+            step1NextBtn.className = "w-full py-3 bg-stone-300 text-stone-500 rounded-2xl font-bold text-sm transition flex items-center justify-center gap-1.5 cursor-not-allowed";
+
+            document.getElementById('card-word').textContent = currentWord.word;
+            document.getElementById('card-ipa').textContent = currentWord.ipa ? `/${currentWord.ipa}/` : '';
+            
+            document.getElementById('progress-text').textContent = `第 ${currentRoundNumber} 轮复习 | 已复习: ${roundWords.length - reviewQueue.length} / ${roundWords.length}`;
+            document.getElementById('queue-text').textContent = `待复习: ${reviewQueue.length}`;
+            
+            const progressPct = ((roundWords.length - reviewQueue.length) / roundWords.length) * 100;
+            document.getElementById('progress-bar-fill').style.width = `${progressPct}%`;
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            const choices = currentWord.shuffledOptions || generateOptionsForWord(currentWord);
+            choices.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-card transition duration-150 flex items-center justify-between w-full border border-stone-250 hover:bg-stone-50';
+                btn.innerHTML = `
+                    <span>${opt}</span>
+                    <i class="ph ph-circle text-stone-300 text-lg shrink-0 ml-4"></i>
+                `;
+                btn.onclick = () => selectOption(btn, opt);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        window.playWordAudioForStep1 = () => {
+            if (!currentWord) return;
+            playAudioDirect(currentWord.word);
+            
+            // Only update step 1 UI if step 1 container is visible
+            const step1Container = document.getElementById('step1-container');
+            if (step1Container && !step1Container.classList.contains('hidden')) {
+                const meaningContainer = document.getElementById('step1-meaning-container');
+                const meaningText = document.getElementById('step1-meaning-text');
+                meaningText.textContent = currentWord.meaning;
+                meaningContainer.classList.remove('hidden');
+                
+                const nextBtn = document.getElementById('step1-next-btn');
+                nextBtn.disabled = false;
+                nextBtn.className = "w-full py-3 bg-slate-900 text-white hover:bg-slate-800 rounded-2xl font-bold text-sm transition flex items-center justify-center gap-1.5 shadow-lg cursor-pointer";
+            }
+        };
+
+        window.goToStep2 = () => {
+            document.getElementById('step1-container').classList.add('hidden');
+            document.getElementById('quiz-block').classList.remove('hidden');
+        };
+
+        function selectOption(btn, selectedText) {
+            if (optionClicked) return;
+            optionClicked = true;
+
+            attemptsCount++;
+            const isCorrect = (selectedText === currentWord.meaning);
+            const optionsContainer = document.getElementById('options-container');
+            
+            if (isCorrect) {
+                btn.className = 'option-card correct w-full border border-emerald-500 bg-emerald-50 text-emerald-800 transition flex items-center justify-between';
+                btn.querySelector('i').className = 'ph-bold ph-check-circle text-emerald-500 text-lg shrink-0 ml-4';
+                showFeedback(true);
+            } else {
+                btn.className = 'option-card wrong w-full border border-rose-500 bg-rose-50 text-rose-800 transition flex items-center justify-between';
+                btn.querySelector('i').className = 'ph-bold ph-x-circle text-rose-500 text-lg shrink-0 ml-4';
+                
+                errorsCount++;
+                hasFailedCurrentTurn = true;
+                struggledWordsSet.add(currentWord);
+                flashcardErrors.add(currentWord);
+
+                Array.from(optionsContainer.children).forEach(child => {
+                    const text = child.querySelector('span').textContent;
+                    if (text === currentWord.meaning) {
+                        child.className = 'option-card correct w-full border border-emerald-500 bg-emerald-50 text-emerald-800 transition flex items-center justify-between';
+                        child.querySelector('i').className = 'ph-bold ph-check-circle text-emerald-500 text-lg shrink-0 ml-4';
+                    }
+                });
+
+                showFeedback(false);
+            }
+        }
+
+        let playedExamples = new Set();
+
+        window.playExampleAudio = (index) => {
+            if (!currentWord.examples || !currentWord.examples[index]) return;
+            const text = currentWord.examples[index].thai;
+            playAudioDirect(text);
+            playedExamples.add(index);
+            
+            // Update play status UI
+            const statusEl = document.getElementById(`play-status-${index}`);
+            if (statusEl) {
+                statusEl.innerHTML = `
+                    <i class="ph-bold ph-check text-emerald-500"></i>
+                    <span class="text-emerald-600 font-semibold">已播放并跟读</span>
+                `;
+            }
+            const iconEl = document.getElementById(`play-icon-${index}`);
+            if (iconEl) {
+                iconEl.className = 'ph-bold ph-speaker-high text-emerald-500 animate-pulse';
+            }
+            
+            checkStep2Completion();
+        };
+
+        function checkStep2Completion() {
+            const nextBtn = document.getElementById('step2-next-btn');
+            const promptEl = document.getElementById('read-along-prompt');
+            
+            if (!settings.enableStep2) {
+                nextBtn.disabled = false;
+                if (promptEl) {
+                    promptEl.innerHTML = `<i class="ph-bold ph-check-circle text-emerald-500 mr-1"></i><span class="text-emerald-600 font-bold">直接过关</span>`;
+                    promptEl.classList.remove('animate-pulse');
+                }
+                
+                const isSuccess = (!hasFailedCurrentTurn);
+                const btnSpan = nextBtn.querySelector('span');
+                if (isSuccess) {
+                    btnSpan.textContent = "攻克并继续";
+                } else {
+                    btnSpan.textContent = "继续";
+                }
+                nextBtn.className = "w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-bold text-sm transition flex items-center justify-center gap-1.5 shadow-lg cursor-pointer";
+                nextBtn.onclick = async () => {
+                    if (hasFailedCurrentTurn) {
+                        reviewQueue.shift();
+                    } else {
+                        const clearedWord = reviewQueue.shift();
+                        completedWords.push(clearedWord);
+                    }
+                    await saveReviewProgress();
+                    renderNextCard();
+                };
+                return;
+            }
+
+            const hasExamples = currentWord.examples && currentWord.examples.length > 0;
+            
+            const requiredCount = hasExamples ? currentWord.examples.length : 0;
+            const currentCount = playedExamples.size;
+            
+            if (currentCount >= requiredCount) {
+                nextBtn.disabled = false;
+                if (promptEl) {
+                    promptEl.innerHTML = `<i class="ph-bold ph-check-circle text-emerald-500 mr-1"></i><span class="text-emerald-600 font-bold">跟读完成</span>`;
+                    promptEl.classList.remove('animate-pulse');
+                }
+
+                // Bind click action and change styles/text based on setting
+                if (settings.enableStep3) {
+                    nextBtn.querySelector('span').textContent = "已跟读，下一步翻译";
+                    nextBtn.className = "w-full py-3 bg-violet-600 hover:bg-violet-750 text-white rounded-2xl font-bold text-sm transition flex items-center justify-center gap-1.5 shadow-lg shadow-violet-500/10 cursor-pointer";
+                    nextBtn.onclick = () => {
+                        showStep3();
+                    };
+                } else {
+                    const isSuccess = (!hasFailedCurrentTurn);
+                    const btnSpan = nextBtn.querySelector('span');
+                    if (isSuccess) {
+                        btnSpan.textContent = "攻克并继续";
+                    } else {
+                        btnSpan.textContent = "继续";
+                    }
+                    nextBtn.className = "w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-bold text-sm transition flex items-center justify-center gap-1.5 shadow-lg cursor-pointer";
+                    nextBtn.onclick = async () => {
+                        if (hasFailedCurrentTurn) {
+                            reviewQueue.shift();
+                        } else {
+                            const clearedWord = reviewQueue.shift();
+                            completedWords.push(clearedWord);
+                        }
+                        await saveReviewProgress();
+                        renderNextCard();
+                    };
+                }
+            } else {
+                nextBtn.disabled = true;
+                nextBtn.className = "w-full py-3 bg-stone-300 text-stone-500 rounded-2xl font-bold text-sm transition flex items-center justify-center gap-1.5 cursor-not-allowed";
+                nextBtn.onclick = null;
+                
+                const btnSpan = nextBtn.querySelector('span');
+                if (settings.enableStep3) {
+                    btnSpan.textContent = "已跟读，下一步翻译";
+                } else {
+                    btnSpan.textContent = hasFailedCurrentTurn ? "继续" : "攻克并继续";
+                }
+
+                if (promptEl) {
+                    promptEl.innerHTML = `📢 请播放所有例句并跟读 (${currentCount}/${requiredCount})`;
+                    promptEl.classList.add('animate-pulse');
+                }
+            }
+        }
+
+        function showStep3() {
+            document.getElementById('step2-container').classList.add('hidden');
+            document.getElementById('step3-container').classList.remove('hidden');
+            
+            const listEl = document.getElementById('translation-examples-list');
+            listEl.innerHTML = '';
+            
+            const hasExamples = currentWord.examples && currentWord.examples.length > 0;
+            
+            if (hasExamples) {
+                currentWord.examples.forEach((ex, index) => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'border-b border-stone-150/60 last:border-0 pb-4 last:pb-0 space-y-2';
+                    itemDiv.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-stone-400">例句 ${index + 1}</span>
+                            <button onclick="playAudioDirect(currentWord.examples[${index}].thai)" class="text-stone-400 hover:text-violet-500 p-1.5 rounded-full hover:bg-stone-50 transition flex items-center gap-1 text-xs font-medium" title="播放例句发音">
+                                <i class="ph-bold ph-speaker-high text-sm"></i>
+                                <span>听发音</span>
+                            </button>
+                        </div>
+                        <div class="example-thai py-2 text-2xl md:text-[28px] font-bold text-amber-950 leading-relaxed select-text font-thai">“ ${ex.thai} ”</div>
+                        <div class="space-y-2 pt-1">
+                            <input type="text" id="trans-input-${index}" 
+                                oninput="onTranslationInput(${index})" 
+                                placeholder="请输入中文翻译..." 
+                                class="w-full bg-stone-50 border border-stone-250 rounded-xl px-4 py-2.5 text-base text-stone-850 placeholder-stone-400 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition duration-200">
+                            
+                            <!-- Reference answer container -->
+                            <div id="trans-ref-${index}" class="hidden p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl text-xs text-stone-600 space-y-1">
+                                <span class="block text-[11px] text-emerald-600 font-bold uppercase tracking-wider">💡 参考翻译</span>
+                                <div class="text-slate-800 font-medium text-sm">${ex.chinese}</div>
+                            </div>
+                        </div>
+                    `;
+                    listEl.appendChild(itemDiv);
+                });
+            } else {
+                listEl.innerHTML = `<div class="text-center py-6 text-stone-400 text-xs italic">无例句，可直接继续。</div>`;
+            }
+            
+            checkStep3Completion();
+        }
+
+        window.onTranslationInput = (index) => {
+            const inputVal = document.getElementById(`trans-input-${index}`).value.trim();
+            const refEl = document.getElementById(`trans-ref-${index}`);
+            
+            if (inputVal.length > 0) {
+                refEl.classList.remove('hidden');
+            } else {
+                refEl.classList.add('hidden');
+            }
+            
+            checkStep3Completion();
+        };
+
+        function checkStep3Completion() {
+            const nextBtn = document.getElementById('next-word-btn');
+            const hasExamples = currentWord.examples && currentWord.examples.length > 0;
+            
+            let allFilled = true;
+            if (hasExamples) {
+                currentWord.examples.forEach((ex, index) => {
+                    const inputEl = document.getElementById(`trans-input-${index}`);
+                    if (inputEl) {
+                        const val = inputEl.value.trim();
+                        if (val.length === 0) {
+                            allFilled = false;
+                        }
+                    } else {
+                        allFilled = false;
+                    }
+                });
+            }
+            
+            if (allFilled) {
+                nextBtn.disabled = false;
+                nextBtn.className = "w-full py-3 bg-slate-900 text-white hover:bg-slate-800 rounded-2xl font-bold text-sm transition flex items-center justify-center gap-1.5 shadow-lg cursor-pointer";
+                
+                const isSuccess = (!hasFailedCurrentTurn);
+                const nextBtnText = document.getElementById('next-btn-text');
+                
+                if (isSuccess) {
+                    nextBtnText.textContent = "攻克并继续";
+                } else {
+                    nextBtnText.textContent = "继续";
+                }
+                
+                nextBtn.onclick = async () => {
+                    if (hasFailedCurrentTurn) {
+                        reviewQueue.shift();
+                    } else {
+                        const clearedWord = reviewQueue.shift();
+                        completedWords.push(clearedWord);
+                    }
+                    await saveReviewProgress();
+                    renderNextCard();
+                };
+            } else {
+                nextBtn.disabled = true;
+                nextBtn.className = "w-full py-3 bg-stone-300 text-stone-500 rounded-2xl font-bold text-sm transition flex items-center justify-center gap-1.5 cursor-not-allowed";
+                nextBtn.onclick = null;
+            }
+        }
+
+        function showFeedback(isSuccess) {
+            const panel = document.getElementById('feedback-panel');
+            const statusBadge = document.getElementById('answer-status-badge');
+            const meaningText = document.getElementById('feedback-meaning');
+
+            meaningText.textContent = currentWord.meaning;
+            playedExamples.clear();
+            
+            if (isSuccess && !hasFailedCurrentTurn) {
+                statusBadge.textContent = "回答正确";
+                statusBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200";
+            } else {
+                statusBadge.textContent = "回答错误";
+                statusBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200";
+            }
+
+            const placeholder = document.getElementById('step3-placeholder');
+            if (placeholder) placeholder.classList.add('hidden');
+            panel.classList.remove('hidden');
+
+            if (!settings.enableStep2) {
+                if (settings.enableStep3) {
+                    showStep3();
+                } else {
+                    document.getElementById('step2-container').classList.remove('hidden');
+                    document.getElementById('step3-container').classList.add('hidden');
+                    
+                    const examplesSection = document.getElementById('step2-examples-section');
+                    if (examplesSection) {
+                        examplesSection.classList.add('hidden');
+                    }
+                    checkStep2Completion();
+                }
+            } else {
+                document.getElementById('step2-container').classList.remove('hidden');
+                document.getElementById('step3-container').classList.add('hidden');
+                
+                const examplesSection = document.getElementById('step2-examples-section');
+                if (examplesSection) {
+                    examplesSection.classList.remove('hidden');
+                }
+                
+                const examplesContainer = document.getElementById('feedback-examples');
+                examplesContainer.innerHTML = '';
+                if (currentWord.examples && currentWord.examples.length > 0) {
+                    currentWord.examples.forEach((ex, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'example-item flex flex-col gap-2 relative';
+                        div.innerHTML = `
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="example-thai font-bold text-amber-950 flex-grow">
+                                    “ ${ex.thai} ”
+                                </div>
+                                <button onclick="playExampleAudio(${index})" class="text-stone-400 hover:text-violet-500 p-1.5 transition rounded-full hover:bg-stone-50 border border-transparent hover:border-slate-200 flex items-center justify-center shrink-0" title="播放发音">
+                                    <i id="play-icon-${index}" class="ph-bold ph-speaker-high text-sm"></i>
+                                </button>
+                            </div>
+                            <div class="example-chinese text-stone-500 text-xs">${ex.chinese}</div>
+                            <div id="play-status-${index}" class="text-[10px] text-stone-400 flex items-center gap-1 font-medium select-none mt-1">
+                                <i class="ph ph-circle text-stone-300"></i>
+                                <span>未播放</span>
+                            </div>
+                        `;
+                        examplesContainer.appendChild(div);
+                    });
+                } else {
+                    examplesContainer.innerHTML = `<span class="text-xs text-stone-400 italic">暂无例句。</span>`;
+                }
+                
+                checkStep2Completion();
+            }
+        }
+
+        let roundQuizBatches = [];
+        let selectedThaiCard = null;
+        let selectedThaiWordObj = null;
+        let matchedSet = new Set();
+
+        function startRoundQuiz() {
+            phase = 'quiz';
+            currentQuizBatchIndex = 0;
+            quizErrors.clear();
+            
+            roundQuizBatches = [];
+            for (let i = 0; i < roundWords.length; i += 10) {
+                roundQuizBatches.push(roundWords.slice(i, i + 10));
+            }
+            
+            saveReviewProgress();
+            renderQuizBatch();
+        }
+
+        function renderQuizBatch() {
+            if (currentQuizBatchIndex >= roundQuizBatches.length) {
+                endRound();
+                return;
+            }
+            
+            hideAllViews();
+            document.getElementById('viewRoundQuiz').classList.remove('hidden');
+            
+            const batchWords = roundQuizBatches[currentQuizBatchIndex];
+            matchedSet = new Set();
+            selectedThaiCard = null;
+            selectedThaiWordObj = null;
+            
+            document.getElementById('quiz-round-title').textContent = `第 ${currentRoundNumber} 轮汇总配对自测`;
+            document.getElementById('quiz-batch-progress').textContent = `第 ${currentQuizBatchIndex + 1} / ${roundQuizBatches.length} 组`;
+            
+            const pct = (currentQuizBatchIndex / roundQuizBatches.length) * 100;
+            document.getElementById('quiz-batch-bar-fill').style.width = `${pct}%`;
+            
+            const nextBtn = document.getElementById('quiz-next-batch-btn');
+            nextBtn.disabled = true;
+            nextBtn.className = "w-full mt-4 py-3 bg-stone-300 text-stone-500 rounded-2xl font-bold text-sm transition flex items-center justify-center gap-1.5 cursor-not-allowed";
+            nextBtn.querySelector('span').textContent = (currentQuizBatchIndex === roundQuizBatches.length - 1) ? "完成本轮配对" : "进入下一组";
+            nextBtn.onclick = () => {
+                currentQuizBatchIndex++;
+                saveReviewProgress();
+                renderQuizBatch();
+            };
+            
+            const thaiWords = [...batchWords].sort(() => Math.random() - 0.5);
+            const chineseWords = [...batchWords].sort(() => Math.random() - 0.5);
+            
+            const thaiCol = document.getElementById('quiz-thai-column');
+            thaiCol.innerHTML = '';
+            thaiWords.forEach(w => {
+                const card = document.createElement('div');
+                card.className = "thai-draggable-card bg-white border border-stone-200 hover:border-violet-400 rounded-xl px-4 py-2 text-center cursor-grab active:cursor-grabbing font-thai text-lg font-bold transition shadow-sm select-none hover:shadow-md";
+                card.id = `thai-card-${w.id}`;
+                card.dataset.word = w.word;
+                card.dataset.id = w.id;
+                card.draggable = true;
+                card.textContent = w.word;
+                
+                card.ondragstart = (e) => {
+                    e.dataTransfer.setData('text/plain', w.id);
+                    card.classList.add('opacity-50');
+                };
+                card.ondragend = () => {
+                    card.classList.remove('opacity-50');
+                };
+                card.onclick = () => {
+                    selectThaiCard(card, w);
+                };
+                
+                thaiCol.appendChild(card);
+            });
+            
+            const chineseCol = document.getElementById('quiz-chinese-column');
+            chineseCol.innerHTML = '';
+            chineseWords.forEach(w => {
+                const slot = document.createElement('div');
+                slot.className = "chinese-drop-target bg-white border border-stone-200 rounded-xl p-3 flex flex-col gap-2 transition min-h-[70px] justify-center items-center hover:shadow-sm cursor-pointer";
+                slot.id = `chinese-target-${w.id}`;
+                slot.dataset.meaning = w.meaning;
+                slot.dataset.id = w.id;
+                
+                slot.innerHTML = `
+                    <div class="text-sm font-semibold text-stone-700 font-sans text-center">${w.meaning}</div>
+                    <div class="drop-zone-area w-full border border-dashed border-stone-250 rounded-lg p-2 min-h-[40px] flex items-center justify-center text-[10px] text-stone-400 font-sans mt-1"
+                         id="dropzone-${w.id}">
+                        拖拽或点击配对
+                    </div>
+                `;
+                
+                slot.ondragover = (e) => {
+                    e.preventDefault();
+                    slot.classList.add('border-violet-450', 'bg-violet-50/30');
+                };
+                slot.ondragleave = () => {
+                    slot.classList.remove('border-violet-450', 'bg-violet-50/30');
+                };
+                slot.ondrop = (e) => {
+                    e.preventDefault();
+                    slot.classList.remove('border-violet-450', 'bg-violet-50/30');
+                    const draggedId = e.dataTransfer.getData('text/plain');
+                    handlePairingAttempt(draggedId, w.id, slot);
+                };
+                slot.onclick = () => {
+                    selectChineseCard(slot, w);
+                };
+                
+                chineseCol.appendChild(slot);
+            });
+        }
+
+        function selectThaiCard(card, wordObj) {
+            document.querySelectorAll('.thai-draggable-card').forEach(c => {
+                c.classList.remove('border-violet-500', 'bg-violet-50/50');
+            });
+            
+            if (selectedThaiCard === card) {
+                selectedThaiCard = null;
+                selectedThaiWordObj = null;
+            } else {
+                card.classList.add('border-violet-500', 'bg-violet-50/50');
+                selectedThaiCard = card;
+                selectedThaiWordObj = wordObj;
+            }
+        }
+
+        function selectChineseCard(slot, wordObj) {
+            if (selectedThaiWordObj) {
+                handlePairingAttempt(selectedThaiWordObj.id, wordObj.id, slot);
+            }
+        }
+
+        function handlePairingAttempt(draggedId, targetId, slot) {
+            const isMatch = (draggedId === targetId);
+            
+            if (isMatch) {
+                const wordObj = originalWords.find(w => w.id === draggedId);
+                if (!wordObj) return;
+
+                matchedSet.add(draggedId);
+                
+                const thaiCard = document.getElementById(`thai-card-${draggedId}`);
+                if (thaiCard) {
+                    thaiCard.classList.add('hidden');
+                }
+                
+                const dropzone = slot.querySelector('.drop-zone-area');
+                if (dropzone) {
+                    dropzone.innerHTML = `
+                        <div class="flex items-center justify-center gap-1.5 text-emerald-700 font-bold font-thai text-base">
+                            <i class="ph-bold ph-check-circle text-emerald-500 text-sm"></i>
+                            <span>${wordObj.word}</span>
+                        </div>
+                    `;
+                    dropzone.className = "w-full border border-emerald-500 bg-emerald-50/30 rounded-lg p-2 min-h-[40px] flex items-center justify-center mt-1";
+                }
+                
+                slot.className = "chinese-drop-target bg-emerald-50/10 border border-emerald-300 rounded-xl p-3 flex flex-col gap-2 transition min-h-[70px] justify-center items-center";
+                
+                if (selectedThaiWordObj && selectedThaiWordObj.id === draggedId) {
+                    selectedThaiCard = null;
+                    selectedThaiWordObj = null;
+                }
+                
+                playAudioDirect(wordObj.word);
+                
+                const batchWords = roundQuizBatches[currentQuizBatchIndex];
+                if (matchedSet.size === batchWords.length) {
+                    const nextBtn = document.getElementById('quiz-next-batch-btn');
+                    nextBtn.disabled = false;
+                    nextBtn.className = "w-full mt-4 py-3 bg-violet-600 hover:bg-violet-750 text-white rounded-2xl font-bold text-sm transition flex items-center justify-center gap-1.5 shadow-lg shadow-violet-500/10 cursor-pointer";
+                }
+            } else {
+                attemptsCount++;
+                errorsCount++;
+                
+                const wordObj = originalWords.find(w => w.id === draggedId);
+                if (wordObj) {
+                    quizErrors.add(wordObj);
+                    struggledWordsSet.add(wordObj);
+                }
+                
+                slot.classList.add('shake-wrong');
+                setTimeout(() => {
+                    slot.classList.remove('shake-wrong');
+                }, 400);
+
+                if (selectedThaiCard) {
+                    selectedThaiCard.classList.remove('border-violet-500', 'bg-violet-50/50');
+                }
+                selectedThaiCard = null;
+                selectedThaiWordObj = null;
+            }
+        }
+
+        async function saveRound1ErrorsToDailyAnki(round1ErrorWords) {
+            const syncStatusEl = document.getElementById('round1-anki-sync-status');
+            const syncTextEl = document.getElementById('round1-anki-sync-text');
+            
+            if (syncStatusEl) {
+                syncStatusEl.classList.remove('hidden');
+            }
+
+            if (!round1ErrorWords || round1ErrorWords.length === 0) {
+                if (syncTextEl) {
+                    syncTextEl.textContent = "全对，无错词需保存";
+                    syncTextEl.className = "font-bold text-stone-500";
+                }
+                return;
+            }
+            
+            if (syncTextEl) {
+                syncTextEl.textContent = "正在同步错词...";
+                syncTextEl.className = "font-bold text-emerald-700 animate-pulse";
+            }
+
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const todayDate = `${year}-${month}-${day}`;
+            
+            // Clean transient properties like shuffledOptions
+            const cleanedWords = round1ErrorWords.map(w => {
+                const copy = { ...w };
+                delete copy.shuffledOptions;
+                return copy;
+            });
+
+            try {
+                const getRes = await fetch(`/api/anki_errors?date=${todayDate}`);
+                if (!getRes.ok) {
+                    throw new Error(`获取当日错词清单失败`);
+                }
+                const reports = await getRes.json();
+
+                if (reports && reports.length > 0) {
+                    const existingReport = reports[0];
+                    const existingWords = Array.isArray(existingReport.errorWords) ? existingReport.errorWords : [];
+                    
+                    const wordMap = new Map();
+                    existingWords.forEach(w => {
+                        const key = w.id || w.word;
+                        if (key) wordMap.set(key, w);
+                    });
+                    cleanedWords.forEach(w => {
+                        const key = w.id || w.word;
+                        if (key) wordMap.set(key, w);
+                    });
+                    
+                    const updatedWords = Array.from(wordMap.values());
+                    
+                    const putRes = await fetch(`/api/anki_errors/${existingReport.uuid}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            errorWords: updatedWords
+                        })
+                    });
+
+                    if (!putRes.ok) {
+                        const errJson = await putRes.json().catch(() => ({}));
+                        throw new Error(errJson.error || `更新错词清单失败`);
+                    }
+
+                    if (syncTextEl) {
+                        syncTextEl.textContent = `已添加 ${cleanedWords.length} 个错词至当日清单`;
+                        syncTextEl.className = "font-bold text-emerald-700";
+                    }
+                } else {
+                    const postRes = await fetch('/api/anki_errors', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            date: todayDate,
+                            errorWords: cleanedWords
+                        })
+                    });
+
+                    if (!postRes.ok) {
+                        const errJson = await postRes.json().catch(() => ({}));
+                        throw new Error(errJson.error || `创建当日错词清单失败`);
+                    }
+
+                    if (syncTextEl) {
+                        syncTextEl.textContent = `已新建当日清单并保存 ${cleanedWords.length} 个错词`;
+                        syncTextEl.className = "font-bold text-emerald-700";
+                    }
+                }
+            } catch (err) {
+                console.error("保存第1轮错词至Anki每日错词库失败:", err);
+                if (syncTextEl) {
+                    syncTextEl.textContent = `同步错词失败: ${err.message}`;
+                    syncTextEl.className = "font-bold text-rose-600";
+                }
+            }
+        }
+
+        function endRound() {
+            const mergedErrors = new Set();
+            flashcardErrors.forEach(w => mergedErrors.add(w));
+            quizErrors.forEach(w => mergedErrors.add(w));
+            
+            const nextRoundWords = Array.from(mergedErrors);
+            
+            if (currentRoundNumber === 1) {
+                saveRound1ErrorsToDailyAnki(nextRoundWords);
+            } else {
+                const syncStatusEl = document.getElementById('round1-anki-sync-status');
+                if (syncStatusEl) syncStatusEl.classList.add('hidden');
+            }
+            
+            if (nextRoundWords.length === 0) {
+                endSession();
+            } else {
+                document.getElementById('round-complete-title').textContent = `第 ${currentRoundNumber} 轮复习已结束`;
+                document.getElementById('round-complete-fc-errors').textContent = flashcardErrors.size;
+                document.getElementById('round-complete-quiz-errors').textContent = quizErrors.size;
+                document.getElementById('round-complete-total-errors').textContent = nextRoundWords.length;
+                
+                const modal = document.getElementById('roundCompleteModal');
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    modal.querySelector('.transform').classList.remove('scale-95');
+                    modal.querySelector('.transform').classList.add('scale-100');
+                }, 10);
+                
+                document.getElementById('start-next-round-btn').onclick = () => {
+                    modal.classList.add('opacity-0');
+                    modal.querySelector('.transform').classList.remove('scale-100');
+                    modal.querySelector('.transform').classList.add('scale-95');
+                    setTimeout(() => {
+                        modal.classList.add('hidden');
+                    }, 300);
+                    
+                    currentRoundNumber++;
+                    roundWords = [...nextRoundWords];
+                    reviewQueue = [...roundWords];
+                    completedWords = [];
+                    flashcardErrors.clear();
+                    quizErrors.clear();
+                    phase = 'flashcard';
+                    currentQuizBatchIndex = 0;
+                    
+                    saveReviewProgress();
+                    
+                    hideAllViews();
+                    document.getElementById('viewGame').classList.remove('hidden');
+                    renderNextCard();
+                };
+            }
+        }
+
+        async function endSession() {
+            if (activeWordset && activeWordset.uuid) {
+                await deleteReviewProgress(activeWordset.uuid);
+            }
+            hideAllViews();
+            document.getElementById('viewCompleted').classList.remove('hidden');
+
+            document.getElementById('result-total-words').textContent = totalUniqueCount;
+            document.getElementById('result-total-attempts').textContent = attemptsCount;
+            
+            const rate = Math.round((errorsCount / attemptsCount) * 100) || 0;
+            document.getElementById('result-error-rate').textContent = `${rate}%`;
+
+            const struggledBlock = document.getElementById('struggled-words-block');
+            const struggledList = document.getElementById('struggled-words-list');
+            struggledList.innerHTML = '';
+
+            if (struggledWordsSet.size > 0) {
+                struggledWordsSet.forEach(w => {
+                    const span = document.createElement('span');
+                    span.className = 'bg-rose-50 text-rose-700 border border-rose-150 px-2.5 py-1 rounded-xl text-xs font-semibold font-thai flex items-center gap-1 cursor-pointer hover:bg-rose-100 transition';
+                    span.innerHTML = `
+                        <span>${w.word}</span>
+                        <span class="text-[10px] text-rose-500 font-sans">(${w.meaning})</span>
+                    `;
+                    span.onclick = () => playAudioDirect(w.word);
+                    struggledList.appendChild(span);
+                });
+                struggledBlock.classList.remove('hidden');
+            } else {
+                struggledBlock.classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // Test Preference Settings
+        // ==========================================
+        let settings = {
+            enableStep2: true,
+            enableStep3: true
+        };
+
+        function loadLocalSettings() {
+            const saved = localStorage.getItem('thai_wordset_settings');
+            if (saved) {
+                try {
+                    settings = JSON.parse(saved);
+                    if (settings.enableStep2 === undefined) settings.enableStep2 = true;
+                    if (settings.enableStep3 === undefined) settings.enableStep3 = true;
+                } catch (e) {
+                    console.error("Error parsing settings:", e);
+                }
+            }
+            const cb2 = document.getElementById('toggleStep2');
+            if (cb2) {
+                cb2.checked = settings.enableStep2;
+            }
+            const cb3 = document.getElementById('toggleStep3');
+            if (cb3) {
+                cb3.checked = settings.enableStep3;
+            }
+        }
+
+        function saveLocalSettings() {
+            const cb2 = document.getElementById('toggleStep2');
+            const cb3 = document.getElementById('toggleStep3');
+            if (cb2 && cb3) {
+                settings.enableStep2 = cb2.checked;
+                settings.enableStep3 = cb3.checked;
+                localStorage.setItem('thai_wordset_settings', JSON.stringify(settings));
+            }
+        }
+
+        function openSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('.transform').classList.remove('scale-95');
+                modal.querySelector('.transform').classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('.transform').classList.remove('scale-100');
+            modal.querySelector('.transform').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // ==========================================
+        // IndexedDB 存储逻辑 (查词历史)
+        // ==========================================
+        const DB_NAME = 'ThaiReadingCoachDB';
+        const DB_VERSION = 2;
+        const STORE_NAME = 'wordQueries';
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                    }
+                    if (!db.objectStoreNames.contains('sentenceTags')) {
+                        const store = db.createObjectStore('sentenceTags', { keyPath: 'id' });
+                        store.createIndex('articleId', 'articleId', { unique: false });
+                        store.createIndex('article_paragraph_sentence', ['articleId', 'paragraphId', 'sentenceId'], { unique: false });
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function saveQueryRecord(word, explanations) {
+            try {
+                const db = await initDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const record = {
+                        word,
+                        explanations,
+                        timestamp: Date.now()
+                    };
+                    const request = store.add(record);
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to save to IndexedDB:', err);
+            }
+        }
+
+        async function getQueryHistory() {
+            try {
+                const db = await initDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_NAME], 'readonly');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.getAll();
+                    request.onsuccess = (e) => {
+                        const records = e.target.result || [];
+                        records.sort((a, b) => b.timestamp - a.timestamp);
+                        resolve(records);
+                    };
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to read from IndexedDB:', err);
+                return [];
+            }
+        }
+
+        async function deleteQueryRecord(id) {
+            try {
+                const db = await initDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.delete(id);
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to delete from IndexedDB:', err);
+            }
+        }
+
+        // ==========================================
+        // IndexedDB 存储逻辑 (复习进度记录)
+        // ==========================================
+        const PROGRESS_DB_NAME = 'ThaiWordsetReviewDB';
+        const PROGRESS_DB_VERSION = 1;
+        const PROGRESS_STORE_NAME = 'reviewProgress';
+
+        function initProgressDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(PROGRESS_DB_NAME, PROGRESS_DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(PROGRESS_STORE_NAME)) {
+                        db.createObjectStore(PROGRESS_STORE_NAME, { keyPath: 'wordsetUuid' });
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function saveReviewProgress() {
+            if (!activeWordset || !activeWordset.uuid) return;
+            try {
+                const db = await initProgressDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([PROGRESS_STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(PROGRESS_STORE_NAME);
+                    const record = {
+                        wordsetUuid: activeWordset.uuid,
+                        currentRoundNumber: currentRoundNumber,
+                        roundWords: roundWords.map(w => w.word),
+                        reviewQueueWords: reviewQueue.map(w => w.word),
+                        completedWordsWords: completedWords.map(w => w.word),
+                        flashcardErrors: Array.from(flashcardErrors).map(w => w.word),
+                        quizErrors: Array.from(quizErrors).map(w => w.word),
+                        phase: phase,
+                        currentQuizBatchIndex: currentQuizBatchIndex,
+                        struggledWordsWords: Array.from(struggledWordsSet).map(w => w.word),
+                        attemptsCount: attemptsCount,
+                        errorsCount: errorsCount,
+                        timestamp: Date.now()
+                    };
+                    const request = store.put(record);
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to save progress to IndexedDB:', err);
+            }
+        }
+
+        async function getReviewProgress(wordsetUuid) {
+            try {
+                const db = await initProgressDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([PROGRESS_STORE_NAME], 'readonly');
+                    const store = transaction.objectStore(PROGRESS_STORE_NAME);
+                    const request = store.get(wordsetUuid);
+                    request.onsuccess = (e) => resolve(e.target.result);
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to read progress from IndexedDB:', err);
+                return null;
+            }
+        }
+
+        async function deleteReviewProgress(wordsetUuid) {
+            try {
+                const db = await initProgressDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([PROGRESS_STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(PROGRESS_STORE_NAME);
+                    const request = store.delete(wordsetUuid);
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to delete progress from IndexedDB:', err);
+            }
+        }
+
+        // ==========================================
+        // 单词侧边栏控制与查询逻辑
+        // ==========================================
+        function toggleSidebar(open) {
+            if (!sidebar) return;
+            const isOpen = open !== undefined ? open : sidebar.classList.contains('w-0');
+            if (isOpen) {
+                sidebar.classList.remove('w-0', 'border-transparent');
+                sidebar.classList.add('w-80', 'md:w-96', 'border-stone-200');
+                
+                sidebarToggleBtn.classList.remove('right-0');
+                sidebarToggleBtn.classList.add('right-80', 'md:right-96');
+                
+                sidebarToggleIcon.classList.remove('ph-caret-left');
+                sidebarToggleIcon.classList.add('ph-caret-right');
+            } else {
+                sidebar.classList.remove('w-80', 'md:w-96', 'border-stone-200');
+                sidebar.classList.add('w-0', 'border-transparent');
+                
+                sidebarToggleBtn.classList.remove('right-80', 'md:right-96');
+                sidebarToggleBtn.classList.add('right-0');
+                
+                sidebarToggleIcon.classList.remove('ph-caret-right');
+                sidebarToggleIcon.classList.add('ph-caret-left');
+            }
+        }
+
+        async function updateSidebarView() {
+            if (!sidebarListContainer) return;
+            const history = await getQueryHistory();
+            if (history && history.length > 0) {
+                sidebarEmptyState.classList.add('hidden');
+                sidebarListContainer.classList.remove('hidden');
+                sidebarListContainer.innerHTML = history.map(item => {
+                    const timeStr = new Date(item.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                    let expHtml = '';
+                    if (item.explanations && item.explanations.length > 0) {
+                        expHtml = item.explanations.map(exp => `
+                            <div class="flex items-baseline gap-2 py-0.5 font-sans">
+                                <span class="text-[10px] bg-violet-100 text-violet-750 px-1 py-0.5 rounded font-black flex-shrink-0">译</span>
+                                <span class="text-stone-700 font-medium text-xs">${exp.meanCh}</span>
+                                <span class="text-[10px] text-stone-400">(${exp.meanEn})</span>
+                            </div>
+                        `).join('');
+                    } else {
+                        expHtml = `<p class="text-xs text-stone-500 italic mt-2 border-t pt-2 font-sans">未找到该单词的详细解释</p>`;
+                    }
+                    return `
+                        <div class="bg-stone-50 border border-stone-150 rounded-xl p-4 shadow-sm relative transition-all duration-300 hover:shadow-md">
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="text-base font-bold text-stone-850 font-thai font-thai-clickable flex items-center gap-1.5" data-word="${item.word}" title="点击播放发音">
+                                    ${item.word}
+                                    <i class="ph-bold ph-speaker-high text-xs text-stone-400 transition-colors"></i>
+                                </h4>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] text-stone-400 bg-stone-100 px-1.5 py-0.5 rounded-full font-sans">${timeStr}</span>
+                                    <button class="delete-history-btn text-stone-400 hover:text-red-500 transition p-1" data-id="${item.id}" title="删除记录">
+                                        <i class="ph ph-trash text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="space-y-1.5 mt-2 border-t pt-2 border-stone-200/60">
+                                ${expHtml}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                sidebarEmptyState.classList.remove('hidden');
+                sidebarListContainer.classList.add('hidden');
+                sidebarListContainer.innerHTML = '';
+            }
+        }
+
+        async function queryWord(word) {
+            if (!word) return;
+
+            // 展开侧边栏
+            toggleSidebar(true);
+            
+            // 展现列表，隐藏空状态
+            sidebarEmptyState.classList.add('hidden');
+            sidebarListContainer.classList.remove('hidden');
+
+            // 插入加载状态卡片
+            const loaderId = 'query-loader-' + Date.now();
+            const loaderHtml = `
+                <div id="${loaderId}" class="bg-stone-50 border border-stone-150 rounded-xl p-4 shadow-sm relative animate-pulse flex flex-col gap-2 font-sans">
+                    <div class="flex justify-between items-center">
+                        <span class="text-base font-bold text-stone-850 font-thai">${word}</span>
+                        <span class="text-xs text-stone-400">正在查询...</span>
+                    </div>
+                    <div class="h-4 bg-stone-200 rounded w-3/4 mt-2"></div>
+                    <div class="h-4 bg-stone-200 rounded w-1/2 mt-1"></div>
+                </div>
+            `;
+            sidebarListContainer.insertAdjacentHTML('afterbegin', loaderHtml);
+            sidebarListContainer.scrollTop = 0;
+
+            try {
+                const response = await fetch("https://thai-semantic-match-worker.alexszhang.workers.dev/explain", {
+                    method: "POST",
+                    headers: getWorkerAuthHeaders(),
+                    body: JSON.stringify({
+                        word: word
+                    })
+                });
+
+                if (response.status === 401) {
+                    throw new Error("401 未授权访问：请检查 API Auth Token 是否正确！");
+                }
+
+                if (!response.ok) {
+                    throw new Error(`请求失败 (${response.status})`);
+                }
+
+                const resText = await response.text();
+                const result = resText ? JSON.parse(resText) : {};
+                
+                // 保存至 IndexedDB
+                await saveQueryRecord(word, result);
+                
+                // 刷新侧边栏（会自动去掉 loader 并渲染最新的结果卡片）
+                await updateSidebarView();
+            } catch (error) {
+                console.error('API Query Error:', error);
+                const loader = document.getElementById(loaderId);
+                if (loader) {
+                    loader.classList.remove('animate-pulse');
+                    loader.className = "bg-red-50 border border-red-100 rounded-xl p-4 shadow-sm relative font-sans";
+
+                    let errorMsg = error.message || '网络请求失败';
+                    if (errorMsg.includes('Failed to fetch') || errorMsg.includes('CORS') || error.name === 'TypeError') {
+                        errorMsg = `CORS 预检失败 (响应头未支持 Authorization)。若后端未开启鉴权：<br><button type="button" onclick="clearWorkerAuthToken(); queryWord('${word}');" class="mt-1.5 px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-[10px] font-bold shadow-xs cursor-pointer inline-flex items-center gap-1 transition"><span>清空 Token 并重试</span></button>`;
+                    }
+
+                    loader.innerHTML = `
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-base font-bold text-red-800 font-thai">${word}</span>
+                            <span class="text-xs text-red-500 font-bold">查询失败</span>
+                        </div>
+                        <div class="text-xs text-red-600 mt-2 border-t border-red-100 pt-2 leading-relaxed">${errorMsg}</div>
+                    `;
+                }
+            }
+        }
+
+        async function triggerManualQuery() {
+            const manualQueryInput = document.getElementById('manualQueryInput');
+            const word = manualQueryInput.value.trim();
+            if (!word) return;
+            manualQueryInput.value = ''; // 清空输入框
+            await queryWord(word);
+        }
+
+        // ==========================================
+        // 浮动选择工具栏逻辑
+        // ==========================================
+        document.addEventListener('selectionchange', () => {
+            if (!selectionToolbar) return;
+            const selection = window.getSelection();
+            if (selection.isCollapsed) {
+                selectionToolbar.classList.add('hidden');
+                return;
+            }
+
+            const text = selection.toString().trim();
+            if (!text) {
+                selectionToolbar.classList.add('hidden');
+                return;
+            }
+
+            const range = selection.getRangeAt(0);
+            const container = document.getElementById('viewGame');
+            
+            // 确保选择的文本处于游戏自测卡片区域内
+            if (container && container.contains(range.commonAncestorContainer)) {
+                selectedWordText = text;
+                selectionToolbar.classList.remove('hidden');
+                
+                const rect = range.getBoundingClientRect();
+                
+                // 计算浮动工具栏的最佳位置（上方居中）
+                const toolbarWidth = 92; // 估算大约宽度
+                const toolbarHeight = 32; // 估算大约高度
+                
+                const left = rect.left + rect.width / 2 - toolbarWidth / 2;
+                const top = rect.top - toolbarHeight - 8;
+                
+                selectionToolbar.style.left = `${Math.max(10, Math.min(left, window.innerWidth - toolbarWidth - 10))}px`;
+                selectionToolbar.style.top = `${Math.max(10, Math.min(top, window.innerHeight - toolbarHeight - 10)) + window.scrollY}px`;
+            } else {
+                selectionToolbar.classList.add('hidden');
+            }
+        });
+
+        // 阻止 mousedown 的默认行为，防止点击工具栏导致选中区域消失
+        document.addEventListener('mousedown', (e) => {
+            if (selectionToolbar && selectionToolbar.contains(e.target)) {
+                e.preventDefault();
+            }
+        });
+        // ==========================================
+        const TOKEN_STORAGE_KEY = 'workerai_auth_token';
+
+        function getWorkerAuthHeaders(extraHeaders = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                ...extraHeaders
+            };
+            const inputEl = document.getElementById('workerAuthToken');
+            const token = (inputEl ? inputEl.value : (localStorage.getItem(TOKEN_STORAGE_KEY) || '')).trim();
+            if (token && token.length > 0) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            return headers;
+        }
+
+        function clearWorkerAuthToken() {
+            const inputEl = document.getElementById('workerAuthToken');
+            if (inputEl) inputEl.value = '';
+            localStorage.removeItem(TOKEN_STORAGE_KEY);
+        }
+
+        function initWorkerAuthTokenSync() {
+            const inputEl = document.getElementById('workerAuthToken');
+            if (!inputEl) return;
+            inputEl.value = localStorage.getItem(TOKEN_STORAGE_KEY) || '';
+            inputEl.addEventListener('input', () => {
+                localStorage.setItem(TOKEN_STORAGE_KEY, inputEl.value.trim());
+            });
+        }
+        document.addEventListener('DOMContentLoaded', initWorkerAuthTokenSync);
+    </script>
+</body>
+</html>

@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课程笔记配置与管理 - vCourse.ThaiNotes</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Serif+Thai:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;750&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Noto Sans SC', 'sans-serif'],
+                        thai: ['Noto Serif Thai', 'Outfit', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0e0d0a 0%, #15110e 50%, #22160d 100%);
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: rgba(0, 0, 0, 0.5);
+            --primary: #f59e0b; /* Amber 500 */
+            --primary-glow: rgba(245, 158, 11, 0.15);
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px var(--glass-shadow);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(245, 158, 11, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .glass-card.active {
+            background: rgba(245, 158, 11, 0.08);
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(245, 158, 11, 0.2);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(245, 158, 11, 0.4);
+        }
+
+        .tab-btn {
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- Header -->
+    <header class="glass-panel border-b border-slate-800/80 px-6 py-4 flex items-center justify-between shrink-0 z-10 font-sans">
+        <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                <i class="ph-bold ph-note-pencil text-xl text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold leading-none tracking-tight flex items-center gap-2">
+                    <span>vCourse.ThaiNotes</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">课程笔记后台</span>
+                </h1>
+                <span class="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mt-1">SQLite tblNotes 笔记库配置与关联管理</span>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-6">
+            <!-- Connection Status -->
+            <div id="connection-status" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
+                <span>服务连接中...</span>
+            </div>
+            
+            <!-- Quick links -->
+            <nav class="flex items-center gap-2 font-sans">
+                <button onclick="openPromptModal()" type="button" class="px-4 py-2 text-sm text-amber-400 hover:text-white rounded-lg hover:bg-amber-500/10 transition duration-205 flex items-center gap-1.5 border border-amber-500/20">
+                    <i class="ph ph-note"></i>
+                    <span>Prompt 管理</span>
+                </button>
+                <a href="/Pages/consoleCourseReview.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition duration-205 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-layout"></i>
+                    <span>常规后台</span>
+                </a>
+                <a href="/Pages/consoleReadingCoach.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition duration-205 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-book-open"></i>
+                    <span>阅读教练后台</span>
+                </a>
+                <a href="/Pages/consoleCourseware.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition duration-205 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-presentation"></i>
+                    <span>课件后台</span>
+                </a>
+                <a href="/Pages/consoleHFWords.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition duration-205 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-lightning"></i>
+                    <span>高频词后台</span>
+                </a>
+                <a href="/Pages/consoleAnki.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition duration-205 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-brain"></i>
+                    <span>错词本后台</span>
+                </a>
+                <a href="/Pages/consoleSentence.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition duration-205 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-tree-structure"></i>
+                    <span>句型后台</span>
+                </a>
+                <a id="client-app-btn" href="/Pages/appMemorizeNotes.html" target="_blank" class="px-4 py-2 text-sm text-amber-400 hover:text-white rounded-lg hover:bg-amber-500/10 transition duration-205 flex items-center gap-1.5 border border-amber-500/20">
+                    <i class="ph ph-arrow-square-out"></i>
+                    <span>打开笔记客户端</span>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex-grow flex overflow-hidden min-h-0">
+        <!-- Sidebar: Notes List -->
+        <aside class="w-96 border-r border-slate-800/60 flex flex-col bg-slate-950/20 shrink-0">
+            <!-- Search & Filter Actions -->
+            <div class="p-4 border-b border-slate-800/60 space-y-3 font-sans">
+                <!-- Search bar -->
+                <div class="relative">
+                    <input type="text" id="search-input" oninput="filterNotes()" placeholder="搜索笔记主题或标签..." 
+                        class="w-full bg-slate-900/50 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition duration-200">
+                    <i class="ph ph-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-base"></i>
+                </div>
+                
+                <!-- Course Filter Dropdowns -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">按科目筛选</label>
+                        <select id="filter-course" onchange="onFilterCourseChange()"
+                            class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500 transition duration-200">
+                            <option value="">全部科目</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">按课时/章节</label>
+                        <select id="filter-lesson" onchange="filterNotes()"
+                            class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500 transition duration-200" disabled>
+                            <option value="">全部课时</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 pt-1">
+                    <button onclick="initNewNote()" type="button" class="w-full py-2.5 text-xs font-semibold bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl hover:opacity-90 shadow-md shadow-amber-500/10 transition duration-200 flex items-center justify-center gap-1.5">
+                        <i class="ph ph-plus-bold"></i>
+                        <span>新增笔记</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Notes List Scroll -->
+            <div id="notes-list-container" class="flex-grow overflow-y-auto custom-scrollbar p-3 space-y-2">
+                <div class="flex flex-col items-center justify-center h-40 text-slate-500">
+                    <i class="ph ph-spinner animate-spin text-2xl mb-2 text-amber-500"></i>
+                    <span class="text-sm">加载笔记列表中...</span>
+                </div>
+            </div>
+            
+            <!-- Statistics Footer -->
+            <div class="p-4 border-t border-slate-800/60 bg-slate-950/40 text-xs text-slate-400 flex justify-between shrink-0 font-medium font-sans">
+                <span id="stat-total-notes">笔记总量: 0</span>
+                <span class="text-amber-400">SQLite tblNotes</span>
+            </div>
+        </aside>
+
+        <!-- Right Workspace: Detail Editor -->
+        <main class="flex-grow flex flex-col bg-slate-950/10 overflow-hidden relative">
+            <!-- Empty state -->
+            <div id="editor-empty-state" class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-slate-900/10 z-10">
+                <div class="h-16 w-16 rounded-2xl bg-slate-800/40 border border-slate-800 flex items-center justify-center mb-4 text-slate-500 shadow-inner">
+                    <i class="ph ph-note-pencil text-3xl text-amber-400/80"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-200">未选择课程笔记</h3>
+                <p class="text-sm text-slate-500 mt-1 max-w-sm">请在左侧列表中选择一篇笔记进行管理，或直接点击“新增笔记”按钮创建新的课程笔记。</p>
+            </div>
+
+            <!-- Form Workspace -->
+            <form id="note-editor-form" onsubmit="saveNote(event)" class="hidden flex-grow flex flex-col overflow-hidden min-h-0">
+                <!-- Editor Header -->
+                <div class="px-6 py-4 border-b border-slate-800/60 flex items-center justify-between bg-slate-900/10 shrink-0">
+                    <div class="flex items-center gap-3">
+                        <span id="editor-action-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/20">编辑</span>
+                        <h2 id="editor-title" class="text-base font-bold text-slate-150">笔记编辑</h2>
+                    </div>
+                    <div class="flex items-center gap-2 font-sans">
+                        <button type="button" id="delete-note-btn" onclick="deleteNote()" class="px-4 py-2 text-xs font-semibold text-rose-400 hover:text-white rounded-xl hover:bg-rose-500/10 border border-rose-500/20 hover:border-rose-500/40 transition duration-200">
+                            删除笔记
+                        </button>
+                        <button type="submit" class="px-5 py-2 text-xs font-semibold bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl hover:opacity-95 shadow-md shadow-amber-500/20 transition duration-200 flex items-center gap-1.5">
+                            <i class="ph ph-floppy-disk"></i>
+                            <span>保存笔记</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab Navigation -->
+                <div class="px-6 border-b border-slate-800/60 flex gap-6 text-sm text-slate-400 bg-slate-950/20 shrink-0 font-sans">
+                    <button type="button" onclick="switchTab('general')" id="tab-general" class="tab-btn py-3 font-medium active">基本信息 & 关联</button>
+                    <button type="button" onclick="switchTab('points')" id="tab-points" class="tab-btn py-3 font-medium">核心要点</button>
+                    <button type="button" onclick="switchTab('flashcards')" id="tab-flashcards" class="tab-btn py-3 font-medium">记忆卡片</button>
+                    <button type="button" onclick="switchTab('quiz')" id="tab-quiz" class="tab-btn py-3 font-medium">随堂测验</button>
+                    <button type="button" onclick="switchTab('summary')" id="tab-summary" class="tab-btn py-3 font-medium">总结填空</button>
+                    <button type="button" onclick="switchTab('raw-json')" id="tab-raw-json" class="tab-btn py-3 font-medium flex items-center gap-1.5">
+                        <i class="ph ph-code"></i>
+                        <span>源码 JSON</span>
+                    </button>
+                </div>
+
+                <!-- Editor Scroll Area -->
+                <div class="flex-grow overflow-y-auto p-6 custom-scrollbar bg-slate-950/5">
+                    
+                    <!-- TAB 1: General Info -->
+                    <div id="panel-general" class="tab-panel space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="md:col-span-2 font-sans">
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">笔记唯一标识 (UUID) *</label>
+                                <input type="text" id="form-uuid" required placeholder="唯一标识符，新建时自动生成"
+                                    class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition duration-200">
+                            </div>
+                            <div class="md:col-span-2 font-sans">
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">主题 (Topic) *</label>
+                                <input type="text" id="form-topic" required placeholder="例如：泰国旅游体验图鉴"
+                                    class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition duration-200">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="md:col-span-2 font-sans">
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">标签 (Tags，逗号分隔)</label>
+                                <input type="text" id="form-tags" placeholder="例如：旅游,体验,泰国文化"
+                                    class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition duration-200">
+                            </div>
+                            <div class="md:col-span-2 font-sans">
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">背景时代/核心主题 (Era)</label>
+                                <input type="text" id="form-era" placeholder="例如：从理念基石到12大体验维度"
+                                    class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition duration-200">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="md:col-span-2 font-sans">
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">画像定位/副标题 (Persona)</label>
+                                <input type="text" id="form-persona" placeholder="例如：全景探索蓝图"
+                                    class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition duration-200">
+                            </div>
+                            <div class="md:col-span-2 font-sans">
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">时间跨度/核心说明 (Timeframe)</label>
+                                <input type="text" id="form-timeframe" placeholder="例如：核心概念与体验分类"
+                                    class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition duration-200">
+                            </div>
+                        </div>
+
+                        <!-- Course Association Panel -->
+                        <div class="glass-panel rounded-2xl p-5 border-slate-800/80 space-y-4">
+                            <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2 font-sans">
+                                <i class="ph ph-link text-amber-400 text-lg"></i>
+                                <span>关联科目与课程章节（可关联多个）</span>
+                            </h3>
+                            <p class="text-xs text-slate-400 font-sans">
+                                关联后，此笔记将出现在所选科目与章节下。请确保至少关联一个课时，学习端会拉取该课时下关联的笔记展示。
+                            </p>
+                            
+                            <!-- Current Associations List -->
+                            <div id="associations-container" class="space-y-2 font-sans">
+                                <!-- Dynamic items will be added here -->
+                            </div>
+
+                            <!-- Add new association form -->
+                            <div class="flex flex-col md:flex-row gap-3 pt-4 items-end border-t border-slate-805/50 font-sans">
+                                <div class="flex-grow w-full">
+                                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">选择科目</label>
+                                    <select id="assoc-course" onchange="onAssocCourseChange()"
+                                        class="w-full bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-amber-500 transition duration-200">
+                                        <option value="">-- 请选择科目 --</option>
+                                    </select>
+                                </div>
+                                <div class="flex-grow w-full">
+                                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">选择课时 / 章节</label>
+                                    <select id="assoc-lesson"
+                                        class="w-full bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-amber-500 transition duration-200" disabled>
+                                        <option value="">-- 请先选择科目 --</option>
+                                    </select>
+                                </div>
+                                <button type="button" onclick="addAssociation()"
+                                    class="px-4 py-2 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-xl border border-amber-500/20 hover:border-amber-500/40 transition duration-200 flex items-center gap-1.5 shrink-0 h-[38px] w-full md:w-auto justify-center">
+                                    <i class="ph ph-plus-bold"></i>
+                                    <span>添加关联</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: Points -->
+                    <div id="panel-points" class="tab-panel hidden space-y-4">
+                        <div class="flex justify-between items-center font-sans">
+                            <span class="text-xs text-slate-400">设置要点或核心知识结构（对应 points 数组，页面渲染中作为卡片段落展示）。</span>
+                            <button type="button" onclick="addPointField()" class="px-3 py-1.5 text-xs font-semibold bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20 rounded-xl transition duration-150 flex items-center gap-1">
+                                <i class="ph ph-plus-bold"></i>
+                                <span>添加要点</span>
+                            </button>
+                        </div>
+                        <div id="points-container" class="space-y-4">
+                            <!-- Dynamic points fields -->
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: Flashcards -->
+                    <div id="panel-flashcards" class="tab-panel hidden space-y-4">
+                        <div class="flex justify-between items-center font-sans">
+                            <span class="text-xs text-slate-400">设置用于背诵的记忆卡片（对应 flashcards 数组）。</span>
+                            <button type="button" onclick="addFlashcardField()" class="px-3 py-1.5 text-xs font-semibold bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20 rounded-xl transition duration-150 flex items-center gap-1">
+                                <i class="ph ph-plus-bold"></i>
+                                <span>添加卡片</span>
+                            </button>
+                        </div>
+                        <div id="flashcards-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Dynamic flashcards -->
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: Quiz -->
+                    <div id="panel-quiz" class="tab-panel hidden space-y-6">
+                        <div class="glass-panel p-5 rounded-2xl border-slate-800/80 space-y-4 font-sans">
+                            <h3 class="text-sm font-bold text-slate-200">随堂测试问题 (Quiz Question)</h3>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">题干内容 *</label>
+                                <textarea id="quiz-question" placeholder="输入随堂测试的问题，例如：根据定义，以下哪项行为属于旅游范畴？" rows="2"
+                                    class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition duration-200"></textarea>
+                            </div>
+                            
+                            <h3 class="text-sm font-bold text-slate-200 pt-2">选项及解析设置 (Options)</h3>
+                            <div class="space-y-4" id="quiz-options-container">
+                                <!-- Option A, B, C, D static fields -->
+                                <div class="p-4 rounded-xl border border-slate-800/60 bg-slate-950/20 flex gap-4">
+                                    <div class="flex flex-col items-center justify-start pt-3">
+                                        <input type="radio" name="quiz-correct" id="quiz-correct-a" value="a" class="h-4.5 w-4.5 accent-amber-500">
+                                        <span class="text-[10px] font-bold text-slate-500 mt-2 uppercase">正确</span>
+                                    </div>
+                                    <div class="flex-grow space-y-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs font-bold text-amber-500">选项 A</span>
+                                            <input type="text" id="quiz-opt-text-a" placeholder="选项描述" class="w-full bg-slate-900/50 border border-slate-800 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition duration-150">
+                                        </div>
+                                        <textarea id="quiz-opt-exp-a" placeholder="解析说明 (Explain why correct/incorrect)" rows="1" class="w-full bg-slate-900/30 border border-slate-800/40 rounded-lg px-3 py-1.5 text-xs text-slate-400 focus:outline-none focus:border-amber-500 transition duration-150"></textarea>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-4 rounded-xl border border-slate-800/60 bg-slate-950/20 flex gap-4">
+                                    <div class="flex flex-col items-center justify-start pt-3">
+                                        <input type="radio" name="quiz-correct" id="quiz-correct-b" value="b" class="h-4.5 w-4.5 accent-amber-500">
+                                        <span class="text-[10px] font-bold text-slate-500 mt-2 uppercase">正确</span>
+                                    </div>
+                                    <div class="flex-grow space-y-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs font-bold text-amber-500">选项 B</span>
+                                            <input type="text" id="quiz-opt-text-b" placeholder="选项描述" class="w-full bg-slate-900/50 border border-slate-800 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition duration-150">
+                                        </div>
+                                        <textarea id="quiz-opt-exp-b" placeholder="解析说明 (Explain why correct/incorrect)" rows="1" class="w-full bg-slate-900/30 border border-slate-800/40 rounded-lg px-3 py-1.5 text-xs text-slate-400 focus:outline-none focus:border-amber-500 transition duration-150"></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="p-4 rounded-xl border border-slate-800/60 bg-slate-950/20 flex gap-4">
+                                    <div class="flex flex-col items-center justify-start pt-3">
+                                        <input type="radio" name="quiz-correct" id="quiz-correct-c" value="c" class="h-4.5 w-4.5 accent-amber-500">
+                                        <span class="text-[10px] font-bold text-slate-500 mt-2 uppercase">正确</span>
+                                    </div>
+                                    <div class="flex-grow space-y-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs font-bold text-amber-500">选项 C</span>
+                                            <input type="text" id="quiz-opt-text-c" placeholder="选项描述" class="w-full bg-slate-900/50 border border-slate-800 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition duration-150">
+                                        </div>
+                                        <textarea id="quiz-opt-exp-c" placeholder="解析说明 (Explain why correct/incorrect)" rows="1" class="w-full bg-slate-900/30 border border-slate-800/40 rounded-lg px-3 py-1.5 text-xs text-slate-400 focus:outline-none focus:border-amber-500 transition duration-150"></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="p-4 rounded-xl border border-slate-800/60 bg-slate-950/20 flex gap-4">
+                                    <div class="flex flex-col items-center justify-start pt-3">
+                                        <input type="radio" name="quiz-correct" id="quiz-correct-d" value="d" class="h-4.5 w-4.5 accent-amber-500">
+                                        <span class="text-[10px] font-bold text-slate-500 mt-2 uppercase">正确</span>
+                                    </div>
+                                    <div class="flex-grow space-y-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs font-bold text-amber-500">选项 D</span>
+                                            <input type="text" id="quiz-opt-text-d" placeholder="选项描述" class="w-full bg-slate-900/50 border border-slate-800 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition duration-150">
+                                        </div>
+                                        <textarea id="quiz-opt-exp-d" placeholder="解析说明 (Explain why correct/incorrect)" rows="1" class="w-full bg-slate-900/30 border border-slate-800/40 rounded-lg px-3 py-1.5 text-xs text-slate-400 focus:outline-none focus:border-amber-500 transition duration-150"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 5: Summary -->
+                    <div id="panel-summary" class="tab-panel hidden space-y-6">
+                        <div class="glass-panel p-5 rounded-2xl border-slate-800/80 space-y-4 font-sans">
+                            <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                                <i class="ph ph-textbox text-amber-400 text-lg"></i>
+                                <span>总结填空交互配置</span>
+                            </h3>
+                            <div class="p-3 bg-amber-500/5 border border-amber-500/10 rounded-xl text-xs text-amber-300 leading-relaxed space-y-1.5">
+                                <p class="font-bold flex items-center gap-1"><i class="ph ph-info"></i>填空段落标记法：</p>
+                                <p>在总结段落文本中，直接将需要填空的内容放入方括号中，例如：<code>[非谋利]</code> 或 <code>[12]</code>。</p>
+                                <p>保存时，程序会<strong>自动转换</strong>为 <code>BLANK_1</code> 等占位符，生成 <code>textParts</code> 与 <code>blanks</code> 数组。极其简便！</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">总结段落（使用中括号包围正确答案）*</label>
+                                <textarea id="summary-marked-text" placeholder="输入包含标记的总结。例如：旅游是基于 [非谋利] 原则，在不超过一年的时间内，出于 [休闲、商务等目的] 而进行的自愿旅行。" rows="6"
+                                    class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition duration-200"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">备选单词池 (Word Pool) - 英文逗号分隔</label>
+                                <input type="text" id="summary-word-pool" placeholder="例如：非谋利, 休闲、商务等目的, 营利, 定居, 12, 8"
+                                    class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition duration-200">
+                                <span class="text-[10px] text-slate-500 mt-1 block">提示：单词池是备选拖拽卡片的合集，通常应该包含所有正确答案以及若干误导项。</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 6: Raw JSON -->
+                    <div id="panel-raw-json" class="tab-panel hidden space-y-4 font-sans">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-slate-400">底层 <code>noteContent</code> JSON（将在此转换为字符串与数据库交互）：</span>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="formatJson()" class="px-3 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition duration-150">
+                                    格式化 JSON
+                                </button>
+                                <button type="button" onclick="validateJsonAction()" class="px-3 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition duration-150">
+                                    校验格式
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="json-status" class="hidden"></div>
+
+                        <textarea id="form-content-json" oninput="validateJson()" rows="16" placeholder="输入 JSON 格式..."
+                            class="w-full bg-slate-950/60 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-300 font-mono focus:outline-none focus:border-amber-500 transition duration-200"></textarea>
+                    </div>
+
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <!-- Script Block -->
+    <script>
+        // Global State variables
+        let notes = [];
+        let coursesData = [];
+        let lessonsData = [];
+        let activeNote = null;
+        let isCreating = false;
+        let activeTab = 'general';
+
+        // Default template for new notes
+        const JSON_TEMPLATE = {
+            "topic": "新笔记主题",
+            "era": "核心概念与分类",
+            "persona": "笔记副标题",
+            "timeframe": "适用时期/阶段",
+            "points": [
+                { "id": "p1", "title": "知识要点一", "detail": "在这里输入知识要点的详细说明内容。" }
+            ],
+            "flashcards": [
+                { "front": "背诵正面问题/单词", "back": "背诵背面答案/翻译" }
+            ],
+            "quiz": {
+                "question": "这里是随堂小测验的测试问题干？",
+                "options": [
+                    { "id": "a", "text": "选项 A 描述", "isCorrect": true, "explanation": "这是正确答案的解析说明" },
+                    { "id": "b", "text": "选项 B 描述", "isCorrect": false, "explanation": "解析 B 为什么不正确" },
+                    { "id": "c", "text": "选项 C 描述", "isCorrect": false, "explanation": "解析 C 为什么不正确" },
+                    { "id": "d", "text": "选项 D 描述", "isCorrect": false, "explanation": "解析 D 为什么不正确" }
+                ]
+            },
+            "summary": {
+                "textParts": [ "这是包含 ", "BLANK_1", " 的总结填空段落示例。" ],
+                "blanks": [ "填空答案" ],
+                "wordPool": [ "填空答案", "干扰项1", "干扰项2" ]
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            updateConnectionStatus('loading', '连接服务中...');
+            await fetchCoursesAndLessons();
+            await fetchNotes();
+        });
+
+        // ==========================================
+        // API Calls & Data Retrieval
+        // ==========================================
+        async function fetchCoursesAndLessons() {
+            try {
+                // Fetch courses
+                const resCourses = await fetch('/api/courses');
+                if (resCourses.ok) {
+                    coursesData = await resCourses.json();
+                    populateCourseDropdowns();
+                } else {
+                    console.error("获取科目列表失败");
+                }
+
+                // Fetch lessons
+                const resLessons = await fetch('/api/lessons');
+                if (resLessons.ok) {
+                    lessonsData = await resLessons.json();
+                } else {
+                    console.error("获取课时列表失败");
+                }
+            } catch (err) {
+                console.error("加载科目与课程数据出错:", err);
+            }
+        }
+
+        async function fetchNotes() {
+            try {
+                updateConnectionStatus('loading', '正在拉取笔记数据...');
+                const res = await fetch('/api/notes');
+                if (!res.ok) throw new Error("服务器返回错误");
+                notes = await res.json();
+                renderNotesList();
+                updateConnectionStatus('connected', '服务连接正常');
+            } catch (err) {
+                console.error(err);
+                updateConnectionStatus('error', '加载笔记失败');
+                alert("加载笔记列表失败: " + err.message);
+            }
+        }
+
+        // ==========================================
+        // UI Dropdown Bindings
+        // ==========================================
+        function populateCourseDropdowns() {
+            const filterSelect = document.getElementById('filter-course');
+            const assocSelect = document.getElementById('assoc-course');
+            
+            // Clear except first
+            filterSelect.innerHTML = '<option value="">全部科目</option>';
+            assocSelect.innerHTML = '<option value="">-- 请选择科目 --</option>';
+
+            coursesData.forEach(c => {
+                const opt1 = document.createElement('option');
+                opt1.value = c.id;
+                opt1.textContent = c.name;
+                filterSelect.appendChild(opt1);
+
+                const opt2 = document.createElement('option');
+                opt2.value = c.id;
+                opt2.textContent = c.name;
+                assocSelect.appendChild(opt2);
+            });
+        }
+
+        function onFilterCourseChange() {
+            const courseId = document.getElementById('filter-course').value;
+            const lessonSelect = document.getElementById('filter-lesson');
+            
+            lessonSelect.innerHTML = '<option value="">全部课时</option>';
+            
+            if (!courseId) {
+                lessonSelect.disabled = true;
+                filterNotes();
+                return;
+            }
+
+            lessonSelect.disabled = false;
+            const filteredLessons = lessonsData.filter(l => l.course_id === courseId);
+            filteredLessons.forEach(l => {
+                const opt = document.createElement('option');
+                opt.value = l.id;
+                opt.textContent = l.title;
+                lessonSelect.appendChild(opt);
+            });
+
+            filterNotes();
+        }
+
+        function onAssocCourseChange() {
+            const courseId = document.getElementById('assoc-course').value;
+            const lessonSelect = document.getElementById('assoc-lesson');
+            
+            lessonSelect.innerHTML = '<option value="">-- 请选择课时 / 章节 --</option>';
+            
+            if (!courseId) {
+                lessonSelect.disabled = true;
+                return;
+            }
+
+            lessonSelect.disabled = false;
+            const filteredLessons = lessonsData.filter(l => l.course_id === courseId);
+            filteredLessons.forEach(l => {
+                const opt = document.createElement('option');
+                opt.value = l.id;
+                opt.textContent = l.title;
+                lessonSelect.appendChild(opt);
+            });
+        }
+
+        // ==========================================
+        // Sidebar Rendering and Search
+        // ==========================================
+        function renderNotesList() {
+            const container = document.getElementById('notes-list-container');
+            const searchVal = document.getElementById('search-input').value.trim().toLowerCase();
+            const filterCourseId = document.getElementById('filter-course').value;
+            const filterLessonId = document.getElementById('filter-lesson').value;
+            
+            let filtered = notes;
+
+            // Search Filter
+            if (searchVal) {
+                filtered = filtered.filter(n => {
+                    const topicMatch = (n.topic || '').toLowerCase().includes(searchVal);
+                    const tagMatch = n.tags && n.tags.some(t => t.toLowerCase().includes(searchVal));
+                    return topicMatch || tagMatch;
+                });
+            }
+
+            // Course Filter (via association)
+            if (filterCourseId) {
+                filtered = filtered.filter(n => {
+                    return n.courses && n.courses.some(c => c.courseId === filterCourseId);
+                });
+            }
+
+            // Lesson Filter (via association)
+            if (filterLessonId) {
+                filtered = filtered.filter(n => {
+                    return n.courses && n.courses.some(c => c.lessonId === filterLessonId);
+                });
+            }
+
+            document.getElementById('stat-total-notes').textContent = `已选/总计: ${filtered.length}/${notes.length}`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-40 text-slate-500 font-sans">
+                        <i class="ph ph-folder-open text-3xl mb-2"></i>
+                        <span class="text-xs">未找到符合条件的笔记</span>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(n => {
+                const isActive = activeNote && activeNote.uuid === n.uuid;
+                const tagBadges = n.tags && n.tags.length > 0
+                    ? n.tags.map(t => `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded text-[10px]">${t}</span>`).join(' ')
+                    : '<span class="text-[10px] text-slate-600">无标签</span>';
+
+                // Map courses associated
+                const courseTags = n.courses && n.courses.length > 0
+                    ? n.courses.map(assoc => {
+                        const cName = getCourseName(assoc.courseId);
+                        return `<span class="bg-slate-900 text-slate-400 border border-slate-800 px-1.5 py-0.5 rounded text-[10px]">${cName}</span>`;
+                      }).join(' ')
+                    : '<span class="text-[10px] text-rose-500/70">未关联课程</span>';
+
+                return `
+                    <div onclick="selectNote('${n.uuid}')" 
+                        class="glass-card p-4 rounded-xl cursor-pointer border relative flex flex-col gap-2 transition duration-150 ${isActive ? 'active' : 'border-slate-800'}"
+                        data-uuid="${n.uuid}">
+                        <div class="flex justify-between items-start gap-2">
+                            <span class="font-bold text-sm text-slate-200 line-clamp-2">${n.topic || '未命名主题'}</span>
+                        </div>
+                        <div class="flex flex-wrap gap-1 mt-0.5">
+                            ${tagBadges}
+                        </div>
+                        <div class="flex flex-wrap gap-1 mt-1 border-t border-slate-900/60 pt-1.5">
+                            ${courseTags}
+                        </div>
+                        <div class="text-[10px] text-slate-500 mt-1 font-sans flex justify-between">
+                            <span>UUID: ${n.uuid.substring(0, 8)}...</span>
+                            <span>${n.created_at || ''}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterNotes() {
+            renderNotesList();
+        }
+
+        function getCourseName(courseId) {
+            const course = coursesData.find(c => c.id === courseId);
+            return course ? course.name : courseId;
+        }
+
+        function getLessonTitle(lessonId) {
+            const lesson = lessonsData.find(l => l.id === lessonId);
+            return lesson ? lesson.title : lessonId;
+        }
+
+        // ==========================================
+        // Note Loading and Tab Switching
+        // ==========================================
+        async function selectNote(uuid) {
+            isCreating = false;
+            try {
+                updateConnectionStatus('loading', '读取笔记详情...');
+                const res = await fetch(`/api/notes/${uuid}`);
+                if (!res.ok) throw new Error("获取详情失败");
+                const data = await res.json();
+                activeNote = data;
+
+                // Update client app preview link
+                document.getElementById('client-app-btn').href = `/Pages/appMemorizeNotes.html?uuid=${uuid}`;
+
+                // Sync UI elements
+                document.getElementById('editor-empty-state').classList.add('hidden');
+                document.getElementById('note-editor-form').classList.remove('hidden');
+                document.getElementById('delete-note-btn').classList.remove('hidden');
+                document.getElementById('editor-action-badge').textContent = "编辑";
+                document.getElementById('editor-action-badge').className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/20";
+                
+                // Form Bindings
+                document.getElementById('form-uuid').value = data.uuid;
+                document.getElementById('form-uuid').disabled = true; // Read-only for existing
+                document.getElementById('form-topic').value = data.topic || '';
+                document.getElementById('form-tags').value = (data.tags || []).join(',');
+                
+                const content = data.noteContent || {};
+                document.getElementById('form-era').value = content.era || '';
+                document.getElementById('form-persona').value = content.persona || '';
+                document.getElementById('form-timeframe').value = content.timeframe || '';
+
+                // Raw JSON Tab binding
+                document.getElementById('form-content-json').value = JSON.stringify(content, null, 2);
+                validateJson();
+
+                // Setup Other Tab Panels
+                renderAssociations();
+                renderPointsPanel(content.points || []);
+                renderFlashcardsPanel(content.flashcards || []);
+                renderQuizPanel(content.quiz || {});
+                renderSummaryPanel(content.summary || {});
+
+                // Default switch to general info
+                switchTab('general');
+                
+                // Refresh list highlight
+                renderNotesList();
+                updateConnectionStatus('connected', '服务连接正常');
+            } catch (err) {
+                console.error(err);
+                updateConnectionStatus('error', '详情加载失败');
+                alert("加载笔记详情失败: " + err.message);
+            }
+        }
+
+        function switchTab(tabId) {
+            // First, sync current tab data to activeNote model
+            syncCurrentTabToModel();
+
+            // Set active class on buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            // Show proper panel
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            document.getElementById(`panel-${tabId}`).classList.remove('hidden');
+
+            activeTab = tabId;
+
+            // If switching TO Raw JSON tab, update JSON text from working state
+            if (tabId === 'raw-json') {
+                const currentContent = buildContentFromForms();
+                document.getElementById('form-content-json').value = JSON.stringify(currentContent, null, 2);
+                validateJson();
+            }
+        }
+
+        // ==========================================
+        // Form Bindings & Component Renderers
+        // ==========================================
+
+        // Associations renderer
+        function renderAssociations() {
+            const container = document.getElementById('associations-container');
+            const assocs = activeNote.courses || [];
+            
+            if (assocs.length === 0) {
+                container.innerHTML = `<div class="text-xs text-rose-400 font-bold bg-rose-500/5 border border-rose-500/10 p-3 rounded-xl flex items-center gap-1.5"><i class="ph ph-warning-circle"></i><span>当前笔记未绑定任何课程，学生端无法显示。请在下方选择课程课时并添加。</span></div>`;
+                return;
+            }
+
+            container.innerHTML = assocs.map((a, idx) => {
+                const courseName = getCourseName(a.courseId);
+                const lessonTitle = getLessonTitle(a.lessonId);
+                return `
+                    <div class="flex items-center justify-between bg-slate-900/60 border border-slate-800 p-3 rounded-xl hover:bg-slate-900 transition">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold text-slate-200">${courseName}</span>
+                            <span class="text-[11px] text-slate-400 mt-0.5">${lessonTitle}</span>
+                        </div>
+                        <button type="button" onclick="removeAssociation(${idx})" class="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition">
+                            <i class="ph-bold ph-trash"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addAssociation() {
+            const courseId = document.getElementById('assoc-course').value;
+            const lessonId = document.getElementById('assoc-lesson').value;
+
+            if (!courseId || !lessonId) {
+                alert("请先选择科目与课时！");
+                return;
+            }
+
+            if (!activeNote.courses) activeNote.courses = [];
+            
+            // Check duplicate
+            const isDup = activeNote.courses.some(a => a.courseId === courseId && a.lessonId === lessonId);
+            if (isDup) {
+                alert("该课时关联已存在！");
+                return;
+            }
+
+            activeNote.courses.push({ courseId, lessonId });
+            renderAssociations();
+        }
+
+        function removeAssociation(idx) {
+            activeNote.courses.splice(idx, 1);
+            renderAssociations();
+        }
+
+        // Points Tab renderer
+        function renderPointsPanel(points) {
+            const container = document.getElementById('points-container');
+            container.innerHTML = '';
+            
+            if (points.length === 0) {
+                addPointField();
+                return;
+            }
+
+            points.forEach((p, idx) => {
+                appendPointMarkup(p.id || `p${idx+1}`, p.title || '', p.detail || '');
+            });
+        }
+
+        function appendPointMarkup(id, title, detail) {
+            const container = document.getElementById('points-container');
+            const div = document.createElement('div');
+            div.className = 'point-row p-4 rounded-xl border border-slate-805 bg-slate-950/20 space-y-3 relative';
+            div.innerHTML = `
+                <div class="flex justify-between items-center font-sans">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">要点标识ID</span>
+                        <input type="text" value="${id}" class="point-id bg-slate-900 border border-slate-800 rounded px-2 py-0.5 text-xs text-amber-500 font-mono focus:outline-none w-20">
+                    </div>
+                    <button type="button" onclick="this.closest('.point-row').remove()" class="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-rose-500/10 transition font-sans">
+                        <i class="ph-bold ph-trash font-bold"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 font-sans">
+                    <div class="md:col-span-1">
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">要点标题</label>
+                        <input type="text" value="${title}" placeholder="例如：历史定位" class="point-title w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">详细描述</label>
+                        <textarea rows="2" placeholder="详细解释说明该知识点..." class="point-detail w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500">${detail}</textarea>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function addPointField() {
+            const count = document.querySelectorAll('.point-row').length + 1;
+            appendPointMarkup(`p${count}`, '', '');
+        }
+
+        // Flashcards Tab renderer
+        function renderFlashcardsPanel(cards) {
+            const container = document.getElementById('flashcards-container');
+            container.innerHTML = '';
+            
+            if (cards.length === 0) {
+                addFlashcardField();
+                return;
+            }
+
+            cards.forEach(c => {
+                appendFlashcardMarkup(c.front || '', c.back || '');
+            });
+        }
+
+        function appendFlashcardMarkup(front, back) {
+            const container = document.getElementById('flashcards-container');
+            const div = document.createElement('div');
+            div.className = 'flashcard-row p-4 rounded-xl border border-slate-805 bg-slate-950/20 space-y-3 relative font-sans';
+            div.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                        <i class="ph ph-cardholder"></i>
+                        <span>记忆卡片</span>
+                    </span>
+                    <button type="button" onclick="this.closest('.flashcard-row').remove()" class="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-rose-500/10 transition">
+                        <i class="ph-bold ph-trash"></i>
+                    </button>
+                </div>
+                <div class="space-y-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">正面 (Front Question/Word)</label>
+                        <textarea placeholder="输入提问词或词组" rows="2" class="card-front w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500">${front}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">背面 (Back Answer/Translation)</label>
+                        <textarea placeholder="输入回答或释义" rows="2" class="card-back w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500">${back}</textarea>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function addFlashcardField() {
+            appendFlashcardMarkup('', '');
+        }
+
+        // Quiz Tab Bindings
+        function renderQuizPanel(quiz) {
+            document.getElementById('quiz-question').value = quiz.question || '';
+            const options = quiz.options || [];
+
+            // A
+            const optA = options.find(o => o.id === 'a') || {};
+            document.getElementById('quiz-opt-text-a').value = optA.text || '';
+            document.getElementById('quiz-opt-exp-a').value = optA.explanation || '';
+            document.getElementById('quiz-correct-a').checked = !!optA.isCorrect;
+
+            // B
+            const optB = options.find(o => o.id === 'b') || {};
+            document.getElementById('quiz-opt-text-b').value = optB.text || '';
+            document.getElementById('quiz-opt-exp-b').value = optB.explanation || '';
+            document.getElementById('quiz-correct-b').checked = !!optB.isCorrect;
+
+            // C
+            const optC = options.find(o => o.id === 'c') || {};
+            document.getElementById('quiz-opt-text-c').value = optC.text || '';
+            document.getElementById('quiz-opt-exp-c').value = optC.explanation || '';
+            document.getElementById('quiz-correct-c').checked = !!optC.isCorrect;
+
+            // D
+            const optD = options.find(o => o.id === 'd') || {};
+            document.getElementById('quiz-opt-text-d').value = optD.text || '';
+            document.getElementById('quiz-opt-exp-d').value = optD.explanation || '';
+            document.getElementById('quiz-correct-d').checked = !!optD.isCorrect;
+        }
+
+        // Summary Tab Bindings (Marked Paragraph style)
+        function renderSummaryPanel(summary) {
+            // Restore brackets for BLANKs
+            const rawText = deserializeSummary(summary);
+            document.getElementById('summary-marked-text').value = rawText;
+            
+            // Set wordpool
+            document.getElementById('summary-word-pool').value = (summary.wordPool || []).join(',');
+        }
+
+        // Convert structured parts back to user-editable bracket format
+        function deserializeSummary(summaryObj) {
+            if (!summaryObj || !summaryObj.textParts || !summaryObj.blanks) return "";
+            
+            let result = "";
+            let blankIdx = 0;
+            
+            for (const part of summaryObj.textParts) {
+                if (part && part.startsWith("BLANK_")) {
+                    const blankWord = summaryObj.blanks[blankIdx] || "";
+                    result += `[${blankWord}]`;
+                    blankIdx++;
+                } else {
+                    result += part || "";
+                }
+            }
+            return result;
+        }
+
+        // Parse user-marked text with brackets into parts and blanks arrays
+        function serializeSummary(rawText) {
+            const textParts = [];
+            const blanks = [];
+            
+            let currentIdx = 0;
+            let blankCount = 1;
+            
+            // Matches anything inside brackets: [word]
+            const regex = /\[([^\]]+)\]/g;
+            let match;
+            
+            while ((match = regex.exec(rawText)) !== null) {
+                const matchIndex = match.index;
+                const innerText = match[1];
+                
+                // Add leading string
+                textParts.push(rawText.substring(currentIdx, matchIndex));
+                
+                // Add blank tag and blank word
+                const blankId = `BLANK_${blankCount++}`;
+                textParts.push(blankId);
+                blanks.push(innerText);
+                
+                currentIdx = regex.lastIndex;
+            }
+            
+            // Add trailing string
+            textParts.push(rawText.substring(currentIdx));
+            
+            return { textParts, blanks };
+        }
+
+        // ==========================================
+        // Model Synchronizations
+        // ==========================================
+        function syncCurrentTabToModel() {
+            if (!activeNote) return;
+
+            if (activeTab === 'raw-json') {
+                const jsonText = document.getElementById('form-content-json').value.trim();
+                try {
+                    activeNote.noteContent = JSON.parse(jsonText);
+                } catch(e) {
+                    // Ignore parsing error here; handled on form submit
+                }
+            } else {
+                activeNote.noteContent = buildContentFromForms();
+            }
+        }
+
+        // Build a complete JSON object matching noteData structure from visual forms
+        function buildContentFromForms() {
+            // General
+            const era = document.getElementById('form-era').value.trim();
+            const persona = document.getElementById('form-persona').value.trim();
+            const timeframe = document.getElementById('form-timeframe').value.trim();
+            const topic = document.getElementById('form-topic').value.trim();
+
+            // Points
+            const points = [];
+            document.querySelectorAll('.point-row').forEach(row => {
+                const id = row.querySelector('.point-id').value.trim();
+                const title = row.querySelector('.point-title').value.trim();
+                const detail = row.querySelector('.point-detail').value.trim();
+                if (id && title) {
+                    points.push({ id, title, detail });
+                }
+            });
+
+            // Flashcards
+            const flashcards = [];
+            document.querySelectorAll('.flashcard-row').forEach(row => {
+                const front = row.querySelector('.card-front').value.trim();
+                const back = row.querySelector('.card-back').value.trim();
+                if (front || back) {
+                    flashcards.push({ front, back });
+                }
+            });
+
+            // Quiz
+            const quizCorrect = document.querySelector('input[name="quiz-correct"]:checked');
+            const correctId = quizCorrect ? quizCorrect.value : '';
+
+            const quiz = {
+                question: document.getElementById('quiz-question').value.trim(),
+                options: [
+                    {
+                        id: 'a',
+                        text: document.getElementById('quiz-opt-text-a').value.trim(),
+                        isCorrect: correctId === 'a',
+                        explanation: document.getElementById('quiz-opt-exp-a').value.trim()
+                    },
+                    {
+                        id: 'b',
+                        text: document.getElementById('quiz-opt-text-b').value.trim(),
+                        isCorrect: correctId === 'b',
+                        explanation: document.getElementById('quiz-opt-exp-b').value.trim()
+                    },
+                    {
+                        id: 'c',
+                        text: document.getElementById('quiz-opt-text-c').value.trim(),
+                        isCorrect: correctId === 'c',
+                        explanation: document.getElementById('quiz-opt-exp-c').value.trim()
+                    },
+                    {
+                        id: 'd',
+                        text: document.getElementById('quiz-opt-text-d').value.trim(),
+                        isCorrect: correctId === 'd',
+                        explanation: document.getElementById('quiz-opt-exp-d').value.trim()
+                    }
+                ]
+            };
+
+            // Summary
+            const rawSummaryText = document.getElementById('summary-marked-text').value;
+            const parsedSummary = serializeSummary(rawSummaryText);
+            
+            const poolStr = document.getElementById('summary-word-pool').value;
+            const pool = poolStr.split(',')
+                                .map(w => w.trim())
+                                .filter(w => w !== '');
+            
+            // Ensure wordpool has answers included and unique
+            parsedSummary.blanks.forEach(b => {
+                if (b && !pool.includes(b)) {
+                    pool.push(b);
+                }
+            });
+
+            const summary = {
+                textParts: parsedSummary.textParts,
+                blanks: parsedSummary.blanks,
+                wordPool: [...new Set(pool)] // Remove duplicates
+            };
+
+            return {
+                topic,
+                era,
+                persona,
+                timeframe,
+                points,
+                flashcards,
+                quiz,
+                summary
+            };
+        }
+
+        // ==========================================
+        // JSON Validators
+        // ==========================================
+        function validateJson() {
+            const textarea = document.getElementById('form-content-json');
+            const statusBadge = document.getElementById('json-status');
+            const val = textarea.value.trim();
+            
+            if (!val) {
+                statusBadge.className = "mb-2 p-2 rounded-lg text-xs flex items-center gap-1.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 font-sans";
+                statusBadge.innerHTML = `<i class="ph-bold ph-x-circle text-sm"></i><span>JSON 内容不能为空</span>`;
+                statusBadge.classList.remove('hidden');
+                return false;
+            }
+
+            try {
+                JSON.parse(val);
+                statusBadge.className = "mb-2 p-2 rounded-lg text-xs flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-sans";
+                statusBadge.innerHTML = `<i class="ph-bold ph-check-circle text-sm"></i><span>JSON 格式校验通过</span>`;
+                statusBadge.classList.remove('hidden');
+                return true;
+            } catch (err) {
+                statusBadge.className = "mb-2 p-2 rounded-lg text-xs flex items-center gap-1.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 font-sans";
+                statusBadge.innerHTML = `<i class="ph-bold ph-warning text-sm"></i><span>语法错误: ${err.message}</span>`;
+                statusBadge.classList.remove('hidden');
+                return false;
+            }
+        }
+
+        function formatJson() {
+            const textarea = document.getElementById('form-content-json');
+            try {
+                const obj = JSON.parse(textarea.value);
+                textarea.value = JSON.stringify(obj, null, 2);
+                validateJson();
+            } catch(e) {
+                alert("JSON 语法有误，无法格式化！");
+            }
+        }
+
+        function validateJsonAction() {
+            if (validateJson()) {
+                alert("JSON 语法完全正确！");
+            } else {
+                alert("JSON 语法校验失败，请检查红字提示。");
+            }
+        }
+
+        // ==========================================
+        // Save, Create and Delete Notes
+        // ==========================================
+        function initNewNote() {
+            isCreating = true;
+            
+            // Create a temp UUID with fallback for insecure HTTP contexts
+            const newUuid = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+                ? crypto.randomUUID()
+                : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                  });
+
+            activeNote = {
+                uuid: newUuid,
+                topic: '新建泰语核心笔记',
+                tags: ['新标签'],
+                courses: [],
+                noteContent: JSON.parse(JSON.stringify(JSON_TEMPLATE))
+            };
+
+            // Update client app preview link
+            document.getElementById('client-app-btn').href = `/Pages/appMemorizeNotes.html?uuid=${newUuid}`;
+
+            // Show Form, Hide Empty
+            document.getElementById('editor-empty-state').classList.add('hidden');
+            document.getElementById('note-editor-form').classList.remove('hidden');
+            document.getElementById('delete-note-btn').classList.add('hidden');
+            document.getElementById('editor-action-badge').textContent = "新建";
+            document.getElementById('editor-action-badge').className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/20";
+
+            // Bind values
+            document.getElementById('form-uuid').value = newUuid;
+            document.getElementById('form-uuid').disabled = false; // Editable on creation
+            document.getElementById('form-topic').value = activeNote.topic;
+            document.getElementById('form-tags').value = activeNote.tags.join(',');
+            
+            document.getElementById('form-era').value = activeNote.noteContent.era;
+            document.getElementById('form-persona').value = activeNote.noteContent.persona;
+            document.getElementById('form-timeframe').value = activeNote.noteContent.timeframe;
+
+            document.getElementById('form-content-json').value = JSON.stringify(activeNote.noteContent, null, 2);
+            validateJson();
+
+            renderAssociations();
+            renderPointsPanel(activeNote.noteContent.points);
+            renderFlashcardsPanel(activeNote.noteContent.flashcards);
+            renderQuizPanel(activeNote.noteContent.quiz);
+            renderSummaryPanel(activeNote.noteContent.summary);
+
+            switchTab('general');
+            renderNotesList();
+        }
+
+        async function saveNote(e) {
+            e.preventDefault();
+            
+            // Sync active tab state
+            syncCurrentTabToModel();
+
+            // Validate tags
+            const tagsInput = document.getElementById('form-tags').value;
+            const tagsArr = tagsInput.split(',')
+                                     .map(t => t.trim())
+                                     .filter(t => t !== '');
+
+            // Validate JSON if currently in raw tab
+            if (activeTab === 'raw-json') {
+                const isValid = validateJson();
+                if (!isValid) {
+                    alert("JSON 语法存在错误，请先修正后再保存！");
+                    return;
+                }
+            }
+
+            const uuid = document.getElementById('form-uuid').value.trim();
+            const topic = document.getElementById('form-topic').value.trim();
+            
+            if (!uuid || !topic) {
+                alert("唯一标识 (UUID) 和主题 (Topic) 是必填项！");
+                return;
+            }
+
+            const payload = {
+                uuid: uuid,
+                topic: topic,
+                tags: tagsArr,
+                noteContent: activeNote.noteContent,
+                courses: activeNote.courses || []
+            };
+
+            try {
+                updateConnectionStatus('loading', '正在提交保存...');
+                const url = isCreating ? '/api/notes' : `/api/notes/${uuid}`;
+                const method = isCreating ? 'POST' : 'PUT';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || "保存失败");
+                }
+
+                const savedNote = await response.json();
+                alert("笔记保存成功！");
+
+                isCreating = false;
+                
+                // Re-fetch list to sync details
+                await fetchNotes();
+
+                // Select saved note
+                selectNote(savedNote.uuid);
+            } catch (err) {
+                console.error(err);
+                updateConnectionStatus('error', '保存失败');
+                alert("保存失败: " + err.message);
+            }
+        }
+
+        async function deleteNote() {
+            if (!activeNote || isCreating) return;
+
+            const confirmDel = confirm(`您确定要永久删除笔记【${activeNote.topic}】以及它的课程关联吗？此操作不可撤销。`);
+            if (!confirmDel) return;
+
+            try {
+                updateConnectionStatus('loading', '正在删除笔记...');
+                const res = await fetch(`/api/notes/${activeNote.uuid}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error("删除请求失败");
+                
+                alert("笔记删除成功！");
+                activeNote = null;
+                
+                document.getElementById('note-editor-form').classList.add('hidden');
+                document.getElementById('editor-empty-state').classList.remove('hidden');
+                
+                await fetchNotes();
+            } catch(err) {
+                console.error(err);
+                updateConnectionStatus('error', '删除失败');
+                alert("删除失败: " + err.message);
+            }
+        }
+
+        // ==========================================
+        // Prompt Modal Functions
+        // ==========================================
+        async function openPromptModal() {
+            document.getElementById('prompt-modal').classList.remove('hidden');
+            document.getElementById('prompt-markdown-textarea').value = '加载中...';
+            try {
+                updateConnectionStatus('loading', '正在加载 Prompt...');
+                const res = await fetch('/api/prompt?type=memorize_notes');
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('prompt-markdown-textarea').value = data.content;
+                    updateConnectionStatus('connected', '已加载 Prompt');
+                    setTimeout(() => updateConnectionStatus('connected', '服务连接正常'), 1500);
+                } else {
+                    alert("获取 Prompt 失败: " + res.statusText);
+                    updateConnectionStatus('connected', '服务连接正常');
+                }
+            } catch (err) {
+                console.error(err);
+                alert("无法连接服务器获取 Prompt");
+                updateConnectionStatus('error', '网络异常，获取 Prompt 失败');
+            }
+        }
+
+        function closePromptModal() {
+            document.getElementById('prompt-modal').classList.add('hidden');
+        }
+
+        function copyPromptText() {
+            const textarea = document.getElementById('prompt-markdown-textarea');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(textarea.value).then(() => {
+                const btnText = document.getElementById('copy-prompt-btn-text');
+                const icon = document.getElementById('copy-prompt-icon');
+                
+                btnText.textContent = "已复制!";
+                icon.className = "ph ph-check text-emerald-400";
+                
+                setTimeout(() => {
+                    btnText.textContent = "复制 Prompt";
+                    icon.className = "ph ph-copy";
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert("复制失败，请手动选择并复制。");
+            });
+        }
+
+        async function savePromptMarkdown() {
+            const content = document.getElementById('prompt-markdown-textarea').value;
+            try {
+                updateConnectionStatus('loading', '正在保存 Prompt...');
+                const res = await fetch('/api/prompt?type=memorize_notes', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+
+                if (res.ok) {
+                    alert("Prompt 修改保存成功！");
+                    closePromptModal();
+                    updateConnectionStatus('connected', 'Prompt 已保存');
+                    setTimeout(() => updateConnectionStatus('connected', '服务连接正常'), 1500);
+                } else {
+                    alert("保存失败: " + res.statusText);
+                    updateConnectionStatus('connected', '服务连接正常');
+                }
+            } catch (err) {
+                console.error(err);
+                alert("保存 Prompt 失败");
+                updateConnectionStatus('error', '网络异常，保存 Prompt 失败');
+            }
+        }
+
+        // ==========================================
+        // Helper to update connection indicator
+        // ==========================================
+        function updateConnectionStatus(status, text) {
+            const el = document.getElementById('connection-status');
+            if (!el) return;
+            if (status === 'loading') {
+                el.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20";
+                el.innerHTML = `<span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span><span>${text}</span>`;
+            } else if (status === 'connected') {
+                el.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+                el.innerHTML = `<span class="h-2 w-2 rounded-full bg-emerald-500"></span><span>${text}</span>`;
+            } else if (status === 'error') {
+                el.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20";
+                el.innerHTML = `<span class="h-2 w-2 rounded-full bg-rose-500 animate-pulse"></span><span>${text}</span>`;
+            }
+        }
+    </script>
+
+    <!-- Prompt Markdown Modal -->
+    <div id="prompt-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-filter backdrop-blur-sm p-4">
+        <div class="glass-panel border border-slate-800 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-800/80 flex justify-between items-center bg-slate-900/40">
+                <h3 class="text-base font-bold text-slate-205 flex items-center gap-2">
+                    <i class="ph ph-note text-amber-400"></i> AI 互动笔记 Prompt 配置 (appMemorizeNotes.md)
+                </h3>
+                <div class="flex items-center gap-2 font-sans">
+                    <button onclick="copyPromptText()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition flex items-center gap-1.5">
+                        <i id="copy-prompt-icon" class="ph ph-copy"></i>
+                        <span id="copy-prompt-btn-text">复制 Prompt</span>
+                    </button>
+                    <button onclick="closePromptModal()" class="text-slate-400 hover:text-white transition pl-2">
+                        <i class="ph ph-x text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="p-6 overflow-y-auto custom-scrollbar space-y-4 flex-grow text-sm text-slate-300 font-sans">
+                <p class="text-xs text-slate-400 leading-relaxed font-sans">
+                    此 Prompt 用于指导 AI 生产符合互动笔记规范的完整 JSON 数据。你可以查看和自定义 Prompt 的内容，修改后点击“保存修改”将持久化更新到 <b>PromptMD/appMemorizeNotes.md</b>。
+                </p>
+
+                <!-- Textarea input -->
+                <div class="flex-grow flex flex-col min-h-[350px]">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Prompt 模板内容</label>
+                    <textarea id="prompt-markdown-textarea" class="flex-grow w-full font-mono text-xs bg-slate-950 border border-slate-800 rounded-xl p-4 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-slate-300 custom-scrollbar resize-none min-h-[300px] leading-relaxed"></textarea>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-slate-800/80 bg-slate-900/40 flex justify-end gap-3 shrink-0 font-sans">
+                <button onclick="closePromptModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white border border-slate-850 hover:bg-slate-850 transition">
+                    取消
+                </button>
+                <button onclick="savePromptMarkdown()" class="px-5 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:opacity-90 shadow-md shadow-amber-500/20 transition flex items-center gap-1.5">
+                    <i class="ph ph-floppy-disk"></i> 保存修改
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

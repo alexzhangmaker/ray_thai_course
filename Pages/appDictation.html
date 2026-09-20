@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>泰语听写助手 · SM-2 记忆练习 - vCourse.ThaiNotes</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Serif+Thai:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Noto Sans SC', 'sans-serif'],
+                        thai: ['Noto Serif Thai', 'Sarabun', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at 50% 0%, #17112c 0%, #0c0a17 60%, #07060d 100%);
+            --glass-bg: rgba(26, 22, 48, 0.65);
+            --glass-card: rgba(30, 26, 58, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --primary-glow: rgba(139, 92, 246, 0.25);
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            background: var(--bg-gradient);
+            color: #f8fafc;
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .font-thai {
+            font-family: 'Noto Serif Thai', 'Sarabun', serif;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .glass-card {
+            background: var(--glass-card);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(139, 92, 246, 0.35);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Sound Wave Animation */
+        .sound-wave {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            height: 28px;
+        }
+        .sound-bar {
+            width: 4px;
+            height: 8px;
+            background: #a78bfa;
+            border-radius: 9999px;
+            animation: soundWave 1s ease-in-out infinite;
+        }
+        .sound-bar:nth-child(2) { animation-delay: 0.15s; height: 16px; }
+        .sound-bar:nth-child(3) { animation-delay: 0.3s; height: 24px; }
+        .sound-bar:nth-child(4) { animation-delay: 0.45s; height: 14px; }
+        .sound-bar:nth-child(5) { animation-delay: 0.2s; height: 10px; }
+
+        @keyframes soundWave {
+            0%, 100% { transform: scaleY(0.4); opacity: 0.6; }
+            50% { transform: scaleY(1.2); opacity: 1; }
+        }
+
+        /* Pulse Ring for Big Play Button */
+        @keyframes pulseRing {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(139, 92, 246, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+        }
+        .pulse-ring-active {
+            animation: pulseRing 1.8s infinite;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.3);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.3);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Single Instance Warning Banner (检测到多个标签页时显示) -->
+    <div id="singleInstanceWarningBanner" class="hidden shrink-0 z-50 bg-amber-500 text-white px-4 sm:px-6 py-2 shadow-md flex items-center justify-between text-xs font-medium font-sans">
+        <div class="flex items-center gap-2">
+            <i class="ph-bold ph-warning-circle text-base text-amber-100 shrink-0"></i>
+            <span><strong>多实例运行提醒：</strong>检测到该应用已在另一个标签页中运行。为避免听写练习进度与记忆数据互相覆盖冲突，建议只保留一个活动标签页。</span>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <button type="button" onclick="dismissSingleInstanceWarning()" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer transition active:scale-95 whitespace-nowrap">我知道了，继续在此使用</button>
+        </div>
+    </div>
+
+    <!-- Top Navigation Bar -->
+    <header class="glass-panel sticky top-0 z-30 border-b border-white/10 px-4 sm:px-6 py-3.5 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <a href="./appPortal.html" class="h-9 w-9 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition">
+                <i class="ph-bold ph-arrow-left text-lg"></i>
+            </a>
+            <div class="flex items-center gap-2.5">
+                <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-violet-500/25">
+                    <i class="ph-fill ph-headphones text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-base font-bold tracking-tight text-white leading-tight flex items-center gap-2">
+                        泰语听写助手
+                        <span class="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">SM-2 间隔复习</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">纸上默写 · 导师评测 · 艾宾浩斯智能排期</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Header Actions -->
+        <div class="flex items-center gap-2">
+            <!-- Audio Speed Toggle -->
+            <div class="flex items-center bg-white/5 border border-white/10 rounded-lg p-0.5 text-xs">
+                <button id="btnSpeedSlow" onclick="setAudioSpeed(0.8)" class="px-2 py-1 rounded text-slate-400 hover:text-white transition">0.8x 慢速</button>
+                <button id="btnSpeedNormal" onclick="setAudioSpeed(1.0)" class="px-2 py-1 rounded bg-violet-600 text-white font-medium shadow">1.0x 原速</button>
+            </div>
+
+            <!-- Auto-play Toggle -->
+            <button id="btnAutoPlay" onclick="toggleAutoPlay()" title="切换切题时自动发音" class="h-8 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center gap-1.5 text-xs text-slate-300 transition">
+                <i id="iconAutoPlay" class="ph-bold ph-play-circle text-violet-400"></i>
+                <span id="textAutoPlay" class="hidden sm:inline">自动连播: 开</span>
+            </button>
+
+            <!-- Console Mgt Link -->
+            <a href="./consoleDictation.html" class="h-8 px-3 rounded-lg bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 flex items-center gap-1.5 text-xs text-violet-300 hover:text-violet-200 font-medium transition">
+                <i class="ph-bold ph-sliders-horizontal"></i>
+                <span class="hidden md:inline">词库与词集管理</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center">
+
+        <!-- ================================================================= -->
+        <!-- VIEW 1: MODE SELECTION & DASHBOARD (Default when session inactive) -->
+        <!-- ================================================================= -->
+        <div id="viewSelection" class="space-y-6">
+            <!-- Hero Stats Card -->
+            <div class="glass-panel rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-2xl border border-white/10">
+                <div class="absolute -right-16 -top-16 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -left-16 -bottom-16 w-64 h-64 bg-fuchsia-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div class="space-y-2 max-w-xl">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/15 border border-violet-500/30 text-xs text-violet-300 font-medium">
+                            <i class="ph-fill ph-sparkle text-violet-400"></i>
+                            智能听写评测工作流
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                            听音写纸上 · 导师把关评分
+                        </h2>
+                        <p class="text-sm text-slate-300 leading-relaxed">
+                            专为泰语拼写设计的听写助手：系统负责纯正发音播放，学生在实体纸张上书写拼写；完成后翻开答案比对，导师轻点评价，SM-2 算法即可自适应算出下一次黄金复习时间。
+                        </p>
+                    </div>
+
+                    <!-- Quick Stats Badges -->
+                    <div class="grid grid-cols-3 gap-3 shrink-0">
+                        <div class="glass-card rounded-2xl p-3.5 text-center">
+                            <div id="statDueCount" class="text-2xl sm:text-3xl font-black text-amber-400">--</div>
+                            <div class="text-[11px] text-slate-400 mt-0.5">今日待复习</div>
+                        </div>
+                        <div class="glass-card rounded-2xl p-3.5 text-center">
+                            <div id="statTotalWords" class="text-2xl sm:text-3xl font-black text-violet-300">--</div>
+                            <div class="text-[11px] text-slate-400 mt-0.5">词库总词数</div>
+                        </div>
+                        <div class="glass-card rounded-2xl p-3.5 text-center">
+                            <div id="statMasteredCount" class="text-2xl sm:text-3xl font-black text-emerald-400">--</div>
+                            <div class="text-[11px] text-slate-400 mt-0.5">已牢记熟练</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mode Selection Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                <!-- Mode 1: Smart Review (Due Today) -->
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group border border-white/10 hover:border-violet-500/50">
+                    <div class="space-y-4">
+                        <div class="h-12 w-12 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-2xl shadow-lg shadow-amber-500/10">
+                            <i class="ph-fill ph-hourglass-high"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-lg font-bold text-white">今日智能复习</h3>
+                                <span id="badgeDueCount" class="px-2 py-0.5 text-xs rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">0 词</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                                基于全局 SM-2 记忆算法排期，优先测验今天已经达到遗忘临界点的单词。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="pt-6">
+                        <button onclick="startDictationSession('smart_due')" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold text-sm shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 transition transform active:scale-95">
+                            <i class="ph-bold ph-play"></i>
+                            开始智能复习
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mode 2: Master Pool Drill -->
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group border border-white/10 hover:border-violet-500/50">
+                    <div class="space-y-4">
+                        <div class="h-12 w-12 rounded-2xl bg-violet-500/20 text-violet-400 border border-violet-500/30 flex items-center justify-center text-2xl shadow-lg shadow-violet-500/10">
+                            <i class="ph-fill ph-shuffle"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-lg font-bold text-white">词库全量摸底</h3>
+                                <span class="px-2 py-0.5 text-xs rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30 font-semibold">随机/全量</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                                随机抽取或连续测试全部词条，适合考前全面大盘点或阶段性综合测试。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="pt-6">
+                        <button onclick="startDictationSession('all')" class="w-full py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-white font-semibold text-sm flex items-center justify-center gap-2 transition transform active:scale-95">
+                            <i class="ph-bold ph-lightning"></i>
+                            开始全量摸底
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mode 3: Add/Manage Custom Collections -->
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group border border-white/10 hover:border-violet-500/50">
+                    <div class="space-y-4">
+                        <div class="h-12 w-12 rounded-2xl bg-fuchsia-500/20 text-fuchsia-400 border border-fuchsia-500/30 flex items-center justify-center text-2xl shadow-lg shadow-fuchsia-500/10">
+                            <i class="ph-fill ph-folder-notch-open"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">词集自选定制</h3>
+                            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                                支持自由创建单元词集（如“日常饮食”、“问候语”、“旅游交通”），针对特定专题逐课突破。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="pt-6">
+                        <a href="./consoleDictation.html" class="w-full py-3 px-4 rounded-xl bg-violet-600/30 hover:bg-violet-600/50 border border-violet-500/40 text-violet-200 font-semibold text-sm flex items-center justify-center gap-2 transition transform active:scale-95">
+                            <i class="ph-bold ph-plus-circle"></i>
+                            管理 / 创建词集
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collection List Cards Section -->
+            <div class="space-y-3 pt-2">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <i class="ph-bold ph-books text-violet-400"></i>
+                        按词集单元针对练习
+                    </h3>
+                    <span id="collectionCountText" class="text-xs text-slate-400">正在加载词集...</span>
+                </div>
+
+                <div id="collectionsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Dynamic collection cards will be rendered here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 2: ACTIVE DICTATION SESSION PLAYER (Step-by-step)            -->
+        <!-- ================================================================= -->
+        <div id="viewSession" class="hidden space-y-5">
+            <!-- Session Status Header -->
+            <div class="glass-panel rounded-2xl px-5 py-3 flex items-center justify-between border border-white/10">
+                <div class="flex items-center gap-3">
+                    <button onclick="confirmExitSession()" title="退出听写" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition">
+                        <i class="ph-bold ph-x text-lg"></i>
+                    </button>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span id="sessionModeBadge" class="text-xs font-semibold text-violet-300">智能复习</span>
+                            <span class="text-slate-500 text-xs">·</span>
+                            <span id="sessionProgressText" class="text-xs text-slate-300 font-medium">第 1 / 15 词</span>
+                        </div>
+                        <!-- Micro Progress Bar -->
+                        <div class="w-32 sm:w-48 h-1.5 bg-white/10 rounded-full mt-1.5 overflow-hidden">
+                            <div id="sessionProgressBar" class="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <div class="text-right">
+                        <div class="text-xs text-slate-400">本次正确率</div>
+                        <div id="sessionAccuracyText" class="text-sm font-bold text-emerald-400">100%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- The Big Interactive Dictation Card -->
+            <div class="glass-panel rounded-3xl p-6 sm:p-10 border border-white/10 shadow-2xl relative overflow-hidden min-h-[420px] flex flex-col justify-between">
+                
+                <!-- Card Header Info -->
+                <div class="flex items-center justify-between text-xs text-slate-400">
+                    <div class="flex items-center gap-2">
+                        <span class="h-2 w-2 rounded-full bg-violet-400 animate-pulse"></span>
+                        <span id="cardStepLabel">步骤 1/2: 听音并在纸上书写</span>
+                    </div>
+                    <div id="cardHistoryStats" class="text-slate-400 flex items-center gap-2">
+                        <!-- Repetition / Interval info -->
+                    </div>
+                </div>
+
+                <!-- PHASE A: HIDDEN WRITING STATE (Student listens & writes on paper) -->
+                <div id="phaseWriting" class="py-8 flex flex-col items-center justify-center text-center space-y-6">
+                    <!-- Big Audio Play Button -->
+                    <div class="relative">
+                        <button id="btnMainPlay" onclick="playCurrentWordAudio()" class="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-tr from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white flex items-center justify-center text-4xl shadow-xl shadow-violet-500/30 transition transform active:scale-95 group pulse-ring-active">
+                            <i id="mainPlayIcon" class="ph-fill ph-speaker-high group-hover:scale-110 transition"></i>
+                        </button>
+                    </div>
+
+                    <!-- Audio Replay and Speed Controls -->
+                    <div class="flex items-center gap-3">
+                        <button onclick="playCurrentWordAudio()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-slate-300 font-medium flex items-center gap-1.5 transition">
+                            <i class="ph-bold ph-arrow-counter-clockwise text-violet-400"></i>
+                            <span>再听一遍</span>
+                            <span id="replayCountBadge" class="px-1.5 py-0.2 rounded bg-violet-500/20 text-violet-300 text-[10px]">1次</span>
+                        </button>
+                        <span class="text-xs text-slate-500">(快捷键 P)</span>
+                    </div>
+
+                    <!-- Writing Prompt & Shield -->
+                    <div class="max-w-md mx-auto p-4 rounded-2xl bg-violet-950/30 border border-violet-500/20 space-y-1.5">
+                        <div class="text-sm font-semibold text-violet-200 flex items-center justify-center gap-2">
+                            <i class="ph-bold ph-pencil-simple-line text-violet-400"></i>
+                            请学生在纸上默写此泰语词
+                        </div>
+                        <p class="text-xs text-slate-400">
+                            屏幕已遮盖泰文拼写与释义以防偷看。学生完成纸上书写后，导师点击下方按钮翻开核对。
+                        </p>
+                    </div>
+
+                    <!-- Big Reveal Answer Button -->
+                    <div class="w-full max-w-md pt-2">
+                        <button onclick="revealAnswer()" class="w-full py-4 px-6 rounded-2xl bg-white text-slate-900 hover:bg-slate-100 font-bold text-base shadow-xl flex items-center justify-center gap-2.5 transition transform active:scale-98">
+                            <i class="ph-bold ph-eye text-violet-600 text-lg"></i>
+                            翻开核对答案 (Reveal)
+                            <span class="text-xs font-normal text-slate-500 ml-1">[Space]</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PHASE B: REVEALED ANSWER & SUPERVISOR GRADING -->
+                <div id="phaseRevealed" class="hidden py-4 space-y-6">
+                    <!-- Word Details Header -->
+                    <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 p-5 rounded-2xl bg-white/5 border border-white/10">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-3">
+                                <span id="revealedThaiWord" class="font-thai text-3xl sm:text-4xl font-bold text-white tracking-wide">--</span>
+                                <button onclick="playCurrentWordAudio()" title="再次播放发音" class="h-9 w-9 rounded-xl bg-violet-600/30 hover:bg-violet-600/50 text-violet-300 flex items-center justify-center transition">
+                                    <i class="ph-bold ph-speaker-high text-lg"></i>
+                                </button>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm">
+                                <span id="revealedPhonetic" class="px-2 py-0.5 rounded-md bg-white/10 text-violet-300 font-mono text-xs">--</span>
+                                <span class="text-slate-400">·</span>
+                                <span id="revealedMeaning" class="text-slate-200 font-medium text-base">--</span>
+                            </div>
+                        </div>
+
+                        <!-- Current SM-2 State Tags -->
+                        <div id="revealedSm2State" class="text-xs text-slate-400 space-y-1 shrink-0">
+                            <!-- Interval info -->
+                        </div>
+                    </div>
+
+                    <!-- Associated Example Sentences -->
+                    <div class="space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                                <i class="ph-bold ph-chat-text text-violet-400"></i>
+                                配套例句精讲 (Example Sentences)
+                            </span>
+                            <span id="examplesCountText" class="text-[11px] text-slate-500">2 个例句</span>
+                        </div>
+
+                        <div id="revealedExamplesList" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                            <!-- Example sentence cards will be dynamically populated -->
+                        </div>
+                    </div>
+
+                    <!-- Supervisor Grading Buttons Scale -->
+                    <div class="pt-3 border-t border-white/10 space-y-2.5">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-semibold text-slate-300 flex items-center gap-1.5">
+                                <i class="ph-bold ph-check-circle text-emerald-400"></i>
+                                导师核对纸面拼写并评分:
+                            </span>
+                            <span class="text-slate-500">键盘快捷键: 1 / 2 / 3 / 4</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                            <!-- Grade 0: Forgot -->
+                            <button onclick="submitGrade(0)" class="p-3 rounded-2xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/60 text-left transition transform active:scale-95 group">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-lg">❌</span>
+                                    <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 font-bold">[1]</span>
+                                </div>
+                                <div class="font-bold text-red-300 text-sm mt-1">忘记 (Forgot)</div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">重置回 1 天后</div>
+                            </button>
+
+                            <!-- Grade 3: Hard -->
+                            <button onclick="submitGrade(3)" class="p-3 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-500/60 text-left transition transform active:scale-95 group">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-lg">⚠️</span>
+                                    <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">[2]</span>
+                                </div>
+                                <div class="font-bold text-amber-300 text-sm mt-1">勉强 (Hard)</div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">有迟疑或辅音稍错</div>
+                            </button>
+
+                            <!-- Grade 4: Correct -->
+                            <button onclick="submitGrade(4)" class="p-3 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 hover:border-emerald-500/60 text-left transition transform active:scale-95 group">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-lg">✅</span>
+                                    <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">[3]</span>
+                                </div>
+                                <div class="font-bold text-emerald-300 text-sm mt-1">正确 (Correct)</div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">纸上书写完全正确</div>
+                            </button>
+
+                            <!-- Grade 5: Perfect -->
+                            <button onclick="submitGrade(5)" class="p-3 rounded-2xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 hover:border-violet-500/60 text-left transition transform active:scale-95 group">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-lg">⭐</span>
+                                    <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 font-bold">[4]</span>
+                                </div>
+                                <div class="font-bold text-violet-300 text-sm mt-1">熟练 (Perfect)</div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">快速下笔·准确无误</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Tips -->
+                <div class="pt-4 text-center text-xs text-slate-500">
+                    快捷操作: <span class="text-slate-400">[P]</span> 重放音频 · <span class="text-slate-400">[Space]</span> 翻开答案 · <span class="text-slate-400">[1-4]</span> 快速评分
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 3: SESSION SUMMARY (Shown after completing all queue cards)  -->
+        <!-- ================================================================= -->
+        <div id="viewSummary" class="hidden space-y-6">
+            <div class="glass-panel rounded-3xl p-6 sm:p-10 border border-white/10 shadow-2xl text-center space-y-6">
+                <!-- Celebration Icon -->
+                <div class="inline-flex h-20 w-20 rounded-3xl bg-gradient-to-tr from-emerald-500 to-teal-500 items-center justify-center text-4xl shadow-xl shadow-emerald-500/25">
+                    🎉
+                </div>
+
+                <div class="space-y-2">
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white">本次听写练习已完成！</h2>
+                    <p class="text-sm text-slate-300 max-w-md mx-auto">
+                        所有生词的复习记录与 SM-2 间隔参数均已更新保存至数据库。
+                    </p>
+                </div>
+
+                <!-- Score Metrics Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
+                    <div class="glass-card rounded-2xl p-4">
+                        <div class="text-xs text-slate-400">总听写词数</div>
+                        <div id="summaryTotalCount" class="text-2xl font-black text-white mt-1">--</div>
+                    </div>
+                    <div class="glass-card rounded-2xl p-4">
+                        <div class="text-xs text-slate-400">正确数量</div>
+                        <div id="summaryCorrectCount" class="text-2xl font-black text-emerald-400 mt-1">--</div>
+                    </div>
+                    <div class="glass-card rounded-2xl p-4">
+                        <div class="text-xs text-slate-400">本次正确率</div>
+                        <div id="summaryAccuracy" class="text-2xl font-black text-violet-400 mt-1">--%</div>
+                    </div>
+                    <div class="glass-card rounded-2xl p-4">
+                        <div class="text-xs text-slate-400">遗忘需强化</div>
+                        <div id="summaryForgotCount" class="text-2xl font-black text-red-400 mt-1">--</div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap items-center justify-center gap-3 pt-4">
+                    <button id="btnRetryMissed" onclick="retryMissedWords()" class="px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm shadow-lg shadow-amber-500/20 flex items-center gap-2 transition">
+                        <i class="ph-bold ph-arrow-counter-clockwise"></i>
+                        强化重练本轮错词
+                    </button>
+                    <button onclick="restartCurrentSession()" class="px-5 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-sm shadow-lg shadow-violet-500/20 flex items-center gap-2 transition">
+                        <i class="ph-bold ph-repeat"></i>
+                        再练一遍
+                    </button>
+                    <button onclick="returnToSelection()" class="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-slate-200 font-semibold text-sm flex items-center gap-2 transition">
+                        <i class="ph-bold ph-squares-four"></i>
+                        返回主列表
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tested Words Breakdown Table -->
+            <div class="glass-panel rounded-3xl p-6 border border-white/10 space-y-4">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="ph-bold ph-list-checks text-violet-400"></i>
+                    作答详细记录清单
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="text-xs text-slate-400 border-b border-white/10 uppercase">
+                            <tr>
+                                <th class="pb-3 pl-2">泰文单词</th>
+                                <th class="pb-3">读音 / 拼音</th>
+                                <th class="pb-3">中文释义</th>
+                                <th class="pb-3 text-center">导师评分</th>
+                                <th class="pb-3 text-right pr-2">下次复习排期</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryTableBody" class="divide-y divide-white/5">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Floating Feedback Toast -->
+    <div id="toastNotification" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full bg-slate-900/90 border border-violet-500/40 text-white text-xs font-medium shadow-2xl backdrop-blur-md flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-300">
+        <i id="toastIcon" class="ph-fill ph-check-circle text-emerald-400 text-base"></i>
+        <span id="toastMessage">已更新 SM-2</span>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // API Configuration
+        const API_KEY = 'thainotes_api_key_2026';
+        const API_BASE = '/api';
+
+        // =============================================================
+        // Single Instance Control (BroadcastChannel)
+        // =============================================================
+        const TAB_INSTANCE_ID = 'tab_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+        let appSyncBroadcastChannel = null;
+        try {
+            if (typeof BroadcastChannel !== 'undefined') {
+                appSyncBroadcastChannel = new BroadcastChannel('thai_dictation_instance_channel');
+                appSyncBroadcastChannel.onmessage = handleSyncBroadcastMessage;
+            }
+        } catch (e) {
+            console.warn("BroadcastChannel not supported:", e);
+        }
+
+        function handleSyncBroadcastMessage(event) {
+            if (!event || !event.data) return;
+            const msg = event.data;
+
+            if (msg.type === 'PING_ACTIVE_INSTANCE') {
+                // Another tab just opened, reply so it detects multi-instance
+                if (msg.senderId !== TAB_INSTANCE_ID && appSyncBroadcastChannel) {
+                    try {
+                        appSyncBroadcastChannel.postMessage({
+                            type: 'PONG_ACTIVE_INSTANCE',
+                            senderId: TAB_INSTANCE_ID,
+                            targetId: msg.senderId
+                        });
+                    } catch(e) {}
+                }
+            } else if (msg.type === 'PONG_ACTIVE_INSTANCE') {
+                // Another active tab responded to our ping! Show warning
+                if (msg.targetId === TAB_INSTANCE_ID) {
+                    showSingleInstanceWarning();
+                }
+            }
+        }
+
+        function showSingleInstanceWarning() {
+            const banner = document.getElementById('singleInstanceWarningBanner');
+            if (banner) {
+                banner.classList.remove('hidden');
+            }
+        }
+
+        function dismissSingleInstanceWarning() {
+            const banner = document.getElementById('singleInstanceWarningBanner');
+            if (banner) {
+                banner.classList.add('hidden');
+            }
+        }
+
+        window.dismissSingleInstanceWarning = dismissSingleInstanceWarning;
+        window.showSingleInstanceWarning = showSingleInstanceWarning;
+
+        // State variables
+        let appStats = null;
+        let collections = [];
+        let activeQueue = [];
+        let currentIndex = 0;
+        let currentSessionMode = 'smart_due'; // 'smart_due' | 'collection' | 'all'
+        let currentCollectionId = null;
+        let sessionResults = []; // [{ word, rating, sm2 }]
+
+        // User Settings
+        let audioSpeed = 1.0;
+        let autoPlayAudio = true;
+        let replayCount = 0;
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadAppStats();
+            await loadCollections();
+            setupKeyboardShortcuts();
+
+            // 多标签页与多实例监听同步：窗口激活时若在主菜单则重新读取最新数据
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    const viewSelection = document.getElementById('viewSelection');
+                    if (viewSelection && !viewSelection.classList.contains('hidden')) {
+                        loadAppStats();
+                        loadCollections();
+                    }
+                }
+            });
+            window.addEventListener('focus', () => {
+                const viewSelection = document.getElementById('viewSelection');
+                if (viewSelection && !viewSelection.classList.contains('hidden')) {
+                    loadAppStats();
+                    loadCollections();
+                }
+            });
+
+            // 向其他标签页广播 Ping，探测是否存在已有运行实例
+            if (appSyncBroadcastChannel) {
+                try {
+                    appSyncBroadcastChannel.postMessage({
+                        type: 'PING_ACTIVE_INSTANCE',
+                        senderId: TAB_INSTANCE_ID
+                    });
+                } catch (e) {}
+            }
+
+            // Check if URL has ?collectionId=...
+            const urlParams = new URLSearchParams(window.location.search);
+            const colParam = urlParams.get('collectionId');
+            if (colParam) {
+                startDictationSession('collection', colParam);
+            }
+        });
+
+        // -------------------------------------------------------------
+        // Audio Playback Engine (Cloud TTS & Direct Voice)
+        // -------------------------------------------------------------
+        window.playAudioDirect = (text) => {
+            if (!text) return;
+            const url = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(text)}`;
+            new Audio(url).play().catch(err => console.error("Audio playback error:", err));
+        };
+
+        window.playSentenceVoice = (text, audioUrl) => {
+            if (audioUrl) {
+                new Audio(audioUrl).play().catch(err => {
+                    console.warn("Direct audio playback failed, falling back to TTS:", err);
+                    window.playAudioDirect(text);
+                });
+            } else {
+                window.playAudioDirect(text);
+            }
+        };
+
+        function playCurrentWordAudio() {
+            if (!activeQueue || activeQueue.length === 0 || currentIndex >= activeQueue.length) return;
+            const currentWord = activeQueue[currentIndex];
+            replayCount++;
+            document.getElementById('replayCountBadge').innerText = `${replayCount}次`;
+
+            // Visual feedback on play button
+            const mainIcon = document.getElementById('mainPlayIcon');
+            if (mainIcon) {
+                mainIcon.className = 'ph-fill ph-waveform text-violet-300 animate-pulse';
+                setTimeout(() => {
+                    mainIcon.className = 'ph-fill ph-speaker-high group-hover:scale-110 transition';
+                }, 1200);
+            }
+
+            window.playSentenceVoice(currentWord.thaiWord, currentWord.audioUrl);
+        }
+
+        function playExampleAudio(thaiSentence, audioUrl = null) {
+            window.playSentenceVoice(thaiSentence, audioUrl);
+        }
+
+        function playExampleAudioByIndex(idx) {
+            if (!activeQueue || currentIndex >= activeQueue.length) return;
+            const word = activeQueue[currentIndex];
+            const ex = word.examples && word.examples[idx];
+            if (!ex) return;
+            window.playSentenceVoice(ex.thai, ex.audioUrl);
+        }
+
+        function setAudioSpeed(speed) {
+            audioSpeed = speed;
+            document.getElementById('btnSpeedSlow').className = speed === 0.8 
+                ? 'px-2 py-1 rounded bg-violet-600 text-white font-medium shadow' 
+                : 'px-2 py-1 rounded text-slate-400 hover:text-white transition';
+            document.getElementById('btnSpeedNormal').className = speed === 1.0 
+                ? 'px-2 py-1 rounded bg-violet-600 text-white font-medium shadow' 
+                : 'px-2 py-1 rounded text-slate-400 hover:text-white transition';
+            showToast(`已切换发音语速: ${speed}x`);
+        }
+
+        function toggleAutoPlay() {
+            autoPlayAudio = !autoPlayAudio;
+            const btn = document.getElementById('btnAutoPlay');
+            const icon = document.getElementById('iconAutoPlay');
+            const text = document.getElementById('textAutoPlay');
+            if (autoPlayAudio) {
+                btn.classList.add('bg-violet-600/20', 'border-violet-500/30', 'text-violet-200');
+                icon.className = 'ph-bold ph-play-circle text-violet-400';
+                text.innerText = '自动连播: 开';
+                showToast('已开启自动发音');
+            } else {
+                btn.classList.remove('bg-violet-600/20', 'border-violet-500/30', 'text-violet-200');
+                icon.className = 'ph-bold ph-pause-circle text-slate-400';
+                text.innerText = '自动连播: 关';
+                showToast('已关闭自动发音');
+            }
+        }
+
+        // -------------------------------------------------------------
+        // Data Loading
+        // -------------------------------------------------------------
+        async function fetchApi(endpoint, options = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-API-Key': API_KEY,
+                ...(options.headers || {})
+            };
+            const response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `HTTP ${response.status}`);
+            }
+            return response.json();
+        }
+
+        async function loadAppStats() {
+            try {
+                const data = await fetchApi('/dictation/stats');
+                appStats = data.stats;
+                document.getElementById('statDueCount').innerText = appStats.dueCount;
+                document.getElementById('statTotalWords').innerText = appStats.totalWords;
+                document.getElementById('statMasteredCount').innerText = appStats.masteredCount;
+                document.getElementById('badgeDueCount').innerText = `${appStats.dueCount} 词`;
+            } catch (err) {
+                console.error('Failed to load stats:', err);
+            }
+        }
+
+        async function loadCollections() {
+            try {
+                const data = await fetchApi('/collections');
+                collections = data.collections || [];
+                document.getElementById('collectionCountText').innerText = `共 ${collections.length} 个词集单元`;
+                renderCollectionsGrid();
+            } catch (err) {
+                console.error('Failed to load collections:', err);
+                document.getElementById('collectionCountText').innerText = '加载词集失败';
+            }
+        }
+
+        function renderCollectionsGrid() {
+            const container = document.getElementById('collectionsGrid');
+            if (!collections || collections.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full p-8 text-center glass-card rounded-2xl text-slate-400 text-sm">
+                        暂无词集单元，可前往管理控制台创建。
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = collections.map(col => {
+                const tagsBadges = (col.tags || []).map(t => 
+                    `<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-white/5 text-slate-300 border border-white/10">${t}</span>`
+                ).join('');
+
+                return `
+                    <div class="glass-card rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-violet-500/40 transition group">
+                        <div class="space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-violet-400 bg-violet-500/15 border border-violet-500/25 px-2 py-0.5 rounded-md">
+                                    ${col.wordCount} 词条
+                                </span>
+                                ${col.dueCount > 0 ? `<span class="text-[10px] font-bold text-amber-300 bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 rounded-md">${col.dueCount} 词待复习</span>` : ''}
+                            </div>
+                            <h4 class="font-bold text-white text-base group-hover:text-violet-300 transition line-clamp-1">${col.name}</h4>
+                            <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">${col.description || '暂无描述'}</p>
+                            <div class="flex flex-wrap gap-1.5 pt-1">
+                                ${tagsBadges}
+                            </div>
+                        </div>
+
+                        <button onclick="startDictationSession('collection', '${col.id}')" class="w-full py-2.5 px-3 rounded-xl bg-violet-600/30 hover:bg-violet-600 border border-violet-500/40 hover:border-violet-500 text-violet-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                            <i class="ph-bold ph-play"></i>
+                            进入此词集听写
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // -------------------------------------------------------------
+        // Dictation Session Controller
+        // -------------------------------------------------------------
+        async function startDictationSession(mode, collectionId = null) {
+            currentSessionMode = mode;
+            currentCollectionId = collectionId;
+            currentIndex = 0;
+            sessionResults = [];
+
+            let queueUrl = `/dictation/queue?type=${mode}&limit=50`;
+            if (mode === 'collection' && collectionId) {
+                queueUrl += `&collectionId=${collectionId}`;
+            }
+
+            try {
+                showToast('正在准备听写队列...');
+                const res = await fetchApi(queueUrl);
+                activeQueue = res.queue || [];
+
+                if (activeQueue.length === 0) {
+                    showToast('当前队列中暂无可用词条', 'warning');
+                    return;
+                }
+
+                // Switch View to Session
+                document.getElementById('viewSelection').classList.add('hidden');
+                document.getElementById('viewSummary').classList.add('hidden');
+                document.getElementById('viewSession').classList.remove('hidden');
+
+                // Update session header badge
+                const modeBadge = document.getElementById('sessionModeBadge');
+                if (mode === 'smart_due') {
+                    modeBadge.innerText = '今日智能复习 (Due Today)';
+                } else if (mode === 'collection') {
+                    const matchedCol = collections.find(c => c.id === collectionId);
+                    modeBadge.innerText = matchedCol ? matchedCol.name : '词集专项练习';
+                } else {
+                    modeBadge.innerText = '词库全量摸底';
+                }
+
+                renderCurrentCard();
+            } catch (err) {
+                console.error('Failed to load queue:', err);
+                showToast('加载练习队列失败: ' + err.message, 'error');
+            }
+        }
+
+        function renderCurrentCard() {
+            if (!activeQueue || currentIndex >= activeQueue.length) {
+                finishSession();
+                return;
+            }
+
+            const word = activeQueue[currentIndex];
+            replayCount = 0;
+            document.getElementById('replayCountBadge').innerText = '1次';
+
+            // Progress Header
+            document.getElementById('sessionProgressText').innerText = `第 ${currentIndex + 1} / ${activeQueue.length} 词`;
+            const progressPercent = Math.round((currentIndex / activeQueue.length) * 100);
+            document.getElementById('sessionProgressBar').style.width = `${progressPercent}%`;
+
+            // Accuracy so far
+            if (sessionResults.length > 0) {
+                const correct = sessionResults.filter(r => r.rating >= 3).length;
+                const acc = Math.round((correct / sessionResults.length) * 100);
+                document.getElementById('sessionAccuracyText').innerText = `${acc}%`;
+            } else {
+                document.getElementById('sessionAccuracyText').innerText = `100%`;
+            }
+
+            // Reset Card Phases: show writing phase, hide revealed phase
+            document.getElementById('phaseWriting').classList.remove('hidden');
+            document.getElementById('phaseRevealed').classList.add('hidden');
+            document.getElementById('cardStepLabel').innerText = '步骤 1/2: 听音并在纸上书写 (Writing in progress)';
+
+            // Prepare Revealed Data for later
+            document.getElementById('revealedThaiWord').innerText = word.thaiWord;
+            document.getElementById('revealedPhonetic').innerText = word.phonetic || word.transliteration || '音标未录入';
+            document.getElementById('revealedMeaning').innerText = word.meaning;
+
+            // Render Examples
+            const examplesContainer = document.getElementById('revealedExamplesList');
+            const examples = word.examples || [];
+            document.getElementById('examplesCountText').innerText = `${examples.length} 个配套例句`;
+
+            if (examples.length === 0) {
+                examplesContainer.innerHTML = `
+                    <div class="p-3 rounded-xl bg-white/5 text-xs text-slate-400 text-center">
+                        该词暂未添加配套例句，可在管理控制台随时补充。
+                    </div>
+                `;
+            } else {
+                examplesContainer.innerHTML = examples.map((ex, idx) => `
+                    <div class="p-3 rounded-xl bg-white/5 border border-white/5 flex items-start justify-between gap-3 hover:bg-white/10 transition">
+                        <div class="space-y-0.5">
+                            <div class="font-thai text-sm text-violet-200 font-medium">${ex.thai}</div>
+                            <div class="text-xs text-slate-400">${ex.translation}</div>
+                        </div>
+                        <button onclick="playExampleAudioByIndex(${idx})" title="播放例句发音" class="h-7 w-7 rounded-lg bg-violet-600/30 hover:bg-violet-600 text-violet-300 hover:text-white flex items-center justify-center shrink-0 transition">
+                            <i class="ph-bold ph-speaker-high text-xs"></i>
+                        </button>
+                    </div>
+                `).join('');
+            }
+
+            // Word History Stats in header
+            document.getElementById('cardHistoryStats').innerHTML = `
+                <span>复习次数: <strong class="text-white">${word.repetition}</strong></span>
+                <span>·</span>
+                <span>当前间隔: <strong class="text-white">${word.interval}天</strong></span>
+            `;
+
+            // Auto Play Audio if enabled
+            if (autoPlayAudio) {
+                setTimeout(() => {
+                    playCurrentWordAudio();
+                }, 150);
+            }
+        }
+
+        function revealAnswer() {
+            document.getElementById('phaseWriting').classList.add('hidden');
+            document.getElementById('phaseRevealed').classList.remove('hidden');
+            document.getElementById('cardStepLabel').innerText = '步骤 2/2: 核对纸面并完成评分 (Grade & SM-2)';
+        }
+
+        async function submitGrade(rating) {
+            if (!activeQueue || currentIndex >= activeQueue.length) return;
+            const currentWord = activeQueue[currentIndex];
+
+            try {
+                // Submit to backend API
+                const res = await fetchApi('/dictation/review', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        wordId: currentWord.id,
+                        rating: rating,
+                        collectionId: currentCollectionId
+                    })
+                });
+
+                // Record result for session summary
+                sessionResults.push({
+                    word: currentWord,
+                    rating: rating,
+                    sm2: res.sm2
+                });
+
+                // Toast SM-2 Feedback
+                const nextDays = res.sm2.current.interval;
+                const ef = res.sm2.current.easinessFactor;
+                showToast(`评分已录入! 下次复习: ${nextDays} 天后 (EF: ${ef})`, rating >= 3 ? 'success' : 'warning');
+
+                // Move to next card
+                currentIndex++;
+                renderCurrentCard();
+            } catch (err) {
+                console.error('Failed to submit rating:', err);
+                showToast('提交评分失败: ' + err.message, 'error');
+            }
+        }
+
+        function finishSession() {
+            document.getElementById('viewSession').classList.add('hidden');
+            document.getElementById('viewSummary').classList.remove('hidden');
+
+            const total = sessionResults.length;
+            const correct = sessionResults.filter(r => r.rating >= 3).length;
+            const forgot = sessionResults.filter(r => r.rating < 3).length;
+            const accuracy = total > 0 ? Math.round((correct / total) * 100) : 100;
+
+            document.getElementById('summaryTotalCount').innerText = total;
+            document.getElementById('summaryCorrectCount').innerText = correct;
+            document.getElementById('summaryAccuracy').innerText = `${accuracy}%`;
+            document.getElementById('summaryForgotCount').innerText = forgot;
+
+            // Show / Hide Retry Missed button
+            document.getElementById('btnRetryMissed').style.display = forgot > 0 ? 'inline-flex' : 'none';
+
+            // Populate Breakdown Table
+            const tbody = document.getElementById('summaryTableBody');
+            tbody.innerHTML = sessionResults.map(res => {
+                let badgeClass = 'bg-red-500/20 text-red-300 border-red-500/30';
+                let ratingLabel = '❌ 忘记 (0)';
+                if (res.rating === 3) {
+                    badgeClass = 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+                    ratingLabel = '⚠️ 勉强 (3)';
+                } else if (res.rating === 4) {
+                    badgeClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+                    ratingLabel = '✅ 正确 (4)';
+                } else if (res.rating === 5) {
+                    badgeClass = 'bg-violet-500/20 text-violet-300 border-violet-500/30';
+                    ratingLabel = '⭐ 熟练 (5)';
+                }
+
+                const nextDate = res.sm2?.current?.nextReviewDate 
+                    ? new Date(res.sm2.current.nextReviewDate).toLocaleDateString() 
+                    : '--';
+                const nextDays = res.sm2?.current?.interval || 1;
+
+                return `
+                    <tr class="hover:bg-white/5 transition">
+                        <td class="py-3 pl-2 font-thai text-base font-bold text-white">${res.word.thaiWord}</td>
+                        <td class="py-3 text-xs font-mono text-violet-300">${res.word.phonetic || '--'}</td>
+                        <td class="py-3 text-xs text-slate-300">${res.word.meaning}</td>
+                        <td class="py-3 text-center">
+                            <span class="inline-block px-2.5 py-0.5 rounded-full border text-xs font-semibold ${badgeClass}">
+                                ${ratingLabel}
+                            </span>
+                        </td>
+                        <td class="py-3 text-right pr-2 text-xs text-slate-300">
+                            ${nextDays} 天后 (${nextDate})
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Reload background stats for dashboard
+            loadAppStats();
+        }
+
+        function retryMissedWords() {
+            const missedWords = sessionResults.filter(r => r.rating < 3).map(r => r.word);
+            if (missedWords.length === 0) {
+                showToast('本轮没有错词！太棒了！', 'success');
+                return;
+            }
+            activeQueue = missedWords;
+            currentIndex = 0;
+            sessionResults = [];
+            document.getElementById('viewSummary').classList.add('hidden');
+            document.getElementById('viewSession').classList.remove('hidden');
+            document.getElementById('sessionModeBadge').innerText = '错词强化突击';
+            renderCurrentCard();
+        }
+
+        function restartCurrentSession() {
+            startDictationSession(currentSessionMode, currentCollectionId);
+        }
+
+        function returnToSelection() {
+            document.getElementById('viewSession').classList.add('hidden');
+            document.getElementById('viewSummary').classList.add('hidden');
+            document.getElementById('viewSelection').classList.remove('hidden');
+            loadAppStats();
+            loadCollections();
+        }
+
+        function confirmExitSession() {
+            if (confirm('确定要中断当前听写练习返回主菜单吗？')) {
+                returnToSelection();
+            }
+        }
+
+        // -------------------------------------------------------------
+        // Keyboard Shortcuts
+        // -------------------------------------------------------------
+        function setupKeyboardShortcuts() {
+            window.addEventListener('keydown', (e) => {
+                // If user is typing in an input, ignore
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+                const sessionVisible = !document.getElementById('viewSession').classList.contains('hidden');
+                if (!sessionVisible) return;
+
+                const isWritingPhase = !document.getElementById('phaseWriting').classList.contains('hidden');
+                const isRevealedPhase = !document.getElementById('phaseRevealed').classList.contains('hidden');
+
+                if (e.key === 'p' || e.key === 'P') {
+                    e.preventDefault();
+                    playCurrentWordAudio();
+                } else if (e.code === 'Space' || e.key === 'Enter') {
+                    if (isWritingPhase) {
+                        e.preventDefault();
+                        revealAnswer();
+                    }
+                } else if (isRevealedPhase) {
+                    if (e.key === '1') {
+                        e.preventDefault();
+                        submitGrade(0);
+                    } else if (e.key === '2') {
+                        e.preventDefault();
+                        submitGrade(3);
+                    } else if (e.key === '3') {
+                        e.preventDefault();
+                        submitGrade(4);
+                    } else if (e.key === '4') {
+                        e.preventDefault();
+                        submitGrade(5);
+                    }
+                }
+            });
+        }
+
+        // -------------------------------------------------------------
+        // Toast Helper
+        // -------------------------------------------------------------
+        let toastTimeout = null;
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('toastNotification');
+            const messageEl = document.getElementById('toastMessage');
+            const iconEl = document.getElementById('toastIcon');
+
+            messageEl.innerText = msg;
+            if (type === 'error') {
+                iconEl.className = 'ph-fill ph-x-circle text-red-400 text-base';
+            } else if (type === 'warning') {
+                iconEl.className = 'ph-fill ph-warning text-amber-400 text-base';
+            } else {
+                iconEl.className = 'ph-fill ph-check-circle text-emerald-400 text-base';
+            }
+
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+                toast.classList.remove('opacity-100');
+            }, 2500);
+        }
+
+        function escapeJsString(str) {
+            return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+    </script>
+</body>
+</html>

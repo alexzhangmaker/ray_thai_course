@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高频词配置与管理 - vCourse.ThaiNotes</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Serif+Thai:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;750&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS (via CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Noto Sans SC', 'sans-serif'],
+                        thai: ['Noto Serif Thai', 'Outfit', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0d0f1a 0%, #121324 50%, #1e122b 100%);
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: rgba(0, 0, 0, 0.4);
+            --primary: #c084fc;
+            --primary-glow: rgba(192, 132, 252, 0.15);
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px var(--glass-shadow);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(192, 132, 252, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .glass-card.active {
+            background: rgba(192, 132, 252, 0.08);
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(192, 132, 252, 0.2);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(192, 132, 252, 0.4);
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- Header -->
+    <header class="glass-panel border-b border-slate-800/80 px-6 py-4 flex items-center justify-between shrink-0 z-10">
+        <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                <i class="ph-bold ph-lightning text-xl text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold leading-none tracking-tight flex items-center gap-2">
+                    <span>vCourse.ThaiNotes</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-semibold border border-purple-500/30">高频词后台</span>
+                </h1>
+                <span class="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mt-1">高频词汇清单管理与同步</span>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-6">
+            <!-- Connection Status -->
+            <div id="connection-status" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
+                <span>正在连接后台...</span>
+            </div>
+            
+            <!-- Quick links -->
+            <nav class="flex items-center gap-2">
+                <button onclick="openPromptModal()" type="button" class="px-4 py-2 text-sm text-purple-400 hover:text-white rounded-lg hover:bg-purple-500/10 transition duration-200 flex items-center gap-1.5 border border-purple-500/20">
+                    <i class="ph ph-note"></i>
+                    <span>Prompt 管理</span>
+                </button>
+                <a href="/Pages/consoleCourseReview.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-layout"></i>
+                    <span>返回常规后台</span>
+                </a>
+                <a href="/Pages/consoleNotes.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-note-pencil"></i>
+                    <span>课程笔记后台</span>
+                </a>
+                <a href="/Pages/consoleAnki.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-brain"></i>
+                    <span>错词本后台</span>
+                </a>
+                <a href="/Pages/appHighFreqWords.html" target="_blank" class="px-4 py-2 text-sm text-purple-400 hover:text-white rounded-lg hover:bg-purple-500/10 transition duration-200 flex items-center gap-1.5 border border-purple-500/20">
+                    <i class="ph ph-arrow-square-out"></i>
+                    <span>打开刷词端 App</span>
+                </a>
+                <button onclick="assignTask()" type="button" class="px-4 py-2 text-sm text-sky-400 hover:text-white rounded-lg hover:bg-sky-500/10 transition duration-200 flex items-center gap-1.5 border border-sky-500/20">
+                    <i class="ph ph-paper-plane-tilt"></i>
+                    <span>布置任务</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex-grow flex overflow-hidden min-h-0">
+        <!-- Sidebar: Vocab List -->
+        <aside class="w-96 border-r border-slate-800/60 flex flex-col bg-slate-950/20 shrink-0">
+            <!-- Search & Actions -->
+            <div class="p-4 border-b border-slate-800/60 space-y-3">
+                <div class="relative">
+                    <input type="text" id="search-input" oninput="filterWords()" placeholder="搜索单词、拼音(IPA)、释义..." 
+                        class="w-full bg-slate-900/50 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition duration-200">
+                    <i class="ph ph-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-base"></i>
+                </div>
+                
+                <div class="flex gap-2">
+                    <button onclick="openImportModal()" type="button" class="flex-1 py-2 text-xs font-semibold text-purple-400 hover:text-white rounded-xl hover:bg-purple-500/10 border border-purple-500/20 hover:border-purple-500/40 transition duration-200 flex items-center justify-center gap-1.5">
+                        <i class="ph ph-download-simple"></i>
+                        <span>导入 JSON</span>
+                    </button>
+                    <button onclick="exportJSON()" type="button" class="flex-1 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 border border-slate-800 hover:border-slate-700 transition duration-200 flex items-center justify-center gap-1.5">
+                        <i class="ph ph-upload-simple"></i>
+                        <span>导出 JSON</span>
+                    </button>
+                    <button onclick="initNewWordForm()" type="button" class="px-4 py-2 text-xs font-semibold bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl hover:opacity-90 shadow-md shadow-purple-500/10 transition duration-200 flex items-center justify-center gap-1.5 shrink-0">
+                        <i class="ph ph-plus-bold"></i>
+                        <span>新增</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Words List Scroll -->
+            <div id="words-list-container" class="flex-grow overflow-y-auto custom-scrollbar p-3 space-y-2">
+                <!-- Cards will render dynamically -->
+                <div class="flex flex-col items-center justify-center h-40 text-slate-500">
+                    <i class="ph ph-spinner animate-spin text-2xl mb-2"></i>
+                    <span class="text-sm">加载高频词汇中...</span>
+                </div>
+            </div>
+            
+            <!-- Statistics Footer -->
+            <div class="p-4 border-t border-slate-800/60 bg-slate-950/40 text-xs text-slate-400 flex justify-between shrink-0 font-medium">
+                <span id="stat-total-words">词汇总量: 0</span>
+                <span class="text-purple-400">Pimsleur 短曝光模式</span>
+            </div>
+        </aside>
+
+        <!-- Right Workspace: Detail Editor -->
+        <main class="flex-grow flex flex-col bg-slate-950/10 overflow-hidden relative">
+            <!-- Empty state -->
+            <div id="editor-empty-state" class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-slate-900/10">
+                <div class="h-16 w-16 rounded-2xl bg-slate-800/40 border border-slate-800 flex items-center justify-center mb-4 text-slate-500 shadow-inner">
+                    <i class="ph ph-article text-3xl text-purple-400/80"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-200">未选择高频词</h3>
+                <p class="text-sm text-slate-500 mt-1 max-w-sm">从左侧列表中选择一个泰语高频词进行编辑，或者点击“新增”按钮创建一个新词条。</p>
+            </div>
+
+            <!-- Form Workspace -->
+            <form id="word-editor-form" onsubmit="saveWord(event)" class="hidden flex-grow flex flex-col overflow-hidden min-h-0">
+                <!-- Editor Header -->
+                <div class="px-6 py-4 border-b border-slate-800/60 flex items-center justify-between bg-slate-900/10 shrink-0">
+                    <div class="flex items-center gap-3">
+                        <span id="editor-action-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/20">编辑</span>
+                        <h2 id="editor-title" class="text-base font-bold text-slate-150">词条详情</h2>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" id="delete-word-btn" onclick="deleteWord()" class="px-4 py-2 text-xs font-semibold text-rose-400 hover:text-white rounded-xl hover:bg-rose-500/10 border border-rose-500/20 hover:border-rose-500/40 transition duration-200">
+                            删除此词条
+                        </button>
+                        <button type="submit" class="px-5 py-2 text-xs font-semibold bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl hover:opacity-95 shadow-md shadow-purple-500/20 transition duration-200 flex items-center gap-1">
+                            <i class="ph ph-floppy-disk"></i>
+                            <span>保存修改</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Editor Body -->
+                <div class="flex-grow overflow-y-auto custom-scrollbar p-6 space-y-6 min-h-0 bg-slate-950/5">
+                    
+                    <!-- Basic Info Box -->
+                    <div class="bg-slate-900/20 border border-slate-800/60 rounded-2xl p-6 space-y-4">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-purple-400 mb-2 flex items-center gap-2">
+                            <i class="ph ph-info"></i> 基本词条信息
+                        </h3>
+                        
+                        <div class="grid grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">唯一标识符 (ID)</label>
+                                <input type="text" id="word-id" required placeholder="如: hfw_016" 
+                                    class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-650 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition duration-200">
+                                <span class="text-[10px] text-slate-500 mt-1 block">说明：保存后不可更改</span>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">泰语单词 (Word)</label>
+                                <input type="text" id="word-thai" required placeholder="如: ไป" 
+                                    class="w-full font-thai bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-2.5 text-lg text-slate-100 placeholder-slate-650 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition duration-200">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">发音标注 (IPA)</label>
+                                <input type="text" id="word-ipa" placeholder="如: pai" 
+                                    class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-650 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition duration-200">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">中文翻译释义 (Meaning)</label>
+                            <input type="text" id="word-meaning" required oninput="updateCorrectOption(this.value)" placeholder="如: 去 / 离开" 
+                                class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-650 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition duration-200">
+                            <span class="text-[10px] text-slate-500 mt-1 block">说明：此字段将直接作为多选题中的正确答案选项（第一选项）</span>
+                        </div>
+                    </div>
+
+                    <!-- Choices Selection Box -->
+                    <div class="bg-slate-900/20 border border-slate-800/60 rounded-2xl p-6 space-y-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-2">
+                                <i class="ph ph-list-bullets"></i> 多选题干扰项配置
+                            </h3>
+                            <span class="text-[10px] text-purple-300 font-semibold px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20">必填 4 个选项</span>
+                        </div>
+                        <p class="text-xs text-slate-500 leading-normal">
+                            本 App 采用快速刷词短曝光模式，每次呈现 4 个选择题选项。为了使记忆更有效果，系统要求配置 4 个选项，其中<b>选项 A（首个元素）必须与释义完全一致</b>（会自动同步更新），其他 3 个为干扰项（Distractors）。
+                        </p>
+
+                        <div class="space-y-3 mt-4">
+                            <!-- Option A (Correct) -->
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold text-xs shrink-0">
+                                    A
+                                </div>
+                                <div class="flex-grow relative">
+                                    <input type="text" id="option-correct" disabled placeholder="输入中文释义自动同步" 
+                                        class="w-full bg-slate-900/30 border border-slate-800/80 rounded-xl px-4 py-2 text-sm text-emerald-400 font-semibold cursor-not-allowed">
+                                    <span class="absolute right-3.5 top-2.5 text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">正确选项 (自动同步)</span>
+                                </div>
+                            </div>
+
+                            <!-- Option B (Distractor) -->
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 border border-slate-700/50 flex items-center justify-center font-bold text-xs shrink-0">
+                                    B
+                                </div>
+                                <input type="text" id="option-distractor-1" required placeholder="输入干扰选项 B..." 
+                                    class="flex-grow bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition duration-200">
+                            </div>
+
+                            <!-- Option C (Distractor) -->
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 border border-slate-700/50 flex items-center justify-center font-bold text-xs shrink-0">
+                                    C
+                                </div>
+                                <input type="text" id="option-distractor-2" required placeholder="输入干扰选项 C..." 
+                                    class="flex-grow bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition duration-200">
+                            </div>
+
+                            <!-- Option D (Distractor) -->
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 border border-slate-700/50 flex items-center justify-center font-bold text-xs shrink-0">
+                                    D
+                                </div>
+                                <input type="text" id="option-distractor-3" required placeholder="输入干扰选项 D..." 
+                                    class="flex-grow bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition duration-200">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Examples Configuration Box -->
+                    <div class="bg-slate-900/20 border border-slate-800/60 rounded-2xl p-6 space-y-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-2">
+                                <i class="ph ph-chat-centered-text"></i> 例句配置 (Examples)
+                            </h3>
+                            <button type="button" onclick="addExampleRow()" class="px-3 py-1 text-xs bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 rounded-lg transition duration-200 flex items-center gap-1">
+                                <i class="ph ph-plus"></i> 添加例句
+                            </button>
+                        </div>
+                        <p class="text-xs text-slate-500 leading-normal">
+                            配置与本单词相关的例句（泰语及中文对照翻译）。第一个 section（举例学习）会展示这些例句以辅助记忆。
+                        </p>
+
+                        <div id="examples-list-container" class="space-y-4 mt-4">
+                            <!-- Example rows will be rendered here dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Scheduler Review Info -->
+                    <div class="bg-slate-900/10 border border-dashed border-slate-800 rounded-2xl p-5 text-slate-500 text-xs flex gap-3 items-start">
+                        <i class="ph ph-lightbulb text-lg text-purple-400 shrink-0 mt-0.5"></i>
+                        <div>
+                            <span class="font-bold text-slate-350 block mb-1">设计小常识</span>
+                            为了兼容在 <a href="/Pages/appHighFreqWords.html" target="_blank" class="text-purple-400 hover:underline">appHighFreqWords.html</a> 中的 Pimsleur 记忆机制，选项数据在保存入库时，首位始终会被强制替换为中文翻译（即正确答案）。在前台渲染时，引擎会动态加载题库，因此无需担心排序对学习效果的影响。
+                        </div>
+                    </div>
+                    
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <!-- Import JSON Modal -->
+    <div id="import-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-filter backdrop-blur-sm p-4">
+        <div class="glass-panel border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-800/80 flex justify-between items-center bg-slate-900/40">
+                <h3 class="text-base font-bold text-slate-200 flex items-center gap-2">
+                    <i class="ph ph-file-arrow-down text-purple-400"></i> 批量导入高频词汇 JSON
+                </h3>
+                <button onclick="closeImportModal()" class="text-slate-400 hover:text-white transition">
+                    <i class="ph ph-x text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Body (Input View) -->
+            <div id="import-modal-body-input" class="p-6 overflow-y-auto custom-scrollbar space-y-4 flex-grow text-sm text-slate-300">
+                <p>请粘贴高频词汇 JSON 数组，或选择外部文件导入。相同的 ID 词条将会被<b>忽略导入</b>，新 ID 将直接新增。</p>
+                
+                <!-- File selector -->
+                <div class="flex items-center gap-3">
+                    <label class="px-4 py-2 rounded-xl border border-slate-800 bg-slate-900/30 hover:bg-slate-900/60 cursor-pointer text-xs font-semibold text-slate-300 transition flex items-center gap-1.5">
+                        <i class="ph ph-file-js"></i> 选择 JSON 文件
+                        <input type="file" id="json-file-input" accept=".json" onchange="handleFileSelect(event)" class="hidden">
+                    </label>
+                    <span id="file-name-display" class="text-xs text-slate-500">未选择文件</span>
+                </div>
+
+                <!-- Textarea input -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-450 mb-2">JSON 内容</label>
+                    <textarea id="import-json-textarea" rows="10" placeholder='[\n  {\n    "id": "hfw_016",\n    "word": "ไป",\n    "ipa": "pai",\n    "meaning": "去 / 离开",\n    "options": ["去 / 离开", "来", "回", "进"],\n    "examples": [\n      {\n        "thai": "ไปโรงเรียน",\n        "chinese": "去学校。"\n      }\n    ]\n  }\n]'
+                        class="w-full font-mono text-xs bg-slate-950 border border-slate-800 rounded-xl p-4 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-slate-200 custom-scrollbar"></textarea>
+                </div>
+
+                <!-- Format Guideline -->
+                <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-800/80 text-xs text-slate-500 space-y-1">
+                    <span class="font-bold text-slate-400 block">数据项字段说明:</span>
+                    <div>• <code class="text-purple-400 font-mono">id</code>: 字符串，唯一标识</div>
+                    <div>• <code class="text-purple-400 font-mono">word</code>: 字符串，泰语单词</div>
+                    <div>• <code class="text-purple-400 font-mono">ipa</code>: 字符串，国际音标</div>
+                    <div>• <code class="text-purple-400 font-mono">meaning</code>: 字符串，中文释义</div>
+                    <div>• <code class="text-purple-400 font-mono">options</code>: 字符串数组，共 4 个元素，首个等于 meaning</div>
+                    <div>• <code class="text-purple-400 font-mono">examples</code>: 例句对象数组，每个对象含 <code class="font-mono">thai</code> 与 <code class="font-mono">chinese</code> 字段</div>
+                </div>
+            </div>
+
+            <!-- Modal Body (Results View) -->
+            <div id="import-modal-body-results" class="hidden p-6 overflow-y-auto custom-scrollbar space-y-4 flex-grow text-sm text-slate-300">
+                <div class="flex items-center gap-3 text-emerald-400 font-bold text-base mb-2">
+                    <div class="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                        <i class="ph ph-check-circle text-lg"></i>
+                    </div>
+                    <span>批量导入操作已完成！</span>
+                </div>
+                
+                <!-- Quick Stats summary cards -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-slate-900/45 border border-slate-800 rounded-xl p-4 text-center">
+                        <div class="text-xs text-slate-400 uppercase font-semibold">成功导入 (新增)</div>
+                        <div class="text-2xl font-bold text-emerald-400 mt-1" id="res-imported-count">0</div>
+                    </div>
+                    <div class="bg-slate-900/45 border border-slate-800 rounded-xl p-4 text-center">
+                        <div class="text-xs text-slate-400 uppercase font-semibold">忽略 (已存在)</div>
+                        <div class="text-2xl font-bold text-slate-400 mt-1" id="res-ignored-count">0</div>
+                    </div>
+                </div>
+
+                <!-- Tab selectors -->
+                <div class="flex border-b border-slate-800">
+                    <button type="button" id="tab-res-imported" onclick="switchResultTab('imported')" class="px-4 py-2 text-xs font-bold text-emerald-400 border-b-2 border-emerald-400 focus:outline-none transition-all">
+                        成功导入 (<span id="res-imported-tab-lbl">0</span>)
+                    </button>
+                    <button type="button" id="tab-res-ignored" onclick="switchResultTab('ignored')" class="px-4 py-2 text-xs font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-300 focus:outline-none transition-all">
+                        被忽略单词 (<span id="res-ignored-tab-lbl">0</span>)
+                    </button>
+                </div>
+
+                <!-- Results list table -->
+                <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/30 max-h-60 overflow-y-auto custom-scrollbar">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900/60 border-b border-slate-800 text-slate-400 font-semibold">
+                                <th class="p-3">ID</th>
+                                <th class="p-3">泰语单词</th>
+                                <th class="p-3">中文释义</th>
+                            </tr>
+                        </thead>
+                        <tbody id="import-results-table-body">
+                            <!-- Rows loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Modal Footer (Input Form) -->
+            <div id="import-modal-footer-input" class="px-6 py-4 border-t border-slate-800/80 bg-slate-900/40 flex justify-end gap-3">
+                <button onclick="closeImportModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white border border-slate-850 hover:bg-slate-850 transition">
+                    取消
+                </button>
+                <button onclick="submitImport()" class="px-5 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:opacity-90 shadow-md shadow-purple-500/20 transition flex items-center gap-1.5">
+                    <i class="ph ph-check-bold"></i> 开始导入
+                </button>
+            </div>
+
+            <!-- Modal Footer (Results View) -->
+            <div id="import-modal-footer-results" class="hidden px-6 py-4 border-t border-slate-800/80 bg-slate-900/40 flex justify-end">
+                <button onclick="confirmImportResults()" class="px-5 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:opacity-90 shadow-md shadow-purple-500/20 transition">
+                    已阅并关闭
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prompt Markdown Modal -->
+    <div id="prompt-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-filter backdrop-blur-sm p-4">
+        <div class="glass-panel border border-slate-800 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-800/80 flex justify-between items-center bg-slate-900/40">
+                <h3 class="text-base font-bold text-slate-200 flex items-center gap-2">
+                    <i class="ph ph-note text-purple-400"></i> AI 词条生成 Prompt 配置
+                </h3>
+                <div class="flex items-center gap-2">
+                    <button onclick="copyPromptText()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition flex items-center gap-1.5">
+                        <i id="copy-prompt-icon" class="ph ph-copy"></i>
+                        <span id="copy-prompt-btn-text">复制 Prompt</span>
+                    </button>
+                    <button onclick="closePromptModal()" class="text-slate-400 hover:text-white transition pl-2">
+                        <i class="ph ph-x text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="p-6 overflow-y-auto custom-scrollbar space-y-4 flex-grow text-sm text-slate-350">
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    此 Prompt 可用于直接粘贴给 ChatGPT、Claude 或 Gemini。将你给定的泰语高频词汇列表发给大模型，即可生成符合系统导入标准的 JSON 数据对象数组，随后复制生成的 JSON 并在<b>“导入 JSON”</b>弹窗中导入即可。
+                </p>
+
+                <!-- Textarea input -->
+                <div class="flex-grow flex flex-col min-h-[350px]">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Prompt 模板内容</label>
+                    <textarea id="prompt-markdown-textarea" class="flex-grow w-full font-mono text-xs bg-slate-950 border border-slate-800 rounded-xl p-4 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-slate-250 custom-scrollbar resize-none min-h-[300px]"></textarea>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-slate-800/80 bg-slate-900/40 flex justify-end gap-3 shrink-0">
+                <button onclick="closePromptModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white border border-slate-850 hover:bg-slate-850 transition">
+                    取消
+                </button>
+                <button onclick="savePromptMarkdown()" class="px-5 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:opacity-90 shadow-md shadow-purple-500/20 transition flex items-center gap-1.5">
+                    <i class="ph ph-floppy-disk"></i> 保存修改
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Block -->
+    <script>
+        let allWords = [];
+        let filteredWords = [];
+        let selectedWordId = null;
+        let isCreating = false;
+        let importResultData = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchWordsList();
+        });
+
+        // 1. Fetch all words
+        async function fetchWordsList() {
+            try {
+                updateConnectionStatus('loading', '正在获取词库...');
+                const res = await fetch('/api/high-frequency-words');
+                if (res.ok) {
+                    allWords = await res.json();
+                    filteredWords = [...allWords];
+                    renderWordsList();
+                    updateConnectionStatus('connected', '已连接至后台');
+                    document.getElementById('stat-total-words').textContent = `词汇总量: ${allWords.length}`;
+                } else {
+                    updateConnectionStatus('error', 'API 错误: ' + res.status);
+                }
+            } catch (err) {
+                console.error(err);
+                updateConnectionStatus('error', '无法连接至后台服务');
+            }
+        }
+
+        // 2. Render Left Sidebar List
+        function renderWordsList() {
+            const container = document.getElementById('words-list-container');
+            container.innerHTML = '';
+
+            if (filteredWords.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-12 text-slate-500 text-center px-4">
+                        <i class="ph ph-warning-circle text-xl mb-2 text-purple-400/60"></i>
+                        <span class="text-xs">没有匹配的词汇项</span>
+                    </div>
+                `;
+                return;
+            }
+
+            filteredWords.forEach(w => {
+                const card = document.createElement('div');
+                card.className = `glass-card p-3.5 rounded-xl cursor-pointer ${selectedWordId === w.id ? 'active' : ''}`;
+                card.onclick = () => selectWord(w.id);
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-[10px] font-bold font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-500 border border-slate-800">${w.id}</span>
+                        <span class="text-[10px] text-slate-500 font-mono">${w.ipa ? '/' + w.ipa + '/' : ''}</span>
+                    </div>
+                    <div class="text-lg font-bold font-thai text-slate-100 tracking-wide">${w.word}</div>
+                    <div class="text-xs text-slate-400 mt-1 truncate">${w.meaning}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // 3. Search & Filter
+        function filterWords() {
+            const val = document.getElementById('search-input').value.trim().toLowerCase();
+            if (!val) {
+                filteredWords = [...allWords];
+            } else {
+                filteredWords = allWords.filter(w => 
+                    w.id.toLowerCase().includes(val) ||
+                    w.word.toLowerCase().includes(val) ||
+                    w.meaning.toLowerCase().includes(val) ||
+                    (w.ipa && w.ipa.toLowerCase().includes(val))
+                );
+            }
+            renderWordsList();
+        }
+
+        // 4. Select and show detail
+        function selectWord(id) {
+            selectedWordId = id;
+            isCreating = false;
+            
+            // Highlight list item
+            const cards = document.querySelectorAll('#words-list-container > div');
+            // Re-render list to keep active styles clean
+            renderWordsList();
+
+            const word = allWords.find(w => w.id === id);
+            if (!word) return;
+
+            // Show Form
+            document.getElementById('editor-empty-state').classList.add('hidden');
+            const form = document.getElementById('word-editor-form');
+            form.classList.remove('hidden');
+
+            // Badges & Headers
+            document.getElementById('editor-action-badge').textContent = '编辑';
+            document.getElementById('editor-action-badge').className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/20';
+            document.getElementById('editor-title').textContent = `编辑高频词: ${word.word}`;
+            document.getElementById('delete-word-btn').classList.remove('hidden');
+
+            // Fill Form
+            document.getElementById('word-id').value = word.id;
+            document.getElementById('word-id').disabled = true; // Cannot edit ID for existing item
+            document.getElementById('word-thai').value = word.word;
+            document.getElementById('word-ipa').value = word.ipa;
+            document.getElementById('word-meaning').value = word.meaning;
+            document.getElementById('option-correct').value = word.meaning;
+
+            // Fill Options Distractors
+            const dist1 = word.options[1] || '';
+            const dist2 = word.options[2] || '';
+            const dist3 = word.options[3] || '';
+            document.getElementById('option-distractor-1').value = dist1;
+            document.getElementById('option-distractor-2').value = dist2;
+            document.getElementById('option-distractor-3').value = dist3;
+
+            // Fill Examples
+            currentExamples = word.examples || [];
+            renderExamples();
+        }
+
+        // Synchronize Correct option field with meaning input
+        function updateCorrectOption(val) {
+            document.getElementById('option-correct').value = val;
+        }
+
+        // 5. Init new word form
+        function initNewWordForm() {
+            selectedWordId = null;
+            isCreating = true;
+
+            // Clear list highlights
+            renderWordsList();
+
+            // Show Form
+            document.getElementById('editor-empty-state').classList.add('hidden');
+            const form = document.getElementById('word-editor-form');
+            form.classList.remove('hidden');
+
+            // Set Title & Badges
+            document.getElementById('editor-action-badge').textContent = '新建';
+            document.getElementById('editor-action-badge').className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/20';
+            document.getElementById('editor-title').textContent = '创建新高频词条';
+            document.getElementById('delete-word-btn').classList.add('hidden'); // Cannot delete unsaved item
+
+            // Clear Form inputs
+            document.getElementById('word-id').disabled = false;
+            document.getElementById('word-thai').value = '';
+            document.getElementById('word-ipa').value = '';
+            document.getElementById('word-meaning').value = '';
+            document.getElementById('option-correct').value = '';
+            document.getElementById('option-distractor-1').value = '';
+            document.getElementById('option-distractor-2').value = '';
+            document.getElementById('option-distractor-3').value = '';
+
+            // Clear Examples
+            currentExamples = [];
+            renderExamples();
+
+            // Generate Next suggested ID (e.g. hfw_123)
+            let nextIdNum = 1;
+            if (allWords.length > 0) {
+                // Find all ID numbers
+                const nums = allWords
+                    .map(w => {
+                        const m = w.id.match(/\d+/);
+                        return m ? parseInt(m[0]) : 0;
+                    })
+                    .filter(n => n > 0);
+                if (nums.length > 0) {
+                    nextIdNum = Math.max(...nums) + 1;
+                }
+            }
+            document.getElementById('word-id').value = `hfw_${String(nextIdNum).padStart(3, '0')}`;
+        }
+
+        // 6. Save word
+        async function saveWord(e) {
+            e.preventDefault();
+
+            const id = document.getElementById('word-id').value.trim();
+            const word = document.getElementById('word-thai').value.trim();
+            const ipa = document.getElementById('word-ipa').value.trim();
+            const meaning = document.getElementById('word-meaning').value.trim();
+            const dist1 = document.getElementById('option-distractor-1').value.trim();
+            const dist2 = document.getElementById('option-distractor-2').value.trim();
+            const dist3 = document.getElementById('option-distractor-3').value.trim();
+
+            if (!id || !word || !meaning || !dist1 || !dist2 || !dist3) {
+                alert("请填写所有必需的字段！");
+                return;
+            }
+
+            const payload = {
+                id,
+                word,
+                ipa,
+                meaning,
+                options: [meaning, dist1, dist2, dist3],
+                examples: currentExamples
+            };
+
+            const url = isCreating ? '/api/high-frequency-words' : `/api/high-frequency-words/${id}`;
+            const method = isCreating ? 'POST' : 'PUT';
+
+            try {
+                updateConnectionStatus('loading', '正在保存数据...');
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    const savedItem = await res.json();
+                    
+                    if (isCreating) {
+                        allWords.push(savedItem);
+                        selectedWordId = savedItem.id;
+                        isCreating = false;
+                    } else {
+                        const idx = allWords.findIndex(w => w.id === id);
+                        if (idx !== -1) {
+                            allWords[idx] = savedItem;
+                        }
+                    }
+
+                    // Refresh
+                    filterWords();
+                    selectWord(savedItem.id);
+                    document.getElementById('stat-total-words').textContent = `词汇总量: ${allWords.length}`;
+                    updateConnectionStatus('connected', '已保存修改');
+                    
+                    // Show a quick success highlight on status bar
+                    setTimeout(() => updateConnectionStatus('connected', '已连接至后台'), 3000);
+                } else {
+                    const data = await res.json();
+                    alert("保存失败: " + (data.error || res.statusText));
+                    updateConnectionStatus('connected', '已连接至后台');
+                }
+            } catch (err) {
+                console.error(err);
+                alert("网络保存失败，请检查连接");
+                updateConnectionStatus('error', '网络异常，保存失败');
+            }
+        }
+
+        // 7. Delete word
+        async function deleteWord() {
+            if (!selectedWordId) return;
+            if (isCreating) return;
+
+            const word = allWords.find(w => w.id === selectedWordId);
+            if (!word) return;
+
+            if (!confirm(`确定要删除词条 "${word.word}" (ID: ${word.id}) 吗？此操作不可逆！`)) {
+                return;
+            }
+
+            try {
+                updateConnectionStatus('loading', '正在删除...');
+                const res = await fetch(`/api/high-frequency-words/${selectedWordId}`, {
+                    method: 'DELETE'
+                });
+
+                if (res.ok) {
+                    allWords = allWords.filter(w => w.id !== selectedWordId);
+                    selectedWordId = null;
+                    
+                    // Reset View
+                    document.getElementById('word-editor-form').classList.add('hidden');
+                    document.getElementById('editor-empty-state').classList.remove('hidden');
+                    
+                    filterWords();
+                    document.getElementById('stat-total-words').textContent = `词汇总量: ${allWords.length}`;
+                    updateConnectionStatus('connected', '已成功删除词条');
+                    setTimeout(() => updateConnectionStatus('connected', '已连接至后台'), 3000);
+                } else {
+                    const data = await res.json();
+                    alert("删除失败: " + (data.error || res.statusText));
+                    updateConnectionStatus('connected', '已连接至后台');
+                }
+            } catch (err) {
+                console.error(err);
+                alert("网络删除失败，请重试");
+                updateConnectionStatus('error', '网络错误，无法删除');
+            }
+        }
+
+        // 8. Connection Status Manager
+        function updateConnectionStatus(type, message) {
+            const statusDiv = document.getElementById('connection-status');
+            statusDiv.innerHTML = '';
+
+            const dot = document.createElement('span');
+            dot.className = 'h-2 w-2 rounded-full';
+            
+            const label = document.createElement('span');
+            label.textContent = message;
+
+            statusDiv.appendChild(dot);
+            statusDiv.appendChild(label);
+
+            if (type === 'loading') {
+                dot.className += ' bg-amber-500 animate-pulse';
+                statusDiv.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20';
+            } else if (type === 'connected') {
+                dot.className += ' bg-emerald-500';
+                statusDiv.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+            } else {
+                dot.className += ' bg-rose-500 animate-ping';
+                statusDiv.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-450 border border-rose-500/25';
+            }
+        }
+
+        // 9. Modal Control for Import
+        function openImportModal() {
+            document.getElementById('import-modal').classList.remove('hidden');
+            document.getElementById('import-json-textarea').value = '';
+            document.getElementById('json-file-input').value = '';
+            document.getElementById('file-name-display').textContent = '未选择文件';
+            
+            // Reset view to input mode
+            document.getElementById('import-modal-body-input').classList.remove('hidden');
+            document.getElementById('import-modal-footer-input').classList.remove('hidden');
+            document.getElementById('import-modal-body-results').classList.add('hidden');
+            document.getElementById('import-modal-footer-results').classList.add('hidden');
+            importResultData = null;
+        }
+
+        function closeImportModal() {
+            document.getElementById('import-modal').classList.add('hidden');
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            document.getElementById('file-name-display').textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                document.getElementById('import-json-textarea').value = evt.target.result;
+            };
+            reader.readAsText(file);
+        }
+
+        async function submitImport() {
+            const text = document.getElementById('import-json-textarea').value.trim();
+            if (!text) {
+                alert("请输入或选择导入的 JSON 数据！");
+                return;
+            }
+
+            let dataObj = null;
+            try {
+                dataObj = JSON.parse(text);
+            } catch (e) {
+                alert("JSON 语法解析失败，请检查格式！\n错误: " + e.message);
+                return;
+            }
+
+            // Simple validations
+            const arr = Array.isArray(dataObj) ? dataObj : [dataObj];
+            const invalidItems = arr.filter(item => !item.id || !item.word || !item.meaning);
+            if (invalidItems.length > 0) {
+                alert(`校验失败！有 ${invalidItems.length} 个词条缺少 ID、Word 或 Meaning 属性！`);
+                return;
+            }
+
+            try {
+                updateConnectionStatus('loading', '正在导入中...');
+                const res = await fetch('/api/high-frequency-words/import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ words: arr })
+                });
+
+                if (res.ok) {
+                    const result = await res.json();
+                    
+                    // Save result details
+                    importResultData = {
+                        importedList: result.importedList || [],
+                        ignoredList: result.ignoredList || []
+                    };
+
+                    // Update UI counts
+                    document.getElementById('res-imported-count').textContent = result.importedCount;
+                    document.getElementById('res-ignored-count').textContent = result.ignoredCount;
+                    document.getElementById('res-imported-tab-lbl').textContent = result.importedCount;
+                    document.getElementById('res-ignored-tab-lbl').textContent = result.ignoredCount;
+
+                    // Switch view to results
+                    document.getElementById('import-modal-body-input').classList.add('hidden');
+                    document.getElementById('import-modal-footer-input').classList.add('hidden');
+                    document.getElementById('import-modal-body-results').classList.remove('hidden');
+                    document.getElementById('import-modal-footer-results').classList.remove('hidden');
+
+                    // Default to showing imported list
+                    switchResultTab('imported');
+
+                    updateConnectionStatus('connected', '已成功导入词库');
+                    setTimeout(() => updateConnectionStatus('connected', '已连接至后台'), 3000);
+                } else {
+                    const errRes = await res.json();
+                    alert("导入请求被拒绝: " + (errRes.error || res.statusText));
+                    updateConnectionStatus('connected', '已连接至后台');
+                }
+            } catch (err) {
+                console.error(err);
+                alert("网络导入请求失败");
+                updateConnectionStatus('error', '网络异常，导入失败');
+            }
+        }
+
+        function switchResultTab(tabName) {
+            const btnImported = document.getElementById('tab-res-imported');
+            const btnIgnored = document.getElementById('tab-res-ignored');
+            
+            if (tabName === 'imported') {
+                btnImported.className = "px-4 py-2 text-xs font-bold text-emerald-400 border-b-2 border-emerald-400 focus:outline-none transition-all";
+                btnIgnored.className = "px-4 py-2 text-xs font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-300 focus:outline-none transition-all";
+            } else {
+                btnImported.className = "px-4 py-2 text-xs font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-300 focus:outline-none transition-all";
+                btnIgnored.className = "px-4 py-2 text-xs font-bold text-amber-500 border-b-2 border-amber-500 focus:outline-none transition-all";
+            }
+
+            const tbody = document.getElementById('import-results-table-body');
+            tbody.innerHTML = '';
+
+            const list = importResultData ? importResultData[tabName + 'List'] : [];
+            if (list.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="p-8 text-center text-slate-500 text-xs">
+                            无此列表数据
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            list.forEach(w => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-slate-900/50 bg-slate-950/10 hover:bg-slate-900/20 transition';
+                tr.innerHTML = `
+                    <td class="p-3 font-mono text-slate-400">${escapeHtml(w.id)}</td>
+                    <td class="p-3 font-thai font-semibold text-slate-200">${escapeHtml(w.word)}</td>
+                    <td class="p-3 text-slate-400">${escapeHtml(w.meaning)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function confirmImportResults() {
+            closeImportModal();
+            fetchWordsList(); // reload all
+        }
+
+        // 10. Export JSON
+        function exportJSON() {
+            if (allWords.length === 0) {
+                alert("当前列表没有可以导出的词汇！");
+                return;
+            }
+
+            // Export pure data objects
+            const pureData = allWords.map(w => ({
+                id: w.id,
+                word: w.word,
+                ipa: w.ipa,
+                meaning: w.meaning,
+                options: w.options
+            }));
+
+            const jsonStr = JSON.stringify(pureData, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `high_frequency_words_${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(link);
+            link.click();
+            
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // 11. Prompt Modal Functions
+        async function openPromptModal() {
+            document.getElementById('prompt-modal').classList.remove('hidden');
+            document.getElementById('prompt-markdown-textarea').value = '加载中...';
+            try {
+                updateConnectionStatus('loading', '正在加载 Prompt...');
+                const res = await fetch('/api/prompt?type=high_freq');
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('prompt-markdown-textarea').value = data.content;
+                    updateConnectionStatus('connected', '已加载 Prompt');
+                    setTimeout(() => updateConnectionStatus('connected', '已连接至后台'), 1500);
+                } else {
+                    alert("获取 Prompt 失败: " + res.statusText);
+                    updateConnectionStatus('connected', '已连接至后台');
+                }
+            } catch (err) {
+                console.error(err);
+                alert("无法连接服务器获取 Prompt");
+                updateConnectionStatus('error', '网络异常，获取 Prompt 失败');
+            }
+        }
+
+        function closePromptModal() {
+            document.getElementById('prompt-modal').classList.add('hidden');
+        }
+
+        function copyPromptText() {
+            const textarea = document.getElementById('prompt-markdown-textarea');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999); // For mobile devices
+            navigator.clipboard.writeText(textarea.value).then(() => {
+                const btnText = document.getElementById('copy-prompt-btn-text');
+                const icon = document.getElementById('copy-prompt-icon');
+                
+                btnText.textContent = "已复制!";
+                icon.className = "ph ph-check text-emerald-400";
+                
+                setTimeout(() => {
+                    btnText.textContent = "复制 Prompt";
+                    icon.className = "ph ph-copy";
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert("复制失败，请手动选择并复制。");
+            });
+        }
+
+        async function savePromptMarkdown() {
+            const content = document.getElementById('prompt-markdown-textarea').value;
+            try {
+                updateConnectionStatus('loading', '正在保存 Prompt...');
+                const res = await fetch('/api/prompt?type=high_freq', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+
+                if (res.ok) {
+                    alert("Prompt 修改保存成功！");
+                    closePromptModal();
+                    updateConnectionStatus('connected', 'Prompt 已保存');
+                    setTimeout(() => updateConnectionStatus('connected', '已连接至后台'), 1500);
+                } else {
+                    alert("保存失败: " + res.statusText);
+                    updateConnectionStatus('connected', '已连接至后台');
+                }
+            } catch (err) {
+                console.error(err);
+                alert("网络连接失败，无法保存 Prompt 修改");
+                updateConnectionStatus('error', '保存 Prompt 失败');
+            }
+        }
+
+        async function assignTask() {
+            const payload = {
+                title: "高频词汇复习",
+                action: {
+                    actionURL: "http://192.168.1.120:3002/Pages/appHighFreqWords.html"
+                },
+                due_date: "2026-07-15T23:59:59Z",
+                priority: "high",
+                status: "pending",
+                description: "每日复习高频词汇",
+                category_id: "cat-study",
+                tags: ['泰语日常知识']
+            };
+
+            try {
+                updateConnectionStatus('loading', '正在布置任务...');
+                const res = await fetch('http://192.168.1.120:3006/api/app/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    alert("任务布置成功！");
+                    updateConnectionStatus('connected', '任务布置成功');
+                    setTimeout(() => updateConnectionStatus('connected', '已连接至后台'), 1500);
+                } else {
+                    alert("布置任务失败: " + res.status + " " + res.statusText);
+                    updateConnectionStatus('connected', '已连接至后台');
+                }
+            } catch (err) {
+                console.error(err);
+                alert("网络连接失败，无法布置任务");
+                updateConnectionStatus('error', '布置任务失败');
+            }
+        }
+
+        // 12. Examples management helper functions
+        let currentExamples = [];
+
+        function renderExamples() {
+            const container = document.getElementById('examples-list-container');
+            container.innerHTML = '';
+            
+            if (currentExamples.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4 border border-dashed border-slate-800 rounded-xl text-slate-500 text-xs">
+                        未添加例句，点击上方“添加例句”进行添加
+                    </div>
+                `;
+                return;
+            }
+
+            currentExamples.forEach((ex, idx) => {
+                const div = document.createElement('div');
+                div.className = 'p-4 rounded-xl border border-slate-800/80 bg-slate-900/40 space-y-3 relative group';
+                div.innerHTML = `
+                    <button type="button" onclick="removeExampleRow(${idx})" class="absolute right-3 top-3 text-slate-500 hover:text-rose-400 transition opacity-0 group-hover:opacity-100 focus:opacity-100">
+                        <i class="ph ph-trash text-base"></i>
+                    </button>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">例句 ${idx + 1} (泰语)</label>
+                        <input type="text" value="${escapeHtml(ex.thai || '')}" oninput="updateExampleField(${idx}, 'thai', this.value)" placeholder="输入泰语例句..." required
+                            class="w-full bg-slate-900/50 border border-slate-800/80 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-purple-500 transition font-thai">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">例句 ${idx + 1} (中文翻译)</label>
+                        <input type="text" value="${escapeHtml(ex.chinese || '')}" oninput="updateExampleField(${idx}, 'chinese', this.value)" placeholder="输入中文对照翻译..." required
+                            class="w-full bg-slate-900/50 border border-slate-800/80 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-purple-500 transition">
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function addExampleRow() {
+            currentExamples.push({ thai: '', chinese: '' });
+            renderExamples();
+        }
+
+        function removeExampleRow(idx) {
+            currentExamples.splice(idx, 1);
+            renderExamples();
+        }
+
+        function updateExampleField(idx, field, value) {
+            if (currentExamples[idx]) {
+                currentExamples[idx][field] = value;
+            }
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>

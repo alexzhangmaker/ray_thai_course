@@ -1,0 +1,2289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz 测验试卷配置与管理 - vCourse.ThaiNotes</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Serif+Thai:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;750&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Noto Sans SC', 'sans-serif'],
+                        thai: ['Noto Serif Thai', 'Outfit', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0d0f1a 0%, #0e1624 50%, #0d2030 100%);
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: rgba(0, 0, 0, 0.4);
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.15);
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px var(--glass-shadow);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .glass-card.active {
+            background: rgba(99, 102, 241, 0.08);
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.2);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.4);
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- Header -->
+    <header class="glass-panel border-b border-slate-800/80 px-6 py-4 flex items-center justify-between shrink-0 z-10">
+        <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-emerald-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <i class="ph-bold ph-graduation-cap text-xl text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold leading-none tracking-tight flex items-center gap-2">
+                    <span>vCourse.ThaiNotes</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-semibold border border-indigo-500/30 font-sans">Quiz 测验后台</span>
+                </h1>
+                <span class="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mt-1">Quiz 数据库管理与 JSON 试卷配置控制台</span>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-6">
+            <!-- Connection Status -->
+            <div id="connection-status" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>服务连接正常</span>
+            </div>
+            
+            <!-- Quick links -->
+            <nav class="flex items-center gap-2 font-sans">
+                <a href="/Pages/consoleCourseReview.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-layout"></i>
+                    <span>常规后台</span>
+                </a>
+                <a href="/Pages/consoleReadingCoach.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition duration-200 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-book-open"></i>
+                    <span>阅读教练后台</span>
+                </a>
+                <a href="/Pages/consoleNotes.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition duration-200 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-note-pencil"></i>
+                    <span>课程笔记后台</span>
+                </a>
+                <a href="javascript:void(0)" onclick="openAppQuizWithUuid()" class="px-4 py-2 text-sm text-indigo-400 hover:text-white rounded-lg hover:bg-indigo-500/10 transition duration-200 flex items-center gap-1.5 border border-indigo-500/20">
+                    <i class="ph ph-arrow-square-out"></i>
+                    <span>打开 Quiz 客户端</span>
+                </a>
+                <button type="button" onclick="openAllSubmissionsModal()" class="px-4 py-2 text-sm text-emerald-400 hover:text-white rounded-lg hover:bg-emerald-500/10 transition duration-200 flex items-center gap-1.5 border border-emerald-500/20">
+                    <i class="ph ph-chart-bar"></i>
+                    <span>测验成绩总览</span>
+                </button>
+                <button type="button" onclick="assignQuizTask()" class="px-4 py-2 text-sm text-sky-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-sky-500/20">
+                    <i class="ph ph-paper-plane-tilt"></i>
+                    <span>布置任务</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex-grow flex overflow-hidden min-h-0">
+        <!-- Sidebar: Quiz List -->
+        <aside class="w-96 border-r border-slate-800/60 flex flex-col bg-slate-950/20 shrink-0">
+            <!-- Search & Actions -->
+            <div class="p-4 border-b border-slate-800/60 space-y-3 font-sans">
+                <!-- Search Input with Clear Button -->
+                <div class="relative">
+                    <input type="text" id="search-input" oninput="onSearchInput()" placeholder="搜索 Quiz 标题或标签..." 
+                           class="w-full pl-9 pr-8 py-2 bg-slate-900/60 border border-slate-800 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition">
+                    <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-base"></i>
+                    <button id="clear-search-btn" onclick="clearSearch()" type="button" class="hidden absolute right-2.5 top-2.5 text-slate-500 hover:text-slate-300">
+                        <i class="ph-bold ph-x text-sm"></i>
+                    </button>
+                </div>
+
+                <!-- Tag & Status Filter Dropdowns -->
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                            <i class="ph ph-tag text-indigo-400"></i>
+                            <span>标签筛选</span>
+                        </label>
+                        <select id="tag-filter" onchange="onTagSelectChange(this.value)" 
+                                class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 truncate cursor-pointer transition">
+                            <option value="all">全部标签</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                            <i class="ph ph-sliders text-indigo-400"></i>
+                            <span>状态筛选</span>
+                        </label>
+                        <select id="status-filter" onchange="filterQuizzes()" 
+                                class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 cursor-pointer transition">
+                            <option value="all">全部状态</option>
+                            <option value="active">已发布 (active)</option>
+                            <option value="draft">草稿 (draft)</option>
+                            <option value="archived">已归档 (archived)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tag Chips Quick Selector -->
+                <div class="pt-0.5">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                            <i class="ph ph-squares-four text-indigo-400"></i>
+                            <span>快捷标签筛选</span>
+                        </span>
+                        <button id="reset-filter-btn" onclick="resetFilters()" type="button" class="text-[11px] text-indigo-400 hover:text-indigo-300 transition hidden flex items-center gap-1 font-sans">
+                            <i class="ph ph-arrow-counter-clockwise"></i>
+                            <span>重置筛选</span>
+                        </button>
+                    </div>
+                    <div id="tag-chips-container" class="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+
+                <!-- Create Quiz Button -->
+                <div class="pt-0.5">
+                    <button onclick="createNewQuiz()" class="w-full py-2 bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition shadow-lg shadow-indigo-500/20">
+                        <i class="ph-bold ph-plus"></i>
+                        <span>新建 Quiz 测验</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quiz Items List -->
+            <div id="quiz-list" class="flex-grow overflow-y-auto p-4 space-y-2.5 custom-scrollbar">
+                <!-- Loaded via JS -->
+            </div>
+
+            <!-- Sidebar Stats Footer -->
+            <div class="p-3 border-t border-slate-800/60 bg-slate-950/40 text-xs text-slate-400 flex items-center justify-between shrink-0 font-medium font-sans">
+                <span id="quiz-count-stat">试卷总量: 0</span>
+                <span id="quiz-tag-stat" class="text-indigo-400 text-[11px]"></span>
+            </div>
+        </aside>
+
+        <!-- Main Editor & Detail View -->
+        <main class="flex-grow flex flex-col bg-slate-950/40 overflow-hidden">
+            <!-- Empty state -->
+            <div id="empty-state" class="flex-grow flex flex-col items-center justify-center text-slate-500 p-8 text-center">
+                <i class="ph ph-graduation-cap text-6xl text-slate-700 mb-4"></i>
+                <h3 class="text-base font-semibold text-slate-400 mb-1">请从左侧选择或新建一个 Quiz 测验</h3>
+                <p class="text-xs text-slate-600 max-w-sm">你可以管理存储在数据库中的测验试卷，在线编辑 JSON 结构或查看题目解析</p>
+            </div>
+
+            <!-- Quiz Editor Form (Hidden by default) -->
+            <div id="quiz-editor" class="flex-grow flex flex-col overflow-hidden hidden">
+                <!-- Top Toolbar of Editor -->
+                <div class="px-6 py-4 border-b border-slate-800/60 flex items-center justify-between bg-slate-900/30 shrink-0">
+                    <div>
+                        <span id="editor-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono font-medium">NEW</span>
+                        <h2 id="editor-title-display" class="text-base font-bold text-slate-100 mt-1">编辑测验试卷</h2>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="previewInApp()" class="px-3.5 py-1.5 text-xs text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-800 rounded-lg border border-slate-700 flex items-center gap-1.5 transition">
+                            <i class="ph ph-arrow-square-out text-indigo-400"></i>
+                            <span>在客户端中测试</span>
+                        </button>
+                        <button onclick="assignQuizTask()" class="px-3.5 py-1.5 text-xs text-sky-400 hover:text-white bg-slate-800/60 hover:bg-slate-800 rounded-lg border border-sky-500/20 flex items-center gap-1.5 transition">
+                            <i class="ph ph-paper-plane-tilt text-sky-400"></i>
+                            <span>布置任务</span>
+                        </button>
+                        <button onclick="copyQuizUrl()" class="px-3.5 py-1.5 text-xs text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-800 rounded-lg border border-slate-700 flex items-center gap-1.5 transition">
+                            <i class="ph ph-copy text-emerald-400"></i>
+                            <span>复制链接</span>
+                        </button>
+                        <button onclick="deleteCurrentQuiz()" id="delete-btn" class="px-3 py-1.5 text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg border border-rose-500/20 flex items-center gap-1 transition">
+                            <i class="ph ph-trash"></i>
+                            <span>删除</span>
+                        </button>
+                        <button onclick="saveQuiz()" class="px-5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-lg shadow-indigo-500/20">
+                            <i class="ph-bold ph-floppy-disk"></i>
+                            <span>保存配置</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Form Meta Controls -->
+                <div class="p-6 border-b border-slate-800/60 bg-slate-900/10 grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0 font-sans">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">UUID 唯一标识</label>
+                        <input type="text" id="quiz-uuid" readonly class="w-full bg-slate-950/60 border border-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-400 focus:outline-none cursor-not-allowed">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Quiz 标题 (Title)</label>
+                        <input type="text" id="quiz-title" placeholder="如：แบบทดสอบทบทวนความรู้: ภาษาไทยเพื่อการท่องเที่ยว" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">状态 (Status)</label>
+                        <select id="quiz-status" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                            <option value="active">Active (已发布)</option>
+                            <option value="draft">Draft (草稿)</option>
+                            <option value="archived">Archived (归档)</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-4">
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">标签 (Tags，用逗号分隔)</label>
+                        <input type="text" id="quiz-tags" placeholder="例如: วัฒนธรรม, ท่องเที่ยว, A2-B1" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Tabs & Content -->
+                <div class="flex-grow flex flex-col overflow-hidden">
+                    <!-- Tab Header -->
+                    <div class="px-6 pt-3 bg-slate-900/20 border-b border-slate-800/60 flex items-center gap-4 shrink-0">
+                        <button onclick="switchTab('json')" id="tab-btn-json" class="pb-3 text-xs font-bold text-indigo-400 border-b-2 border-indigo-500 flex items-center gap-1.5">
+                            <i class="ph ph-code"></i>
+                            <span>JSON 数据源码</span>
+                        </button>
+                        <button onclick="switchTab('preview')" id="tab-btn-preview" class="pb-3 text-xs font-bold text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+                            <i class="ph ph-eye"></i>
+                            <span>题目图形化预览</span>
+                        </button>
+                        <button onclick="switchTab('prompt')" id="tab-btn-prompt" class="pb-3 text-xs font-bold text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+                            <i class="ph ph-sparkle"></i>
+                            <span>AI Prompt 模版生成器</span>
+                        </button>
+                        <button onclick="switchTab('submissions')" id="tab-btn-submissions" class="pb-3 text-xs font-bold text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+                            <i class="ph ph-chart-bar"></i>
+                            <span>测验作答记录</span>
+                            <span id="tab-submissions-count" class="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-400">0</span>
+                        </button>
+                    </div>
+
+                    <!-- Tab 1: JSON Editor -->
+                    <div id="tab-content-json" class="flex-grow flex flex-col p-6 overflow-hidden">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs text-slate-400">直接修改 Quiz JSON 数据结构 (包含 title, total_questions, questions 数组)</span>
+                            <div class="flex items-center gap-2">
+                                <button onclick="formatJson()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 rounded border border-slate-700 transition">
+                                    <i class="ph ph-magic-wand mr-1"></i>格式化 JSON
+                                </button>
+                                <button onclick="validateJson()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 rounded border border-slate-700 transition">
+                                    <i class="ph ph-check-circle mr-1"></i>校验格式
+                                </button>
+                            </div>
+                        </div>
+                        <textarea id="json-editor-textarea" oninput="onJsonChange()" class="w-full flex-grow bg-slate-950/80 border border-slate-800 rounded-xl p-4 font-mono text-xs text-emerald-400 focus:outline-none focus:border-indigo-500/60 custom-scrollbar leading-relaxed resize-none" placeholder="在此粘贴或修改 Quiz JSON 数据..."></textarea>
+                    </div>
+
+                    <!-- Tab 2: Visual Questions Preview -->
+                    <div id="tab-content-preview" class="flex-grow p-6 overflow-y-auto custom-scrollbar hidden space-y-4">
+                        <!-- Loaded dynamically from JSON -->
+                        <div id="visual-questions-list" class="space-y-4 max-w-4xl mx-auto"></div>
+                    </div>
+
+                    <!-- Tab 3: Prompt Generator -->
+                    <div id="tab-content-prompt" class="flex-grow p-6 overflow-y-auto custom-scrollbar hidden space-y-4">
+                        <div class="max-w-4xl mx-auto space-y-4">
+                            <div class="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-xs text-indigo-300 leading-relaxed">
+                                <i class="ph ph-lightbulb text-base mr-1"></i>
+                                复制下方 Prompt 提示词发送给 ChatGPT / Claude / Gemini，生成标准格式的 Quiz JSON，然后粘贴到 JSON 数据源码标签页即可快速导入测验！
+                            </div>
+
+                            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <h4 class="text-sm font-bold text-slate-200">生成泰语 Quiz JSON 的推荐 Prompt 模板</h4>
+                                    <button onclick="copyPromptText()" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-semibold flex items-center gap-1">
+                                        <i class="ph ph-copy"></i>
+                                        <span>复制 Prompt</span>
+                                    </button>
+                                </div>
+                                <pre id="prompt-template-text" class="bg-slate-950 p-4 rounded-lg text-xs font-mono text-slate-300 leading-relaxed overflow-x-auto whitespace-pre-wrap select-all">请帮我生成一份泰语学习/阅读理解测验 Quiz 的 JSON 数据。
+
+要求格式如下 JSON：
+{
+  "quiz_title": "แบบทดสอบทบทวนความรู้: [主题名称]",
+  "total_questions": 5,
+  "questions": [
+    {
+      "id": 1,
+      "type": "single_choice", // 可选: single_choice (单选), multiple_choice (多选), true_false (判断)
+      "difficulty": "easy", // 可选: easy, medium, hard
+      "knowledge_point": "知识点说明",
+      "question": "泰语题目内容...",
+      "options": [
+        "ก. 选项A",
+        "ข. 选项B",
+        "ค. 选项C",
+        "ง. 选项D"
+      ],
+      "answer": "ข", // 如果是单选填选项字母如"ข"，如果是判断题填"true"或"false"，如果是多选填数组如["ก", "ค"]
+      "explanation": "解析与说明..."
+    }
+  ]
+}
+
+主题：[在此填入主题，如：泰语旅游词汇 / 泰国九皇斋节文化]
+题目数量：5 题
+难度比例：2题 easy, 2题 medium, 1题 hard</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 4: Submissions / Test Results -->
+                    <div id="tab-content-submissions" class="flex-grow p-6 overflow-y-auto custom-scrollbar hidden space-y-6">
+                        <div class="max-w-5xl mx-auto space-y-6">
+                            <!-- Stats Cards Row -->
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 font-sans">
+                                <div class="glass-card rounded-xl p-4 bg-slate-900/40 border border-slate-800">
+                                    <span class="text-xs text-slate-400 flex items-center gap-1.5 mb-1">
+                                        <i class="ph ph-users text-indigo-400 text-base"></i>
+                                        <span>累计测试次数</span>
+                                    </span>
+                                    <h3 id="sub-stat-total" class="text-2xl font-extrabold text-slate-100">0</h3>
+                                </div>
+                                <div class="glass-card rounded-xl p-4 bg-slate-900/40 border border-slate-800">
+                                    <span class="text-xs text-slate-400 flex items-center gap-1.5 mb-1">
+                                        <i class="ph ph-percent text-emerald-400 text-base"></i>
+                                        <span>平均正确率</span>
+                                    </span>
+                                    <h3 id="sub-stat-avg" class="text-2xl font-extrabold text-emerald-400">0%</h3>
+                                </div>
+                                <div class="glass-card rounded-xl p-4 bg-slate-900/40 border border-slate-800">
+                                    <span class="text-xs text-slate-400 flex items-center gap-1.5 mb-1">
+                                        <i class="ph ph-trophy text-amber-400 text-base"></i>
+                                        <span>最高得分率</span>
+                                    </span>
+                                    <h3 id="sub-stat-max" class="text-2xl font-extrabold text-amber-400">0%</h3>
+                                </div>
+                                <div class="glass-card rounded-xl p-4 bg-slate-900/40 border border-slate-800">
+                                    <span class="text-xs text-slate-400 flex items-center gap-1.5 mb-1">
+                                        <i class="ph ph-clock text-sky-400 text-base"></i>
+                                        <span>平均作答耗时</span>
+                                    </span>
+                                    <h3 id="sub-stat-time" class="text-2xl font-extrabold text-sky-400">00:00</h3>
+                                </div>
+                            </div>
+
+                            <!-- Controls & Table Header -->
+                            <div class="flex items-center justify-between gap-3 font-sans">
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                                        <i class="ph ph-table text-indigo-400"></i>
+                                        <span>测验作答记录流水</span>
+                                    </h3>
+                                    <span class="text-xs text-slate-500">点击“查看答卷”可查看该次提交的每题作答结果、标准答案与错题解析</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <select id="sub-mode-filter" onchange="renderCurrentQuizSubmissions()" class="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 cursor-pointer">
+                                        <option value="all">全部模式</option>
+                                        <option value="practice">练习模式 (practice)</option>
+                                        <option value="exam">模拟考试 (exam)</option>
+                                    </select>
+                                    <button onclick="loadQuizSubmissions(currentQuizUuid)" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700 cursor-pointer">
+                                        <i class="ph ph-arrow-clockwise"></i>
+                                        <span>刷新记录</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Submissions List Table -->
+                            <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/40">
+                                <div class="overflow-x-auto custom-scrollbar">
+                                    <table class="w-full text-left text-xs text-slate-300">
+                                        <thead class="bg-slate-900/80 text-slate-400 border-b border-slate-800 font-semibold uppercase text-[11px]">
+                                            <tr>
+                                                <th class="py-3 px-4"># ID</th>
+                                                <th class="py-3 px-4">作答时间</th>
+                                                <th class="py-3 px-4">模式</th>
+                                                <th class="py-3 px-4">得分 / 题数</th>
+                                                <th class="py-3 px-4">得分率</th>
+                                                <th class="py-3 px-4">耗时</th>
+                                                <th class="py-3 px-4">连击</th>
+                                                <th class="py-3 px-4 text-right">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="submissions-table-body" class="divide-y divide-slate-800/60 font-sans">
+                                            <!-- Loaded via JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-xs font-medium text-slate-200 shadow-2xl transition-all duration-300 opacity-0 translate-y-4 pointer-events-none flex items-center gap-2 z-50">
+        <i id="toast-icon" class="ph-bold ph-check-circle text-emerald-400 text-base"></i>
+        <span id="toast-msg">操作成功</span>
+    </div>
+
+    <script>
+        // State management
+        let quizzes = [];
+        let currentQuizUuid = null;
+        let activeTab = 'json';
+        let selectedTag = 'all';
+
+        // Utility: HTML escaping
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchQuizzes();
+        });
+
+        // Toast notification
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMsg.textContent = msg;
+            if (isError) {
+                toastIcon.className = 'ph-bold ph-warning-circle text-rose-400 text-base';
+                toast.className = toast.className.replace('border-slate-700', 'border-rose-500/30');
+            } else {
+                toastIcon.className = 'ph-bold ph-check-circle text-emerald-400 text-base';
+                toast.className = toast.className.replace('border-rose-500/30', 'border-slate-700');
+            }
+
+            toast.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+            }, 3000);
+        }
+
+        // Fetch quiz list from server
+        async function fetchQuizzes() {
+            try {
+                const res = await fetch('/api/quizzes');
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                quizzes = await res.json();
+
+                // Check URL param for tag
+                const params = new URLSearchParams(window.location.search);
+                const tagParam = params.get('tag');
+                if (tagParam) {
+                    selectedTag = tagParam;
+                }
+
+                updateTagFilterUI();
+                filterQuizzes();
+
+                // If URL has uuid, open it
+                const uuidParam = params.get('uuid');
+                if (uuidParam && quizzes.some(q => q.uuid === uuidParam)) {
+                    selectQuiz(uuidParam);
+                }
+            } catch (err) {
+                console.error('Failed to fetch quizzes:', err);
+                document.getElementById('connection-status').innerHTML = `
+                    <span class="h-2 w-2 rounded-full bg-rose-500"></span>
+                    <span class="text-rose-400">后端连接失败 (${err.message})</span>
+                `;
+                showToast('后端服务未启动或连接失败', true);
+            }
+        }
+
+        // Update Tag Filter UI: Dropdown & Quick Chips
+        function updateTagFilterUI() {
+            const tagFilterSelect = document.getElementById('tag-filter');
+            const tagChipsContainer = document.getElementById('tag-chips-container');
+            if (!tagFilterSelect || !tagChipsContainer) return;
+
+            // Calculate tag counts
+            const tagCounts = {};
+            quizzes.forEach(q => {
+                const tags = q.tags || (q.raw_tags ? q.raw_tags.split(',').map(t => t.trim()).filter(Boolean) : []);
+                tags.forEach(t => {
+                    tagCounts[t] = (tagCounts[t] || 0) + 1;
+                });
+            });
+
+            const uniqueTags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]);
+
+            // 1. Populate Dropdown <select id="tag-filter">
+            let selectHtml = `<option value="all">全部标签 (${quizzes.length})</option>`;
+            uniqueTags.forEach(tag => {
+                selectHtml += `<option value="${encodeURIComponent(tag)}">${escapeHtml(tag)} (${tagCounts[tag]})</option>`;
+            });
+            tagFilterSelect.innerHTML = selectHtml;
+
+            // Maintain current selection
+            if (selectedTag && selectedTag !== 'all' && tagCounts[selectedTag]) {
+                tagFilterSelect.value = encodeURIComponent(selectedTag);
+            } else {
+                tagFilterSelect.value = 'all';
+                selectedTag = 'all';
+            }
+
+            // 2. Populate Quick Tag Chips
+            let chipsHtml = `
+                <button type="button" onclick="selectTagFilter('all')" data-tag="all"
+                    class="tag-filter-chip px-2.5 py-1 rounded-lg text-xs font-medium transition shrink-0 flex items-center gap-1.5 cursor-pointer ${selectedTag === 'all' ? 'bg-indigo-600 text-white font-semibold shadow-sm' : 'bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800/80'}">
+                    <span>全部</span>
+                    <span class="chip-count text-[10px] px-1.5 py-0.5 rounded-full ${selectedTag === 'all' ? 'bg-indigo-700/80 text-white' : 'bg-slate-800 text-slate-400'}">${quizzes.length}</span>
+                </button>
+            `;
+
+            uniqueTags.forEach(tag => {
+                const isSelected = selectedTag === tag;
+                chipsHtml += `
+                    <button type="button" onclick="selectTagFilter('${encodeURIComponent(tag)}', true)" data-tag="${escapeHtml(tag)}"
+                        title="按标签筛选: ${escapeHtml(tag)}"
+                        class="tag-filter-chip px-2.5 py-1 rounded-lg text-xs font-medium transition shrink-0 flex items-center gap-1.5 cursor-pointer ${isSelected ? 'bg-indigo-600 text-white font-semibold shadow-sm' : 'bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800/80'}">
+                        <span class="truncate max-w-[130px]">${escapeHtml(tag)}</span>
+                        <span class="chip-count text-[10px] px-1.5 py-0.5 rounded-full ${isSelected ? 'bg-indigo-700/80 text-white' : 'bg-slate-800 text-slate-400'}">${tagCounts[tag]}</span>
+                    </button>
+                `;
+            });
+
+            tagChipsContainer.innerHTML = chipsHtml;
+        }
+
+        // Update tag chips visual active state
+        function updateTagChipsHighlight() {
+            const chips = document.querySelectorAll('.tag-filter-chip');
+            chips.forEach(chip => {
+                const chipTag = chip.getAttribute('data-tag');
+                const isSelected = chipTag === selectedTag;
+                if (isSelected) {
+                    chip.className = 'tag-filter-chip px-2.5 py-1 rounded-lg text-xs font-semibold transition shrink-0 flex items-center gap-1.5 bg-indigo-600 text-white shadow-sm cursor-pointer';
+                    const countSpan = chip.querySelector('.chip-count');
+                    if (countSpan) countSpan.className = 'chip-count text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-700/80 text-white';
+                } else {
+                    chip.className = 'tag-filter-chip px-2.5 py-1 rounded-lg text-xs font-medium transition shrink-0 flex items-center gap-1.5 bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800/80 cursor-pointer';
+                    const countSpan = chip.querySelector('.chip-count');
+                    if (countSpan) countSpan.className = 'chip-count text-[10px] px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-400';
+                }
+            });
+        }
+
+        // Handle Search input
+        function onSearchInput() {
+            const searchInput = document.getElementById('search-input');
+            const clearSearchBtn = document.getElementById('clear-search-btn');
+            if (clearSearchBtn) {
+                if (searchInput && searchInput.value.trim().length > 0) {
+                    clearSearchBtn.classList.remove('hidden');
+                } else {
+                    clearSearchBtn.classList.add('hidden');
+                }
+            }
+            filterQuizzes();
+        }
+
+        // Clear Search input
+        function clearSearch() {
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) searchInput.value = '';
+            const clearSearchBtn = document.getElementById('clear-search-btn');
+            if (clearSearchBtn) clearSearchBtn.classList.add('hidden');
+            filterQuizzes();
+        }
+
+        // Handle dropdown tag select change
+        function onTagSelectChange(val) {
+            const decoded = val === 'all' ? 'all' : decodeURIComponent(val);
+            selectTagFilter(decoded, false);
+        }
+
+        // Programmatic tag selection
+        function selectTagFilter(tagVal, isEncoded = false) {
+            if (isEncoded) {
+                tagVal = decodeURIComponent(tagVal);
+            }
+            selectedTag = tagVal;
+
+            const tagFilterSelect = document.getElementById('tag-filter');
+            if (tagFilterSelect) {
+                tagFilterSelect.value = (tagVal === 'all') ? 'all' : encodeURIComponent(tagVal);
+            }
+
+            updateTagChipsHighlight();
+            filterQuizzes();
+        }
+
+        // Reset all active filters
+        function resetFilters() {
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) searchInput.value = '';
+            const clearSearchBtn = document.getElementById('clear-search-btn');
+            if (clearSearchBtn) clearSearchBtn.classList.add('hidden');
+
+            document.getElementById('status-filter').value = 'all';
+            selectedTag = 'all';
+            const tagFilterSelect = document.getElementById('tag-filter');
+            if (tagFilterSelect) tagFilterSelect.value = 'all';
+
+            updateTagChipsHighlight();
+            filterQuizzes();
+        }
+
+        // Filter quizzes based on tag, search, and status
+        function filterQuizzes() {
+            const search = document.getElementById('search-input').value.toLowerCase().trim();
+            const status = document.getElementById('status-filter').value;
+
+            const filtered = quizzes.filter(q => {
+                const qTags = q.tags || (q.raw_tags ? q.raw_tags.split(',').map(t => t.trim()).filter(Boolean) : []);
+                const matchTag = (selectedTag === 'all' || !selectedTag) ? true : qTags.includes(selectedTag);
+                const matchSearch = !search || 
+                    (q.title && q.title.toLowerCase().includes(search)) || 
+                    (q.uuid && q.uuid.toLowerCase().includes(search)) || 
+                    (q.raw_tags && q.raw_tags.toLowerCase().includes(search)) ||
+                    qTags.some(t => t.toLowerCase().includes(search));
+                const matchStatus = status === 'all' || q.status === status;
+                return matchTag && matchSearch && matchStatus;
+            });
+
+            renderQuizList(filtered);
+            updateSidebarStats(filtered.length, quizzes.length);
+        }
+
+        // Update footer stats and reset button
+        function updateSidebarStats(filteredCount, totalCount) {
+            const statCount = document.getElementById('quiz-count-stat');
+            const statTag = document.getElementById('quiz-tag-stat');
+            if (statCount) {
+                statCount.textContent = `已选/总计: ${filteredCount}/${totalCount}`;
+            }
+            if (statTag) {
+                if (selectedTag && selectedTag !== 'all') {
+                    statTag.innerHTML = `<span class="inline-flex items-center gap-1 bg-indigo-500/10 text-indigo-300 px-2 py-0.5 rounded border border-indigo-500/20 text-[11px]"><i class="ph ph-tag text-[10px]"></i>${escapeHtml(selectedTag)}</span>`;
+                } else {
+                    statTag.innerHTML = '';
+                }
+            }
+
+            const searchVal = document.getElementById('search-input') ? document.getElementById('search-input').value.trim() : '';
+            const statusVal = document.getElementById('status-filter') ? document.getElementById('status-filter').value : 'all';
+            const hasActiveFilter = (selectedTag !== 'all') || (statusVal !== 'all') || (searchVal !== '');
+            const resetBtn = document.getElementById('reset-filter-btn');
+            if (resetBtn) {
+                if (hasActiveFilter) {
+                    resetBtn.classList.remove('hidden');
+                } else {
+                    resetBtn.classList.add('hidden');
+                }
+            }
+        }
+
+        // Render sidebar quiz list
+        function renderQuizList(list) {
+            const container = document.getElementById('quiz-list');
+            if (!list || list.length === 0) {
+                const searchVal = document.getElementById('search-input') ? document.getElementById('search-input').value.trim() : '';
+                const statusVal = document.getElementById('status-filter') ? document.getElementById('status-filter').value : 'all';
+                const isFiltered = (selectedTag !== 'all') || (statusVal !== 'all') || (searchVal !== '');
+
+                container.innerHTML = `
+                    <div class="text-center py-12 text-slate-500 text-xs">
+                        <i class="ph ph-folder-open text-3xl mb-2 block text-slate-600"></i>
+                        <span>${isFiltered ? '未找到符合筛选条件的 Quiz 测验' : '暂无 Quiz 数据'}</span>
+                        ${isFiltered ? `
+                            <div class="mt-3">
+                                <button type="button" onclick="resetFilters()" class="px-3 py-1.5 rounded-lg bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600/30 transition text-xs font-semibold cursor-pointer">
+                                    清除筛选条件
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = list.map(item => {
+                const isActive = item.uuid === currentQuizUuid;
+                const statusBadge = item.status === 'active' 
+                    ? `<span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">Active</span>`
+                    : item.status === 'draft'
+                    ? `<span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold">Draft</span>`
+                    : `<span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400 border border-slate-700">Archived</span>`;
+
+                const tags = item.tags || (item.raw_tags ? item.raw_tags.split(',').map(t => t.trim()).filter(Boolean) : []);
+                const tagsHtml = tags.map(t => {
+                    const isTagActive = selectedTag === t;
+                    return `<span onclick="event.stopPropagation(); selectTagFilter('${encodeURIComponent(t)}', true)" title="点击按此标签筛选: ${escapeHtml(t)}" class="px-1.5 py-0.5 rounded text-[10px] transition cursor-pointer flex items-center gap-1 ${isTagActive ? 'bg-indigo-600/40 text-indigo-300 border border-indigo-500/60 font-semibold shadow-xs' : 'bg-slate-900 text-slate-400 border border-slate-800 hover:border-indigo-500/40 hover:text-indigo-300'}"><i class="ph ph-tag text-[9px] text-indigo-400/80"></i>${escapeHtml(t)}</span>`;
+                }).join('');
+
+                const attemptInfo = (item.submission_count && item.submission_count > 0)
+                    ? `<span class="text-emerald-400 font-medium text-[10px] flex items-center gap-0.5" title="累计测试 ${item.submission_count} 次，平均分 ${item.avg_score || 0}%"><i class="ph ph-chart-bar"></i>${item.submission_count}次 (均分${item.avg_score || 0}%)</span>`
+                    : `<span class="text-slate-600 text-[10px]">未测试</span>`;
+
+                return `
+                    <div onclick="selectQuiz('${item.uuid}')" class="glass-card rounded-xl p-3.5 cursor-pointer relative font-sans ${isActive ? 'active' : ''}">
+                        <div class="flex justify-between items-start mb-1.5 gap-2">
+                            <h4 class="text-xs font-bold text-slate-200 line-clamp-2 leading-snug hover:text-indigo-300 transition">${escapeHtml(item.title)}</h4>
+                            ${statusBadge}
+                        </div>
+                        ${tagsHtml ? `<div class="flex items-center gap-1.5 flex-wrap mb-2">${tagsHtml}</div>` : ''}
+                        <div class="flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-800/40 pt-2">
+                            <div class="flex items-center gap-1.5">
+                                <span><i class="ph ph-question text-indigo-400 mr-1"></i>${item.question_count || 0} 题</span>
+                                <span class="text-slate-700">•</span>
+                                ${attemptInfo}
+                            </div>
+                            <span class="font-mono text-[10px]">${item.uuid}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Select a quiz to edit
+        async function selectQuiz(uuid) {
+            currentQuizUuid = uuid;
+
+            // If the selected quiz doesn't match current tag filter, adjust filter so it is visible in the list
+            const targetQuiz = quizzes.find(q => q.uuid === uuid);
+            if (targetQuiz) {
+                const targetTags = targetQuiz.tags || (targetQuiz.raw_tags ? targetQuiz.raw_tags.split(',').map(t => t.trim()).filter(Boolean) : []);
+                if (selectedTag !== 'all' && !targetTags.includes(selectedTag)) {
+                    selectedTag = 'all';
+                    const tagFilterSelect = document.getElementById('tag-filter');
+                    if (tagFilterSelect) tagFilterSelect.value = 'all';
+                    updateTagChipsHighlight();
+                }
+            }
+
+            filterQuizzes();
+
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('quiz-editor').classList.remove('hidden');
+
+            // Load submissions for this quiz
+            loadQuizSubmissionsCount(uuid);
+            if (activeTab === 'submissions') {
+                loadQuizSubmissions(uuid);
+            }
+
+            try {
+                const res = await fetch(`/api/quizzes/${uuid}`);
+                if (!res.ok) throw new Error(`Fetch error: ${res.status}`);
+                const quiz = await res.json();
+
+                document.getElementById('editor-badge').textContent = 'EDITING';
+                document.getElementById('editor-title-display').textContent = quiz.title;
+                document.getElementById('quiz-uuid').value = quiz.uuid;
+                document.getElementById('quiz-title').value = quiz.title;
+                document.getElementById('quiz-tags').value = quiz.raw_tags || '';
+                document.getElementById('quiz-status').value = quiz.status || 'active';
+                document.getElementById('delete-btn').classList.remove('hidden');
+
+                const jsonStr = JSON.stringify(quiz.quiz_data || {}, null, 2);
+                document.getElementById('json-editor-textarea').value = jsonStr;
+
+                renderVisualQuestions(quiz.quiz_data || {});
+            } catch (err) {
+                console.error('Failed to load quiz details:', err);
+                showToast(`加载 Quiz (${uuid}) 失败: ${err.message}`, true);
+            }
+        }
+
+        // Create new quiz
+        function createNewQuiz() {
+            currentQuizUuid = null;
+            filterQuizzes();
+
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('quiz-editor').classList.remove('hidden');
+
+            const countBadge = document.getElementById('tab-submissions-count');
+            if (countBadge) {
+                countBadge.textContent = '0';
+                countBadge.className = 'text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-400';
+            }
+            if (activeTab === 'submissions') {
+                switchTab('json');
+            }
+
+            const newUuid = 'qz_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+
+            document.getElementById('editor-badge').textContent = 'CREATE NEW';
+            document.getElementById('editor-title-display').textContent = '新建测验试卷';
+            document.getElementById('quiz-uuid').value = newUuid;
+            document.getElementById('quiz-title').value = '';
+            document.getElementById('quiz-tags').value = 'วัฒนธรรม, ท่องเที่ยว';
+            document.getElementById('quiz-status').value = 'active';
+            document.getElementById('delete-btn').classList.add('hidden');
+
+            const defaultJson = {
+                "quiz_title": "新建泰语测验试卷",
+                "total_questions": 1,
+                "questions": [
+                    {
+                        "id": 1,
+                        "type": "single_choice",
+                        "difficulty": "easy",
+                        "knowledge_point": "基础词汇理解",
+                        "question": "คำว่า 'สวัสดี' มีความหมายว่าอย่างไร?",
+                        "options": [
+                            "ก. 你好 / Goodbye",
+                            "ข. 谢谢 / Thank you",
+                            "ค. 对不起 / Sorry",
+                            "ง. 再见 / Bye"
+                        ],
+                        "answer": "ก",
+                        "explanation": "'สวัสดี' 是泰语中最常用的打招呼用语，意为你好。"
+                    }
+                ]
+            };
+
+            document.getElementById('json-editor-textarea').value = JSON.stringify(defaultJson, null, 2);
+            renderVisualQuestions(defaultJson);
+            switchTab('json');
+        }
+
+        // Switch tab
+        function switchTab(tabName) {
+            activeTab = tabName;
+            const tabs = ['json', 'preview', 'prompt', 'submissions'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-btn-${t}`);
+                const content = document.getElementById(`tab-content-${t}`);
+                if (!btn || !content) return;
+                if (t === tabName) {
+                    btn.className = 'pb-3 text-xs font-bold text-indigo-400 border-b-2 border-indigo-500 flex items-center gap-1.5';
+                    content.classList.remove('hidden');
+                } else {
+                    btn.className = 'pb-3 text-xs font-bold text-slate-400 hover:text-slate-200 flex items-center gap-1.5';
+                    content.classList.add('hidden');
+                }
+            });
+
+            if (tabName === 'preview') {
+                try {
+                    const text = document.getElementById('json-editor-textarea').value;
+                    const parsed = JSON.parse(text);
+                    renderVisualQuestions(parsed);
+                } catch (e) {}
+            } else if (tabName === 'submissions') {
+                if (currentQuizUuid) {
+                    loadQuizSubmissions(currentQuizUuid);
+                }
+            }
+        }
+
+        // JSON formatting & validation
+        function formatJson() {
+            try {
+                const textarea = document.getElementById('json-editor-textarea');
+                const parsed = JSON.parse(textarea.value);
+                textarea.value = JSON.stringify(parsed, null, 2);
+                showToast('JSON 格式化成功');
+            } catch (err) {
+                showToast(`JSON 语法错误: ${err.message}`, true);
+            }
+        }
+
+        function validateJson() {
+            try {
+                const textarea = document.getElementById('json-editor-textarea');
+                const parsed = JSON.parse(textarea.value);
+                if (!parsed.questions || !Array.isArray(parsed.questions)) {
+                    throw new Error('缺少 questions 数组字段');
+                }
+                showToast(`校验通过! 共有 ${parsed.questions.length} 道题目`);
+            } catch (err) {
+                showToast(`校验失败: ${err.message}`, true);
+            }
+        }
+
+        function onJsonChange() {
+            try {
+                const text = document.getElementById('json-editor-textarea').value;
+                const parsed = JSON.parse(text);
+                if (parsed.quiz_title && !document.getElementById('quiz-title').value) {
+                    document.getElementById('quiz-title').value = parsed.quiz_title;
+                }
+            } catch (e) {}
+        }
+
+        // Render questions list visually
+        function renderVisualQuestions(quizData) {
+            const container = document.getElementById('visual-questions-list');
+            const questions = quizData.questions || [];
+
+            if (questions.length === 0) {
+                container.innerHTML = `<div class="text-center text-slate-500 py-8 text-xs">暂无题目预览</div>`;
+                return;
+            }
+
+            container.innerHTML = questions.map((q, idx) => {
+                const diffBadge = q.difficulty === 'easy'
+                    ? `<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">Easy</span>`
+                    : q.difficulty === 'hard'
+                    ? `<span class="px-2 py-0.5 rounded text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/20 font-semibold">Hard</span>`
+                    : `<span class="px-2 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold">Medium</span>`;
+
+                let opts = q.options || [];
+                if (opts.length === 0 && q.type === 'true_false') {
+                    opts = ['A. True (ถูก)', 'B. False (ผิด)'];
+                }
+
+                const optionsHtml = opts.map(opt => {
+                    let isAnswer = false;
+                    if (q.type === 'true_false') {
+                        const normTarget = ['true', 't', 'a', '1', 'ใช่', 'ถูก'].includes(String(q.answer).trim().toLowerCase()) ? 'true' : 'false';
+                        const normOpt = (opt.startsWith('A') || opt.toLowerCase().includes('true')) ? 'true' : 'false';
+                        isAnswer = (normTarget === normOpt);
+                    } else if (Array.isArray(q.answer)) {
+                        isAnswer = q.answer.some(a => opt.startsWith(a));
+                    } else {
+                        isAnswer = opt.startsWith(q.answer);
+                    }
+                    return `
+                        <div class="px-3 py-2 rounded-lg text-xs ${isAnswer ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-medium' : 'bg-slate-900/50 border border-slate-800 text-slate-300'}">
+                            ${opt} ${isAnswer ? '<i class="ph-bold ph-check ml-1 text-emerald-400"></i>' : ''}
+                        </div>
+                    `;
+                }).join('');
+
+                const displayAnswer = q.type === 'true_false' 
+                    ? (['true', 't', 'a', '1', 'ใช่', 'ถูก'].includes(String(q.answer).trim().toLowerCase()) ? 'True (ถูก)' : 'False (ผิด)')
+                    : (Array.isArray(q.answer) ? q.answer.join(', ') : q.answer);
+
+                return `
+                    <div class="bg-slate-900/40 border border-slate-800 rounded-xl p-5 space-y-3 font-sans">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-lg bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-bold text-xs">${idx + 1}</span>
+                                <span class="text-xs text-slate-400"><i class="ph ph-bookmark text-indigo-400 mr-1"></i>${q.knowledge_point || '知识点'}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-slate-500 font-mono">${q.type || 'single_choice'}</span>
+                                ${diffBadge}
+                            </div>
+                        </div>
+                        <h4 class="text-sm font-bold text-slate-100 leading-relaxed font-thai">${q.question}</h4>
+                        ${optionsHtml ? `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">${optionsHtml}</div>` : ''}
+                        <div class="p-3 rounded-lg bg-indigo-950/30 border border-indigo-800/30 text-xs text-indigo-200/90 leading-relaxed">
+                            <span class="font-bold text-indigo-400">正确答案：</span> ${displayAnswer}
+                            <br>
+                            <span class="font-bold text-indigo-400">解析：</span> ${q.explanation || '暂无解析'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Save quiz (Create or Update)
+        async function saveQuiz() {
+            const uuid = document.getElementById('quiz-uuid').value.trim();
+            const title = document.getElementById('quiz-title').value.trim();
+            const tags = document.getElementById('quiz-tags').value.trim();
+            const status = document.getElementById('quiz-status').value;
+            const jsonText = document.getElementById('json-editor-textarea').value.trim();
+
+            if (!jsonText) {
+                showToast('JSON 数据不可为空', true);
+                return;
+            }
+
+            let quizDataObj;
+            try {
+                quizDataObj = JSON.parse(jsonText);
+            } catch (err) {
+                showToast(`JSON 格式错误，无法保存: ${err.message}`, true);
+                return;
+            }
+
+            // Sync title inside quiz_data if missing or changed
+            if (title) {
+                quizDataObj.quiz_title = title;
+            }
+
+            const bodyData = {
+                uuid,
+                title: title || quizDataObj.quiz_title || '未命名 Quiz',
+                tags,
+                status,
+                quiz_data: quizDataObj
+            };
+
+            try {
+                const isEdit = !!currentQuizUuid;
+                const url = isEdit ? `/api/quizzes/${uuid}` : '/api/quizzes';
+                const method = isEdit ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bodyData)
+                });
+
+                if (!res.ok) {
+                    const errRes = await res.json();
+                    throw new Error(errRes.error || `HTTP ${res.status}`);
+                }
+
+                const saved = await res.json();
+                showToast(isEdit ? 'Quiz 修改成功！' : 'Quiz 新建成功！');
+                await fetchQuizzes();
+                selectQuiz(saved.uuid);
+            } catch (err) {
+                console.error('Failed to save quiz:', err);
+                showToast(`保存失败: ${err.message}`, true);
+            }
+        }
+
+        // Delete quiz
+        async function deleteCurrentQuiz() {
+            if (!currentQuizUuid) return;
+            if (!confirm(`确定要删除此 Quiz 测验 (UUID: ${currentQuizUuid}) 吗？此操作无法撤销。`)) return;
+
+            try {
+                const res = await fetch(`/api/quizzes/${currentQuizUuid}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                showToast('Quiz 已成功删除');
+                currentQuizUuid = null;
+                document.getElementById('quiz-editor').classList.add('hidden');
+                document.getElementById('empty-state').classList.remove('hidden');
+                await fetchQuizzes();
+            } catch (err) {
+                console.error('Failed to delete quiz:', err);
+                showToast(`删除失败: ${err.message}`, true);
+            }
+        }
+
+        // Preview in App
+        function previewInApp() {
+            const uuid = document.getElementById('quiz-uuid').value;
+            if (uuid) {
+                window.open(`/Pages/appQuiz.html?uuid=${uuid}`, '_blank');
+            }
+        }
+
+        // Copy quiz URL
+        function copyQuizUrl() {
+            const uuid = document.getElementById('quiz-uuid').value;
+            if (!uuid) return;
+            const fullUrl = `${window.location.origin}/Pages/appQuiz.html?uuid=${uuid}`;
+            navigator.clipboard.writeText(fullUrl).then(() => {
+                showToast('Quiz 客户端链接已复制到剪贴板');
+            }).catch(() => {
+                showToast(`链接: ${fullUrl}`);
+            });
+        }
+
+        // Copy prompt text
+        function copyPromptText() {
+            const text = document.getElementById('prompt-template-text').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('AI Prompt 提示词已复制到剪贴板');
+            });
+        }
+
+        function openAppQuizWithUuid() {
+            let uuid = currentQuizUuid || (document.getElementById('quiz-uuid') ? document.getElementById('quiz-uuid').value : '');
+            let url = '/Pages/appQuiz.html';
+            if (uuid) {
+                url += `?uuid=${encodeURIComponent(uuid)}`;
+            }
+            window.open(url, '_blank');
+        }
+
+        async function assignQuizTask() {
+            let uuid = currentQuizUuid || (document.getElementById('quiz-uuid') ? document.getElementById('quiz-uuid').value : '');
+            
+            if (!uuid) {
+                alert("请先从左侧列表中选择要布置任务的 Quiz 测验试卷！");
+                return;
+            }
+
+            const quizObj = quizzes.find(q => q.uuid === uuid);
+            const quizTitle = quizObj ? quizObj.title : (document.getElementById('quiz-title').value || 'Quiz测验');
+            const allTags = quizObj && quizObj.tags ? (Array.isArray(quizObj.tags) ? quizObj.tags : [quizObj.tags]) : [];
+            const textToMatch = `${quizTitle} ${allTags.join(' ')}`;
+            let subjectTag = '';
+            if (/兰纳|lanna/i.test(textToMatch)) subjectTag = '兰纳文化与社会';
+            else if (/翻译/i.test(textToMatch)) subjectTag = '泰语翻译1';
+            else if (/读写/i.test(textToMatch)) subjectTag = '泰语读写-3';
+            else if (/tourism|旅游/i.test(textToMatch)) subjectTag = 'Tourism';
+            else if (/文学/i.test(textToMatch)) subjectTag = '泰国文学导读';
+            else if (/日常/i.test(textToMatch)) subjectTag = '泰语日常知识';
+            else if (/基础/i.test(textToMatch)) subjectTag = '基础泰语2';
+            else if (allTags.length > 0 && allTags[0] !== '错题复习' && allTags[0] !== '针对性训练') subjectTag = allTags[0];
+            else subjectTag = '泰语日常知识';
+
+            const payload = {
+                title: `Quiz测验：${quizTitle}`,
+                action: {
+                    actionURL: `http://192.168.1.120:3002/Pages/appQuiz.html?uuid=${uuid}`
+                },
+                due_date: "2026-07-15T23:59:59Z",
+                priority: "high",
+                status: "pending",
+                description: "Quiz 测验练习",
+                category_id: "cat-study",
+                tags: [subjectTag]
+            };
+
+            try {
+                showToast("正在布置任务...", false);
+                const res = await fetch('http://192.168.1.120:3006/api/app/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    showToast("任务布置成功！", false);
+                    alert("任务布置成功！");
+                } else {
+                    showToast(`布置任务失败: ${res.status}`, true);
+                    alert("布置任务失败: " + res.status + " " + res.statusText);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("网络连接失败，无法布置任务", true);
+                alert("网络连接失败，无法布置任务");
+            }
+        }
+
+        // ==========================================
+        // Submissions & Test Results Management
+        // ==========================================
+        let currentSubmissions = [];
+
+        async function loadQuizSubmissionsCount(uuid) {
+            if (!uuid) return;
+            try {
+                const res = await fetch(`/api/quizzes/${encodeURIComponent(uuid)}/submissions?limit=1`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const count = data.stats?.total_attempts || 0;
+                    const countBadge = document.getElementById('tab-submissions-count');
+                    if (countBadge) {
+                        countBadge.textContent = count;
+                        countBadge.className = count > 0 
+                            ? 'text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-600/30 text-indigo-300 font-bold border border-indigo-500/40' 
+                            : 'text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-400';
+                    }
+                }
+            } catch (e) {}
+        }
+
+        async function loadQuizSubmissions(uuid) {
+            if (!uuid) return;
+            const tableBody = document.getElementById('submissions-table-body');
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center py-8 text-slate-500">
+                        <i class="ph ph-spinner animate-spin text-xl mr-2"></i> 加载测验作答记录中...
+                    </td>
+                </tr>
+            `;
+
+            try {
+                const res = await fetch(`/api/quizzes/${encodeURIComponent(uuid)}/submissions`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                currentSubmissions = data.submissions || [];
+
+                // Update Stats
+                const stats = data.stats || {};
+                document.getElementById('sub-stat-total').textContent = stats.total_attempts || 0;
+                document.getElementById('sub-stat-avg').textContent = `${stats.average_score || 0}%`;
+                document.getElementById('sub-stat-max').textContent = `${stats.max_score || 0}%`;
+                
+                // Calculate average time
+                if (currentSubmissions.length > 0) {
+                    const avgSeconds = Math.round(currentSubmissions.reduce((sum, s) => sum + (s.time_taken_seconds || 0), 0) / currentSubmissions.length);
+                    const mins = Math.floor(avgSeconds / 60);
+                    const secs = avgSeconds % 60;
+                    document.getElementById('sub-stat-time').textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                } else {
+                    document.getElementById('sub-stat-time').textContent = '00:00';
+                }
+
+                // Update tab count badge
+                const countBadge = document.getElementById('tab-submissions-count');
+                if (countBadge) {
+                    countBadge.textContent = currentSubmissions.length;
+                    countBadge.className = currentSubmissions.length > 0 
+                        ? 'text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-600/30 text-indigo-300 font-bold border border-indigo-500/40' 
+                        : 'text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-400';
+                }
+
+                renderCurrentQuizSubmissions();
+            } catch (err) {
+                console.error('Failed to load quiz submissions:', err);
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-8 text-rose-400 text-xs">
+                            加载测验记录失败: ${escapeHtml(err.message)}
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function renderCurrentQuizSubmissions() {
+            const tableBody = document.getElementById('submissions-table-body');
+            const modeFilter = document.getElementById('sub-mode-filter') ? document.getElementById('sub-mode-filter').value : 'all';
+
+            const filtered = currentSubmissions.filter(s => {
+                return modeFilter === 'all' || s.mode === modeFilter;
+            });
+
+            if (filtered.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-10 text-slate-500 text-xs">
+                            <i class="ph ph-notepad text-2xl mb-1.5 block text-slate-600"></i>
+                            <span>暂无测验作答记录</span>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tableBody.innerHTML = filtered.map(item => {
+                const percent = item.score_percent;
+                const scoreColor = percent >= 80 
+                    ? 'text-emerald-400 font-bold' 
+                    : percent >= 60 
+                    ? 'text-amber-400 font-bold' 
+                    : 'text-rose-400 font-bold';
+
+                const badgeMode = item.mode === 'exam'
+                    ? '<span class="px-2 py-0.5 rounded text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/20 font-semibold">模拟考试</span>'
+                    : '<span class="px-2 py-0.5 rounded text-[10px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold">练习模式</span>';
+
+                const mins = Math.floor((item.time_taken_seconds || 0) / 60);
+                const secs = (item.time_taken_seconds || 0) % 60;
+                const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+                return `
+                    <tr class="hover:bg-slate-900/50 transition duration-150">
+                        <td class="py-3 px-4 font-mono text-slate-400">#${item.id}</td>
+                        <td class="py-3 px-4 text-slate-300">${item.created_at || '-'}</td>
+                        <td class="py-3 px-4">${badgeMode}</td>
+                        <td class="py-3 px-4 text-slate-200 font-semibold">${item.score} / ${item.total_questions}</td>
+                        <td class="py-3 px-4 ${scoreColor}">${percent}%</td>
+                        <td class="py-3 px-4 font-mono text-slate-400">${timeStr}</td>
+                        <td class="py-3 px-4 text-amber-400">${item.max_streak || 0} 🔥</td>
+                        <td class="py-3 px-4 text-right space-x-2">
+                            <button onclick="viewSubmissionDetail(${item.id})" class="px-2.5 py-1 text-[11px] font-semibold bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 rounded border border-indigo-500/30 transition cursor-pointer">
+                                <i class="ph ph-eye mr-0.5"></i> 查看答卷
+                            </button>
+                            <button onclick="deleteSubmissionRecord(${item.id})" class="px-2 py-1 text-[11px] font-semibold text-rose-400 hover:bg-rose-500/10 rounded transition cursor-pointer" title="删除记录">
+                                <i class="ph ph-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function viewSubmissionDetail(id) {
+            const modal = document.getElementById('submission-detail-modal');
+            const modalContent = document.getElementById('submission-detail-content');
+            modal.classList.remove('hidden');
+            modalContent.innerHTML = `
+                <div class="text-center py-12 text-slate-400">
+                    <i class="ph ph-spinner animate-spin text-2xl mb-2"></i>
+                    <p>正在读取答卷详情与题目明细...</p>
+                </div>
+            `;
+
+            try {
+                const res = await fetch(`/api/quiz-submissions/${id}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                currentDetailSubmissionData = data;
+                renderSubmissionDetailModal(data);
+            } catch (err) {
+                console.error(err);
+                modalContent.innerHTML = `
+                    <div class="text-center py-12 text-rose-400">
+                        <i class="ph ph-warning-circle text-3xl mb-2"></i>
+                        <p>加载答卷失败: ${escapeHtml(err.message)}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderSubmissionDetailModal(data) {
+            const modalContent = document.getElementById('submission-detail-content');
+            const percent = data.score_percent;
+            const scoreColor = percent >= 80 ? 'text-emerald-400' : percent >= 60 ? 'text-amber-400' : 'text-rose-400';
+            const mins = Math.floor((data.time_taken_seconds || 0) / 60);
+            const secs = (data.time_taken_seconds || 0) % 60;
+            const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+            const badgeMode = data.mode === 'exam'
+                ? '<span class="px-2 py-0.5 rounded text-xs bg-rose-500/10 text-rose-400 border border-rose-500/20 font-semibold">模拟考试</span>'
+                : '<span class="px-2 py-0.5 rounded text-xs bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold">练习模式</span>';
+
+            const userAnswers = data.user_answers || [];
+            const wrongAnswers = userAnswers.filter(q => q.is_correct === false);
+
+            // Knowledge breakdown
+            const kb = data.knowledge_breakdown || {};
+            const kbKeys = Object.keys(kb);
+            const kbHtml = kbKeys.length > 0 ? `
+                <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
+                    <h4 class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <i class="ph ph-chart-pie text-indigo-400"></i>
+                        <span>知识点掌握度分析</span>
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        ${kbKeys.map(k => {
+                            const item = kb[k];
+                            const p = Math.round((item.correct / item.total) * 100);
+                            return `
+                                <div class="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80">
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span class="text-slate-300 truncate">${escapeHtml(k)}</span>
+                                        <span class="font-bold ${p >= 70 ? 'text-emerald-400' : 'text-amber-400'}">${item.correct}/${item.total} (${p}%)</span>
+                                    </div>
+                                    <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                        <div class="h-full ${p >= 70 ? 'bg-emerald-500' : 'bg-amber-500'}" style="width: ${p}%"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            ` : '';
+
+            // Question cards
+            const questionsHtml = userAnswers.map((q, idx) => {
+                const isCorrect = q.is_correct;
+                const userAns = Array.isArray(q.user_answer) ? q.user_answer.join(', ') : (q.user_answer || '未作答');
+                const targetAns = Array.isArray(q.correct_answer) ? q.correct_answer.join(', ') : q.correct_answer;
+
+                return `
+                    <div class="p-4 rounded-xl border ${isCorrect ? 'bg-slate-900/40 border-slate-800' : 'bg-rose-950/15 border-rose-900/40'} space-y-2.5 font-sans">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-start gap-2">
+                                <span class="w-5 h-5 rounded-full ${isCorrect ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'} flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                                    ${idx + 1}
+                                </span>
+                                <div>
+                                    <h5 class="text-sm font-semibold text-slate-100 font-thai leading-relaxed">${escapeHtml(q.question)}</h5>
+                                    ${q.knowledge_point ? `<span class="text-[11px] text-slate-500 mt-0.5 block"><i class="ph ph-bookmark text-indigo-400 mr-1"></i>${escapeHtml(q.knowledge_point)}</span>` : ''}
+                                </div>
+                            </div>
+                            <span class="px-2 py-0.5 rounded text-xs font-bold shrink-0 ${isCorrect ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
+                                ${isCorrect ? '<i class="ph-bold ph-check mr-1"></i>正确' : '<i class="ph-bold ph-x mr-1"></i>错误'}
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+                            <div class="p-2.5 rounded-lg ${isCorrect ? 'bg-slate-800/50 text-slate-300' : 'bg-rose-900/20 text-rose-200'}">
+                                <span class="text-[10px] text-slate-400 block mb-0.5">学生回答：</span>
+                                <span class="font-bold">${escapeHtml(userAns)}</span>
+                            </div>
+                            <div class="p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-800/30 text-emerald-200">
+                                <span class="text-[10px] text-emerald-400/80 block mb-0.5">正确答案：</span>
+                                <span class="font-bold text-emerald-300">${escapeHtml(targetAns)}</span>
+                            </div>
+                        </div>
+
+                        ${q.explanation ? `
+                            <div class="p-2.5 rounded-lg bg-indigo-950/20 border border-indigo-800/20 text-xs text-indigo-200/90 leading-relaxed">
+                                <span class="font-bold text-indigo-400 mr-1">题目解析：</span>
+                                ${escapeHtml(q.explanation)}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            modalContent.innerHTML = `
+                <div class="space-y-5">
+                    <!-- Summary Card -->
+                    <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between flex-wrap gap-4">
+                        <div>
+                            <span class="text-xs text-slate-400">试卷标题</span>
+                            <h3 class="text-base font-bold text-slate-100">${escapeHtml(data.quiz_title || 'Quiz测验')}</h3>
+                            <div class="flex items-center gap-3 text-xs text-slate-400 mt-1">
+                                <span>提交时间：${data.created_at || '-'}</span>
+                                <span>•</span>
+                                <span>模式：${badgeMode}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-6">
+                            <div class="text-center">
+                                <span class="text-[11px] text-slate-400 block">正确题数</span>
+                                <span class="text-xl font-extrabold text-slate-100">${data.score} / ${data.total_questions}</span>
+                            </div>
+                            <div class="text-center">
+                                <span class="text-[11px] text-slate-400 block">得分率</span>
+                                <span class="text-2xl font-black ${scoreColor}">${percent}%</span>
+                            </div>
+                            <div class="text-center">
+                                <span class="text-[11px] text-slate-400 block">作答耗时</span>
+                                <span class="text-base font-mono text-slate-300">${timeStr}</span>
+                            </div>
+                        </div>
+                        ${wrongAnswers.length > 0 ? `
+                            <div class="w-full pt-3 mt-1 border-t border-slate-800/80 flex items-center justify-between flex-wrap gap-2">
+                                <span class="text-xs text-rose-400 font-medium flex items-center gap-1.5">
+                                    <i class="ph-bold ph-warning-circle"></i>
+                                    <span>本次测验共有 ${wrongAnswers.length} 道题目回答错误</span>
+                                </span>
+                                <button onclick="extractWrongsFromCurrentDetailModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 flex items-center gap-1.5 transition cursor-pointer">
+                                    <i class="ph-bold ph-arrow-counter-clockwise"></i>
+                                    <span>提取本次错题 (${wrongAnswers.length}题) 生成复习Quiz并安排任务</span>
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    ${kbHtml}
+
+                    <!-- Questions list -->
+                    <div class="space-y-3">
+                        <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                            <i class="ph ph-list-numbers text-indigo-400"></i>
+                            <span>逐题答题卡与解析 (${userAnswers.length} 题)</span>
+                        </h4>
+                        <div class="space-y-3 max-h-[50vh] overflow-y-auto custom-scrollbar pr-1">
+                            ${questionsHtml || '<p class="text-slate-500 text-xs py-4 text-center">暂无题目详情</p>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Global wrong questions & submissions review state
+        let allSubmissionsData = [];
+        let allExtractedWrongs = [];
+        let selectedWrongUids = new Set();
+        let currentAllSubmissionsTab = 'records';
+        let currentFilteredWrongsList = [];
+
+        function enrichQuestionWithOptions(q, quizUuid) {
+            if (q.options && Array.isArray(q.options) && q.options.length > 0) {
+                return q;
+            }
+            const originalQuiz = quizzes.find(item => item.uuid === quizUuid);
+            if (originalQuiz && originalQuiz.quiz_data && Array.isArray(originalQuiz.quiz_data.questions)) {
+                const matched = originalQuiz.quiz_data.questions.find(item => 
+                    String(item.id) === String(q.id || q.questionId) || item.question === q.question
+                );
+                if (matched) {
+                    return {
+                        ...q,
+                        options: matched.options || [],
+                        difficulty: q.difficulty || matched.difficulty || 'medium',
+                        type: q.type || matched.type || 'single_choice'
+                    };
+                }
+            }
+            return q;
+        }
+
+        async function deleteSubmissionRecord(id) {
+            if (!confirm(`确定要删除作答记录 #${id} 吗？`)) return;
+            try {
+                const res = await fetch(`/api/quiz-submissions/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                showToast('作答记录已删除');
+                if (currentQuizUuid) {
+                    await loadQuizSubmissions(currentQuizUuid);
+                }
+                await fetchQuizzes();
+                const allModal = document.getElementById('all-submissions-modal');
+                if (allModal && !allModal.classList.contains('hidden')) {
+                    await openAllSubmissionsModal(currentAllSubmissionsTab);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(`删除失败: ${err.message}`, true);
+            }
+        }
+
+        async function openAllSubmissionsModal(initialTab = 'records', filterSubmissionId = null) {
+            const modal = document.getElementById('all-submissions-modal');
+            const tbody = document.getElementById('all-submissions-table-body');
+            modal.classList.remove('hidden');
+
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center py-8 text-slate-500">
+                        <i class="ph ph-spinner animate-spin text-xl mr-2"></i> 加载所有测验成绩及错题数据中...
+                    </td>
+                </tr>
+            `;
+
+            try {
+                const res = await fetch('/api/quiz-submissions?limit=200&include_answers=true');
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const list = await res.json();
+                allSubmissionsData = list;
+
+                // Extract all wrong questions across submissions
+                allExtractedWrongs = [];
+                list.forEach(sub => {
+                    const answers = sub.user_answers || [];
+                    answers.forEach(a => {
+                        if (a.is_correct === false) {
+                            const enriched = enrichQuestionWithOptions(a, sub.quiz_uuid);
+                            allExtractedWrongs.push({
+                                uid: `sub_${sub.id}_q_${a.id || Math.random().toString(36).substr(2, 5)}`,
+                                dedupKey: `${enriched.type || 'single'}_${(enriched.question || '').trim()}`,
+                                submissionId: sub.id,
+                                quizUuid: sub.quiz_uuid,
+                                quizTitle: sub.quiz_title || '未命名试卷',
+                                createdAt: sub.created_at,
+                                questionId: enriched.id,
+                                question: enriched.question,
+                                type: enriched.type || 'single_choice',
+                                difficulty: enriched.difficulty || 'medium',
+                                knowledgePoint: enriched.knowledge_point || '',
+                                options: enriched.options || [],
+                                studentAnswer: a.user_answer,
+                                correctAnswer: a.correct_answer,
+                                explanation: enriched.explanation || a.explanation || '',
+                                errorCount: 1
+                            });
+                        }
+                    });
+                });
+
+                // Update summary badges
+                const subCountBadge = document.getElementById('tab-sub-count-badge');
+                if (subCountBadge) subCountBadge.textContent = list.length;
+                const wrongCountBadge = document.getElementById('tab-wrong-count-badge');
+                if (wrongCountBadge) wrongCountBadge.textContent = `${allExtractedWrongs.length} 题`;
+                const statTotalText = document.getElementById('stat-total-submissions-text');
+                if (statTotalText) statTotalText.textContent = `共 ${list.length} 次作答记录，累计提取到 ${allExtractedWrongs.length} 道错题`;
+
+                // Render Submissions Table
+                if (list.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="text-center py-10 text-slate-500 text-xs">
+                                暂无任何测验作答数据
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    tbody.innerHTML = list.map(item => {
+                        const percent = item.score_percent;
+                        const scoreColor = percent >= 80 
+                            ? 'text-emerald-400 font-bold' 
+                            : percent >= 60 
+                            ? 'text-amber-400 font-bold' 
+                            : 'text-rose-400 font-bold';
+
+                        const mins = Math.floor((item.time_taken_seconds || 0) / 60);
+                        const secs = (item.time_taken_seconds || 0) % 60;
+                        const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+                        const wrongCount = (item.user_answers || []).filter(a => a.is_correct === false).length;
+                        const wrongBadge = wrongCount > 0
+                            ? `<span class="px-2 py-0.5 rounded text-[11px] bg-rose-500/10 text-rose-400 border border-rose-500/20 font-bold">${wrongCount} 题错误</span>`
+                            : `<span class="px-2 py-0.5 rounded text-[11px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">全对</span>`;
+
+                        return `
+                            <tr class="hover:bg-slate-900/50 transition">
+                                <td class="py-3 px-4 font-mono text-slate-400">#${item.id}</td>
+                                <td class="py-3 px-4 font-semibold text-slate-200 max-w-xs truncate" title="${escapeHtml(item.quiz_title)}">${escapeHtml(item.quiz_title || item.quiz_uuid)}</td>
+                                <td class="py-3 px-4 text-slate-400">${item.created_at || '-'}</td>
+                                <td class="py-3 px-4 text-slate-200">${item.score} / ${item.total_questions}</td>
+                                <td class="py-3 px-4 ${scoreColor}">${percent}%</td>
+                                <td class="py-3 px-4">${wrongBadge}</td>
+                                <td class="py-3 px-4 font-mono text-slate-400">${timeStr}</td>
+                                <td class="py-3 px-4 text-right space-x-1.5">
+                                    <button onclick="viewSubmissionDetail(${item.id})" class="px-2.5 py-1 text-xs font-semibold bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 rounded border border-indigo-500/30 transition cursor-pointer">
+                                        查看答卷
+                                    </button>
+                                    ${wrongCount > 0 ? `
+                                        <button onclick="filterAndReviewSubmissionWrongs(${item.id})" class="px-2.5 py-1 text-xs font-semibold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded border border-rose-500/30 transition cursor-pointer inline-flex items-center gap-1" title="提取本次提交的错题">
+                                            <i class="ph-bold ph-arrow-counter-clockwise"></i> 提取错题
+                                        </button>
+                                    ` : ''}
+                                    <button onclick="deleteSubmissionRecord(${item.id})" class="px-2 py-1 text-xs text-rose-400 hover:bg-rose-500/10 rounded transition cursor-pointer" title="删除记录">
+                                        <i class="ph ph-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
+                // Populate Wrong Questions Filters
+                populateWrongQuestionsFilters(list, filterSubmissionId);
+
+                // Filter & render wrong questions view
+                filterWrongQuestionsList();
+
+                // Switch to requested tab
+                switchAllSubmissionsTab(initialTab);
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-8 text-rose-400 text-xs">
+                            加载失败: ${escapeHtml(err.message)}
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function populateWrongQuestionsFilters(submissionsList, selectedSubmissionId) {
+            const quizFilter = document.getElementById('wrong-filter-quiz');
+            const subFilter = document.getElementById('wrong-filter-submission');
+            if (!quizFilter || !subFilter) return;
+
+            const quizMap = {};
+            allExtractedWrongs.forEach(w => {
+                quizMap[w.quizUuid] = (quizMap[w.quizUuid] || { title: w.quizTitle, count: 0 });
+                quizMap[w.quizUuid].count++;
+            });
+
+            quizFilter.innerHTML = '<option value="all">全部试卷 (' + allExtractedWrongs.length + ' 题错误)</option>' +
+                Object.keys(quizMap).map(uuid => `
+                    <option value="${uuid}">${escapeHtml(quizMap[uuid].title)} (${quizMap[uuid].count} 题)</option>
+                `).join('');
+
+            const subsWithWrongs = submissionsList.filter(s => {
+                const count = (s.user_answers || []).filter(a => a.is_correct === false).length;
+                return count > 0;
+            });
+
+            subFilter.innerHTML = '<option value="all">全部作答记录</option>' +
+                subsWithWrongs.map(s => {
+                    const count = (s.user_answers || []).filter(a => a.is_correct === false).length;
+                    return `<option value="${s.id}">#${s.id} - ${escapeHtml(s.quiz_title || s.quiz_uuid)} (${count} 错题, ${s.created_at})</option>`;
+                }).join('');
+
+            if (selectedSubmissionId) {
+                subFilter.value = String(selectedSubmissionId);
+                const targetSub = submissionsList.find(s => String(s.id) === String(selectedSubmissionId));
+                if (targetSub && targetSub.quiz_uuid) {
+                    quizFilter.value = targetSub.quiz_uuid;
+                }
+            }
+        }
+
+        function switchAllSubmissionsTab(tab) {
+            currentAllSubmissionsTab = tab;
+            const btnRecords = document.getElementById('tab-btn-sub-records');
+            const btnWrongs = document.getElementById('tab-btn-sub-wrongs');
+            const viewRecords = document.getElementById('all-sub-view-records');
+            const viewWrongs = document.getElementById('all-sub-view-wrongs');
+            const recordsFooter = document.getElementById('records-footer-actions');
+            const wrongsFooter = document.getElementById('wrong-review-footer-actions');
+
+            if (tab === 'records') {
+                if (btnRecords) btnRecords.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white shadow-sm flex items-center gap-1.5 transition cursor-pointer";
+                if (btnWrongs) btnWrongs.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white flex items-center gap-1.5 transition cursor-pointer";
+                if (viewRecords) viewRecords.classList.remove('hidden');
+                if (viewWrongs) viewWrongs.classList.add('hidden');
+                if (recordsFooter) recordsFooter.classList.remove('hidden');
+                if (wrongsFooter) wrongsFooter.classList.add('hidden');
+            } else {
+                if (btnRecords) btnRecords.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white flex items-center gap-1.5 transition cursor-pointer";
+                if (btnWrongs) btnWrongs.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white shadow-sm flex items-center gap-1.5 transition cursor-pointer";
+                if (viewRecords) viewRecords.classList.add('hidden');
+                if (viewWrongs) viewWrongs.classList.remove('hidden');
+                if (recordsFooter) recordsFooter.classList.add('hidden');
+                if (wrongsFooter) wrongsFooter.classList.remove('hidden');
+            }
+        }
+
+        function filterAndReviewSubmissionWrongs(submissionId) {
+            openAllSubmissionsModal('wrongs', submissionId);
+        }
+
+        function filterWrongQuestionsList() {
+            const quizFilterVal = document.getElementById('wrong-filter-quiz') ? document.getElementById('wrong-filter-quiz').value : 'all';
+            const subFilterVal = document.getElementById('wrong-filter-submission') ? document.getElementById('wrong-filter-submission').value : 'all';
+            const dedupChecked = document.getElementById('wrong-dedup-toggle') ? document.getElementById('wrong-dedup-toggle').checked : true;
+
+            let filtered = allExtractedWrongs.filter(w => {
+                if (quizFilterVal !== 'all' && w.quizUuid !== quizFilterVal) return false;
+                if (subFilterVal !== 'all' && String(w.submissionId) !== String(subFilterVal)) return false;
+                return true;
+            });
+
+            if (dedupChecked) {
+                const dedupMap = new Map();
+                filtered.forEach(w => {
+                    if (dedupMap.has(w.dedupKey)) {
+                        const existing = dedupMap.get(w.dedupKey);
+                        existing.errorCount = (existing.errorCount || 1) + 1;
+                        if (!existing.options || existing.options.length === 0) {
+                            existing.options = w.options;
+                        }
+                    } else {
+                        dedupMap.set(w.dedupKey, { ...w, errorCount: 1 });
+                    }
+                });
+                filtered = Array.from(dedupMap.values());
+            }
+
+            currentFilteredWrongsList = filtered;
+
+            // Select all filtered questions by default
+            selectedWrongUids = new Set(filtered.map(w => w.uid));
+
+            renderWrongQuestionsCards(filtered);
+            updateWrongSelectionUI();
+        }
+
+        function renderWrongQuestionsCards(list) {
+            const container = document.getElementById('wrong-questions-cards-container');
+            const emptyState = document.getElementById('wrong-questions-empty-state');
+            if (!container || !emptyState) return;
+
+            if (list.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            container.innerHTML = list.map((w, index) => {
+                const isSelected = selectedWrongUids.has(w.uid);
+                const typeName = w.type === 'multiple_choice' ? '多选题' : (w.type === 'true_false' ? '判断题' : '单选题');
+                const typeBadgeClass = w.type === 'multiple_choice' 
+                    ? 'bg-purple-500/10 text-purple-300 border border-purple-500/20' 
+                    : (w.type === 'true_false' ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20' : 'bg-blue-500/10 text-blue-300 border border-blue-500/20');
+
+                let optionsHtml = '';
+                if (Array.isArray(w.options) && w.options.length > 0) {
+                    optionsHtml = `
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
+                            ${w.options.map(opt => `
+                                <div class="px-2.5 py-1.5 rounded-lg bg-slate-950/60 border border-slate-800/80 text-xs text-slate-300 font-thai flex items-center gap-2">
+                                    <span class="text-slate-500 text-[11px] font-mono shrink-0">•</span>
+                                    <span>${escapeHtml(opt)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                const formattedStudentAns = Array.isArray(w.studentAnswer) ? w.studentAnswer.join(', ') : (w.studentAnswer || '未作答');
+                const formattedTargetAns = Array.isArray(w.correctAnswer) ? w.correctAnswer.join(', ') : (w.correctAnswer || '未知');
+
+                return `
+                    <div id="wrong-card-${w.uid}" onclick="toggleSelectWrongQuestion('${w.uid}')" class="p-4 rounded-xl border transition cursor-pointer select-none space-y-2.5 ${isSelected ? 'bg-indigo-950/40 border-indigo-500 ring-1 ring-indigo-500' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'}">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-start gap-3">
+                                <input type="checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleSelectWrongQuestion('${w.uid}')" class="mt-1 h-4 w-4 rounded border-slate-700 text-indigo-600 focus:ring-0 cursor-pointer">
+                                <div>
+                                    <div class="flex items-center gap-2 flex-wrap mb-1">
+                                        <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-800 text-slate-300">#${index + 1}</span>
+                                        <span class="px-2 py-0.5 rounded text-[11px] font-semibold ${typeBadgeClass}">${typeName}</span>
+                                        ${w.knowledgePoint ? `<span class="px-2 py-0.5 rounded text-[11px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-medium"><i class="ph ph-bookmark mr-1"></i>${escapeHtml(w.knowledgePoint)}</span>` : ''}
+                                        <span class="text-[11px] text-slate-400 font-medium"><i class="ph ph-book-open mr-1 text-slate-500"></i>${escapeHtml(w.quizTitle)}</span>
+                                        ${w.errorCount > 1 ? `<span class="px-2 py-0.5 rounded text-[11px] bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30">累计做错 ${w.errorCount} 次</span>` : ''}
+                                    </div>
+                                    <h5 class="text-sm font-semibold text-slate-100 font-thai leading-relaxed mt-1">${escapeHtml(w.question)}</h5>
+                                </div>
+                            </div>
+                        </div>
+
+                        ${optionsHtml}
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+                            <div class="p-2 rounded-lg bg-rose-900/20 border border-rose-900/30 text-rose-200 flex items-center justify-between">
+                                <span class="text-[10px] text-rose-400/80">做错回答：</span>
+                                <span class="font-bold">${escapeHtml(formattedStudentAns)}</span>
+                            </div>
+                            <div class="p-2 rounded-lg bg-emerald-950/30 border border-emerald-800/30 text-emerald-200 flex items-center justify-between">
+                                <span class="text-[10px] text-emerald-400/80">标准答案：</span>
+                                <span class="font-bold text-emerald-300">${escapeHtml(formattedTargetAns)}</span>
+                            </div>
+                        </div>
+
+                        ${w.explanation ? `
+                            <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800/80 text-xs text-slate-400">
+                                <span class="font-bold text-indigo-400 mr-1">题目解析：</span>${escapeHtml(w.explanation)}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleSelectWrongQuestion(uid) {
+            if (selectedWrongUids.has(uid)) {
+                selectedWrongUids.delete(uid);
+            } else {
+                selectedWrongUids.add(uid);
+            }
+
+            const card = document.getElementById(`wrong-card-${uid}`);
+            if (card) {
+                const checkbox = card.querySelector('input[type="checkbox"]');
+                const isSelected = selectedWrongUids.has(uid);
+                if (checkbox) checkbox.checked = isSelected;
+                if (isSelected) {
+                    card.className = "p-4 rounded-xl border transition cursor-pointer select-none space-y-2.5 bg-indigo-950/40 border-indigo-500 ring-1 ring-indigo-500";
+                } else {
+                    card.className = "p-4 rounded-xl border transition cursor-pointer select-none space-y-2.5 bg-slate-900/60 border-slate-800 hover:border-slate-700";
+                }
+            }
+
+            updateWrongSelectionUI();
+        }
+
+        function selectAllWrongQuestions(selectAll) {
+            if (selectAll) {
+                currentFilteredWrongsList.forEach(w => selectedWrongUids.add(w.uid));
+            } else {
+                currentFilteredWrongsList.forEach(w => selectedWrongUids.delete(w.uid));
+            }
+            renderWrongQuestionsCards(currentFilteredWrongsList);
+            updateWrongSelectionUI();
+        }
+
+        function invertSelectWrongQuestions() {
+            currentFilteredWrongsList.forEach(w => {
+                if (selectedWrongUids.has(w.uid)) {
+                    selectedWrongUids.delete(w.uid);
+                } else {
+                    selectedWrongUids.add(w.uid);
+                }
+            });
+            renderWrongQuestionsCards(currentFilteredWrongsList);
+            updateWrongSelectionUI();
+        }
+
+        function updateWrongSelectionUI() {
+            const countText = document.getElementById('selected-wrong-count-text');
+            const totalText = document.getElementById('total-wrong-count-text');
+            const btnSaveOnly = document.getElementById('btn-save-wrong-quiz-only');
+            const btnAssignTask = document.getElementById('btn-assign-wrong-quiz-task');
+            const titleInput = document.getElementById('review-quiz-title-input');
+
+            const count = selectedWrongUids.size;
+            const total = currentFilteredWrongsList.length;
+
+            if (countText) countText.textContent = count;
+            if (totalText) totalText.textContent = total;
+
+            const disabled = count === 0;
+            if (btnSaveOnly) {
+                btnSaveOnly.disabled = disabled;
+                btnSaveOnly.style.opacity = disabled ? '0.5' : '1';
+                btnSaveOnly.style.cursor = disabled ? 'not-allowed' : 'pointer';
+            }
+            if (btnAssignTask) {
+                btnAssignTask.disabled = disabled;
+                btnAssignTask.style.opacity = disabled ? '0.5' : '1';
+                btnAssignTask.style.cursor = disabled ? 'not-allowed' : 'pointer';
+            }
+
+            // Suggest title if input is empty or has default pattern
+            if (titleInput && (!titleInput.value || titleInput.value.startsWith('错题复习：') || titleInput.value.startsWith('综合错题复习'))) {
+                const subFilterVal = document.getElementById('wrong-filter-submission') ? document.getElementById('wrong-filter-submission').value : 'all';
+                const quizFilterVal = document.getElementById('wrong-filter-quiz') ? document.getElementById('wrong-filter-quiz').value : 'all';
+                const now = new Date();
+                const dateStr = `${now.getMonth() + 1}月${now.getDate()}日`;
+
+                if (subFilterVal !== 'all') {
+                    const sub = allSubmissionsData.find(s => String(s.id) === String(subFilterVal));
+                    const name = sub ? (sub.quiz_title || sub.quiz_uuid) : '测验';
+                    titleInput.value = `错题复习：${name} (${count}题) - ${dateStr}`;
+                } else if (quizFilterVal !== 'all') {
+                    const quiz = quizzes.find(q => q.uuid === quizFilterVal);
+                    const name = quiz ? quiz.title : '试卷';
+                    titleInput.value = `错题复习：${name} (${count}题) - ${dateStr}`;
+                } else {
+                    titleInput.value = `综合错题复习 (${count}题) - ${dateStr}`;
+                }
+            }
+        }
+
+        async function submitGenerateWrongReviewQuiz(assignTask = true) {
+            const selectedList = currentFilteredWrongsList.filter(w => selectedWrongUids.has(w.uid));
+            if (selectedList.length === 0) {
+                alert("请先勾选需要复习的错题！");
+                return;
+            }
+
+            const titleInput = document.getElementById('review-quiz-title-input');
+            let quizTitle = titleInput ? titleInput.value.trim() : '';
+            if (!quizTitle) {
+                quizTitle = `错题复习 (${selectedList.length}题)`;
+            }
+
+            const btnSaveOnly = document.getElementById('btn-save-wrong-quiz-only');
+            const btnAssignTask = document.getElementById('btn-assign-wrong-quiz-task');
+            if (btnSaveOnly) btnSaveOnly.disabled = true;
+            if (btnAssignTask) btnAssignTask.disabled = true;
+
+            showToast("正在生成错题复习Quiz...", false);
+
+            try {
+                // Prepare questions with enriched options
+                const finalQuestions = selectedList.map((q, idx) => {
+                    const enriched = enrichQuestionWithOptions(q, q.quizUuid);
+                    return {
+                        id: idx + 1,
+                        type: enriched.type || 'single_choice',
+                        difficulty: enriched.difficulty || 'medium',
+                        knowledge_point: enriched.knowledgePoint || enriched.knowledge_point || '',
+                        question: enriched.question,
+                        options: enriched.options || [],
+                        answer: enriched.correctAnswer || enriched.correct_answer || enriched.answer,
+                        explanation: enriched.explanation || ''
+                    };
+                });
+
+                const quizData = {
+                    quiz_title: quizTitle,
+                    total_questions: finalQuestions.length,
+                    questions: finalQuestions
+                };
+
+                // 1. Save new Quiz to backend /api/quizzes
+                const quizRes = await fetch('/api/quizzes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: quizTitle,
+                        tags: ['错题复习', '针对性训练'],
+                        status: 'active',
+                        quiz_data: quizData
+                    })
+                });
+
+                if (!quizRes.ok) throw new Error(`创建错题试卷失败: HTTP ${quizRes.status}`);
+                const createdQuiz = await quizRes.json();
+                const newUuid = createdQuiz.uuid;
+
+                // Refresh quizzes list in console
+                await fetchQuizzes();
+                if (typeof selectQuiz === 'function') {
+                    selectQuiz(newUuid);
+                }
+
+                // 2. Assign Review Task if requested
+                let taskSuccess = false;
+                let taskErrorMsg = '';
+
+                if (assignTask) {
+                    showToast("正在安排复习任务...", false);
+                    try {
+                        let subjectTag = '';
+                        if (/兰纳|lanna/i.test(quizTitle)) subjectTag = '兰纳文化与社会';
+                        else if (/翻译/i.test(quizTitle)) subjectTag = '泰语翻译1';
+                        else if (/读写/i.test(quizTitle)) subjectTag = '泰语读写-3';
+                        else if (/tourism|旅游/i.test(quizTitle)) subjectTag = 'Tourism';
+                        else if (/文学/i.test(quizTitle)) subjectTag = '泰国文学导读';
+                        else if (/日常/i.test(quizTitle)) subjectTag = '泰语日常知识';
+                        else if (/基础/i.test(quizTitle)) subjectTag = '基础泰语2';
+                        else subjectTag = '泰语日常知识';
+
+                        const taskPayload = {
+                            title: `错题复习Quiz：${quizTitle}`,
+                            action: {
+                                actionURL: `http://192.168.1.120:3002/Pages/appQuiz.html?uuid=${newUuid}`
+                            },
+                            due_date: new Date(Date.now() + 3 * 86400000).toISOString(),
+                            priority: "high",
+                            status: "pending",
+                            description: `针对作答记录中 ${finalQuestions.length} 道错题的专项巩固复习`,
+                            category_id: "cat-study",
+                            tags: [subjectTag]
+                        };
+
+                        const taskRes = await fetch('http://192.168.1.120:3006/api/app/tasks', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(taskPayload)
+                        });
+
+                        if (taskRes.ok) {
+                            taskSuccess = true;
+                        } else {
+                            taskErrorMsg = `HTTP ${taskRes.status} ${taskRes.statusText}`;
+                        }
+                    } catch (taskErr) {
+                        taskErrorMsg = taskErr.message;
+                    }
+                }
+
+                // Close modal
+                document.getElementById('all-submissions-modal').classList.add('hidden');
+                showToast("错题复习Quiz创建成功！", false);
+
+                if (assignTask) {
+                    if (taskSuccess) {
+                        if (confirm(`✓ 错题复习试卷《${quizTitle}》（共 ${finalQuestions.length} 题）已生成！\n✓ 并且已成功布置复习任务至任务系统！\n\n点击【确定】立即在新标签页打开测验，点击【取消】留在后台查看。`)) {
+                            window.open(`/Pages/appQuiz.html?uuid=${newUuid}`, '_blank');
+                        }
+                    } else {
+                        alert(`✓ 错题复习试卷《${quizTitle}》（共 ${finalQuestions.length} 题）已成功保存！\n⚠️ 安排复习任务提示: ${taskErrorMsg}（可在左侧列表选中该试卷后随时重新点击【安排复习任务】）`);
+                    }
+                } else {
+                    if (confirm(`✓ 错题复习试卷《${quizTitle}》（共 ${finalQuestions.length} 题）已成功保存至题库！\n\n点击【确定】立即在新标签页打开测验，点击【取消】留在后台查看。`)) {
+                        window.open(`/Pages/appQuiz.html?uuid=${newUuid}`, '_blank');
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(`创建失败: ${err.message}`, true);
+                alert(`创建错题复习Quiz失败: ${err.message}`);
+            } finally {
+                if (btnSaveOnly) btnSaveOnly.disabled = false;
+                if (btnAssignTask) btnAssignTask.disabled = false;
+            }
+        }
+
+        function extractWrongsFromCurrentDetailModal() {
+            if (!currentDetailSubmissionData) return;
+            const subId = currentDetailSubmissionData.id;
+            document.getElementById('submission-detail-modal').classList.add('hidden');
+            openAllSubmissionsModal('wrongs', subId);
+        }
+    </script>
+
+    <!-- Modal 1: All Submissions Modal (Global view across all quizzes) -->
+    <div id="all-submissions-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden p-4">
+        <div class="glass-panel bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden font-sans">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/60 shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+                        <i class="ph-bold ph-chart-bar text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-100">全部测验作答记录总览</h3>
+                        <p class="text-xs text-slate-400">实时汇总所有 Quiz 测验试卷的学生做题成绩记录与错题萃取</p>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('all-submissions-modal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition cursor-pointer">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Nav Tabs -->
+            <div class="px-6 py-2.5 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between flex-wrap gap-3 shrink-0">
+                <div class="flex items-center gap-2">
+                    <button id="tab-btn-sub-records" type="button" onclick="switchAllSubmissionsTab('records')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white shadow-sm flex items-center gap-1.5 transition cursor-pointer">
+                        <i class="ph ph-table"></i>
+                        <span>作答记录流水</span>
+                        <span id="tab-sub-count-badge" class="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-indigo-800 text-indigo-200">0</span>
+                    </button>
+                    <button id="tab-btn-sub-wrongs" type="button" onclick="switchAllSubmissionsTab('wrongs')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white flex items-center gap-1.5 transition cursor-pointer">
+                        <i class="ph-bold ph-target"></i>
+                        <span>错题萃取与复习任务</span>
+                        <span id="tab-wrong-count-badge" class="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30">0 题</span>
+                    </button>
+                </div>
+                <div id="wrong-summary-quick-stat" class="text-xs text-slate-400 flex items-center gap-2">
+                    <span class="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
+                    <span id="stat-total-submissions-text">共 0 次做题记录</span>
+                </div>
+            </div>
+
+            <!-- Modal Body 1: Submissions Table View -->
+            <div id="all-sub-view-records" class="flex-grow overflow-y-auto custom-scrollbar p-6">
+                <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/40">
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-900/80 text-slate-400 border-b border-slate-800 font-semibold uppercase text-[11px]">
+                                <tr>
+                                    <th class="py-3 px-4"># ID</th>
+                                    <th class="py-3 px-4">测验试卷</th>
+                                    <th class="py-3 px-4">提交时间</th>
+                                    <th class="py-3 px-4">得分 / 题数</th>
+                                    <th class="py-3 px-4">得分率</th>
+                                    <th class="py-3 px-4">错题数</th>
+                                    <th class="py-3 px-4">耗时</th>
+                                    <th class="py-3 px-4 text-right">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-submissions-table-body" class="divide-y divide-slate-800/60 font-sans">
+                                <!-- Loaded via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Body 2: Wrong Questions Review & Task View -->
+            <div id="all-sub-view-wrongs" class="flex-grow overflow-y-auto custom-scrollbar p-6 hidden">
+                <!-- Filter & Quick Selection Toolbar -->
+                <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800 mb-4 space-y-3">
+                    <div class="flex items-center justify-between flex-wrap gap-3">
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <!-- Quiz Filter -->
+                            <div class="flex items-center gap-1.5 text-xs text-slate-400">
+                                <span>来源试卷:</span>
+                                <select id="wrong-filter-quiz" onchange="filterWrongQuestionsList()" class="bg-slate-900 text-slate-200 text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 focus:outline-none focus:border-indigo-500 cursor-pointer">
+                                    <option value="all">全部试卷</option>
+                                </select>
+                            </div>
+                            <!-- Submission Filter -->
+                            <div class="flex items-center gap-1.5 text-xs text-slate-400">
+                                <span>作答记录:</span>
+                                <select id="wrong-filter-submission" onchange="filterWrongQuestionsList()" class="bg-slate-900 text-slate-200 text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 focus:outline-none focus:border-indigo-500 cursor-pointer">
+                                    <option value="all">全部作答记录</option>
+                                </select>
+                            </div>
+                            <!-- Deduplicate checkbox -->
+                            <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer select-none">
+                                <input type="checkbox" id="wrong-dedup-toggle" checked onchange="filterWrongQuestionsList()" class="rounded border-slate-700 text-indigo-600 focus:ring-0">
+                                <span>合并相同错题</span>
+                            </label>
+                        </div>
+                        <!-- Batch Selection Buttons -->
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="selectAllWrongQuestions(true)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition cursor-pointer">
+                                全选
+                            </button>
+                            <button type="button" onclick="invertSelectWrongQuestions()" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition cursor-pointer">
+                                反选
+                            </button>
+                            <button type="button" onclick="selectAllWrongQuestions(false)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition cursor-pointer">
+                                清空
+                            </button>
+                            <span class="text-xs text-slate-400 ml-1">已选择 <span id="selected-wrong-count-text" class="text-indigo-400 font-bold">0</span> / <span id="total-wrong-count-text">0</span> 题</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wrong Questions Cards Container -->
+                <div id="wrong-questions-cards-container" class="space-y-3 font-sans">
+                    <!-- Injected via JS -->
+                </div>
+
+                <!-- Empty State -->
+                <div id="wrong-questions-empty-state" class="hidden text-center py-16 text-slate-500">
+                    <i class="ph ph-check-circle text-4xl text-emerald-400/60 mb-2 block"></i>
+                    <p class="text-sm font-semibold text-slate-300">太棒了！当前没有任何错误答题记录</p>
+                    <p class="text-xs text-slate-500 mt-1">所有作答测验题目均为正确回答，暂无需针对性复习。</p>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-3 border-t border-slate-800 bg-slate-900/60 shrink-0">
+                <!-- Footer for Records View -->
+                <div id="records-footer-actions" class="flex justify-end">
+                    <button onclick="document.getElementById('all-submissions-modal').classList.add('hidden')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition cursor-pointer">
+                        关闭
+                    </button>
+                </div>
+                <!-- Footer for Wrongs View -->
+                <div id="wrong-review-footer-actions" class="hidden flex items-center justify-between flex-wrap gap-3">
+                    <div class="flex items-center gap-2 flex-grow max-w-md">
+                        <span class="text-xs text-slate-400 shrink-0 font-medium">复习试卷名称:</span>
+                        <input type="text" id="review-quiz-title-input" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-sans" placeholder="例如：错题复习-文化与习俗专项 (5题)">
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <button type="button" onclick="submitGenerateWrongReviewQuiz(false)" id="btn-save-wrong-quiz-only" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 flex items-center gap-1.5 transition cursor-pointer">
+                            <i class="ph ph-floppy-disk"></i>
+                            <span>仅保存为新Quiz</span>
+                        </button>
+                        <button type="button" onclick="submitGenerateWrongReviewQuiz(true)" id="btn-assign-wrong-quiz-task" class="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white text-xs font-bold shadow-lg shadow-indigo-500/20 flex items-center gap-2 transition cursor-pointer">
+                            <i class="ph-bold ph-rocket-launch"></i>
+                            <span>生成错题复习Quiz并安排复习任务</span>
+                        </button>
+                        <button type="button" onclick="document.getElementById('all-submissions-modal').classList.add('hidden')" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl text-xs transition cursor-pointer">
+                            关闭
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Single Submission Detail Modal (Answer sheet view) -->
+    <div id="submission-detail-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden p-4">
+        <div class="glass-panel bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden font-sans">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/60 shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="h-8 w-8 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
+                        <i class="ph-bold ph-newspaper text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-100">测验作答报告详情</h3>
+                        <p class="text-xs text-slate-400">查看该次提交的完整答题卡、得分与解析</p>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('submission-detail-modal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition cursor-pointer">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+            <!-- Modal Content (dynamic) -->
+            <div id="submission-detail-content" class="flex-grow overflow-y-auto custom-scrollbar p-6">
+                <!-- Dynamically injected -->
+            </div>
+            <!-- Modal Footer -->
+            <div class="px-6 py-3 border-t border-slate-800 bg-slate-900/40 flex justify-end shrink-0">
+                <button onclick="document.getElementById('submission-detail-modal').classList.add('hidden')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition cursor-pointer">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

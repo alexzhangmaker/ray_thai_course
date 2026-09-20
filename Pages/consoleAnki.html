@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anki 每日错词配置与管理 - vCourse.ThaiNotes</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Serif+Thai:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;750&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Noto Sans SC', 'sans-serif'],
+                        thai: ['Noto Serif Thai', 'Outfit', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0a0812 0%, #100c1c 50%, #170d26 100%);
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: rgba(0, 0, 0, 0.5);
+            --primary: #8b5cf6; /* Purple/Violet 500 */
+            --primary-glow: rgba(139, 92, 246, 0.15);
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px var(--glass-shadow);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(139, 92, 246, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .glass-card.active {
+            background: rgba(139, 92, 246, 0.08);
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.2);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 92, 246, 0.4);
+        }
+
+        .tab-btn {
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- Header -->
+    <header class="glass-panel border-b border-slate-800/80 px-6 py-4 flex items-center justify-between shrink-0 z-10 font-sans">
+        <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-violet-500 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
+                <i class="ph-bold ph-brain text-xl text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold leading-none tracking-tight flex items-center gap-2">
+                    <span>vCourse.ThaiNotes</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 font-semibold border border-violet-500/30">错词本后台</span>
+                </h1>
+                <span class="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mt-1">SQLite tblDailyAnkiError 错词库配置与管理</span>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-6">
+            <!-- Connection Status -->
+            <div id="connection-status" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-violet-500/10 text-violet-400 border border-violet-500/20">
+                <span class="h-2 w-2 rounded-full bg-violet-500 animate-pulse"></span>
+                <span>服务连接中...</span>
+            </div>
+            
+            <!-- Quick links -->
+            <nav class="flex items-center gap-2">
+                <a href="/Pages/consoleCourseReview.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition duration-205 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-layout"></i>
+                    <span>常规后台</span>
+                </a>
+                <a href="/Pages/consoleNotes.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition duration-205 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-note-pencil"></i>
+                    <span>课程笔记后台</span>
+                </a>
+                <a href="/Pages/consoleReadingCoach.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition duration-205 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-book-open"></i>
+                    <span>阅读教练后台</span>
+                </a>
+                <a href="/Pages/consoleCourseware.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition duration-205 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-presentation"></i>
+                    <span>课件后台</span>
+                </a>
+                <a href="/Pages/consoleWordset.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition duration-205 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-cards"></i>
+                    <span>词汇集后台</span>
+                </a>
+                <a href="/Pages/consoleHFWords.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition duration-205 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-lightning"></i>
+                    <span>高频词后台</span>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex-grow flex overflow-hidden min-h-0">
+        <!-- Sidebar: Daily Error Lists -->
+        <aside class="w-96 border-r border-slate-800/60 flex flex-col bg-slate-950/20 shrink-0">
+            <!-- Search & Actions -->
+            <div class="p-4 border-b border-slate-800/60 space-y-3 font-sans">
+                <!-- Search bar -->
+                <div class="relative">
+                    <input type="text" id="search-input" oninput="filterReports()" placeholder="搜索日期 (如：2026-07-01)..." 
+                        class="w-full bg-slate-900/50 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition duration-200">
+                    <i class="ph ph-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-base"></i>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="initNewReport()" type="button" class="w-full py-2.5 text-xs font-semibold bg-gradient-to-r from-violet-500 to-fuchsia-600 text-white rounded-xl hover:opacity-90 shadow-md shadow-violet-500/10 transition duration-200 flex items-center justify-center gap-1.5">
+                        <i class="ph ph-plus-bold"></i>
+                        <span>新增错词清单</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Reports List Scroll -->
+            <div id="reports-list-container" class="flex-grow overflow-y-auto custom-scrollbar p-3 space-y-2">
+                <div class="flex flex-col items-center justify-center h-40 text-slate-500">
+                    <i class="ph ph-spinner animate-spin text-2xl mb-2 text-violet-500"></i>
+                    <span class="text-sm">加载错词列表中...</span>
+                </div>
+            </div>
+            
+            <!-- Statistics Footer -->
+            <div class="p-4 border-t border-slate-800/60 bg-slate-950/40 text-xs text-slate-400 flex justify-between shrink-0 font-medium font-sans">
+                <span id="stat-total-reports">记录总量: 0</span>
+                <span class="text-violet-400">SQLite tblDailyAnkiError</span>
+            </div>
+        </aside>
+
+        <!-- Right Workspace: Detail Editor -->
+        <main class="flex-grow flex flex-col bg-slate-950/10 overflow-hidden relative">
+            <!-- Empty state -->
+            <div id="editor-empty-state" class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-slate-900/10 z-10">
+                <div class="h-16 w-16 rounded-2xl bg-slate-800/40 border border-slate-800 flex items-center justify-center mb-4 text-slate-500 shadow-inner">
+                    <i class="ph ph-brain text-3xl text-violet-400/80"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-200">未选择错词清单</h3>
+                <p class="text-sm text-slate-500 mt-1 max-w-sm font-sans">请在左侧列表中选择一天复习出错的单词清单进行管理，或直接点击“新增错词清单”按钮创建新的记录。</p>
+            </div>
+
+            <!-- Form Workspace -->
+            <form id="report-editor-form" onsubmit="saveReport(event)" class="hidden flex-grow flex flex-col overflow-hidden min-h-0">
+                <!-- Editor Header -->
+                <div class="px-6 py-4 border-b border-slate-800/60 flex items-center justify-between bg-slate-900/10 shrink-0">
+                    <div class="flex items-center gap-3">
+                        <span id="editor-action-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-violet-500/20 text-violet-300 border border-violet-500/20">编辑</span>
+                        <h2 id="editor-title" class="text-base font-bold text-slate-150">错词清单编辑</h2>
+                    </div>
+                    <div class="flex items-center gap-2 font-sans">
+                        <button type="button" id="delete-report-btn" onclick="deleteReport()" class="px-4 py-2 text-xs font-semibold text-rose-400 hover:text-white rounded-xl hover:bg-rose-500/10 border border-rose-500/20 hover:border-rose-500/40 transition duration-200">
+                            删除记录
+                        </button>
+                        <a id="btn-review-app" href="/Pages/appAnkiError.html" target="_blank" class="px-4 py-2 text-xs font-semibold text-violet-400 hover:text-white rounded-xl hover:bg-violet-500/10 border border-violet-500/20 hover:border-violet-500/40 transition duration-200 flex items-center gap-1.5">
+                            <i class="ph ph-arrow-square-out"></i>
+                            <span>开始复习</span>
+                        </a>
+                        <button type="button" id="btn-assign-task" onclick="assignAnkiTask()" class="px-4 py-2 text-xs font-semibold text-sky-400 hover:text-white rounded-xl hover:bg-sky-500/10 border border-sky-500/20 hover:border-sky-500/40 transition duration-200 flex items-center gap-1.5">
+                            <i class="ph ph-paper-plane-tilt"></i>
+                            <span>布置任务</span>
+                        </button>
+                        <button type="submit" class="px-5 py-2 text-xs font-semibold bg-gradient-to-r from-violet-500 to-fuchsia-600 text-white rounded-xl hover:opacity-95 shadow-md shadow-violet-500/20 transition duration-200 flex items-center gap-1.5">
+                            <i class="ph ph-floppy-disk"></i>
+                            <span>保存记录</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab Navigation -->
+                <div class="px-6 border-b border-slate-800/60 flex gap-6 text-sm text-slate-400 bg-slate-950/20 shrink-0 font-sans">
+                    <button type="button" onclick="switchTab('general')" id="tab-general" class="tab-btn py-3 font-medium active">基本信息</button>
+                    <button type="button" onclick="switchTab('words')" id="tab-words" class="tab-btn py-3 font-medium">错词管理</button>
+                    <button type="button" onclick="switchTab('raw-json')" id="tab-raw-json" class="tab-btn py-3 font-medium flex items-center gap-1.5">
+                        <i class="ph ph-code"></i>
+                        <span>源码 JSON</span>
+                    </button>
+                </div>
+
+                <!-- Editor Scroll Area -->
+                <div class="flex-grow overflow-y-auto p-6 custom-scrollbar bg-slate-950/5">
+                    
+                    <!-- TAB 1: General Info -->
+                    <div id="panel-general" class="tab-panel space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="font-sans">
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">错词记录唯一标识 (UUID) *</label>
+                                <input type="text" id="form-uuid" required placeholder="唯一标识符，新建时自动生成"
+                                    class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-violet-500 transition duration-200">
+                            </div>
+                            <div class="font-sans">
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">复习出错日期 (Date) *</label>
+                                <input type="date" id="form-date" required
+                                    class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-violet-500 transition duration-200">
+                            </div>
+                        </div>
+
+                        <!-- Info Card -->
+                        <div class="glass-panel p-5 rounded-2xl border-slate-850 space-y-3 font-sans">
+                            <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                                <i class="ph ph-info text-violet-400 text-lg"></i>
+                                <span>Anki 每日错词本作用说明</span>
+                            </h3>
+                            <p class="text-xs text-slate-400 leading-relaxed">
+                                此表用于记录你在每日词汇复习（Anki卡片测试）中，判定为“不记得”或“回答错误”的高频词列表。
+                            </p>
+                            <p class="text-xs text-slate-400 leading-relaxed">
+                                系统会将每天的错词以清单形式进行存储。你可以在此项中删除、新增或者修正常规单词的拼写、IPA 发音、释义、干扰项以及对应的例句。
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: Error Words -->
+                    <div id="panel-words" class="tab-panel hidden space-y-4">
+                        <div class="flex justify-between items-center font-sans">
+                            <span class="text-xs text-slate-400">管理今天回答错误的泰语高频词清单。</span>
+                            <button type="button" onclick="addWordField()" class="px-3 py-1.5 text-xs font-semibold bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 border border-violet-500/20 rounded-xl transition duration-150 flex items-center gap-1">
+                                <i class="ph ph-plus-bold"></i>
+                                <span>添加错词</span>
+                            </button>
+                        </div>
+                        <div id="words-container" class="space-y-4">
+                            <!-- Dynamic words lists -->
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: Raw JSON -->
+                    <div id="panel-raw-json" class="tab-panel hidden space-y-4 font-sans">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-slate-400">底层 <code>errorWords</code> 错词数组 JSON（对应高频词结构体数组）：</span>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="formatJson()" class="px-3 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition duration-150">
+                                    格式化 JSON
+                                </button>
+                                <button type="button" onclick="validateJsonAction()" class="px-3 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition duration-150">
+                                    校验格式
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="json-status" class="hidden"></div>
+
+                        <textarea id="form-content-json" oninput="validateJson()" rows="16" placeholder="输入 JSON 格式..."
+                            class="w-full bg-slate-950/60 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-300 font-mono focus:outline-none focus:border-violet-500 transition duration-200"></textarea>
+                    </div>
+
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <!-- Script Block -->
+    <script>
+        let reports = [];
+        let activeReport = null;
+        let isCreating = false;
+        let activeTab = 'general';
+
+        // Default boilerplate for a new errorWord
+        const WORD_TEMPLATE = {
+            "id": "hfw_000",
+            "word": "คำศัพท์",
+            "ipa": "kam sàp",
+            "meaning": "单词",
+            "options": ["单词", "释义1", "释义2", "释义3"],
+            "examples": [
+                {
+                    "thai": "ตัวอย่างประโยค",
+                    "chinese": "例句翻译"
+                }
+            ]
+        };
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            updateConnectionStatus('loading', '连接服务中...');
+            await fetchReports();
+        });
+
+        // ==========================================
+        // API Calls & Data Retrieval
+        // ==========================================
+        async function fetchReports() {
+            try {
+                updateConnectionStatus('loading', '拉取错词清单...');
+                const res = await fetch('/api/anki_errors');
+                if (!res.ok) throw new Error("获取列表失败");
+                reports = await res.json();
+                renderReportsList();
+                updateConnectionStatus('connected', '服务连接正常');
+            } catch (err) {
+                console.error(err);
+                updateConnectionStatus('error', '加载错词列表失败');
+                alert("加载错词清单列表失败: " + err.message);
+            }
+        }
+
+        // ==========================================
+        // Sidebar Rendering
+        // ==========================================
+        function renderReportsList() {
+            const container = document.getElementById('reports-list-container');
+            const searchVal = document.getElementById('search-input').value.trim().toLowerCase();
+            
+            let filtered = reports;
+
+            if (searchVal) {
+                filtered = filtered.filter(r => {
+                    const dateMatch = (r.date || '').toLowerCase().includes(searchVal);
+                    const wordMatch = r.errorWords && r.errorWords.some(w => (w.word || '').toLowerCase().includes(searchVal) || (w.meaning || '').toLowerCase().includes(searchVal));
+                    return dateMatch || wordMatch;
+                });
+            }
+
+            document.getElementById('stat-total-reports').textContent = `记录总量: ${reports.length}`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-40 text-slate-500 font-sans">
+                        <i class="ph ph-folder-open text-3xl mb-2"></i>
+                        <span class="text-xs">未找到错词清单</span>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(r => {
+                const isActive = activeReport && activeReport.uuid === r.uuid;
+                const count = r.errorWords ? r.errorWords.length : 0;
+                
+                return `
+                    <div onclick="selectReport('${r.uuid}')" 
+                        class="glass-card p-4 rounded-xl cursor-pointer border relative flex flex-col gap-2 transition duration-150 ${isActive ? 'active' : 'border-slate-800'}"
+                        data-uuid="${r.uuid}">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-sm text-slate-200 font-sans flex items-center gap-1.5">
+                                <i class="ph ph-calendar text-violet-400"></i>
+                                <span>${r.date}</span>
+                            </span>
+                            <span class="bg-violet-500/10 text-violet-400 border border-violet-500/20 px-2 py-0.5 rounded text-[10px] font-bold font-sans">
+                                错词: ${count}
+                            </span>
+                        </div>
+                        <div class="text-[10px] text-slate-500 font-sans flex justify-between">
+                            <span>ID: ${r.uuid.substring(0, 8)}...</span>
+                            <span class="truncate max-w-[150px] text-right font-thai">
+                                ${r.errorWords && r.errorWords.length > 0 ? r.errorWords.map(w => w.word).slice(0, 3).join(', ') + '...' : '空清单'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterReports() {
+            renderReportsList();
+        }
+
+        // ==========================================
+        // Load Details and Tab Control
+        // ==========================================
+        async function selectReport(uuid) {
+            isCreating = false;
+            try {
+                updateConnectionStatus('loading', '读取清单详情...');
+                const res = await fetch(`/api/anki_errors/${uuid}`);
+                if (!res.ok) throw new Error("获取详情失败");
+                const data = await res.json();
+                activeReport = data;
+
+                // Sync UI
+                document.getElementById('editor-empty-state').classList.add('hidden');
+                document.getElementById('report-editor-form').classList.remove('hidden');
+                document.getElementById('delete-report-btn').classList.remove('hidden');
+                document.getElementById('btn-review-app').classList.remove('hidden');
+                document.getElementById('btn-review-app').href = `/Pages/appAnkiError.html?uuid=${uuid}`;
+                document.getElementById('btn-assign-task').classList.remove('hidden');
+                document.getElementById('editor-action-badge').textContent = "编辑";
+                document.getElementById('editor-action-badge').className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-violet-500/20 text-violet-300 border border-violet-500/20";
+
+                // Bind General
+                document.getElementById('form-uuid').value = data.uuid;
+                document.getElementById('form-uuid').disabled = true;
+                document.getElementById('form-date').value = data.date;
+
+                // Bind JSON
+                document.getElementById('form-content-json').value = JSON.stringify(data.errorWords, null, 2);
+                validateJson();
+
+                // Setup Words Container
+                renderWordsContainer(data.errorWords || []);
+
+                switchTab('general');
+                renderReportsList();
+                updateConnectionStatus('connected', '服务连接正常');
+            } catch(err) {
+                console.error(err);
+                updateConnectionStatus('error', '加载详情失败');
+                alert("加载错词清单详情失败: " + err.message);
+            }
+        }
+
+        function switchTab(tabId) {
+            syncCurrentTabToModel();
+
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+            document.getElementById(`panel-${tabId}`).classList.remove('hidden');
+
+            activeTab = tabId;
+
+            if (tabId === 'raw-json') {
+                const wordsList = buildWordsFromForms();
+                document.getElementById('form-content-json').value = JSON.stringify(wordsList, null, 2);
+                validateJson();
+            } else if (tabId === 'words') {
+                // If coming back to words, render them from activeReport errorWords list
+                renderWordsContainer(activeReport.errorWords || []);
+            }
+        }
+
+        // ==========================================
+        // Words Components and Rendering
+        // ==========================================
+        function renderWordsContainer(words) {
+            const container = document.getElementById('words-container');
+            container.innerHTML = '';
+
+            if (words.length === 0) {
+                container.innerHTML = `<div class="text-xs text-amber-400 font-bold bg-amber-500/5 border border-amber-500/10 p-3 rounded-xl flex items-center gap-1.5 font-sans"><i class="ph ph-warning-circle"></i><span>当前清单暂无错词，请点击上方“添加错词”按钮。</span></div>`;
+                return;
+            }
+
+            words.forEach((w, idx) => {
+                appendWordMarkup(w, idx);
+            });
+        }
+
+        function appendWordMarkup(word, idx) {
+            const container = document.getElementById('words-container');
+            const div = document.createElement('div');
+            div.className = 'word-card p-4 rounded-xl border border-slate-800 bg-slate-950/20 space-y-4 relative';
+            div.setAttribute('data-index', idx);
+
+            // Options mapping
+            const options = word.options || [];
+            const examples = word.examples || [];
+
+            // Examples markup
+            let examplesHtml = '';
+            examples.forEach((ex, exIdx) => {
+                examplesHtml += `
+                    <div class="example-row grid grid-cols-1 md:grid-cols-2 gap-2 pb-2 border-b border-slate-900/50" data-idx="${exIdx}">
+                        <div>
+                            <label class="block text-[9px] text-slate-500 mb-0.5">泰语例句</label>
+                            <input type="text" value="${ex.thai || ''}" placeholder="泰语原文" class="ex-thai w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1 text-xs text-slate-200 focus:outline-none">
+                        </div>
+                        <div class="relative">
+                            <label class="block text-[9px] text-slate-500 mb-0.5">中文翻译</label>
+                            <div class="flex gap-2 items-center">
+                                <input type="text" value="${ex.chinese || ''}" placeholder="中文解释" class="ex-chinese w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1 text-xs text-slate-200 focus:outline-none">
+                                <button type="button" onclick="this.closest('.example-row').remove()" class="p-1 text-slate-500 hover:text-rose-400 transition" title="删除例句">
+                                    <i class="ph-bold ph-x"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            div.innerHTML = `
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2 font-sans">
+                    <div class="flex items-center gap-2">
+                        <span class="h-6 w-6 rounded-lg bg-violet-500/10 text-violet-400 border border-violet-500/20 text-xs font-bold flex items-center justify-center">${idx + 1}</span>
+                        <span class="text-xs font-bold text-slate-400">词汇 ID</span>
+                        <input type="text" value="${word.id || 'hfw_000'}" class="word-id bg-slate-900 border border-slate-800 rounded px-2 py-0.5 text-xs text-violet-400 font-mono focus:outline-none w-24">
+                    </div>
+                    <button type="button" onclick="this.closest('.word-card').remove(); refreshWordIndexes();" class="text-slate-500 hover:text-rose-400 p-1.5 rounded hover:bg-rose-500/10 transition">
+                        <i class="ph-bold ph-trash"></i>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 font-sans">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">泰语单词 (Word) *</label>
+                        <input type="text" value="${word.word || ''}" placeholder="โภชนาการ" class="word-thai w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 font-thai focus:outline-none focus:border-violet-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">IPA 发音 *</label>
+                        <input type="text" value="${word.ipa || ''}" placeholder="phôt chà naa kaan" class="word-ipa w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-violet-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">中文释义 (Meaning) *</label>
+                        <input type="text" value="${word.meaning || ''}" placeholder="营养" class="word-meaning w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-violet-500">
+                    </div>
+                </div>
+
+                <div class="space-y-2 border-t border-slate-900/60 pt-3 font-sans">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wide">选项词汇 (Options) - 共4个且通常第1个对应释义</label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <input type="text" value="${options[0] || ''}" placeholder="选项 1" class="word-opt-1 w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none">
+                        <input type="text" value="${options[1] || ''}" placeholder="选项 2" class="word-opt-2 w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none">
+                        <input type="text" value="${options[2] || ''}" placeholder="选项 3" class="word-opt-3 w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none">
+                        <input type="text" value="${options[3] || ''}" placeholder="选项 4" class="word-opt-4 w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Examples nested block -->
+                <div class="border-t border-slate-900/60 pt-3 space-y-2 font-sans">
+                    <div class="flex justify-between items-center">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wide">学习例句</label>
+                        <button type="button" onclick="addExampleField(this)" class="px-2 py-1 text-[9px] font-semibold bg-slate-800 text-slate-300 hover:text-white rounded border border-slate-700 transition flex items-center gap-0.5">
+                            <i class="ph ph-plus-bold"></i>
+                            <span>新增例句</span>
+                        </button>
+                    </div>
+                    <div class="examples-list-container space-y-2">
+                        ${examplesHtml}
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function addWordField() {
+            const container = document.getElementById('words-container');
+            // If empty notice is showing, remove it
+            if (container.querySelector('.text-amber-400')) {
+                container.innerHTML = '';
+            }
+            const count = container.querySelectorAll('.word-card').length;
+            const newWord = JSON.parse(JSON.stringify(WORD_TEMPLATE));
+            newWord.id = `hfw_${String(Math.floor(Math.random() * 500) + 100)}`;
+            appendWordMarkup(newWord, count);
+        }
+
+        function addExampleField(btn) {
+            const listContainer = btn.closest('.word-card').querySelector('.examples-list-container');
+            const exIdx = listContainer.querySelectorAll('.example-row').length;
+            const div = document.createElement('div');
+            div.className = 'example-row grid grid-cols-1 md:grid-cols-2 gap-2 pb-2 border-b border-slate-900/50';
+            div.setAttribute('data-idx', exIdx);
+            div.innerHTML = `
+                <div>
+                    <label class="block text-[9px] text-slate-500 mb-0.5">泰语例句</label>
+                    <input type="text" placeholder="例句原文" class="ex-thai w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1 text-xs text-slate-200 focus:outline-none">
+                </div>
+                <div class="relative">
+                    <label class="block text-[9px] text-slate-500 mb-0.5">中文翻译</label>
+                    <div class="flex gap-2 items-center">
+                        <input type="text" placeholder="翻译" class="ex-chinese w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1 text-xs text-slate-200 focus:outline-none">
+                        <button type="button" onclick="this.closest('.example-row').remove()" class="p-1 text-slate-500 hover:text-rose-400 transition" title="删除例句">
+                            <i class="ph-bold ph-x"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            listContainer.appendChild(div);
+        }
+
+        function refreshWordIndexes() {
+            document.querySelectorAll('.word-card').forEach((card, i) => {
+                card.querySelector('.h-6.w-6').textContent = i + 1;
+            });
+        }
+
+        // ==========================================
+        // Sync and Serializers
+        // ==========================================
+        function syncCurrentTabToModel() {
+            if (!activeReport) return;
+            if (activeTab === 'raw-json') {
+                const text = document.getElementById('form-content-json').value.trim();
+                try {
+                    activeReport.errorWords = JSON.parse(text);
+                } catch(e) {}
+            } else {
+                activeReport.errorWords = buildWordsFromForms();
+            }
+        }
+
+        function buildWordsFromForms() {
+            const list = [];
+            document.querySelectorAll('.word-card').forEach(card => {
+                const id = card.querySelector('.word-id').value.trim();
+                const word = card.querySelector('.word-thai').value.trim();
+                const ipa = card.querySelector('.word-ipa').value.trim();
+                const meaning = card.querySelector('.word-meaning').value.trim();
+
+                const options = [
+                    card.querySelector('.word-opt-1').value.trim(),
+                    card.querySelector('.word-opt-2').value.trim(),
+                    card.querySelector('.word-opt-3').value.trim(),
+                    card.querySelector('.word-opt-4').value.trim()
+                ].filter(o => o !== '');
+
+                const examples = [];
+                card.querySelectorAll('.example-row').forEach(row => {
+                    const thai = row.querySelector('.ex-thai').value.trim();
+                    const chinese = row.querySelector('.ex-chinese').value.trim();
+                    if (thai || chinese) {
+                        examples.push({ thai, chinese });
+                    }
+                });
+
+                if (word || meaning) {
+                    list.push({
+                        id,
+                        word,
+                        ipa,
+                        meaning,
+                        options,
+                        examples
+                    });
+                }
+            });
+            return list;
+        }
+
+        // ==========================================
+        // JSON Helpers
+        // ==========================================
+        function validateJson() {
+            const textarea = document.getElementById('form-content-json');
+            const badge = document.getElementById('json-status');
+            const val = textarea.value.trim();
+
+            if (!val) {
+                badge.className = "mb-2 p-2 rounded-lg text-xs flex items-center gap-1.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 font-sans";
+                badge.innerHTML = `<i class="ph-bold ph-x-circle text-sm"></i><span>内容不能为空</span>`;
+                badge.classList.remove('hidden');
+                return false;
+            }
+
+            try {
+                const parsed = JSON.parse(val);
+                if (!Array.isArray(parsed)) {
+                    badge.className = "mb-2 p-2 rounded-lg text-xs flex items-center gap-1.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 font-sans";
+                    badge.innerHTML = `<i class="ph-bold ph-warning-circle text-sm"></i><span>JSON 格式应为高频词对象数组 []</span>`;
+                    badge.classList.remove('hidden');
+                    return false;
+                }
+                badge.className = "mb-2 p-2 rounded-lg text-xs flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-sans";
+                badge.innerHTML = `<i class="ph-bold ph-check-circle text-sm"></i><span>JSON 格式校验成功</span>`;
+                badge.classList.remove('hidden');
+                return true;
+            } catch(err) {
+                badge.className = "mb-2 p-2 rounded-lg text-xs flex items-center gap-1.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 font-sans";
+                badge.innerHTML = `<i class="ph-bold ph-warning text-sm"></i><span>错误: ${err.message}</span>`;
+                badge.classList.remove('hidden');
+                return false;
+            }
+        }
+
+        function formatJson() {
+            const textarea = document.getElementById('form-content-json');
+            try {
+                const parsed = JSON.parse(textarea.value);
+                textarea.value = JSON.stringify(parsed, null, 2);
+                validateJson();
+            } catch(e) {
+                alert("JSON 语法解析出错，无法格式化。");
+            }
+        }
+
+        function validateJsonAction() {
+            if (validateJson()) {
+                alert("JSON 结构符合规范！");
+            } else {
+                alert("JSON 结构存在语法或格式错误。");
+            }
+        }
+
+        // ==========================================
+        // Save, Create and Delete actions
+        // ==========================================
+        function initNewReport() {
+            isCreating = true;
+            // Generate UUID with fallback for insecure HTTP contexts
+            const newUuid = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+                ? crypto.randomUUID()
+                : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                  });
+            const today = new Date().toISOString().substring(0, 10);
+
+            activeReport = {
+                uuid: newUuid,
+                date: today,
+                errorWords: [ JSON.parse(JSON.stringify(WORD_TEMPLATE)) ]
+            };
+
+            document.getElementById('editor-empty-state').classList.add('hidden');
+            document.getElementById('report-editor-form').classList.remove('hidden');
+            document.getElementById('delete-report-btn').classList.add('hidden');
+            document.getElementById('btn-review-app').classList.add('hidden');
+            document.getElementById('btn-assign-task').classList.add('hidden');
+            document.getElementById('editor-action-badge').textContent = "新建";
+            document.getElementById('editor-action-badge').className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/20";
+
+            document.getElementById('form-uuid').value = newUuid;
+            document.getElementById('form-uuid').disabled = false;
+            document.getElementById('form-date').value = today;
+
+            document.getElementById('form-content-json').value = JSON.stringify(activeReport.errorWords, null, 2);
+            validateJson();
+
+            renderWordsContainer(activeReport.errorWords);
+            switchTab('general');
+            renderReportsList();
+        }
+
+        async function saveReport(e) {
+            e.preventDefault();
+            syncCurrentTabToModel();
+
+            if (activeTab === 'raw-json') {
+                if (!validateJson()) {
+                    alert("JSON 源码中包含格式错误，请先修正后再保存！");
+                    return;
+                }
+            }
+
+            const uuid = document.getElementById('form-uuid').value.trim();
+            const date = document.getElementById('form-date').value.trim();
+
+            if (!uuid || !date) {
+                alert("唯一标识 (UUID) 和复习日期 (Date) 是必填项！");
+                return;
+            }
+
+            const payload = {
+                uuid,
+                date,
+                errorWords: activeReport.errorWords || []
+            };
+
+            try {
+                updateConnectionStatus('loading', '正在提交保存...');
+                const url = isCreating ? '/api/anki_errors' : `/api/anki_errors/${uuid}`;
+                const method = isCreating ? 'POST' : 'PUT';
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.error || "保存失败");
+                }
+
+                const savedReport = await res.json();
+                alert("错词清单保存成功！");
+
+                isCreating = false;
+                await fetchReports();
+                selectReport(savedReport.uuid);
+            } catch (err) {
+                console.error(err);
+                updateConnectionStatus('error', '保存失败');
+                alert("保存失败: " + err.message);
+            }
+        }
+
+        async function deleteReport() {
+            if (!activeReport || isCreating) return;
+            const confirmDel = confirm(`您确定要永久删除日期为 ${activeReport.date} 的每日错词清单吗？此操作不可撤回。`);
+            if (!confirmDel) return;
+
+            try {
+                updateConnectionStatus('loading', '删除记录中...');
+                const res = await fetch(`/api/anki_errors/${activeReport.uuid}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error("删除请求失败");
+                
+                alert("清单记录已成功删除。");
+                activeReport = null;
+                
+                document.getElementById('report-editor-form').classList.add('hidden');
+                document.getElementById('editor-empty-state').classList.remove('hidden');
+                await fetchReports();
+            } catch(err) {
+                console.error(err);
+                updateConnectionStatus('error', '删除失败');
+                alert("删除失败: " + err.message);
+            }
+        }
+
+        async function assignAnkiTask() {
+            if (!activeReport) {
+                alert("请先选择一个错词清单！");
+                return;
+            }
+
+            // Determine subject tag (daily anki error list belongs to 泰语日常知识)
+            let subjectTag = '泰语日常知识';
+            if (activeReport.tags) {
+                const textToMatch = String(activeReport.tags);
+                if (/读写/i.test(textToMatch)) subjectTag = '泰语读写-3';
+                else if (/翻译/i.test(textToMatch)) subjectTag = '泰语翻译1';
+                else if (/旅游|tourism/i.test(textToMatch)) subjectTag = 'Tourism';
+                else if (/文学/i.test(textToMatch)) subjectTag = '泰国文学导读';
+                else if (/兰纳|lanna/i.test(textToMatch)) subjectTag = '兰纳文化与社会';
+                else if (/日常/i.test(textToMatch)) subjectTag = '泰语日常知识';
+                else if (/基础/i.test(textToMatch)) subjectTag = '基础泰语2';
+            }
+
+            const payload = {
+                title: `复习错词-${activeReport.date}`,
+                action: {
+                    actionURL: `http://192.168.1.120:3002/Pages/appAnkiError.html?uuid=${activeReport.uuid}`
+                },
+                due_date: "2026-07-15T23:59:59Z",
+                priority: "high",
+                status: "pending",
+                description: "复习错词清单",
+                category_id: "cat-study",
+                tags: [subjectTag]
+            };
+
+            try {
+                updateConnectionStatus('loading', '正在布置任务...');
+                const res = await fetch('http://192.168.1.120:3006/api/app/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    alert("任务布置成功！");
+                    updateConnectionStatus('connected', '任务布置成功');
+                    setTimeout(() => updateConnectionStatus('connected', '已连接至后台'), 1500);
+                } else {
+                    alert("布置任务失败: " + res.status + " " + res.statusText);
+                    updateConnectionStatus('connected', '已连接至后台');
+                }
+            } catch (err) {
+                console.error(err);
+                alert("网络连接失败，无法布置任务");
+                updateConnectionStatus('error', '布置任务失败');
+            }
+        }
+
+        function updateConnectionStatus(status, text) {
+            const el = document.getElementById('connection-status');
+            if (!el) return;
+            if (status === 'loading') {
+                el.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-violet-500/10 text-violet-400 border border-violet-500/20 font-sans";
+                el.innerHTML = `<span class="h-2 w-2 rounded-full bg-violet-500 animate-pulse"></span><span>${text}</span>`;
+            } else if (status === 'connected') {
+                el.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-sans";
+                el.innerHTML = `<span class="h-2 w-2 rounded-full bg-emerald-500"></span><span>${text}</span>`;
+            } else if (status === 'error') {
+                el.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20 font-sans";
+                el.innerHTML = `<span class="h-2 w-2 rounded-full bg-rose-500 animate-pulse"></span><span>${text}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

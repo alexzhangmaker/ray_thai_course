@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语句型配置与管理 - vCourse.ThaiNotes</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Serif+Thai:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;750&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Noto Sans SC', 'sans-serif'],
+                        thai: ['Noto Serif Thai', 'Outfit', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0a0e17 0%, #101524 50%, #18223d 100%);
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: rgba(0, 0, 0, 0.5);
+            --primary: #3b82f6; /* Blue 500 */
+            --primary-glow: rgba(59, 130, 246, 0.15);
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px var(--glass-shadow);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .glass-card.active {
+            background: rgba(59, 130, 246, 0.08);
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.2);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.4);
+        }
+
+        .tab-btn {
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .token-badge {
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .token-subject {
+            background: linear-gradient(120deg, rgba(168, 237, 234, 0.2) 0%, rgba(254, 214, 227, 0.2) 100%);
+            border: 1px solid rgba(168, 237, 234, 0.4);
+            color: #a8edea;
+        }
+        .token-verb, .token-action {
+            background: linear-gradient(120deg, rgba(255, 154, 158, 0.2) 0%, rgba(254, 207, 239, 0.2) 100%);
+            border: 1px solid rgba(255, 154, 158, 0.4);
+            color: #ff9a9e;
+        }
+        .token-purpose, .token-prepositional_phrase {
+            background: linear-gradient(120deg, rgba(161, 196, 253, 0.2) 0%, rgba(194, 233, 251, 0.2) 100%);
+            border: 1px solid rgba(161, 196, 253, 0.4);
+            color: #a1c4fd;
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- Header -->
+    <header class="glass-panel border-b border-slate-800/80 px-6 py-4 flex items-center justify-between shrink-0 z-10 font-sans">
+        <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <i class="ph-bold ph-tree-structure text-xl text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold leading-none tracking-tight flex items-center gap-2">
+                    <span>vCourse.ThaiNotes</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-semibold border border-blue-500/30">句型管理后台</span>
+                </h1>
+                <span class="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mt-1">SQLite tblSentencePattern 句型库与关联管理</span>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-6">
+            <!-- Connection Status -->
+            <div id="connection-status" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <span class="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
+                <span>服务连接中...</span>
+            </div>
+            
+            <!-- Quick links -->
+            <nav class="flex items-center gap-2 font-sans">
+                <a href="/Pages/consoleCourseReview.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition duration-200 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-layout"></i>
+                    <span>常规后台</span>
+                </a>
+                <a href="/Pages/consoleNotes.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition duration-200 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-note"></i>
+                    <span>课程笔记后台</span>
+                </a>
+                <a id="client-app-btn" href="javascript:void(0)" onclick="openAppSentenceCoachWithLesson()" class="px-4 py-2 text-sm text-emerald-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-emerald-500/20">
+                    <i class="ph ph-arrow-square-out"></i>
+                    <span>打开句型客户端</span>
+                </a>
+                <button type="button" onclick="assignSentenceTask()" class="px-4 py-2 text-sm text-sky-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-sky-500/20">
+                    <i class="ph ph-paper-plane-tilt"></i>
+                    <span>布置任务</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex-grow flex overflow-hidden min-h-0">
+        <!-- Sidebar: Sentence Patterns List -->
+        <aside class="w-96 border-r border-slate-800/60 flex flex-col bg-slate-950/20 shrink-0">
+            <!-- Search & Filter Actions -->
+            <div class="p-4 border-b border-slate-800/60 space-y-3 font-sans">
+                <!-- Search bar -->
+                <div class="relative">
+                    <input type="text" id="search-input" oninput="filterPatterns()" placeholder="搜索句型主题、名称或标签..." 
+                        class="w-full bg-slate-900/50 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200">
+                    <i class="ph ph-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-base"></i>
+                </div>
+                
+                <!-- Course Filter Dropdowns -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">按科目筛选</label>
+                        <select id="filter-course" onchange="onFilterCourseChange()"
+                            class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-blue-500 transition duration-200">
+                            <option value="">全部科目</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">按课时/章节</label>
+                        <select id="filter-lesson" onchange="filterPatterns()"
+                            class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-blue-500 transition duration-200" disabled>
+                            <option value="">全部课时</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 pt-1">
+                    <button onclick="initNewPattern()" type="button" class="w-full py-2.5 text-xs font-semibold bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:opacity-90 shadow-md shadow-blue-500/10 transition duration-200 flex items-center justify-center gap-1.5">
+                        <i class="ph ph-plus-bold"></i>
+                        <span>新增句型</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Patterns List Scroll -->
+            <div id="patterns-list-container" class="flex-grow overflow-y-auto custom-scrollbar p-3 space-y-2">
+                <div class="flex flex-col items-center justify-center h-40 text-slate-500">
+                    <i class="ph ph-spinner animate-spin text-2xl mb-2 text-blue-500"></i>
+                    <span class="text-sm">加载句型列表中...</span>
+                </div>
+            </div>
+            
+            <!-- Statistics Footer -->
+            <div class="p-4 border-t border-slate-800/60 bg-slate-950/40 text-xs text-slate-400 flex justify-between shrink-0 font-medium font-sans">
+                <span id="stat-total-patterns">句型总量: 0</span>
+                <span class="text-blue-400">SQLite tblSentencePattern</span>
+            </div>
+        </aside>
+
+        <!-- Right Workspace: Detail Editor -->
+        <main class="flex-grow flex flex-col bg-slate-950/10 overflow-hidden relative">
+            <!-- Empty state -->
+            <div id="editor-empty-state" class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-slate-900/10 z-10">
+                <div class="h-16 w-16 rounded-2xl bg-slate-800/40 border border-slate-800 flex items-center justify-center mb-4 text-slate-500 shadow-inner">
+                    <i class="ph ph-tree-structure text-3xl text-blue-400/80"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-200">未选择泰语句型</h3>
+                <p class="text-sm text-slate-500 mt-1 max-w-sm">请在左侧列表中选择一个句型进行编辑或查看，或直接点击“新增句型”按钮进行创建。</p>
+            </div>
+
+            <!-- Form Workspace -->
+            <form id="pattern-editor-form" onsubmit="savePattern(event)" class="hidden flex-grow flex flex-col overflow-hidden min-h-0">
+                <!-- Editor Header -->
+                <div class="px-6 py-4 border-b border-slate-800/60 flex items-center justify-between bg-slate-900/10 shrink-0">
+                    <div class="flex items-center gap-3">
+                        <span id="editor-action-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-500/20">编辑</span>
+                        <h2 id="editor-title" class="text-base font-bold text-slate-150">句型配置</h2>
+                    </div>
+                    <div class="flex items-center gap-2 font-sans">
+                        <button type="button" id="delete-pattern-btn" onclick="deletePattern()" class="px-4 py-2 text-xs font-semibold text-rose-400 hover:text-white rounded-xl hover:bg-rose-500/10 border border-rose-500/20 hover:border-rose-500/40 transition duration-200">
+                            删除句型
+                        </button>
+                        <button type="submit" class="px-5 py-2 text-xs font-semibold bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:opacity-95 shadow-md shadow-blue-500/20 transition duration-200 flex items-center gap-1.5">
+                            <i class="ph ph-floppy-disk"></i>
+                            <span>保存句型</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab Navigation -->
+                <div class="px-6 border-b border-slate-800/60 flex gap-6 text-sm text-slate-400 bg-slate-950/20 shrink-0 font-sans">
+                    <button type="button" onclick="switchTab('general')" id="tab-general" class="tab-btn py-3 font-medium active">基本信息 & 关联</button>
+                    <button type="button" onclick="switchTab('raw-json')" id="tab-raw-json" class="tab-btn py-3 font-medium flex items-center gap-1.5">
+                        <i class="ph ph-code"></i>
+                        <span>源码 JSON</span>
+                    </button>
+                    <button type="button" onclick="switchTab('preview')" id="tab-preview" class="tab-btn py-3 font-medium flex items-center gap-1.5">
+                        <i class="ph ph-eye"></i>
+                        <span>效果预览</span>
+                    </button>
+                </div>
+
+                <!-- Editor Scroll Area -->
+                <div class="flex-grow overflow-y-auto p-6 custom-scrollbar bg-slate-950/5">
+                    
+                    <!-- TAB 1: General Info -->
+                    <div id="panel-general" class="tab-panel space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="md:col-span-2 font-sans">
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">句型唯一标识 (UUID/ID) *</label>
+                                <input type="text" id="form-uuid" required placeholder="例如：pattern-004"
+                                    class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition duration-200">
+                            </div>
+                            <div class="md:col-span-2 font-sans">
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">句型名称 (Pattern Name) *</label>
+                                <input type="text" id="form-name" required placeholder="例如：เพื่อ 句型（为了……）"
+                                    class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition duration-200">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+                            <div class="md:col-span-2 font-sans">
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">CEFR 等级 *</label>
+                                <select id="form-level" required
+                                    class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition duration-200">
+                                    <option value="A1">A1 - 入门级</option>
+                                    <option value="A2">A2 - 基础级</option>
+                                    <option value="B1">B1 - 进阶级</option>
+                                    <option value="B2">B2 - 高阶级</option>
+                                    <option value="C1">C1 - 专业级</option>
+                                    <option value="C2">C2 - 精通级</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2 font-sans">
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">主题分类 (Topic) *</label>
+                                <input type="text" id="form-topic" required placeholder="例如：意图与目标表达"
+                                    class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition duration-200">
+                            </div>
+                            <div class="md:col-span-2 font-sans">
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">难度指数 (Difficulty) *</label>
+                                <input type="number" id="form-difficulty" required min="1" max="5" placeholder="例如：2"
+                                    class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition duration-200">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="font-sans">
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">标签 (Tags，逗号分隔)</label>
+                                <input type="text" id="form-tags" placeholder="例如：เพื่อ,目的,意图,目标"
+                                    class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition duration-200">
+                            </div>
+                            <div class="font-sans">
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">前置必备词汇 (Prerequisite Vocab，逗号分隔)</label>
+                                <input type="text" id="form-vocab" placeholder="例如：เรียน,ทำงาน,ไป,ซื้อ"
+                                    class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition duration-200">
+                            </div>
+                        </div>
+
+                        <!-- Course Association Panel -->
+                        <div class="glass-panel rounded-2xl p-5 border-slate-800/80 space-y-4">
+                            <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2 font-sans">
+                                <i class="ph ph-link text-blue-400 text-lg"></i>
+                                <span>关联科目与课程章节（可关联多个）</span>
+                            </h3>
+                            <p class="text-xs text-slate-400 font-sans">
+                                关联后，此句型将出现在所选科目与章节的句型学习库中。请确保至少关联一个课时，学习端会拉取该课时下关联的句型。
+                            </p>
+                            
+                            <!-- Current Associations List -->
+                            <div id="associations-container" class="space-y-2 font-sans">
+                                <!-- Dynamic items will be added here -->
+                            </div>
+
+                            <!-- Add new association form -->
+                            <div class="flex flex-col md:flex-row gap-3 pt-4 items-end border-t border-slate-800/50 font-sans">
+                                <div class="flex-grow w-full">
+                                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">选择科目</label>
+                                    <select id="assoc-course" onchange="onAssocCourseChange()"
+                                        class="w-full bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-blue-500 transition duration-200">
+                                        <option value="">-- 请选择科目 --</option>
+                                    </select>
+                                </div>
+                                <div class="flex-grow w-full">
+                                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">选择课时 / 章节</label>
+                                    <select id="assoc-lesson"
+                                        class="w-full bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-blue-500 transition duration-200" disabled>
+                                        <option value="">-- 请先选择科目 --</option>
+                                    </select>
+                                </div>
+                                <button type="button" onclick="addAssociation()"
+                                    class="px-4 py-2 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-blue-400 rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition duration-200 flex items-center gap-1.5 shrink-0 h-[38px] w-full md:w-auto justify-center">
+                                    <i class="ph ph-plus-bold"></i>
+                                    <span>添加关联</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: Raw JSON Editor -->
+                    <div id="panel-raw-json" class="tab-panel hidden space-y-4">
+                        <div class="flex justify-between items-center font-sans">
+                            <div class="flex flex-col">
+                                <span class="text-xs text-slate-400">直接编辑句型 JSON 结构，包含公式元素、例句及各类练习题。</span>
+                                <span id="json-error" class="text-xs text-rose-400 mt-1 hidden">JSON 语法错误，请检查！</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="formatJson()" class="px-3 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 transition duration-150 flex items-center gap-1">
+                                    <i class="ph ph-magic-wand"></i>
+                                    <span>格式化 JSON</span>
+                                </button>
+                            </div>
+                        </div>
+                        <textarea id="form-content-json" oninput="validateJson()" rows="24"
+                            class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs font-mono text-emerald-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-200 leading-relaxed custom-scrollbar"></textarea>
+                    </div>
+
+                    <!-- TAB 3: Preview -->
+                    <div id="panel-preview" class="tab-panel hidden space-y-6">
+                        <!-- Preview container populated dynamically -->
+                        <div id="preview-container" class="space-y-6"></div>
+                    </div>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <!-- Script Block -->
+    <script>
+        // Global State variables
+        let patterns = [];
+        let coursesData = [];
+        let lessonsData = [];
+        let activePattern = null;
+        let isCreating = false;
+        let activeTab = 'general';
+
+        // Default template for new sentence patterns
+        const JSON_TEMPLATE = {
+            "id": "pattern-xxx",
+            "createdAt": new Date().toISOString(),
+            "updatedAt": new Date().toISOString(),
+            "level": "A2",
+            "topic": "主题分类",
+            "patternName": "句型名称",
+            "formula": {
+                "display": "主语 + 动词 + เพื่อ + 目的",
+                "components": [
+                    {
+                        "slot": "subject",
+                        "label": "主语",
+                        "description": "动作的发出者",
+                        "examples": ["ฉัน", "เขา"],
+                        "glossary": "ประธาน",
+                        "ipa": "/prà-thaːn/"
+                    },
+                    {
+                        "slot": "action",
+                        "label": "主要动作",
+                        "description": "为实现目标采取的行动",
+                        "examples": ["เรียน", "ทำงาน"],
+                        "glossary": "กริยาหลัก",
+                        "ipa": "/krí-jaː lǎk/"
+                    },
+                    {
+                        "slot": "purpose",
+                        "label": "目的",
+                        "description": "要达成的目标",
+                        "examples": ["สุขภาพดี", "มีเงิน"],
+                        "glossary": "เป้าหมาย",
+                        "ipa": "/pâo-mǎi/"
+                    }
+                ]
+            },
+            "usage": {
+                "summary": "句型用法简述",
+                "detail": "句型结构详细说明以及常见使用场景。",
+                "notes": [
+                    "เพื่อ 后面接动词短语或名词短语",
+                    "可以跟 เพราะ（因为）做对比"
+                ]
+            },
+            "examples": [
+                {
+                    "id": "ex-001",
+                    "thai": "ฉันเรียนภาษาไทยเพื่อทำงานที่ประเทศไทย",
+                    "parsed": {
+                        "subject": "ฉัน",
+                        "action": "เรียนภาษาไทย",
+                        "purpose": "ทำงานที่ประเทศไทย"
+                    },
+                    "english": "I study Thai to work in Thailand.",
+                    "chinese": "我学习泰语是为了在泰国工作。",
+                    "audioThai": "",
+                    "imageHint": "",
+                    "isVariant": false,
+                    "variantNote": ""
+                }
+            ],
+            "exercises": {
+                "recognition": {
+                    "description": "识别句子中是否使用了 'เพื่อ' 来表达目的",
+                    "items": [
+                        {
+                            "sentence": "เขามาโรงเรียนเพื่อเรียนภาษา",
+                            "audioUrl": "",
+                            "answer": true,
+                            "explanation": "句子正确使用了 'เพื่อ' 表示来学校的目的。"
+                        }
+                    ]
+                },
+                "fillInBlank": {
+                    "description": "选择合适的词填空",
+                    "items": [
+                        {
+                            "sentence": "ฉันไปตลาด ______ ซื้อผัก",
+                            "slot": "purpose",
+                            "answer": "เพื่อ",
+                            "hints": ["表示目的"],
+                            "acceptableAnswers": ["เพื่อ"]
+                        }
+                    ]
+                },
+                "dragAndDrop": {
+                    "description": "拖拽词块组成正确顺序",
+                    "items": [
+                        {
+                            "id": "dd-001",
+                            "targetSentence": "ฉันเรียนเพื่อทำงาน",
+                            "targetEnglish": "I study to work.",
+                            "blocks": [
+                                { "text": "ฉัน", "slot": "subject", "order": 0 },
+                                { "text": "เรียน", "slot": "action", "order": 1 },
+                                { "text": "เพื่อ", "slot": "purpose", "order": 2 },
+                                { "text": "ทำงาน", "slot": "purpose", "order": 3 }
+                            ],
+                            "distractors": ["เพราะ"],
+                            "audioUrl": ""
+                        }
+                    ]
+                },
+                "multipleChoice": {
+                    "description": "选择正确选项完成句子",
+                    "items": [
+                        {
+                            "id": "mc-001",
+                            "question": "选择正确的词填入空白：ฉันไปร้านอาหาร ______ กินข้าว",
+                            "type": "fillIn",
+                            "options": ["เพื่อ", "เพราะ", "ที่"],
+                            "correctIndex": 0,
+                            "explanation": "这里表示吃饭的目的，用เพื่อ。"
+                        }
+                    ]
+                },
+                "translation": {
+                    "description": "翻译练习",
+                    "items": [
+                        {
+                            "id": "tr-001",
+                            "direction": "th2zh",
+                            "prompt": "เขาทำงานเพื่อเลี้ยงดูครอบครัว",
+                            "audioUrl": "",
+                            "referenceAnswer": "他工作是为了养家。",
+                            "keywords": ["工作", "养家"],
+                            "wordBlocks": [],
+                            "targetSentence": "",
+                            "distractors": [],
+                            "explanation": "ทำงาน = 工作；เพื่อ = 为了；เลี้ยงดูครอบครัว = 养家"
+                        }
+                    ]
+                },
+                "sentenceConstruction": {
+                    "description": "用句型造句",
+                    "items": [
+                        {
+                            "id": "sc-001",
+                            "prompt": {
+                                "subject": "ฉัน",
+                                "subjectZh": "我",
+                                "prepositionalHint": "เพื่อสุขภาพ",
+                                "prepositionalHintZh": "为了健康",
+                                "englishHint": "I exercise for health."
+                            },
+                            "referenceAnswer": "ฉันออกกำลังกายเพื่อสุขภาพ",
+                            "scoringRubric": {
+                                "hasSubject": { "weight": 20, "keyword": "ฉัน" },
+                                "hasVerb": { "weight": 35, "keyword": "ออกกำลังกาย" },
+                                "hasPrepPhrase": { "weight": 35, "keyword": "เพื่อ" },
+                                "spellingCorrect": { "weight": 10, "exactMatch": true }
+                            }
+                        }
+                    ]
+                },
+                "errorCorrection": {
+                    "description": "找出并改正下列句子中的错误",
+                    "items": [
+                        {
+                            "wrongSentence": "ฉันไปตลาดเพราะซื้อผัก",
+                            "errorPosition": "เพราะ",
+                            "errorType": "wrong_word",
+                            "correctedSentence": "ฉันไปตลาดเพื่อซื้อผัก",
+                            "explanation": "这里是买菜的目的，应该用เพื่อ。"
+                        }
+                    ]
+                }
+            },
+            "quiz": {
+                "description": "综合测验",
+                "config": {
+                    "totalQuestions": 5,
+                    "timeLimitSeconds": 300,
+                    "passingScore": 70,
+                    "questionTypes": ["recognition", "fillInBlank"]
+                },
+                "pool": ["mc-001", "tr-001", "dd-001"]
+            },
+            "printableWorksheet": {
+                "description": "可打印练习纸",
+                "config": {
+                    "paperSize": "A4",
+                    "fontSize": 16,
+                    "lineHeight": 2.5,
+                    "showAnswerLines": true,
+                    "includeAudioQR": false
+                },
+                "sections": ["fillInBlank"]
+            },
+            "metadata": {
+                "relatedPatterns": [],
+                "prerequisiteVocab": ["เรียน", "ทำงาน"],
+                "tags": ["目的"],
+                "difficulty": 2
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            updateConnectionStatus('loading', '连接服务中...');
+            await fetchCoursesAndLessons();
+            await fetchPatterns();
+        });
+
+        // ==========================================
+        // API Calls & Data Retrieval
+        // ==========================================
+        async function fetchCoursesAndLessons() {
+            try {
+                // Fetch courses
+                const resCourses = await fetch('/api/courses');
+                if (resCourses.ok) {
+                    coursesData = await resCourses.json();
+                    populateCourseDropdowns();
+                } else {
+                    console.error("获取科目列表失败");
+                }
+
+                // Fetch lessons
+                const resLessons = await fetch('/api/lessons');
+                if (resLessons.ok) {
+                    lessonsData = await resLessons.json();
+                } else {
+                    console.error("获取课时列表失败");
+                }
+            } catch (err) {
+                console.error("加载科目与课程数据出错:", err);
+            }
+        }
+
+        async function fetchPatterns() {
+            try {
+                updateConnectionStatus('loading', '加载句型库...');
+                const res = await fetch('/api/sentence_patterns');
+                if (!res.ok) throw new Error("加载失败");
+                patterns = await res.json();
+                
+                renderPatternsList();
+                updateConnectionStatus('connected', '服务连接正常');
+            } catch (err) {
+                console.error(err);
+                updateConnectionStatus('error', '加载句型库失败');
+            }
+        }
+
+        // ==========================================
+        // Dropdown & UI populating
+        // ==========================================
+        function populateCourseDropdowns() {
+            const filterCourse = document.getElementById('filter-course');
+            const assocCourse = document.getElementById('assoc-course');
+            
+            // Clear existing except first
+            filterCourse.innerHTML = '<option value="">全部科目</option>';
+            assocCourse.innerHTML = '<option value="">-- 请选择科目 --</option>';
+
+            coursesData.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.name;
+                filterCourse.appendChild(opt.cloneNode(true));
+                assocCourse.appendChild(opt);
+            });
+        }
+
+        function onFilterCourseChange() {
+            const courseId = document.getElementById('filter-course').value;
+            const filterLesson = document.getElementById('filter-lesson');
+            
+            filterLesson.innerHTML = '<option value="">全部课时</option>';
+            if (!courseId) {
+                filterLesson.disabled = true;
+            } else {
+                filterLesson.disabled = false;
+                const lessons = lessonsData.filter(l => l.course_id === courseId);
+                lessons.forEach(l => {
+                    const opt = document.createElement('option');
+                    opt.value = l.id;
+                    opt.textContent = l.title;
+                    filterLesson.appendChild(opt);
+                });
+            }
+            filterPatterns();
+        }
+
+        function onAssocCourseChange() {
+            const courseId = document.getElementById('assoc-course').value;
+            const assocLesson = document.getElementById('assoc-lesson');
+            
+            assocLesson.innerHTML = '<option value="">-- 请选择课时 --</option>';
+            if (!courseId) {
+                assocLesson.disabled = true;
+            } else {
+                assocLesson.disabled = false;
+                const lessons = lessonsData.filter(l => l.course_id === courseId);
+                lessons.forEach(l => {
+                    const opt = document.createElement('option');
+                    opt.value = l.id;
+                    opt.textContent = l.title;
+                    assocLesson.appendChild(opt);
+                });
+            }
+        }
+
+        // ==========================================
+        // Sidebar list rendering
+        // ==========================================
+        function renderPatternsList() {
+            const container = document.getElementById('patterns-list-container');
+            const searchVal = document.getElementById('search-input').value.trim().toLowerCase();
+            const filterCourseId = document.getElementById('filter-course').value;
+            const filterLessonId = document.getElementById('filter-lesson').value;
+
+            let filtered = [...patterns];
+
+            // Search Filter
+            if (searchVal) {
+                filtered = filtered.filter(p => {
+                    const nameMatch = (p.patternContent && p.patternContent.patternName || '').toLowerCase().includes(searchVal);
+                    const topicMatch = (p.patternContent && p.patternContent.topic || '').toLowerCase().includes(searchVal);
+                    const tagMatch = p.tags && p.tags.some(t => t.toLowerCase().includes(searchVal));
+                    const uuidMatch = p.uuid.toLowerCase().includes(searchVal);
+                    return nameMatch || topicMatch || tagMatch || uuidMatch;
+                });
+            }
+
+            // Course Filter (via association)
+            if (filterCourseId) {
+                filtered = filtered.filter(p => {
+                    return p.courses && p.courses.some(c => c.courseId === filterCourseId);
+                });
+            }
+
+            // Lesson Filter (via association)
+            if (filterLessonId) {
+                filtered = filtered.filter(p => {
+                    return p.courses && p.courses.some(c => c.lessonId === filterLessonId);
+                });
+            }
+
+            document.getElementById('stat-total-patterns').textContent = `已选/总计: ${filtered.length}/${patterns.length}`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-40 text-slate-500 font-sans">
+                        <i class="ph ph-folder-open text-3xl mb-2"></i>
+                        <span class="text-xs">未找到符合条件的句型</span>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(p => {
+                const isActive = activePattern && activePattern.uuid === p.uuid;
+                const patternName = p.patternContent ? p.patternContent.patternName : '未命名句型';
+                const topic = p.patternContent ? p.patternContent.topic : '';
+                const level = p.patternContent ? p.patternContent.level : '';
+                
+                const tagBadges = p.tags && p.tags.length > 0
+                    ? p.tags.slice(0, 3).map(t => `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1.5 py-0.5 rounded text-[10px]">${t}</span>`).join(' ')
+                    : '<span class="text-[10px] text-slate-600">无标签</span>';
+
+                // Map courses associated
+                const courseTags = p.courses && p.courses.length > 0
+                    ? p.courses.map(assoc => {
+                        const cName = getCourseName(assoc.courseId);
+                        return `<span class="bg-slate-900 text-slate-400 border border-slate-800 px-1.5 py-0.5 rounded text-[10px]">${cName}</span>`;
+                      }).join(' ')
+                    : '<span class="text-[10px] text-rose-500/70">未关联课程</span>';
+
+                return `
+                    <div onclick="selectPattern('${p.uuid}')" 
+                        class="glass-card p-4 rounded-xl cursor-pointer border relative flex flex-col gap-2 transition duration-150 ${isActive ? 'active' : 'border-slate-800'}"
+                        data-uuid="${p.uuid}">
+                        <div class="flex justify-between items-start gap-2">
+                            <span class="font-bold text-sm text-slate-200 line-clamp-2">${patternName}</span>
+                            <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 shrink-0 font-bold font-sans">${level}</span>
+                        </div>
+                        <div class="text-xs text-slate-400 font-sans">${topic}</div>
+                        <div class="flex flex-wrap gap-1 mt-0.5">
+                            ${tagBadges}
+                        </div>
+                        <div class="flex flex-wrap gap-1 mt-1 border-t border-slate-900/60 pt-1.5">
+                            ${courseTags}
+                        </div>
+                        <div class="text-[10px] text-slate-500 mt-1 font-sans flex justify-between">
+                            <span>ID: ${p.uuid}</span>
+                            <span>${p.created_at || ''}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterPatterns() {
+            renderPatternsList();
+        }
+
+        function getCourseName(courseId) {
+            const course = coursesData.find(c => c.id === courseId);
+            return course ? course.name : courseId;
+        }
+
+        function getLessonTitle(lessonId) {
+            const lesson = lessonsData.find(l => l.id === lessonId);
+            return lesson ? lesson.title : lessonId;
+        }
+
+        // ==========================================
+        // Pattern Selection & Editing
+        // ==========================================
+        async function selectPattern(uuid) {
+            isCreating = false;
+            try {
+                updateConnectionStatus('loading', '读取句型详情...');
+                const res = await fetch(`/api/sentence_patterns/${uuid}`);
+                if (!res.ok) throw new Error("获取详情失败");
+                const data = await res.json();
+                activePattern = data;
+
+                // Sync UI elements
+                document.getElementById('editor-empty-state').classList.add('hidden');
+                document.getElementById('pattern-editor-form').classList.remove('hidden');
+                document.getElementById('delete-pattern-btn').classList.remove('hidden');
+                document.getElementById('editor-action-badge').textContent = "编辑";
+                document.getElementById('editor-action-badge').className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-500/20";
+                
+                // Form Bindings
+                document.getElementById('form-uuid').value = data.uuid;
+                document.getElementById('form-uuid').disabled = true; // Read-only for existing
+                document.getElementById('form-tags').value = (data.tags || []).join(',');
+                
+                const content = data.patternContent || {};
+                document.getElementById('form-name').value = content.patternName || '';
+                document.getElementById('form-level').value = content.level || 'A2';
+                document.getElementById('form-topic').value = content.topic || '';
+                document.getElementById('form-difficulty').value = (content.metadata && content.metadata.difficulty) || 2;
+                document.getElementById('form-vocab').value = (content.metadata && content.metadata.prerequisiteVocab || []).join(',');
+
+                // Raw JSON Tab binding
+                document.getElementById('form-content-json').value = JSON.stringify(content, null, 2);
+                validateJson();
+
+                // Setup Other Panels
+                renderAssociations();
+                
+                // Switch to default tab
+                switchTab('general');
+                
+                // Refresh list highlight
+                renderPatternsList();
+                updateConnectionStatus('connected', '服务连接正常');
+            } catch (err) {
+                console.error(err);
+                updateConnectionStatus('error', '详情加载失败');
+                alert("加载句型详情失败: " + err.message);
+            }
+        }
+
+        function initNewPattern() {
+            isCreating = true;
+            activePattern = {
+                uuid: "pattern-" + String(patterns.length + 1).padStart(3, '0'),
+                tags: ["目的"],
+                patternContent: JSON.parse(JSON.stringify(JSON_TEMPLATE))
+            };
+            activePattern.patternContent.id = activePattern.uuid;
+
+            // Sync UI elements
+            document.getElementById('editor-empty-state').classList.add('hidden');
+            document.getElementById('pattern-editor-form').classList.remove('hidden');
+            document.getElementById('delete-pattern-btn').classList.add('hidden');
+            document.getElementById('editor-action-badge').textContent = "新建";
+            document.getElementById('editor-action-badge').className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/20";
+            
+            // Form Bindings
+            document.getElementById('form-uuid').value = activePattern.uuid;
+            document.getElementById('form-uuid').disabled = false;
+            document.getElementById('form-tags').value = activePattern.tags.join(',');
+            
+            const content = activePattern.patternContent;
+            document.getElementById('form-name').value = content.patternName;
+            document.getElementById('form-level').value = content.level;
+            document.getElementById('form-topic').value = content.topic;
+            document.getElementById('form-difficulty').value = content.metadata.difficulty;
+            document.getElementById('form-vocab').value = content.metadata.prerequisiteVocab.join(',');
+
+            // Raw JSON Tab binding
+            document.getElementById('form-content-json').value = JSON.stringify(content, null, 2);
+            validateJson();
+
+            renderAssociations();
+            switchTab('general');
+            renderPatternsList();
+        }
+
+        function switchTab(tabId) {
+            // Sync current tab data to activePattern model
+            syncCurrentTabToModel();
+
+            // Set active class on buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            // Show proper panel
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            document.getElementById(`panel-${tabId}`).classList.remove('hidden');
+
+            activeTab = tabId;
+
+            // Trigger preview rendering if preview selected
+            if (tabId === 'preview') {
+                renderPreview();
+            }
+        }
+
+        // ==========================================
+        // Sync / Save Form Data
+        // ==========================================
+        function syncCurrentTabToModel() {
+            if (!activePattern) return;
+
+            if (activeTab === 'general') {
+                // Read from general inputs
+                activePattern.uuid = document.getElementById('form-uuid').value.trim();
+                const tagsVal = document.getElementById('form-tags').value.trim();
+                activePattern.tags = tagsVal ? tagsVal.split(',').map(s => s.trim()) : [];
+                
+                // Read into patternContent JSON
+                activePattern.patternContent.id = activePattern.uuid;
+                activePattern.patternContent.patternName = document.getElementById('form-name').value.trim();
+                activePattern.patternContent.level = document.getElementById('form-level').value;
+                activePattern.patternContent.topic = document.getElementById('form-topic').value.trim();
+                
+                if (!activePattern.patternContent.metadata) {
+                    activePattern.patternContent.metadata = {};
+                }
+                activePattern.patternContent.metadata.difficulty = parseInt(document.getElementById('form-difficulty').value) || 2;
+                activePattern.patternContent.metadata.tags = activePattern.tags;
+                
+                const vocabVal = document.getElementById('form-vocab').value.trim();
+                activePattern.patternContent.metadata.prerequisiteVocab = vocabVal ? vocabVal.split(',').map(s => s.trim()) : [];
+                
+                // Update JSON text
+                document.getElementById('form-content-json').value = JSON.stringify(activePattern.patternContent, null, 2);
+            } else if (activeTab === 'raw-json') {
+                // Read from JSON text
+                try {
+                    const parsed = JSON.parse(document.getElementById('form-content-json').value);
+                    activePattern.patternContent = parsed;
+                    
+                    // Sync back metadata fields to general tab inputs
+                    if (parsed.id) activePattern.uuid = parsed.id;
+                    if (parsed.patternName) document.getElementById('form-name').value = parsed.patternName;
+                    if (parsed.level) document.getElementById('form-level').value = parsed.level;
+                    if (parsed.topic) document.getElementById('form-topic').value = parsed.topic;
+                    if (parsed.metadata) {
+                        if (parsed.metadata.difficulty) document.getElementById('form-difficulty').value = parsed.metadata.difficulty;
+                        if (parsed.metadata.tags) {
+                            activePattern.tags = parsed.metadata.tags;
+                            document.getElementById('form-tags').value = parsed.metadata.tags.join(',');
+                        }
+                        if (parsed.metadata.prerequisiteVocab) {
+                            document.getElementById('form-vocab').value = parsed.metadata.prerequisiteVocab.join(',');
+                        }
+                    }
+                } catch (e) {
+                    // JSON parsing failed, but we don't block tab switching immediately
+                }
+            }
+        }
+
+        async function savePattern(event) {
+            if (event) event.preventDefault();
+            
+            // Sync current tab first
+            syncCurrentTabToModel();
+
+            // Validate JSON is correct before sending
+            const jsonText = document.getElementById('form-content-json').value;
+            try {
+                JSON.parse(jsonText);
+            } catch (e) {
+                alert("JSON 源码中存在语法错误，无法保存！请到 [源码 JSON] 标签页中修复。");
+                return;
+            }
+
+            const uuidToSave = activePattern.uuid;
+            if (!uuidToSave) {
+                alert("请输入句型唯一标识 UUID！");
+                return;
+            }
+
+            updateConnectionStatus('loading', '正在保存句型数据...');
+            
+            const payload = {
+                uuid: uuidToSave,
+                tags: activePattern.tags,
+                patternContent: activePattern.patternContent,
+                courses: activePattern.courses || []
+            };
+
+            const url = isCreating ? '/api/sentence_patterns' : `/api/sentence_patterns/${uuidToSave}`;
+            const method = isCreating ? 'POST' : 'PUT';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.error || "请求失败");
+                }
+
+                alert("句型保存成功！");
+                isCreating = false;
+                
+                // Re-fetch all and re-select
+                await fetchPatterns();
+                await selectPattern(uuidToSave);
+            } catch (err) {
+                console.error(err);
+                updateConnectionStatus('error', '保存失败');
+                alert("保存失败: " + err.message);
+            }
+        }
+
+        async function deletePattern() {
+            if (!activePattern || isCreating) return;
+            if (!confirm(`确定要删除句型 "${activePattern.patternContent.patternName || activePattern.uuid}" 吗？\n删除后关联此句型的所有科目关联也将一并被移除！`)) {
+                return;
+            }
+
+            updateConnectionStatus('loading', '正在删除句型...');
+            try {
+                const res = await fetch(`/api/sentence_patterns/${activePattern.uuid}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error("删除请求失败");
+                
+                alert("句型删除成功！");
+                activePattern = null;
+                document.getElementById('pattern-editor-form').classList.add('hidden');
+                document.getElementById('editor-empty-state').classList.remove('hidden');
+                
+                await fetchPatterns();
+            } catch (err) {
+                console.error(err);
+                updateConnectionStatus('error', '删除失败');
+                alert("删除失败: " + err.message);
+            }
+        }
+
+        // ==========================================
+        // JSON Formatting and Validation
+        // ==========================================
+        function validateJson() {
+            const val = document.getElementById('form-content-json').value;
+            const errLabel = document.getElementById('json-error');
+            try {
+                JSON.parse(val);
+                errLabel.classList.add('hidden');
+                return true;
+            } catch (e) {
+                errLabel.textContent = `JSON 语法错误: ${e.message}`;
+                errLabel.classList.remove('hidden');
+                return false;
+            }
+        }
+
+        function formatJson() {
+            const txt = document.getElementById('form-content-json');
+            try {
+                const obj = JSON.parse(txt.value);
+                txt.value = JSON.stringify(obj, null, 2);
+                validateJson();
+            } catch (e) {
+                alert("无法格式化，当前 JSON 存在语法错误。");
+            }
+        }
+
+        // ==========================================
+        // Course Association Handling
+        // ==========================================
+        function renderAssociations() {
+            const container = document.getElementById('associations-container');
+            
+            if (!activePattern.courses) {
+                activePattern.courses = [];
+            }
+            
+            if (activePattern.courses.length === 0) {
+                container.innerHTML = `
+                    <div class="text-xs text-rose-400 bg-rose-500/5 border border-rose-500/10 px-3 py-2 rounded-xl text-center">
+                        当前句型未关联任何章节，学习端将无法展示。请在下方选择并添加关联。
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = activePattern.courses.map((assoc, idx) => {
+                const cName = getCourseName(assoc.courseId);
+                const lTitle = getLessonTitle(assoc.lessonId);
+                return `
+                    <div class="flex items-center justify-between bg-slate-900/60 border border-slate-800 rounded-xl px-4 py-2 text-xs">
+                        <div class="flex flex-col gap-0.5">
+                            <span class="font-bold text-slate-200">${cName}</span>
+                            <span class="text-slate-400">${lTitle}</span>
+                        </div>
+                        <button type="button" onclick="removeAssociation(${idx})" class="p-1 hover:bg-slate-800 text-rose-400 hover:text-rose-300 rounded transition">
+                            <i class="ph-bold ph-trash text-sm"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function addAssociation() {
+            const courseId = document.getElementById('assoc-course').value;
+            const lessonId = document.getElementById('assoc-lesson').value;
+
+            if (!courseId || !lessonId) {
+                alert("请选择要关联的科目与课时！");
+                return;
+            }
+
+            // Check duplicate
+            const duplicate = activePattern.courses.some(c => c.courseId === courseId && c.lessonId === lessonId);
+            if (duplicate) {
+                alert("该课时关联已存在！");
+                return;
+            }
+
+            activePattern.courses.push({ courseId, lessonId });
+            renderAssociations();
+            
+            // If editing, also save associations to DB directly (optional, but saving as part of Save Pattern is more intuitive)
+        }
+
+        function removeAssociation(idx) {
+            activePattern.courses.splice(idx, 1);
+            renderAssociations();
+        }
+
+        // ==========================================
+        // Preview Panel Rendering
+        // ==========================================
+        function renderPreview() {
+            const container = document.getElementById('preview-container');
+            const data = activePattern.patternContent;
+
+            if (!data) {
+                container.innerHTML = `<div class="text-sm text-slate-500 text-center py-8">无句型数据可供预览</div>`;
+                return;
+            }
+
+            const level = data.level || 'A2';
+            const topic = data.topic || '分类';
+            const name = data.patternName || '未命名句型';
+            const display = data.formula ? data.formula.display : '';
+            const components = data.formula && data.formula.components || [];
+            
+            // Usage
+            const usageSummary = data.usage ? data.usage.summary : '';
+            const usageDetail = data.usage ? data.usage.detail : '';
+            const usageNotes = data.usage && data.usage.notes || [];
+
+            // Examples
+            const examples = data.examples || [];
+
+            // Exercises
+            const exercises = data.exercises || {};
+
+            let html = `
+                <!-- Title & Level Meta Card -->
+                <div class="glass-panel rounded-2xl p-6 border-slate-800/80 space-y-3">
+                    <div class="flex justify-between items-start gap-4">
+                        <div>
+                            <span class="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-bold border border-blue-500/30">${level}</span>
+                            <span class="text-xs text-slate-400 ml-2 font-medium">${topic}</span>
+                            <h3 class="text-xl font-bold text-white mt-1.5">${name}</h3>
+                        </div>
+                        <div class="flex items-center gap-1 font-sans text-xs text-amber-400 bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/25">
+                            <i class="ph ph-star-fill"></i>
+                            <span>难度指数: ${(data.metadata && data.metadata.difficulty) || 2}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formula Card -->
+                <div class="glass-panel rounded-2xl p-6 border-slate-800/80 space-y-4">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-blue-400">1. 句型公式 (Formula)</h4>
+                    <div class="bg-slate-950/60 border border-slate-850 p-4 rounded-xl text-center text-lg font-bold text-slate-200">
+                        ${display}
+                    </div>
+                    
+                    <!-- Components -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+            `;
+
+            components.forEach(comp => {
+                let badgeClass = 'token-prepositional_phrase';
+                if (comp.slot === 'subject') badgeClass = 'token-subject';
+                else if (comp.slot === 'action' || comp.slot === 'verb') badgeClass = 'token-action';
+
+                const ipa = comp.ipa ? `<span class="text-[10px] text-slate-500 block font-mono mt-0.5">${comp.ipa}</span>` : '';
+                const examplesStr = comp.examples && comp.examples.length > 0 
+                    ? `<div class="text-[10px] text-slate-400 mt-2 bg-slate-950/30 p-1.5 rounded border border-slate-800">
+                            <strong>词汇示例：</strong>${comp.examples.join(', ')}
+                       </div>` 
+                    : '';
+
+                html += `
+                    <div class="bg-slate-900/30 border border-slate-850 p-3.5 rounded-xl flex flex-col gap-1">
+                        <div class="flex items-center gap-1.5">
+                            <span class="token-badge ${badgeClass}">${comp.slot}</span>
+                            <span class="text-xs font-bold text-slate-300">${comp.label}</span>
+                        </div>
+                        <span class="text-xs text-slate-400 mt-1.5 leading-relaxed">${comp.description}</span>
+                        ${ipa}
+                        ${comp.glossary ? `<span class="text-[10px] text-blue-300 font-thai block mt-1">${comp.glossary}</span>` : ''}
+                        ${examplesStr}
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+
+                <!-- Usage Details -->
+                <div class="glass-panel rounded-2xl p-6 border-slate-800/80 space-y-4">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-blue-400">2. 用法精讲 (Usage)</h4>
+                    <div class="space-y-3.5">
+                        <div class="bg-slate-900/40 border border-slate-850 p-4 rounded-xl space-y-2">
+                            <div class="text-xs font-bold text-slate-200">用法概要:</div>
+                            <div class="text-xs text-slate-300 font-thai leading-relaxed">${usageSummary}</div>
+                        </div>
+                        <div class="text-xs text-slate-300 leading-relaxed bg-slate-900/10 p-3 rounded-lg border border-slate-850">
+                            <strong>详细释义:</strong> ${usageDetail}
+                        </div>
+                        
+                        <!-- Notes -->
+                        ${usageNotes.length > 0 ? `
+                            <div class="space-y-1.5 pt-1">
+                                <strong class="text-xs text-slate-400 block">注意事项:</strong>
+                                <ul class="list-disc pl-4 text-xs text-slate-400 space-y-1 leading-relaxed">
+                                    ${usageNotes.map(note => `<li>${note}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <!-- Examples Card -->
+                <div class="glass-panel rounded-2xl p-6 border-slate-800/80 space-y-4">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-blue-400">3. 经典例句 (Examples)</h4>
+                    <div class="space-y-4">
+            `;
+
+            examples.forEach((ex, idx) => {
+                let parsedHTML = '';
+                if (ex.parsed) {
+                    parsedHTML = `
+                        <div class="flex flex-wrap gap-2 mt-2 pt-2 border-t border-slate-850/50">
+                            ${Object.entries(ex.parsed).map(([slotName, val]) => {
+                                let badgeClass = 'token-prepositional_phrase';
+                                if (slotName === 'subject') badgeClass = 'token-subject';
+                                else if (slotName === 'action' || slotName === 'verb') badgeClass = 'token-action';
+                                
+                                return `
+                                    <div class="flex items-center gap-1 bg-slate-900/80 px-2 py-1 rounded border border-slate-800">
+                                        <span class="token-badge ${badgeClass} text-[9px] py-0.5 px-1.5">${slotName}</span>
+                                        <span class="text-[10px] font-thai text-slate-200">${val}</span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                }
+
+                html += `
+                    <div class="bg-slate-900/40 border border-slate-850 p-4 rounded-xl flex flex-col gap-1">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[10px] font-mono text-slate-500">EX-0${idx + 1} (${ex.id})</span>
+                            ${ex.isVariant ? `<span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/20">变体</span>` : ''}
+                        </div>
+                        <div class="text-base text-slate-100 font-thai font-medium leading-relaxed mt-1">${ex.thai}</div>
+                        <div class="text-xs text-slate-350 mt-1">${ex.chinese}</div>
+                        <div class="text-xs text-slate-500 font-sans italic">${ex.english}</div>
+                        ${ex.variantNote ? `<div class="text-[10px] text-amber-400/80 mt-1">变体说明: ${ex.variantNote}</div>` : ''}
+                        ${parsedHTML}
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+
+                <!-- Exercises Card -->
+                <div class="glass-panel rounded-2xl p-6 border-slate-800/80 space-y-4">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-blue-400">4. 课后练习 (Exercises)</h4>
+                    <div class="space-y-5">
+            `;
+
+            // Exercises summary by type
+            let exerciseCount = 0;
+            Object.entries(exercises).forEach(([type, section]) => {
+                if (section && Array.isArray(section.items) && section.items.length > 0) {
+                    exerciseCount += section.items.length;
+                    
+                    html += `
+                        <div class="space-y-2 border-t border-slate-850/60 pt-3 first:border-0 first:pt-0">
+                            <div class="flex justify-between items-center">
+                                <h5 class="text-xs font-bold text-slate-300 flex items-center gap-1.5 uppercase">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+                                    <span>${type} 题型</span>
+                                </h5>
+                                <span class="text-[10px] text-slate-450">${section.description || ''}</span>
+                            </div>
+                            <div class="grid grid-cols-1 gap-2 pl-3">
+                    `;
+
+                    section.items.forEach((item, itemIdx) => {
+                        let innerText = '';
+                        if (type === 'recognition') {
+                            innerText = `句子: <span class="font-thai text-slate-200">${item.sentence}</span> <br>答案: <span class="font-bold ${item.answer ? 'text-emerald-400' : 'text-rose-400'}">${item.answer ? '正确' : '错误'}</span>`;
+                        } else if (type === 'fillInBlank') {
+                            innerText = `句子: <span class="font-thai text-slate-200">${item.sentence}</span> (空位 slot: <code class="text-blue-300">${item.slot}</code>) <br>答案: <code class="text-emerald-400 font-thai">${item.answer}</code>`;
+                        } else if (type === 'dragAndDrop') {
+                            innerText = `完整句: <span class="font-thai text-slate-200">${item.targetSentence}</span> <br>中文: <span class="text-slate-400">${item.targetEnglish}</span>`;
+                        } else if (type === 'multipleChoice') {
+                            innerText = `问题: <span class="text-slate-200">${item.question}</span> <br>选项: ${item.options.map((o, oIdx) => `<span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-900 border border-slate-800 ${oIdx === item.correctIndex ? 'text-emerald-400 font-bold border-emerald-500/30' : 'text-slate-400'}">${o}</span>`).join(' ')}`;
+                        } else if (type === 'translation') {
+                            innerText = `方向: <span class="text-slate-400 font-bold text-[10px]">${item.direction === 'th2zh' ? '泰译中' : '中译泰'}</span> <br>提示: <span class="text-slate-200 font-thai">${item.prompt}</span> <br>参考答案: <span class="text-emerald-400 font-thai">${item.referenceAnswer}</span>`;
+                        } else if (type === 'sentenceConstruction') {
+                            innerText = `主语: <span class="font-thai text-slate-200">${item.prompt.subject}</span>, 方位: <span class="font-thai text-slate-200">${item.prompt.prepositionalHint}</span> <br>参考答案: <span class="text-emerald-400 font-thai">${item.referenceAnswer}</span>`;
+                        } else if (type === 'errorCorrection') {
+                            innerText = `错误句: <span class="font-thai text-rose-400 line-through">${item.wrongSentence}</span> <br>正确句: <span class="font-thai text-emerald-450">${item.correctedSentence}</span>`;
+                        }
+
+                        html += `
+                            <div class="bg-slate-950/40 border border-slate-875 p-3 rounded-xl text-xs space-y-1.5">
+                                <div class="font-semibold text-slate-400">第 ${itemIdx + 1} 题 (${item.id || 'no-id'})</div>
+                                <div class="leading-relaxed pl-1">${innerText}</div>
+                                ${item.explanation ? `<div class="text-[10px] text-slate-500 bg-slate-950/80 p-1.5 rounded leading-relaxed">解析: ${item.explanation}</div>` : ''}
+                            </div>
+                        `;
+                    });
+
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            if (exerciseCount === 0) {
+                html += `<div class="text-xs text-slate-500 text-center py-4">此句型中暂无设计的课后练习</div>`;
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // ==========================================
+        // Helper connection status indicator
+        // ==========================================
+        function updateConnectionStatus(status, text) {
+            const el = document.getElementById('connection-status');
+            const dot = el.querySelector('span');
+            const label = el.querySelector('span:nth-child(2)');
+
+            label.textContent = text;
+            
+            if (status === 'connected') {
+                el.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+                dot.className = "h-2 w-2 rounded-full bg-emerald-500";
+            } else if (status === 'loading') {
+                el.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20";
+                dot.className = "h-2 w-2 rounded-full bg-amber-500 animate-pulse";
+            } else {
+                el.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20";
+                dot.className = "h-2 w-2 rounded-full bg-rose-500";
+            }
+        }
+
+        function openAppSentenceCoachWithLesson() {
+            const courseSelect = document.getElementById('filter-course');
+            const lessonSelect = document.getElementById('filter-lesson');
+            const courseId = courseSelect ? courseSelect.value : '';
+            const lessonId = lessonSelect ? lessonSelect.value : '';
+            
+            let url = '/Pages/appSentenceCoach.html';
+            const query = [];
+            if (courseId) query.push(`courseID=${encodeURIComponent(courseId)}`);
+            if (lessonId) query.push(`lessonID=${encodeURIComponent(lessonId)}`);
+            
+            if (query.length > 0) {
+                url += '?' + query.join('&');
+            }
+            window.open(url, '_blank');
+        }
+
+        async function assignSentenceTask() {
+            const courseSelect = document.getElementById('filter-course');
+            const lessonSelect = document.getElementById('filter-lesson');
+            
+            const courseId = courseSelect ? courseSelect.value : '';
+            const lessonId = lessonSelect ? lessonSelect.value : '';
+
+            if (!courseId || !lessonId) {
+                alert("请先在筛选条件中选择科目和课时！");
+                return;
+            }
+
+            const courseName = courseSelect.options[courseSelect.selectedIndex].text;
+            const lessonTitle = lessonSelect.options[lessonSelect.selectedIndex].text;
+
+            const payload = {
+                title: `句型练习：${courseName} - ${lessonTitle}`,
+                action: {
+                    actionURL: `http://192.168.1.120:3002/Pages/appSentenceCoach.html?lessonID=${lessonId}`
+                },
+                due_date: "2026-07-15T23:59:59Z",
+                priority: "high",
+                status: "pending",
+                description: "句型练习",
+                category_id: "cat-study",
+                tags: [courseName]
+            };
+
+            try {
+                showToast("正在布置任务...", "info");
+                const res = await fetch('http://192.168.1.120:3006/api/app/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    showToast("任务布置成功！", "success");
+                    alert("任务布置成功！");
+                } else {
+                    showToast(`布置任务失败: ${res.status}`, "error");
+                    alert("布置任务失败: " + res.status + " " + res.statusText);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("网络连接失败，无法布置任务", "error");
+                alert("网络连接失败，无法布置任务");
+            }
+        }
+
+        function showToast(msg, type = "info") {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                container.className = 'fixed bottom-6 right-6 z-50 pointer-events-none space-y-2';
+                document.body.appendChild(container);
+            }
+            const toast = document.createElement('div');
+            
+            const colorClass = type === 'success' 
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                : (type === 'error' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-sky-500/10 text-sky-400 border-sky-500/20');
+            
+            const icon = type === 'success' ? 'ph-check-circle' : (type === 'error' ? 'ph-warning-circle' : 'ph-info');
+
+            toast.className = `flex items-center gap-2.5 px-4 py-3 border rounded-xl text-xs font-semibold shadow-lg backdrop-blur-md transition duration-300 transform translate-y-2 opacity-0 ${colorClass}`;
+            toast.innerHTML = `
+                <i class="ph-bold ${icon} text-base"></i>
+                <span>${msg}</span>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+    </script>
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 pointer-events-none space-y-2"></div>
+</body>
+</html>

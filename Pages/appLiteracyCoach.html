@@ -1,0 +1,2945 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语读写素养教练 (Thai Literacy Coach)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icon CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Serif+Thai:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .thai-text, .font-thai, .font-thai-clickable {
+            font-family: 'Noto Serif Thai', serif;
+            line-height: 2.2;
+            letter-spacing: 0.03em;
+        }
+        /* Token dynamic highlighting */
+        .token {
+            display: inline-block;
+            padding: 0px 2px;
+            margin: 0px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .token:hover {
+            background-color: #f1f5f9;
+        }
+        /* Vocab Challenge Styling */
+        .token.vocab-challenge {
+            border-bottom: 2px dashed #6366f1; /* Violet dashed */
+            font-weight: 500;
+        }
+        .token.vocab-challenge:hover {
+            background-color: #e0e7ff;
+            color: #4f46e5;
+        }
+        /* Discourse Markers - Radar highlights (initially hidden, shown when radar active) */
+        .radar-active .token.signal-cause {
+            background-color: #ffedd5;
+            color: #c2410c;
+            font-weight: 600;
+            border-bottom: 2px solid #f97316;
+        }
+        .radar-active .token.signal-add {
+            background-color: #dbeafe;
+            color: #1d4ed8;
+            font-weight: 600;
+            border-bottom: 2px solid #3b82f6;
+        }
+        .radar-active .token.signal-contrast {
+            background-color: #fce7f3;
+            color: #be185d;
+            font-weight: 600;
+            border-bottom: 2px solid #ec4899;
+        }
+        .radar-active .token.signal-example {
+            background-color: #dcfce7;
+            color: #15803d;
+            font-weight: 600;
+            border-bottom: 2px solid #22c55e;
+        }
+        /* Sentence highlight during reading and TTS */
+        .thai-sentence {
+            transition: all 0.25s ease;
+            padding: 2px 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            display: inline;
+        }
+        .thai-sentence:hover {
+            background-color: #f0fdf4; /* Soft emerald background */
+            border-left-color: #10b981; /* Emerald solid border */
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.05);
+        }
+        .thai-sentence.sentence-active {
+            background-color: #f0fdf4;
+            border-left-color: #22c55e;
+        }
+        .thai-sentence.pinned {
+            background-color: #eef2ff;
+            border-left-color: #6366f1;
+            box-shadow: 0 2px 6px rgba(99, 102, 241, 0.1);
+        }
+        .thai-sentence.speaking {
+            background-color: #fef9c3;
+            border-left-color: #eab308;
+            animation: pulse-speak 1.5s infinite;
+        }
+        @keyframes pulse-speak {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        /* Smooth Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        /* Step styles */
+        .step-inactive {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        /* Option selection feedback */
+        .option-card {
+            border: 2px solid #e2e8f0;
+            transition: all 0.2s ease;
+        }
+        .option-card.selected {
+            border-color: #6366f1;
+            background-color: #e0e7ff;
+            color: #312e81;
+        }
+        .option-card.correct {
+            border-color: #22c55e;
+            background-color: #dcfce7;
+            color: #14532d;
+        }
+        .option-card.incorrect {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+            color: #7f1d1d;
+            text-decoration: line-through;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 h-screen flex flex-col antialiased overflow-hidden">
+
+    <!-- Top Navigation & Global Header -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 flex-shrink-0">
+        <div class="max-w-[96%] mx-auto px-6 py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+            <!-- App Identity -->
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-lg shadow-indigo-100 flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        泰语读写素养教练 <span class="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-semibold">Thai Literacy Coach</span>
+                    </h1>
+                    <p class="text-xs text-slate-500">读前预测 • 读中拆解 • 读后反思总结与写作产出</p>
+                </div>
+            </div>
+            
+            <!-- Global Options Controls -->
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Discourse Radar Toggle -->
+                <label class="flex items-center cursor-pointer bg-slate-100 px-3.5 py-1.5 rounded-full hover:bg-slate-200/80 transition text-xs font-semibold text-slate-600 select-none">
+                    <i class="fas fa-satellite-dish text-amber-500 mr-1.5 animate-pulse"></i> 信号词雷达
+                    <div class="relative inline-block w-8 h-4.5 ml-2">
+                        <input type="checkbox" id="radarToggle" class="sr-only peer" checked>
+                        <div class="w-8 h-4.5 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-amber-500"></div>
+                    </div>
+                </label>
+
+                <!-- Translation Switch -->
+                <label class="flex items-center cursor-pointer bg-slate-100 px-3.5 py-1.5 rounded-full hover:bg-slate-200/80 transition text-xs font-semibold text-slate-600 select-none">
+                    <i class="fas fa-language text-indigo-600 mr-1.5"></i> 中文对照
+                    <div class="relative inline-block w-8 h-4.5 ml-2">
+                        <input type="checkbox" id="translationToggle" class="sr-only peer">
+                        <div class="w-8 h-4.5 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </div>
+                </label>
+
+                <!-- Reset Journey -->
+                <button id="resetJourneyBtn" class="flex items-center bg-rose-50 text-rose-600 px-3.5 py-1.5 rounded-full hover:bg-rose-100 transition text-xs font-semibold active:scale-95 shadow-sm">
+                    <i class="fas fa-redo mr-1.5"></i> 重置学习进度
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Global Progress Timeline (Stretch across full width, stays stable at top) -->
+    <div class="max-w-[96%] mx-auto w-full px-6 pt-4 flex-shrink-0">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex justify-between items-center relative overflow-hidden">
+            <div class="absolute left-0 bottom-0 h-1 bg-indigo-600 transition-all duration-500" id="timelineProgressBar" style="width: 33%"></div>
+            
+            <div class="flex items-center gap-2 cursor-pointer transition text-indigo-600 font-bold" id="step1TimelineBtn">
+                <span class="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs" id="step1TimelineIcon">1</span>
+                <span class="text-sm">步骤一：读前预热</span>
+            </div>
+            
+            <div class="h-[1px] flex-grow bg-slate-200 mx-4"></div>
+            
+            <div class="flex items-center gap-2 cursor-pointer transition text-slate-400 font-medium" id="step2TimelineBtn">
+                <span class="w-7 h-7 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs" id="step2TimelineIcon">2</span>
+                <span class="text-sm">步骤二：逐段导读</span>
+            </div>
+            
+            <div class="h-[1px] flex-grow bg-slate-200 mx-4"></div>
+            
+            <div class="flex items-center gap-2 cursor-pointer transition text-slate-400 font-medium" id="step3TimelineBtn">
+                <span class="w-7 h-7 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs" id="step3TimelineIcon">3</span>
+                <span class="text-sm">步骤三：思考写作</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Workspace Grid (Uses grid-cols-4 layout: 2/4 (50%) | 1/4 (25%) | 1/4 (25%)) -->
+    <main class="max-w-[96%] mx-auto w-full px-6 py-6 flex-grow grid grid-cols-1 lg:grid-cols-4 gap-6 overflow-hidden min-h-0">
+        
+        <!-- Column 1: Reading Journey Workspace / Full Text Panel (Scrollable) (Spans 50% width) -->
+        <section id="leftPanel" class="lg:col-span-2 h-full overflow-y-auto flex flex-col gap-6 pr-2">
+            
+            <!-- STEP 1 CARD: PRE-READING PREVIEW (FOUR SEQUENTIAL CARDS) -->
+            <div id="step1Workspace" class="space-y-6">
+                <!-- Header Metadata (stays stable at the top) -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex justify-between items-center flex-wrap gap-4">
+                    <div>
+                        <span class="text-xs text-indigo-600 font-bold tracking-wider uppercase">Step 1: Pre-reading Preview</span>
+                        <h2 class="text-xl font-extrabold text-slate-800" id="articleTitleZH">邻里之间 (บ้านใกล้เรือนเคียง)</h2>
+                    </div>
+                    <div class="text-[11px] text-slate-500 font-medium flex items-center gap-4 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                        <span><i class="far fa-clock mr-1 text-indigo-500"></i> 预计：<span id="estTime">12</span>分钟</span>
+                        <span><i class="fas fa-layer-group mr-1 text-indigo-500"></i> 级别：<span id="levelBadge">A2-B1</span></span>
+                        <span><i class="fas fa-file-alt mr-1 text-indigo-500"></i> 字数：约 <span id="wordCount">520</span> 词</span>
+                    </div>
+                </div>
+
+                <!-- Card 1: Background introduction -->
+                <div id="step1Card1" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4 transition duration-300">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold" id="step1Card1Badge">1</span>
+                            <span>活动一：文化背景学习 (Cultural Context)</span>
+                        </h3>
+                        <span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded flex items-center gap-1" id="card1StatusBadge"><i class="fas fa-unlock"></i> 进行中</span>
+                    </div>
+
+                    <p class="text-xs text-slate-500 leading-relaxed font-medium">
+                        在阅读《邻里之间 (บ้านใกล้เรือนเคียง)》前，请先了解小说的文化与现实背景，这有助于理解课文的主题立意。
+                    </p>
+
+                    <div class="bg-slate-50 border border-slate-100 p-4.5 rounded-xl text-slate-600 leading-relaxed text-xs shadow-inner" id="backgroundContent">
+                        <!-- Loaded dynamically -->
+                    </div>
+
+                    <div class="flex justify-end pt-2 border-t border-slate-100">
+                        <button id="completeCard1Btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl font-bold transition active:scale-95 shadow-md text-xs">
+                            我已阅读背景，解锁生词表 <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 2: Vocabulary Preview -->
+                <div id="step1Card2" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4 step-inactive relative transition duration-300">
+                    <!-- Lock overlay -->
+                    <div class="absolute inset-0 bg-white/70 backdrop-blur-[1px] rounded-2xl flex flex-col items-center justify-center z-10 select-none" id="step1Card2Lock">
+                        <div class="bg-slate-800 text-white w-9 h-9 rounded-full flex items-center justify-center shadow-lg"><i class="fas fa-lock text-xs"></i></div>
+                        <span class="text-[10px] text-slate-500 font-bold mt-1.5">完成背景介绍解锁</span>
+                    </div>
+
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[10px] font-bold" id="step1Card2Badge">2</span>
+                            <span>活动二：三级词汇预习 (Vocabulary Scaffolding)</span>
+                        </h3>
+                        <div class="flex gap-1 text-[9px] font-semibold select-none">
+                            <button id="s1vTabAll" class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold" onclick="switchS1VocabTab('all')">全部</button>
+                            <button id="s1vTabArticle" class="px-2 py-0.5 rounded bg-slate-100 text-slate-500 font-medium" onclick="switchS1VocabTab('article')">文章核心</button>
+                            <button id="s1vTabSection" class="px-2 py-0.5 rounded bg-slate-100 text-slate-500 font-medium" onclick="switchS1VocabTab('section')">段落关键</button>
+                            <button id="s1vTabSentence" class="px-2 py-0.5 rounded bg-slate-100 text-slate-500 font-medium" onclick="switchS1VocabTab('sentence')">句中难词</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 border border-slate-200/40 p-3 rounded-xl text-[10px] text-slate-500 leading-relaxed">
+                        以下是系统从<strong>文章、段落、句子</strong>三个层级为您提取的重点生词。点击卡片可收听发音，并可一键加入日记本。
+                    </div>
+
+                    <!-- Vocabulary List container (scrollable max-h-60) -->
+                    <div id="s1VocabContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-1">
+                        <!-- Rendered dynamically -->
+                    </div>
+
+                    <div class="flex justify-end pt-2 border-t border-slate-100">
+                        <button id="completeCard2Btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl font-bold transition active:scale-95 shadow-md text-xs">
+                            学习完毕，解锁词汇闪卡 <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 3: Flashcards -->
+                <div id="step1Card3" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4 step-inactive relative transition duration-300">
+                    <!-- Lock overlay -->
+                    <div class="absolute inset-0 bg-white/70 backdrop-blur-[1px] rounded-2xl flex flex-col items-center justify-center z-10 select-none" id="step1Card3Lock">
+                        <div class="bg-slate-800 text-white w-9 h-9 rounded-full flex items-center justify-center shadow-lg"><i class="fas fa-lock text-xs"></i></div>
+                        <span class="text-[10px] text-slate-500 font-bold mt-1.5">完成词汇预习解锁</span>
+                    </div>
+
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[10px] font-bold" id="step1Card3Badge">3</span>
+                            <span>活动三：词汇闪卡复习 (Flashcard Review)</span>
+                        </h3>
+                        <span class="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded font-mono" id="s1fcCounter">0 / 0</span>
+                    </div>
+
+                    <div class="bg-slate-50 border border-slate-200/40 p-3 rounded-xl text-[10px] text-slate-500 leading-relaxed">
+                        通过闪卡自我评测刚才预习的生词。点击卡片可翻转查看释义。
+                    </div>
+
+                    <!-- Inline Card Canvas -->
+                    <div class="flex items-center justify-center py-4 bg-slate-50 rounded-xl border border-slate-100">
+                        <div id="s1FlashcardElement" class="w-full max-w-xs h-36 bg-white border border-slate-200 rounded-2xl shadow-sm p-4 flex flex-col justify-between items-center cursor-pointer select-none transition-all duration-300 transform active:scale-95" title="点击翻转卡片">
+                            <div id="s1fcFront" class="flex flex-col items-center justify-center flex-grow space-y-1">
+                                <span class="text-xl font-extrabold text-slate-800 thai-text tracking-wide" id="s1fcWord">...</span>
+                                <span class="text-[10px] text-slate-400 font-mono" id="s1fcIpa">/ /</span>
+                            </div>
+                            <div id="s1fcBack" class="hidden flex flex-col items-center justify-center flex-grow space-y-1 text-center">
+                                <span class="text-[8px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded font-mono font-bold" id="s1fcPos">n.</span>
+                                <span class="text-sm font-bold text-slate-800" id="s1fcZh">中文释义</span>
+                            </div>
+                            <span class="text-[8px] text-slate-400 font-semibold tracking-wider"><i class="fas fa-sync"></i> 点击翻转</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+                        <div class="flex gap-1.5">
+                            <button id="s1fcPrevBtn" class="bg-white border border-slate-200 text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition active:scale-95 text-[10px]"><i class="fas fa-chevron-left"></i> 上一个</button>
+                            <button id="s1fcNextBtn" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition active:scale-95 text-[10px] font-bold">下一个 <i class="fas fa-chevron-right"></i></button>
+                        </div>
+                        <button id="completeCard3Btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl font-bold transition active:scale-95 shadow-md text-xs">
+                            我已完成闪卡复习，解锁读前预测 <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 4: Prediction Quiz -->
+                <div id="step1Card4" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4 step-inactive relative transition duration-300">
+                    <!-- Lock overlay -->
+                    <div class="absolute inset-0 bg-white/70 backdrop-blur-[1px] rounded-2xl flex flex-col items-center justify-center z-10 select-none" id="step1Card4Lock">
+                        <div class="bg-slate-800 text-white w-9 h-9 rounded-full flex items-center justify-center shadow-lg"><i class="fas fa-lock text-xs"></i></div>
+                        <span class="text-[10px] text-slate-500 font-bold mt-1.5">完成闪卡复习解锁</span>
+                    </div>
+
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[10px] font-bold" id="step1Card4Badge">4</span>
+                            <span>活动四：读前预测 (Prediction Challenge)</span>
+                        </h3>
+                    </div>
+
+                    <p class="text-slate-700 text-xs font-semibold" id="predQuestionText">根据故事标题《邻里之间》和引言，你预测这篇小说将探讨的核心主题是？</p>
+                    <div class="grid grid-cols-1 gap-2.5" id="predOptionsContainer">
+                        <!-- Options loaded dynamically -->
+                    </div>
+                    
+                    <!-- Feedback alert -->
+                    <div id="predFeedback" class="hidden p-3.5 rounded-xl border text-[11px] leading-relaxed"></div>
+
+                    <div class="flex justify-end pt-2 border-t border-slate-100">
+                        <button id="startReadingBtn" class="bg-slate-200 text-slate-400 px-6 py-2.5 rounded-xl font-bold cursor-not-allowed text-xs flex items-center gap-1.5" disabled>
+                            锁定中，请先回答预测问题 <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2 CARD: DURING-READING GUIDED READER -->
+            <div id="step2Workspace" class="hidden space-y-6">
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-6">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-4">
+                        <div>
+                            <span class="text-xs text-indigo-600 font-bold tracking-wider uppercase">Step 2: Guided Reading Workspace</span>
+                            <h2 class="text-xl font-bold text-slate-800">逐段精读与导读测试</h2>
+                        </div>
+                        <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full flex items-center gap-1.5">
+                            进度：<span id="readingProgressText">0 / 4</span> 段
+                        </span>
+                    </div>
+
+                    <!-- Instructions -->
+                    <div class="bg-slate-50 border border-slate-200/50 rounded-xl p-4 flex gap-3 text-xs text-slate-500">
+                        <i class="fas fa-lightbulb text-amber-500 text-base flex-shrink-0 mt-0.5"></i>
+                        <div class="leading-relaxed">
+                            <strong class="text-slate-700">精读小助手：</strong>
+                            1. 鼠标悬停在虚线标出的 <span class="border-b-2 border-dashed border-indigo-600 font-semibold text-indigo-600">生词</span> 上可查看发音与词意；
+                            2. 点击任意句子可调用系统语音(TTS)朗读（悬停可高亮整句话并在右侧查看句级词表）；
+                            3. 开启“信号词雷达”可发现文中起承转合的关联词；
+                            4. 读完段落后，请在中间控制面板回答该段的提问，回答正确即可解锁下一段。
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Paragraphs Container -->
+                    <div id="paragraphsContainer" class="space-y-6">
+                        <!-- Dynamic sections render here -->
+                    </div>
+
+                    <!-- Navigation to Step 3 (Initially hidden) -->
+                    <div id="unlockStep3Panel" class="hidden flex justify-end pt-4 border-t border-slate-100">
+                        <button id="goToStep3Btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-bold transition active:scale-95 shadow-lg shadow-indigo-100 flex items-center gap-2">
+                            进入步骤三：反思总结与写作 <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3 FULL ARTICLE READ AREA (Only visible in Step 3 layout as Col 1 - spans 50% width) -->
+            <div id="step3ArticleContainer" class="hidden space-y-6">
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                        <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5"><i class="fas fa-book-open text-indigo-500"></i> 阅读原文 (Full Text)</h2>
+                        <span class="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded font-bold"><i class="fas fa-lock-open"></i> 全文已解锁</span>
+                    </div>
+                    <!-- Full Article dynamic renderer -->
+                    <div id="step3ArticleContent" class="space-y-6">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Column 2: Exercises, Quizzes & Writing Panel (middlePanel - Spans 25% width, always visible) -->
+        <section id="middlePanel" class="lg:col-span-1 h-full overflow-y-auto flex flex-col gap-6 pr-2">
+            
+            <!-- Step 1 Placeholder Card -->
+            <div id="step1MiddlePlaceholder" class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-4">
+                <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                    <h3 class="font-bold text-slate-800 text-xs">导读提问等候区</h3>
+                </div>
+                <p class="text-xs text-slate-500 leading-relaxed">
+                    请先在左侧完成“读前预热”背景学习，并提交“读前预测”问题答案以开启第二步精读。
+                </p>
+                <div class="bg-indigo-50/50 p-3.5 rounded-xl border border-indigo-100/50 text-[10px] text-indigo-700 leading-relaxed font-semibold">
+                    <i class="fas fa-lock mr-1"></i> 步骤二开启后，这里将呈现每一段落的专属导读测试。
+                </div>
+            </div>
+
+            <!-- Step 2 In-Reading Question Coach Module (Displays in step 2) -->
+            <div id="sectionQuizSidebar" class="hidden bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-4 flex-shrink-0">
+                <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse"></span>
+                    <h3 class="font-bold text-slate-800 text-xs" id="sidebarSectionTitle">当前段落导读提问</h3>
+                </div>
+                
+                <!-- Section Question content -->
+                <div class="space-y-3" id="sidebarQuestionContent">
+                    <p class="text-xs text-slate-600 font-semibold leading-relaxed" id="sidebarQuestionZH">
+                        <!-- Loaded dynamically -->
+                    </p>
+                    <div class="grid grid-cols-1 gap-2" id="sidebarOptionsContainer">
+                        <!-- Options list loaded dynamically -->
+                    </div>
+                    <!-- Sidebar Question Feedback -->
+                    <div id="sidebarFeedback" class="hidden p-3.5 rounded-xl border text-[11px] leading-relaxed">
+                        <!-- Correct/Incorrect feedback description -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sentence Helper Card (Displays sentence glossary dynamically on hover) -->
+            <div id="sentenceHelper" class="hidden bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-4 flex-shrink-0">
+                <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <h3 class="font-bold text-slate-800 text-xs">句级难词助手 (Sentence Helper)</h3>
+                </div>
+                <div id="shContent" class="space-y-3">
+                    <div class="text-center text-slate-400 py-4 text-[10px] select-none">
+                        <i class="fas fa-mouse-pointer text-xl mb-1.5 block opacity-40"></i>
+                        将鼠标悬停在左侧任意句子上<br>这里将实时展示该句子的重点难词解析
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3 WORKSPACE CARD -->
+            <div id="step3Workspace" class="hidden space-y-6">
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+                    <div class="border-b border-slate-100 pb-3">
+                        <span class="text-[10px] text-indigo-600 font-bold tracking-wider uppercase">Step 3: Exercises & Writing</span>
+                        <h2 class="text-base font-bold text-slate-800">主旨回顾与读后写作产出</h2>
+                    </div>
+
+                    <!-- Part A: Comprehension Quiz (Logical Structure) -->
+                    <div class="space-y-4">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-1.5 border-l-4 border-indigo-600 pl-2 text-sm">
+                            <span class="text-slate-500 text-xs font-semibold">PART A:</span> 整体主旨测试
+                        </h3>
+                        <div id="articleComprehensionQuiz" class="space-y-4">
+                            <!-- Article Quizzes render here -->
+                        </div>
+                    </div>
+
+                    <!-- Part B: Reflection Writing Area -->
+                    <div class="space-y-4 border-t border-slate-100 pt-4">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-1.5 border-l-4 border-indigo-600 pl-2 text-sm">
+                            <span class="text-slate-500 text-xs font-semibold">PART B:</span> 反思总结写作
+                        </h3>
+                        
+                        <!-- Prompt Description -->
+                        <div class="bg-slate-50 border border-slate-100 p-4 rounded-xl text-slate-600 text-xs space-y-1.5 leading-relaxed">
+                            <p class="font-semibold text-slate-700" id="writingPrompt">【写作要求】：结合本篇所学，用中文或泰语撰写一段约50字左右的摘要，概括金·汤普森的贡献以及泰丝面临的现代挑战。</p>
+                            <p class="text-[10px] text-slate-400"><i class="fas fa-shield-alt"></i> 输入下方核心词汇，系统将自动检测。</p>
+                        </div>
+
+                        <!-- Keyword Checker scaffolding -->
+                        <div class="space-y-2">
+                            <span class="text-[10px] text-slate-500 font-bold uppercase"><i class="fas fa-tags"></i> 尝试在摘要中写出以下泰语词汇：</span>
+                            <div class="flex flex-wrap gap-1.5" id="scaffoldKeywordsContainer">
+                                <!-- Dynamic keywords list -->
+                            </div>
+                        </div>
+
+                        <!-- Text Area Container -->
+                        <div class="relative">
+                            <textarea id="writingTextarea" rows="5" class="w-full border border-slate-200 rounded-xl p-3.5 text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition placeholder-slate-400 font-sans" placeholder="在这里输入您的总结...一边看左侧文章，一边打字吧！"></textarea>
+                            <span class="absolute bottom-2.5 right-3 text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200" id="wordCounter">
+                                已输入 <span id="writingCharCount">0</span> 字符
+                            </span>
+                        </div>
+
+                        <!-- Action bar for writing -->
+                        <div class="flex justify-between items-center">
+                            <button id="submitWritingBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl font-bold transition active:scale-95 shadow-md shadow-emerald-100 flex items-center justify-center gap-1.5 text-sm">
+                                <i class="fas fa-check-circle"></i> 提交写作并核对范文
+                            </button>
+                        </div>
+
+                        <!-- Model comparison block (initially hidden) -->
+                        <div id="modelComparisonBlock" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3.5">
+                            <h4 class="font-bold text-slate-800 text-xs border-b pb-1.5"><i class="fas fa-compress-alt text-emerald-600"></i> 参考范文与评测对照</h4>
+                            <div class="space-y-3 text-xs leading-relaxed">
+                                <div class="space-y-1">
+                                    <span class="text-[10px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded font-bold">泰语参考范文</span>
+                                    <p class="text-slate-700 font-medium thai-text" id="modelAnswerTH"></p>
+                                </div>
+                                <div class="space-y-1">
+                                    <span class="text-[10px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded font-bold">中文参考翻译</span>
+                                    <p class="text-slate-600" id="modelAnswerZH"></p>
+                                </div>
+                            </div>
+                            <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-3 text-[10px] text-indigo-800 leading-relaxed">
+                                <strong>自我对比修正建议：</strong><br>
+                                请检查您是否正确表达了金·汤普森在生产与出口方面的贡献，以及合成纤维（ใยสังเคราะห์）所带来的恶性竞争。
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Completion Dashboard -->
+                    <div id="completionDashboard" class="hidden bg-gradient-to-r from-indigo-500 to-violet-600 text-white rounded-2xl p-5 text-center space-y-4 shadow-xl shadow-indigo-100">
+                        <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mx-auto text-xl animate-bounce">
+                            <i class="fas fa-trophy text-yellow-300"></i>
+                        </div>
+                        <div class="space-y-1">
+                            <h3 class="text-lg font-black">恭喜您！完成本章训练</h3>
+                            <p class="text-indigo-100 text-[10px]">您已完成泰语读写素养训练的全部阶段！</p>
+                        </div>
+                        <div class="grid grid-cols-3 bg-white/10 rounded-xl p-3 divide-x divide-white/10 text-center text-xs">
+                            <div>
+                                <div class="text-sm font-bold" id="dashTime">0</div>
+                                <div class="text-[9px] text-indigo-200">学习耗时</div>
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold" id="dashQueries">0</div>
+                                <div class="text-[9px] text-indigo-200">查询词数</div>
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold" id="dashAccuracy">0%</div>
+                                <div class="text-[9px] text-indigo-200">测试准确率</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Column 3: AI Coach Assistant & Vocabulary Diary (Locked sidebar, spans 25% width) -->
+        <section id="rightPanel" class="lg:col-span-1 h-full flex flex-col gap-6 overflow-y-auto pr-1">
+            
+            <!-- AI Literacy Coach Panel -->
+            <div class="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-2xl border border-slate-800 shadow-xl p-6 flex flex-col justify-between min-h-[220px] relative overflow-hidden flex-shrink-0">
+                <div class="absolute -right-10 -top-10 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl"></div>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3 border-b border-white/10 pb-3">
+                        <div class="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center">
+                            <i class="fas fa-robot text-indigo-400 animate-bounce"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-200 text-xs flex items-center gap-1.5">
+                                AI 素养导师 (AI Reading Coach)
+                            </h3>
+                            <span class="text-[9px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-mono border border-emerald-400/20">在线导学中</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Coach Dialogue Bubble -->
+                    <div id="coachDialogue">
+                        <div class="flex gap-2.5 items-start">
+                            <div class="bg-indigo-900/50 border border-indigo-800/60 p-3.5 rounded-2xl text-xs leading-relaxed text-slate-300">
+                                Sawasdee krub! 我是您的泰语读写素养教练。我们将通过三步法攻克这篇关于<strong>《邻里之间》</strong>的小说。
+                                <br><br>
+                                首先，请阅读<strong>“读前预热”</strong>的背景，学习核心词汇，然后完成下方的<strong>“读前预测”</strong>问题，即可解锁正式阅读！
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Step-Based Tip Panel -->
+                <div class="bg-white/5 border border-white/10 rounded-xl p-3 mt-4 text-[10px] text-slate-400 leading-relaxed">
+                    <i class="fas fa-quote-left mr-1 text-indigo-400"></i>
+                    <span id="coachTipText">点击重点生词可开启语音合成示范发音。</span>
+                </div>
+            </div>
+
+            <!-- Smart Dictionary Panel (Active keywords & lookup queries tabs) -->
+            <div id="smartDictionaryPanel" class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col gap-4 flex-shrink-0">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-3 flex-shrink-0">
+                    <h3 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                        <i class="fas fa-spell-check text-sky-500"></i>
+                        智能辅助词典
+                    </h3>
+                    <div class="flex gap-1 text-[9px] font-semibold select-none">
+                        <button id="dictTabActive" class="px-2 py-0.5 rounded bg-sky-50 text-sky-700 font-bold" onclick="switchDictTab('active')">段落生词</button>
+                        <button id="dictTabQueries" class="px-2 py-0.5 rounded bg-slate-100 text-slate-500 font-medium" onclick="switchDictTab('queries')">查询历史 (<span id="queryHistoryCount">0</span>)</button>
+                    </div>
+                </div>
+
+                <!-- Tab 1 contents: Paragraph Active Keywords -->
+                <div id="dictContentActive" class="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+                    <!-- Dynamic active words list -->
+                </div>
+
+                <!-- Tab 2 contents: Selection Query History -->
+                <div id="dictContentQueries" class="hidden space-y-2.5 max-h-56 overflow-y-auto pr-1">
+                    <!-- Dynamic queried words list -->
+                    <div class="text-center text-slate-400 py-6 text-[10px] select-none" id="emptyQueriesState">
+                        暂无划词查询记录
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vocabulary Diary Panel (IndexedDB Backup) -->
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex-grow flex flex-col min-h-[300px]">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-3 flex-shrink-0">
+                    <h3 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                        <i class="fas fa-bookmark text-indigo-500"></i> 
+                        我的生词日记 (<span id="vocabCount">0</span>)
+                    </h3>
+                    <!-- Toggle study deck -->
+                    <button id="toggleFlashcardDeckBtn" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1 font-sans">
+                        <i class="fas fa-clone"></i> 卡片复习
+                    </button>
+                </div>
+
+                <!-- Word List Container (Scrollable inside the card) -->
+                <div id="diaryContainer" class="flex-grow overflow-y-auto py-3 space-y-3">
+                    <!-- Loaded dynamically from IDB -->
+                    <div class="flex flex-col items-center justify-center text-slate-400 py-8 text-center select-none" id="emptyDiaryState">
+                        <i class="fas fa-folder-open text-3xl mb-2 text-slate-200"></i>
+                        <p class="text-[10px]">生词本目前为空</p>
+                        <p class="text-[9px] text-slate-400 mt-1 max-w-[200px]">在精读过程中，双击或划选任何单词，在弹出框中点击“加入词汇日记”添加生词。</p>
+                    </div>
+                </div>
+
+                <!-- Footer Operations -->
+                <div class="border-t border-slate-100 pt-3 flex justify-between items-center flex-shrink-0">
+                    <button id="clearDiaryBtn" class="text-xs text-rose-500 hover:text-rose-700 font-bold transition flex items-center gap-1 active:scale-95">
+                        <i class="fas fa-trash-alt"></i> 清空词汇
+                    </button>
+                    <span class="text-[9px] text-slate-400 font-mono"><i class="fas fa-database"></i> Local DB (IDB)</span>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Global Popover hover tooltip for vocabulary -->
+    <div id="vocabTooltip" class="fixed hidden bg-white rounded-2xl shadow-xl border border-slate-200/80 p-5 w-72 z-50 transition-all duration-150 text-slate-700 flex flex-col gap-3">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+            <span id="ttThai" class="text-xl font-bold text-slate-800 thai-text"></span>
+            <span id="ttPos" class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-mono font-semibold"></span>
+        </div>
+        <div class="text-xs font-mono text-slate-400" id="ttIpa"></div>
+        <div class="space-y-1.5 text-xs">
+            <div class="flex items-center"><span class="w-6 text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-center rounded mr-2 py-0.5 font-bold flex-shrink-0">中</span><span id="ttZh" class="text-slate-700 font-medium"></span></div>
+            <div class="flex items-center"><span class="w-6 text-[10px] bg-blue-50 text-blue-700 border border-blue-200/60 text-center rounded mr-2 py-0.5 font-bold flex-shrink-0">EN</span><span id="ttEn" class="text-slate-500"></span></div>
+        </div>
+        <button id="ttSaveBtn" class="w-full bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-700 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 active:scale-95 border border-slate-200/60 mt-1">
+            <i class="fas fa-plus"></i> 记入生词日记
+        </button>
+    </div>
+
+    <!-- Selection Floating Action Bar -->
+    <div id="selectionActionBar" class="fixed hidden bg-slate-900 text-white rounded-full px-4 py-2 shadow-2xl border border-slate-800 items-center gap-3.5 z-50 transition-all duration-150 text-xs font-semibold select-none">
+        <span class="text-indigo-300 font-medium select-none cursor-default truncate max-w-[100px]" id="selectedTextSpan"></span>
+        <button id="querySelectionBtn" class="flex items-center gap-1.5 hover:text-sky-300 transition active:scale-90">
+            <i class="fas fa-search text-sky-400"></i> 查询单词
+        </button>
+        <button id="addSelectionToDiaryBtn" class="flex items-center gap-1.5 hover:text-indigo-300 transition active:scale-90">
+            <i class="fas fa-plus-circle text-indigo-400"></i> 添加笔记
+        </button>
+        <button id="speakSelectionBtn" class="flex items-center gap-1.5 hover:text-amber-300 transition active:scale-90">
+            <i class="fas fa-volume-up text-amber-400"></i> 播放音频
+        </button>
+    </div>
+
+    <!-- FLASHCARD REVIEW MODAL DIALOG -->
+    <dialog id="flashcardDialog" class="rounded-3xl shadow-2xl p-0 border border-slate-200 max-w-lg w-full backdrop:bg-black/60 overflow-hidden">
+        <div class="flex flex-col h-[480px]">
+            <!-- Header -->
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fas fa-clone text-indigo-600"></i> 词汇闪卡自我评测 (Flashcard Study)
+                </h3>
+                <button id="closeFlashcardBtn" class="text-slate-400 hover:text-slate-600 transition p-1.5 rounded-lg hover:bg-slate-100">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+            
+            <!-- Cards Canvas -->
+            <div class="flex-grow flex items-center justify-center bg-slate-50/50 p-8">
+                <!-- Word Card -->
+                <div id="flashcardElement" class="w-full max-w-xs h-56 bg-white border border-slate-200 rounded-2xl shadow-md p-6 flex flex-col justify-between items-center cursor-pointer select-none transition-all duration-300 transform active:scale-95" title="点击翻转卡片">
+                    <!-- Front (Thai) -->
+                    <div id="flashcardFront" class="flex flex-col items-center justify-center flex-grow space-y-3">
+                        <span class="text-3xl font-extrabold text-slate-800 thai-text tracking-wide" id="fcWord">...</span>
+                        <span class="text-xs text-slate-400 font-mono" id="fcIpa">/ /</span>
+                    </div>
+                    <!-- Back (Zh / En / Pos) - Initially hidden -->
+                    <div id="flashcardBack" class="hidden flex flex-col items-center justify-center flex-grow space-y-2.5 text-center">
+                        <span class="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-mono font-bold" id="fcPos">n.</span>
+                        <span class="text-lg font-bold text-slate-800" id="fcZh">中文释义</span>
+                        <span class="text-sm text-slate-500 font-medium" id="fcEn">English</span>
+                    </div>
+                    <!-- Footer indicator -->
+                    <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider" id="fcFlipHint"><i class="fas fa-sync"></i> 点击翻转卡片</span>
+                </div>
+            </div>
+
+            <!-- Navigator & Stats -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+                <span class="text-xs text-slate-500 font-semibold" id="fcCounter">0 / 0</span>
+                <div class="flex gap-2">
+                    <button id="fcPrevBtn" class="bg-white border border-slate-200 text-slate-700 p-2 rounded-xl hover:bg-slate-100 transition active:scale-95 text-xs"><i class="fas fa-chevron-left"></i> 上一个</button>
+                    <button id="fcNextBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition active:scale-95 text-xs font-bold">下一个 <i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
+    <script>
+        // ==========================================
+        // Embedded Dynamic Dataset (邻里之间)
+        // ==========================================
+        const articleData = {
+            "article_id": "art_002",
+            "title_th": "บ้านใกล้เรือนเคียง (邻里之间)",
+            "title_zh": "邻里之间 (บ้านใกล้เรือนเคียง)",
+            "level": "A2-B1",
+            "word_count": 520,
+            "estimated_reading_time": 12,
+            "pre_reading": {
+                "background_zh": "《邻里之间》（บ้านใกล้เรือนเคียง）是泰国的一篇短篇纪实小说，通过女主人公因提拉（Intira）随工程师丈夫搬进公司分配的曼谷高档住宅区后的生活遭遇展开。因提拉在自家庭院里辛勤开垦了一片茂盛 of kitchen vegetables, and won the respect of her parents-in-law who previously disliked her background. However, the garden eventually created neighbor frictions, with dogs digging up her bed and neighbors plucking vegetables without asking. The story highlights the clash between property boundaries and civic duty/public mind (Discourse: จิตสาธารณะ) in a middle-class workspace housing estate.",
+                "vocab_preview": [
+                    { "word": "จิตสาธารณะ", "ipa": "/tɕìt.sǎː.tʰaː.rá.náʔ/", "zh": "公德心 / 公共精神", "en": "public-mindedness" },
+                    { "word": "ความภาคภูมิใจ", "ipa": "/kʰwaːm.pʰâːk.pʰuːm.tɕaj/", "zh": "自豪 / 骄傲", "en": "pride" },
+                    { "word": "จิตสำนึก", "ipa": "/tɕìt.sǎm.nɯ́k/", "zh": "意识 / 觉悟", "en": "consciousness" }
+                ],
+                "prediction_question": {
+                    "question_zh": "根据故事标题《邻里之间》和引言，你预测这篇小说将探讨的核心主题是？",
+                    "options": [
+                        { "id": "p1", "text": "泰国现代建筑公司的贪腐问题与员工宿舍的恶劣条件", "is_correct": false },
+                        { "id": "p2", "text": "表面高社会地位群体的私德缺失与邻里公共空间中的产权/公德心冲突", "is_correct": true },
+                        { "id": "p3", "text": "传统与现代家庭在婆媳关系上的和解历程", "is_correct": false }
+                    ]
+                }
+            },
+            "sections": [
+                {
+                    "section_id": "sec_1",
+                    "section_title_zh": "第一部分：新家与新生活的起点",
+                    "vocabulary_glossary": {
+                        "v_101": { "thai": "ความภาคภูมิใจ", "ipa": "/kʰwaːm.pʰâːk.pʰuːm.tɕaj/", "pos": "n.", "zh": "自豪/骄傲", "en": "pride" },
+                        "v_102": { "thai": "เห่อ", "ipa": "/hɤ̀ː/", "pos": "v.", "zh": "新鲜感/热衷", "en": "excited about something new" },
+                        "v_103": { "thai": "คัดสรร", "ipa": "/kʰát.sǎn/", "pos": "v.", "zh": "筛选/精选", "en": "to select carefully" }
+                    },
+                    "sentences": [
+                        {
+                            "sentence_id": "s1",
+                            "role": "topic_sentence",
+                            "translation_zh": "因提拉满怀自豪地从父母家搬到大公司区内的一栋员工宿舍里和丈夫同住。",
+                            "thai": "อินทิราย้ายจากบ้านพ่อแม่มาอยู่กับสามีที่บ้านพักในบริเวณบริษัทใหญ่ด้วยความภาคภูมิใจ",
+                            "html_render": "อินทิราย้ายจากบ้านพ่อแม่มาอยู่กับสามีที่บ้านพักในบริเวณบริษัทใหญ่ด้วย<span class='token vocab-challenge' data-vocab='v_101'>ความภาคภูมิใจ</span>",
+                            "glossary": [
+                                { "word": "ความภาคภูมิใจ", "ipa": "/kʰwaːm.pʰâːk.pʰuːm.tɕaj/", "pos": "n.", "zh": "自豪/骄傲", "en": "pride" },
+                                { "word": "บริษัท", "ipa": "/bɔː.rí.sàt/", "pos": "n.", "zh": "公司/企业", "en": "company" },
+                                { "word": "บ้านพัก", "ipa": "/bâːn.pʰák/", "pos": "n.", "zh": "宿舍/住宅", "en": "lodging" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s2",
+                            "role": "major_detail",
+                            "translation_zh": "怎能不自豪呢？毕竟像她这样一个咖啡店老板的女儿，嫁给这家Meena公司的工程师，而且丈夫在曼谷还有房子。",
+                            "thai": "จะไม่ให้ภูมิใจได้อย่างไร ในเมื่อลูกสาวเจ้าของร้านกาแฟอย่างเธอ ได้แต่งงานกับนายช่างของบริษัทมีนาแห่งนี้ แถมสามียังมีบ้านที่กรุงเทพฯ อีกด้วย",
+                            "html_render": "จะไม่ให้ภูมิใจได้อย่างไร <span class='token signal-cause' data-type='cause'>ในเมื่อ</span>ลูกสาวเจ้าของร้านกาแฟอย่างเธอ ได้แต่งงานกับนายช่างของบริษัทมีนาแห่งนี้ <span class='token signal-add' data-type='add'>แถม</span>สามียังมีบ้านที่กรุงเทพฯ อีกด้วย",
+                            "glossary": [
+                                { "word": "นายช่าง", "ipa": "/naːj.tɕʰâːŋ/", "pos": "n.", "zh": "工程师", "en": "engineer" },
+                                { "word": "แต่งงาน", "ipa": "/tɛ̀ŋ.ŋaːn/", "pos": "v.", "zh": "结婚", "en": "to get married" },
+                                { "word": "ร้านกาแฟ", "ipa": "/ráːn.kaː.fɛː/", "pos": "n.", "zh": "咖啡馆", "en": "coffee shop" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s3",
+                            "role": "minor_detail",
+                            "translation_zh": "虽说是父母的房子，但过不了多久，那房子迟早也得归她丈夫所有，因为他是独生子。",
+                            "thai": "แม้จะเป็นบ้านของพ่อแม่ แต่อีกหน่อยก็ต้องตกเป็นของสามีเธออยู่ดีเพราะเขาเป็นลูกคนเดียว",
+                            "html_render": "แม้จะเป็นบ้านของพ่อแม่ <span class='token signal-contrast' data-type='contrast'>แต่อีกหน่อย</span>ก็ต้องตกเป็นของสามีเธออยู่ดีเพราะเขาเป็นลูกคนเดียว",
+                            "glossary": [
+                                { "word": "ลูกคนเดียว", "ipa": "/lûːk.kʰon.diao/", "pos": "n.", "zh": "独生子", "en": "only child" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s4",
+                            "role": "major_detail",
+                            "translation_zh": "起初，公婆对儿子娶了个咖啡店的华裔姑娘并不太满意，但当得知因提拉学成毕业并任省属编制内教师后，两位便不再冷脸相对了。",
+                            "thai": "ทีแรกพ่อแม่ของสามีไม่ค่อยพอใจนักที่ลูกชายแต่งงานกับหมวยร้านกาแฟ แต่พอรู้ว่าอินทิราเรียนจบวิทยาลัยครูและเป็นครูรับราชการในสังกัดจังหวัด ท่านทั้งสองก็เลิกทำหน้าบึ้งตึงใส่",
+                            "html_render": "ทีแรกพ่อแม่ของสามีไม่ค่อยพอใจนักที่ลูกชายแต่งงานกับหมวยร้านกาแฟ <span class='token signal-contrast' data-type='contrast'>แต่พอ</span>รู้ว่าอินทิราเรียนจบวิทยาลัยครู <span class='token signal-add' data-type='add'>และ</span>เป็นครูรับราชการ在สังกัดจังหวัด ท่านทั้งสองก็เลิกทำหน้าบึ้งตึงใส่",
+                            "glossary": [
+                                { "word": "ไม่ค่อยพอใจ", "ipa": "/mâj.kʰɔ̂ːj.pʰɔː.tɕaj/", "pos": "v.", "zh": "不甚满意", "en": "unsatisfied" },
+                                { "word": "วิทยาลัยครู", "ipa": "/wít.tʰa.jaː.laj.kʰruː/", "pos": "n.", "zh": "师范学院", "en": "teachers college" },
+                                { "word": "รับราชการ", "ipa": "/ráp.râːt.tɕa.kaːn/", "pos": "v.", "zh": "任公职/当公务员", "en": "civil service" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s5",
+                            "role": "minor_detail",
+                            "translation_zh": "因提拉对新家感到非常新鲜，虽说只是职位宿舍，但实在很舒适。",
+                            "thai": "อินทิราเห่อบ้านใหม่มาก แม้จะเป็นเพียงบ้านพักประจำตำแหน่ง แต่ก็น่าอยู่เหลือเกิน",
+                            "html_render": "อินทิรา<span class='token vocab-challenge' data-vocab='v_102'>เห่อ</span>บ้านใหม่มาก แม้จะเป็นเพียงบ้านพักประจำตำแหน่ง <span class='token signal-contrast' data-type='contrast'>แต่</span>ก็น่าอยู่เหลือเกิน",
+                            "glossary": [
+                                { "word": "เห่อ", "ipa": "/hɤ̀ː/", "pos": "v.", "zh": "热衷/新鲜感", "en": "excited about new" },
+                                { "word": "ประจำตำแหน่ง", "ipa": "/prà.tɕam.tam.nɛ̀ŋ/", "pos": "adj.", "zh": "职位的/岗位的", "en": "official position" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s6",
+                            "role": "minor_detail",
+                            "translation_zh": "公司的水电全免费，卧室里空调凉爽，屋子周围还有空间可以像她梦想已久的那样栽花种草，以前住在排屋时可没有这种机会。",
+                            "thai": "น้ำไฟทางบริษัทก็บริการฟรี ห้องนอนติดเครื่องปรับอากาศเย็นฉ่ำ รอบบ้านมีพื้นที่ให้ปลูกต้นไม้ใบหญ้าอย่างที่เธอฝันมานาน แต่ไม่มีโอกาสได้ทำสมัยที่อยู่ตึกแถว",
+                            "html_render": "น้ำไฟทางบริษัทก็บริการฟรี ห้องนอนติดเครื่องปรับอากาศเย็นฉ่ำ รอบบ้านมีพื้นที่ให้ปลูกต้นไม้ใบหญ้าอย่างที่เธอฝันมานาน <span class='token signal-contrast' data-type='contrast'>แต่</span>ไม่มีโอกาสได้ทำสมัยที่อยู่ตึกแถว",
+                            "glossary": [
+                                { "word": "เครื่องปรับอากาศ", "ipa": "/kʰrɯ̂aŋ.pràp.ʔaː.kàːt/", "pos": "n.", "zh": "空调/冷气机", "en": "air conditioner" },
+                                { "word": "ตึกแถว", "ipa": "/tʉ̀k.tʰɛ̌w/", "pos": "n.", "zh": "排屋/店面楼", "en": "shophouse" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s7",
+                            "role": "minor_detail",
+                            "translation_zh": "小区里的道路干干净净，偶尔有一点狗屎，也有清洁工负责处理。",
+                            "thai": "ถนนในหมู่บ้านสะอาดสะอ้าน จะมีขี้หมาบ้างก็มีพนักงานทำความสะอาดคอยดูแล",
+                            "html_render": "ถนนในหมู่บ้านสะอาดสะอ้าน จะมีขี้หมาบ้างก็มีพนักงานทำความสะอาดคอยดูแล",
+                            "glossary": [
+                                { "word": "สะอาดสะอ้าน", "ipa": "/sà.ʔàːt.sà.ʔâːn/", "pos": "adj.", "zh": "干干净净/洁净", "en": "spotless" },
+                                { "word": "พนักงาน", "ipa": "/pʰa.nák.ŋaːn/", "pos": "n.", "zh": "员工/雇员", "en": "staff" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s8",
+                            "role": "concluding_sentence",
+                            "translation_zh": "因此，孩子们、家庭主妇以及所有员工都不敢乱扔垃圾，因为大家都敬畏那些公司精心挑选的、身材强壮如职业拳击手一般的清洁工 and 保安。",
+                            "thai": "เด็กๆ หรือแม้แต่แม่บ้านและพนักงานทุกคนจึงไม่กล้าทิ้งขยะเรี่ยราด เพราะต่างเกรงสายตาพนักงานทำความสะอาดและยามของบริษัทที่คัดสรรมาอย่างดี หุ่นล่ำบึ้กราวกับนักมวยอาชีพทุกคน",
+                            "html_render": "เด็กๆ หรือแม้แต่แม่บ้าน<span class='token signal-add' data-type='add'>และ</span>พนักงานทุกคน<span class='token signal-cause' data-type='cause'>จึง</span>ไม่กล้าทิ้งขยะเรี่ยราด เพราะต่างเกรงสายตาพนักงานทำความสะอาด<span class='token signal-add' data-type='add'>และ</span>ยามของบริษัทที่<span class='token vocab-challenge' data-vocab='v_103'>คัดสรร</span>มาอย่างดี หุ่นล่ำบึ้กราวกับนักมวยอาชีพทุกคน",
+                            "glossary": [
+                                { "word": "เรี่ยราad", "ipa": "/rîa.râːt/", "pos": "adv.", "zh": "乱丢/遍地", "en": "scattered" },
+                                { "word": "คัดสรร", "ipa": "/kʰát.sǎn/", "pos": "v.", "zh": "筛选精选", "en": "select" }
+                            ]
+                        }
+                    ],
+                    "in_reading_coaching": {
+                        "question_zh": "1. 根据段落一，为什么小区里的所有人都不敢乱扔垃圾？",
+                        "hint_zh": "请阅读句子 s8，看看“จึงไม่กล้าทิ้งขยะเรี่ยราดเพราะ...”之后给出的原因。",
+                        "options": [
+                            { "id": "q1_1", "text": "摆放在小区各处的先进垃圾桶上印有高额罚金警示", "is_correct": false },
+                            { "id": "q1_2", "text": "因为大家敬畏公司挑选的、身材强壮如职业拳击手一般的保安与清洁工", "is_correct": true },
+                            { "id": "q1_3", "text": "因为公司宿舍区里安装了先进的自动垃圾分类与处理摄像头", "is_correct": false }
+                        ],
+                        "explanation_zh": "段落最后一句（s8）指出，大家不敢乱扔垃圾是因为敬畏那些由公司精心挑选、身材魁梧健壮如职业拳击手一般的清洁工和保安。选B。"
+                    }
+                },
+                {
+                    "section_id": "sec_2",
+                    "section_title_zh": "第二部分：建立菜园与赢得公婆的喜爱",
+                    "vocabulary_glossary": {
+                        "v_201": { "thai": "งอกงาม", "ipa": "/ŋɔ̂ːk.ŋaːm/", "pos": "v./adj.", "zh": "繁茂/茁壮成长", "en": "to grow luxuriantly" },
+                        "v_202": { "thai": "เจริญอาหาร", "ipa": "/tɕà.rəːn.ʔaː.hǎːn/", "pos": "v.", "zh": "胃口大开", "en": "to have a good appetite" },
+                        "v_203": { "thai": "ขยันขันแข็ง", "ipa": "/kʰà.jǎn.kʰǎn.kʰɛ̌ŋ/", "pos": "adj.", "zh": "勤劳/勤勉", "en": "diligent and hard-working" }
+                    },
+                    "sentences": [
+                        {
+                            "sentence_id": "s9",
+                            "role": "topic_sentence",
+                            "translation_zh": "因提拉在房子前面做了花坛，侧面和后面种了厨房蔬菜。",
+                            "thai": "อินทิราทำแปลงดอกไม้ไว้หน้าบ้าน ด้านข้างและด้านหลังปลูกผักสวนครัว",
+                            "html_render": "อินทิราทำแปลงดอกไม้ไว้หน้าบ้าน ด้านข้าง<span class='token signal-add' data-type='add'>และ</span>ด้านหลังปลูกผักสวนครัว",
+                            "glossary": [
+                                { "word": "แปลงดอกไม้", "ipa": "/plɛːŋ.dɔ̀ːk.mâːj/", "pos": "n.", "zh": "花坛/花圃", "en": "flower bed" },
+                                { "word": "ผักสวนครัว", "ipa": "/pʰàk.sǔan.kʰrua/", "pos": "n.", "zh": "厨房绿叶菜", "en": "kitchen veggies" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s10",
+                            "role": "major_detail",
+                            "translation_zh": "这里的泥土非常好，她用心地施肥浇水，而且因为没养动物来乱扒菜地，蔬菜因此长得极其茂盛。",
+                            "thai": "ดินที่นี่ดีมาก เธอใส่ปุ๋ยรดน้ำอย่างใส่ใจ และเพราะไม่ได้เลี้ยงสัตว์ให้มาขุดคุ้ยแปลงผัก ต้นไม้จึงงอกงามดีเหลือเกิน",
+                            "html_render": "ดินที่นี่ดีมาก เธอใส่ปุ๋ยรดน้ำอย่างใส่ใจ <span class='token signal-add' data-type='add'>และ</span>เพราะไม่ได้เลี้ยงสัตว์ให้มาขุดคุ้ยแปลงผัก ต้นไม้<span class='token signal-cause' data-type='cause'>จึง</span><span class='token vocab-challenge' data-vocab='v_201'>งอกงาม</span>ดีเหลือเกิน",
+                            "glossary": [
+                                { "word": "ปุ๋ย", "ipa": "/pǔj/", "pos": "n.", "zh": "肥料", "en": "fertilizer" },
+                                { "word": "ขุดคุ้ย", "ipa": "/kʰùt.kʰúj/", "pos": "v.", "zh": "刨挖/扒乱", "en": "dig up" },
+                                { "word": "งอกงาม", "ipa": "/ŋɔ̂ːk.ŋaːm/", "pos": "v.", "zh": "茁壮成长/繁茂", "en": "grow well" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s11",
+                            "role": "minor_detail",
+                            "translation_zh": "但随之而来的是，杂草同样也长得很茂盛。",
+                            "thai": "แต่สิ่งที่ตามมาคือหญ้าก็งามดีด้วยเช่นกัน",
+                            "html_render": "<span class='token signal-contrast' data-type='contrast'>แต่</span>สิ่งที่ตามมาคือหญ้าก็งามดีด้วย<span class='token signal-example' data-type='example'>เช่นกัน</span>",
+                            "glossary": [
+                                { "word": "สิ่งที่ตามมา", "ipa": "/sìŋ.tʰîː.taːm.maː/", "pos": "n.", "zh": "伴随而来的事物", "en": "what follows" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s12",
+                            "role": "minor_detail",
+                            "translation_zh": "因此，她不得不经常辛苦地拔草，最后决定雇弟弟在周末来帮她处理这事。",
+                            "thai": "เธอจึงต้องเหนื่อยถอนหญ้าอยู่บ่อยๆ สุดท้ายจึงตัดสินใจจ้างน้องชายให้มาช่วยจัดการเรื่องนี้ในวันหยุด",
+                            "html_render": "เธอ<span class='token signal-cause' data-type='cause'>จึง</span>ต้องเหนื่อยถอนหญ้าอยู่บ่อยๆ สุดท้าย<span class='token signal-cause' data-type='cause'>จึง</span>ตัดสินใจจ้างน้องชายให้มาช่วยจัดการเรื่องนี้ในวันหยุด",
+                            "glossary": [
+                                { "word": "ถอนหญ้า", "ipa": "/tʰɔ̌ːn.jâː/", "pos": "v.", "zh": "拔草除草", "en": "weed" },
+                                { "word": "วันหยุด", "ipa": "/wan.jùt/", "pos": "n.", "zh": "周末假期", "en": "weekend" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s13",
+                            "role": "minor_detail",
+                            "translation_zh": "丈夫的父母曾在周末来这里住，看望平时很少有时间回曼谷的儿子。",
+                            "thai": "พ่อแม่สามีเคยมาพักในวันหยุดเพื่อเยี่ยมลูกชายที่ไม่ค่อยมีเวลาเข้ากรุงเทพฯ",
+                            "html_render": "พ่อแม่สามีเคยมาพักในวันหยุดเพื่อเยี่ยมลูกชายที่ไม่ค่อยมีเวลาเข้ากรุงเทพฯ",
+                            "glossary": [
+                                { "word": "เยี่ยม", "ipa": "/jîam/", "pos": "v.", "zh": "看望/拜访", "en": "visit" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s14",
+                            "role": "major_detail",
+                            "translation_zh": "他们非常喜欢因提拉的新鲜菜地，而且这个以前帮家里卖过快餐的咖啡店姑娘厨艺也十分精湛。",
+                            "thai": "ท่านชอบใจแปลงผักสดของอินทิรามาก และฝีมือการทำกับข้าวของหมวยร้านกาแฟที่เคยช่วยขายข้าวแกงมาก่อนก็เยี่ยมยอด",
+                            "html_render": "ท่านชอบใจแปลงผักสดของอินทิรามาก <span class='token signal-add' data-type='add'>และ</span>ฝีมือการทำกับข้าวของหมวยร้านกาแฟที่เคยช่วยขายข้าวแกงมาก่อนก็เยี่ยมยอด",
+                            "glossary": [
+                                { "word": "ชอบใจ", "ipa": "/tɕʰɔ̂ːp.tɕaj/", "pos": "v.", "zh": "中意/喜爱", "en": "pleased with" },
+                                { "word": "ข้าวแกง", "ipa": "/kʰâːw.kɛːŋ/", "pos": "n.", "zh": "快餐盖饭/咖喱菜", "en": "curry rice" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s15",
+                            "role": "minor_detail",
+                            "translation_zh": "当用新鲜、高品质且不用担心农药的蔬菜做菜时，他们胃口大开。",
+                            "thai": "เมื่อได้ผักสดๆ เนื้อดีๆ มาปรุงอาหารโดยไม่ต้องกลัวยาฆ่าแมลง ท่านก็เจริญอาหารกันใหญ่",
+                            "html_render": "เมื่อได้ผักสดๆ เนื้อดีๆ มาปรุงอาหารโดยไม่ต้องกลัวยาฆ่าแมลง ท่านก็<span class='token vocab-challenge' data-vocab='v_202'>เจริญอาหาร</span>กันใหญ่",
+                            "glossary": [
+                                { "word": "ยาฆ่าแมลง", "ipa": "/jaː.kʰâː.ma.lɛːŋ/", "pos": "n.", "zh": "农药/杀虫剂", "en": "pesticide" },
+                                { "word": "เจริญอาหาร", "ipa": "/tɕà.rəːn.ʔaː.hǎːn/", "pos": "v.", "zh": "胃口大开", "en": "good appetite" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s16",
+                            "role": "concluding_sentence",
+                            "translation_zh": "对这个咖啡店女婿的嫌弃也随之彻底烟消云散，因为看到因提拉非常勤劳，而且虽然没有大学文凭，却很有能力和学识，举止得体，照顾家务也打理得非常好。",
+                            "thai": "ความรังเกียจที่มีต่อลูกสะใภ้หมวยร้านกาแฟก็มลายหายไปสิ้น เพราะเห็นว่าอินทิรานั้นขยันขันแข็ง ทั้งยังมีความรู้ความสามารถ แม้จะไม่ได้เรียนจบปริญญา",
+                            "html_render": "ความรังเกียจที่มีต่อลูกสะใภ้หมวยร้านกาแฟก็มลายหายไปสิ้น เพราะเห็นว่าอินทิรานั้น<span class='token vocab-challenge' data-vocab='v_203'>ขยันขันแข็ง</span> ทั้งยังมีความรู้ความสามารถ แม้จะไม่ได้เรียนจบปริญญา",
+                            "glossary": [
+                                { "word": "รังเกียจ", "ipa": "/raŋ.kìat/", "pos": "v.", "zh": "反感嫌弃", "en": "dislike" },
+                                { "word": "มลายหายไป", "ipa": "/ma.laːj.hǎːj.paj/", "pos": "v.", "zh": "烟消云散", "en": "vanish" },
+                                { "word": "ขยันขันแข็ง", "ipa": "/kʰà.jǎn.kʰǎn.kʰɛ̌ŋ/", "pos": "adj.", "zh": "勤劳肯干", "en": "diligent" }
+                            ]
+                        }
+                    ],
+                    "in_reading_coaching": {
+                        "question_zh": "2. 公婆最终消除对因提拉的嫌弃（รังเกียจ），最核心的原因是什么？",
+                        "hint_zh": "阅读最后一句（s16），看看“เพราะเห็นว่า...”后面提到了因提拉的哪些优秀品质。",
+                        "options": [
+                            { "id": "q2_1", "text": "因为因提拉帮公婆买了一台大功率的自动洗衣机，解决了家务负担", "is_correct": false },
+                            { "id": "q2_2", "text": "因为因提拉拿到了名牌大学的研究生学位并顺利晋升了校长职务", "is_correct": false },
+                            { "id": "q2_3", "text": "因为亲眼看到因提拉非常勤劳肯干、有能力有学识，且将家务照顾得极好", "is_correct": true }
+                        ],
+                        "explanation_zh": "最后一句（s16）明确指出，公婆消除成见是因为亲眼看到因提拉勤劳肯干（ขยันขันแข็ง）、懂礼仪有能力，并把家务照顾得井井有条。选C。"
+                    }
+                },
+                {
+                    "section_id": "sec_3",
+                    "section_title_zh": "第三部分：邻里之间的麻烦与蔬菜被采",
+                    "vocabulary_glossary": {
+                        "v_301": { "thai": "ทัศนียภาพ", "ipa": "/tʰát.sà.niː.já.pʰâːp/", "pos": "n.", "zh": "景观/风景", "en": "landscape/scenery" },
+                        "v_302": { "thai": "ล่วงล้ำ", "ipa": "/lûaŋ.lám/", "pos": "v.", "zh": "侵犯/越界", "en": "to trespass/violate boundaries" },
+                        "v_303": { "thai": "จิตสำนึก", "ipa": "/tɕìt.sǎm.nɯ́k/", "pos": "n.", "zh": "意识/觉悟", "en": "conscience/awareness" }
+                    },
+                    "sentences": [
+                        {
+                            "sentence_id": "s17",
+                            "role": "topic_sentence",
+                            "translation_zh": "但问题在因提拉住了六个月后开始显现，蔬菜正长得好，却遇到了邻居的狗喜欢跑进来扒菜地的问题。",
+                            "thai": "แต่ปัญหาเริ่มก่อตัวขึ้นเมื่ออินทิราอยู่ได้หกเดือน ผักกำลังงามได้ที่ แต่กลับเจอปัญหาหมาของเพื่อนบ้านที่ชอบเข้ามาคุ้ยแปลงผัก",
+                            "html_render": "<span class='token signal-contrast' data-type='contrast'>แต่</span>ปัญหาเริ่มก่อตัวขึ้นเมื่ออินทิราอยู่ได้หกเดือน ผักกำลังงามได้ที่ <span class='token signal-contrast' data-type='contrast'>แต่กลับ</span>เจอปัญหาหมาของเพื่อนบ้านที่ชอบเข้ามาคุ้ยแปลงผัก",
+                            "glossary": [
+                                { "word": "ก่อตัวขึ้น", "ipa": "/kɔ̀ː.tua.kʰʉ̂n/", "pos": "v.", "zh": "酝酿/开始形成", "en": "start building" },
+                                { "word": "เพื่อนบ้าน", "ipa": "/pʰɯ̂an.bâːn/", "pos": "n.", "zh": "邻居", "en": "neighbor" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s18",
+                            "role": "major_detail",
+                            "translation_zh": "她不知道该怎么办，因为公司不允许围栅栏，以保持像大城市里高档别墅区那样的优美景观。",
+                            "thai": "ไม่รู้จะทำอย่างไรดีเพราะบริษัทไม่อนุญาตให้กั้นรั้วเพื่อคงทัศนียภาพที่สวยงามเหมือนหมู่บ้านจัดสรรในเมืองใหญ่",
+                            "html_render": "ไม่รู้จะทำอย่างไรดีเพราะบริษัทไม่อนุญาตให้กั้นรั้วเพื่อคง<span class='token vocab-challenge' data-vocab='v_301'>ทัศนียภาพ</span>ที่สวยงามเหมือนหมู่บ้านจัดสรรในเมืองใหญ่",
+                            "glossary": [
+                                { "word": "ทัศนียภาพ", "ipa": "/tʰát.sà.niː.já.pʰâːp/", "pos": "n.", "zh": "景观风景", "en": "landscape" },
+                                { "word": "หมู่บ้านจัดสรร", "ipa": "/mùː.bâːn.tɕàt.sǎn/", "pos": "n.", "zh": "规划别墅区", "en": "housing estate" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s19",
+                            "role": "minor_detail",
+                            "translation_zh": "因提拉因此通过在房子周围种上一圈银合欢树并定期修剪来解决问题。",
+                            "thai": "อินทิราจึงแก้ปัญหาด้วยการปลูกต้นกระถินล้อมรอบบริเวณบ้านไว้ คอยตัดแต่งให้สม่ำเสมอ",
+                            "html_render": "อินทิรา<span class='token signal-cause' data-type='cause'>จึง</span>แก้ปัญหาด้วยการปลูกต้นกระถินล้อมรอบบริเวณบ้านไว้ คอยตัดแต่งให้สม่ำเสมอ",
+                            "glossary": [
+                                { "word": "กระถิน", "ipa": "/krà.tʰǐn/", "pos": "n.", "zh": "银合欢树", "en": "leucaena" },
+                                { "word": "ตัดแต่ง", "ipa": "/tàt.tɛ̀ŋ/", "pos": "v.", "zh": "修剪枝叶", "en": "prune" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s20",
+                            "role": "major_detail",
+                            "translation_zh": "然而结果却是，邻居们纷纷来采摘银合欢，甚至一把一把地摘走辣椒，正在结实的小番茄也被小孩子们摘得精光。",
+                            "thai": "ทว่ากลับกลายเป็นว่าเพื่อนบ้านพากันมาเก็บกระถินบ้าง มาเด็ดพริกไปทีละกำมือบ้าง มะเขือเทศที่กำลังออกลูกก็ถูกเด็กๆ เด็ดจนเหี้ยน",
+                            "html_render": "<span class='token signal-contrast' data-type='contrast'>ทว่ากลับกลายเป็นว่า</span>เพื่อนบ้านพากันมาเก็บกระถินบ้าง มาเด็ดพริกไปทีละกำมือบ้าง มะเขือเทศที่กำลังออกลูกก็ถูกเด็กๆ เด็ดจนเหี้ยน",
+                            "glossary": [
+                                { "word": "เด็ด", "ipa": "/dèt/", "pos": "v.", "zh": "掐/采摘", "en": "pluck" },
+                                { "word": "เหี้ยน", "ipa": "/hîan/", "pos": "adv.", "zh": "光光的/净", "en": "bare" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s21",
+                            "role": "minor_detail",
+                            "translation_zh": "种下的菜转眼就没了，豆子、香茅在早上看完之后，到晚上从来没有一天是完整的。",
+                            "thai": "ผักสวนครัวที่ปลูกไว้หายวับไปกับตา เถาถั่ว ตะไคร้ ไม่เคยอยู่ครบตามที่เห็นในตอนเช้าเลยสักวัน",
+                            "html_render": "ผักสวนครัวที่ปลูกไว้หายวับไปกับตา เถาถั่ว ตะไคร้ ไม่เคยอยู่ครบตามที่เห็นในตอนเช้าเลยสักวัน",
+                            "glossary": [
+                                { "word": "หายวับ", "ipa": "/hǎːj.wáp/", "pos": "v.", "zh": "瞬间消失", "en": "vanish" },
+                                { "word": "ตะไคร้", "ipa": "/ta.kʰráj/", "pos": "n.", "zh": "香茅", "en": "lemongrass" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s22",
+                            "role": "minor_detail",
+                            "translation_zh": "那些邻居只种观赏花木，至于厨房蔬菜却跑来摘因提拉种下的。",
+                            "thai": "เพื่อนบ้านเหล่านั้นปลูกแต่ไม้ดอกไม้ประดับ ส่วนผักสวนครัวกลับมาเด็ดเอาที่อินทิราปลูกไว้",
+                            "html_render": "เพื่อนบ้านเหล่านั้นปลูกแต่ไม้ดอกไม้ประดับ ส่วนผักสวนครัวกลับมาเด็ดเอาที่อินทิราปลูกไว้",
+                            "glossary": [
+                                { "word": "ไม้ดอก", "ipa": "/mâːj.dɔ̀ːk/", "pos": "n.", "zh": "花卉", "en": "flowering plant" },
+                                { "word": "ไม้ประดับ", "ipa": "/mâːj.prà.dàp/", "pos": "n.", "zh": "观赏植物", "en": "ornamental plant" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s23",
+                            "role": "major_detail",
+                            "translation_zh": "因提拉不高兴的地方在于他们从来不事先申请允许，而且这些孩子的父母也不懂得教育孩子尊重他人的权利，不应该侵犯越界。",
+                            "thai": "แต่อินทิราไม่ชอบใจตรงที่พวกเขาไม่เคยขออนุญาตก่อน บางทีผักยังไม่โตเต็มที่ มะเขือเทศยังดิบอยู่ก็มาเด็ดไปเล่น พ่อแม่เด็กพวกนี้ไม่รู้จักสอนลูกให้รู้สิทธิของผู้อื่นว่าไม่ควรล่วงล้ำ",
+                            "html_render": "แต่อินทิราไม่ชอบใจตรงที่พวกเขาไม่เคยขออนุญาตก่อน บางทีผักยังไม่โตเต็มที่ มะเขือเทศยังดิบอยู่ก็มาเด็ดไปเล่น พ่อแม่เด็กพวกนี้ไม่รู้จักสอนลูกให้รู้สิทธิของผู้อื่นว่าไม่ควร<span class='token vocab-challenge' data-vocab='v_302'>ล่วงล้ำ</span>",
+                            "glossary": [
+                                { "word": "ขออนุญาต", "ipa": "/kʰɔ̌ː.ʔà.nú.jâːt/", "pos": "v.", "zh": "请求允许", "en": "ask permission" },
+                                { "word": "ล่วงล้ำ", "ipa": "/lûaŋ.lám/", "pos": "v.", "zh": "侵犯/越界", "en": "trespass" },
+                                { "word": "สิทธิ", "ipa": "/sìt.tʰí/", "pos": "n.", "zh": "权利/产权", "en": "rights" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s24",
+                            "role": "concluding_sentence",
+                            "translation_zh": "她非常郁闷，因为作为一名幼儿园教师，她总是教育孩子们“人家的东西不是我们的东西”，但结果却是这小区里孩子的父母自己缺乏个人权利的意识。",
+                            "thai": "อินทิรากลุ้มใจมากเพราะในฐานะครูอนุบาล เธอพร่ำสอนเด็กๆ ตลอดว่า ของของเขาไม่ใช่ของของเรา แต่กลับกลายเป็นว่าพ่อแม่ของเด็กในหมู่บ้านนี้เองที่ขาดจิตสำนึกเรื่องสิทธิส่วนบุคคล",
+                            "html_render": "อินทิรากลุ้มใจมากเพราะในฐานะครูอนุบาล เธอพร่ำสอนเด็กๆ ตลอดว่า ของของเขาไม่ใช่ของของเรา <span class='token signal-contrast' data-type='contrast'>แต่กลับกลายเป็นว่า</span>พ่อแม่ของเด็กในหมู่บ้านนี้เองที่ขาด<span class='token vocab-challenge' data-vocab='v_303'>จิตสำนึก</span>เรื่องสิทธิส่วนบุคคล",
+                            "glossary": [
+                                { "word": "จิตสำนึก", "ipa": "/tɕìt.sǎm.nɯ́k/", "pos": "n.", "zh": "公德觉悟", "en": "conscience" },
+                                { "word": "สิทธิส่วนบุคคล", "ipa": "/sìt.tʰí.sùan.bùk.kʰon/", "pos": "n.", "zh": "个人私产权", "en": "private rights" }
+                            ]
+                        }
+                    ],
+                    "in_reading_coaching": {
+                        "question_zh": "3. 因提拉在面对自家的蔬菜被邻居采摘时，最感到苦恼和不赞同的是什么？",
+                        "hint_zh": "阅读句子 s23 和 s24，看看她觉得邻里孩子的父母缺乏什么意识？",
+                        "options": [
+                            { "id": "q3_1", "text": "邻居们种植观赏花木时使用了大量会随风飘散的有害农药", "is_correct": false },
+                            { "id": "q3_2", "text": "邻居采摘时不打招呼，且有地位的家长们缺乏对他人私有产权与人身权利的尊重", "is_correct": true },
+                            { "id": "q3_3", "text": "邻居把采下来的蔬菜拿到市场上卖，赚取额外的家庭收入", "is_correct": false }
+                        ],
+                        "explanation_zh": "根据 s23 和 s24，因提拉感到苦恼不仅因为邻居不问自取，更因为作为有社会地位的邻里父母却纵容孩子，缺乏对他人私有产权与私权的觉悟。选B。"
+                    }
+                },
+                {
+                    "section_id": "sec_4",
+                    "section_title_zh": "第四部分：社会地位与公德心的反思",
+                    "vocabulary_glossary": {
+                        "v_401": { "thai": "จิตสาธารณะ", "ipa": "/tɕìt.sǎː.tʰaː.rá.náʔ/", "pos": "n.", "zh": "公德心/公共意识", "en": "public mind/civic duty" },
+                        "v_402": { "thai": "ฟุ่มเฟือย", "ipa": "/fûm.fɯaaj/", "pos": "adj./adv.", "zh": "奢侈/浪费", "en": "extravagant/wasteful" },
+                        "v_403": { "thai": "ห้ามปราม", "ipa": "/hâːm.praːm/", "pos": "v.", "zh": "劝阻/制止", "en": "to forbid/warn against" }
+                    },
+                    "sentences": [
+                        {
+                            "sentence_id": "s25",
+                            "role": "topic_sentence",
+                            "translation_zh": "那些人全都是有地位的体面人，既有工程师也有职员，家家户户收入都很高。",
+                            "thai": "พวกเหล่านั้นล้วนเป็นคนมีระดับ ทั้งนายช่างและเสมียน ทุกครอบครัวต่างมีรายได้ดี",
+                            "html_render": "พวกเหล่านั้นล้วนเป็นคนมีระดับ ทั้งนายช่าง <span class='token signal-add' data-type='add'>และ</span>เสมียน ทุกครอบครัวต่างมีรายได้ดี",
+                            "glossary": [
+                                { "word": "มีระดับ", "ipa": "/miː.rá.dàp/", "pos": "adj.", "zh": "社会地位体面", "en": "high class" },
+                                { "word": "เสมียน", "ipa": "/sà.mǐan/", "pos": "n.", "zh": "职员/办事员", "en": "clerk" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s26",
+                            "role": "major_detail",
+                            "translation_zh": "但奇怪的是，他们竟然毫无公德心。",
+                            "thai": "แต่น่าแปลกที่กลับไม่มีจิตสาธารณะเลย",
+                            "html_render": "<span class='token signal-contrast' data-type='contrast'>แต่น่าแปลกที่</span>กลับไม่มี<span class='token vocab-challenge' data-vocab='v_401'>จิตสาธารณะ</span>เลย",
+                            "glossary": [
+                                { "word": "น่าแปลก", "ipa": "/nâː.plɛ̀ːk/", "pos": "adj.", "zh": "奇怪不可思议", "en": "strange" },
+                                { "word": "จิตสาธารณะ", "ipa": "/tɕìt.sǎː.tʰaː.rá.náʔ/", "pos": "n.", "zh": "公德心", "en": "public mind" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s27",
+                            "role": "minor_detail",
+                            "translation_zh": "水电费的事也是同样，因为公司全额报销，所以大家都用得非常奢侈浪费，空调大开，设备大用。",
+                            "thai": "เรื่องค่าน้ำค่าไฟก็เช่นกัน เพราะบริษัทออกให้หมด จึงใช้กันอย่างฟุ่มเฟือย เปิดแอร์ทิ้งไว้ทั้งวันทั้งคืน",
+                            "html_render": "เรื่องค่าน้ำค่าไฟก็<span class='token signal-example' data-type='example'>เช่นกัน</span> เพราะบริษัทออกให้หมด <span class='token signal-cause' data-type='cause'>จึง</span>ใช้กันอย่าง<span class='token vocab-challenge' data-vocab='v_402'>ฟุ่มเฟือย</span>เปิดแอร์ทิ้งไว้ทั้งวันทั้งคืน",
+                            "glossary": [
+                                { "word": "ค่าน้ำค่าไฟ", "ipa": "/kʰâː.náːm.kʰâː.faj/", "pos": "n.", "zh": "水电费", "en": "utility bills" },
+                                { "word": "ฟุ่มเฟือย", "ipa": "/fûm.fɯaaj/", "pos": "adj.", "zh": "奢侈浪费", "en": "extravagant" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s28",
+                            "role": "major_detail",
+                            "translation_zh": "因提拉节俭惯了，以至于有时在邻居眼里她反倒成了一个怪物。",
+                            "thai": "อินทิราเป็นคนประหยัดจนเคยตัว จนบางครั้งเธอก็กลายเป็นตัวประหลาดในสายตาเพื่อนบ้าน",
+                            "html_render": "อินทิราเป็นคนประหยัดจนเคยตัว จนบางครั้งเธอก็กลายเป็นตัวประหลาดในสายตาเพื่อนบ้าน",
+                            "glossary": [
+                                { "word": "เคยตัว", "ipa": "/kʰɤːj.tua/", "pos": "adj.", "zh": "习惯成自然", "en": "habitual" },
+                                { "word": "ตัวประหลาด", "ipa": "/tua.prà.làːt/", "pos": "n.", "zh": "怪人异类", "en": "eccentric" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s29",
+                            "role": "minor_detail",
+                            "translation_zh": "丈夫曾想给她买台洗衣机，但因提拉失声劝阻，说浪费电而且没必要，因为就两个人而且雇人能让穷孩子多点收入。",
+                            "thai": "สามีเคยคิดจะซื้อเครื่องซักผ้าให้ แต่อินทิราห้ามปรามไว้เสียงหลง บอกว่าเปลืองไฟและไม่จำเป็น",
+                            "html_render": "สามีเคยคิดจะซื้อเครื่องซักผ้าให้ <span class='token signal-contrast' data-type='contrast'>แต่</span>อินทิรา<span class='token vocab-challenge' data-vocab='v_403'>ห้ามปราม</span>ไว้เสียงหลง บอกว่าเปลืองไฟ <span class='token signal-add' data-type='add'>และ</span>ไม่จำเป็น",
+                            "glossary": [
+                                { "word": "เครื่องซักผ้า", "ipa": "/kʰrɯ̂aŋ.sák.pʰâː/", "pos": "n.", "zh": "洗衣机", "en": "washing machine" },
+                                { "word": "ห้ามปราม", "ipa": "/hâːm.praːm/", "pos": "v.", "zh": "规劝制止", "en": "forbid" }
+                            ]
+                        },
+                        {
+                            "sentence_id": "s30",
+                            "role": "concluding_sentence",
+                            "translation_zh": "她的丈夫只能诧异地看着她，因为 he had never seen anyone forbid the purchase of convenient facilities like his wife.",
+                            "thai": "สามีของเธอได้แต่มองอย่างแปลกใจ เพราะไม่เคยเห็นใครห้ามปรามการซื้อของอำนวยความสะดวกเหมือนภรรยาของเขาเลย",
+                            "html_render": "สามีของเธอได้แต่มองอย่างแปลกใจ เพราะไม่เคยเห็นใคร<span class='token vocab-challenge' data-vocab='v_403'>ห้ามปราม</span>การซื้อของอำนวยความสะดวกเหมือนภรรยาของเขาเลย",
+                            "glossary": [
+                                { "word": "แปลกใจ", "ipa": "/plɛ̀ːk.tɕaj/", "pos": "v.", "zh": "纳闷惊奇", "en": "surprised" },
+                                { "word": "อำนวยความสะดวก", "ipa": "/ʔam.nuaj.kʰwaːm.sà.dùak/", "pos": "v.", "zh": "提供便利设", "en": "facilities" }
+                            ]
+                        }
+                    ],
+                    "in_reading_coaching": {
+                        "question_zh": "4. 为什么因提拉节俭的行为在邻里眼中反倒像个“怪物”（ตัวประหลาด）？",
+                        "hint_zh": "阅读 s27、s28 和 s29。看看在全额报销水电的情况下，邻里们的做法与因提拉的坚持有何不同。",
+                        "options": [
+                            { "id": "q4_1", "text": "因为其他人都借着公司免费报销水电的机会极其奢侈地使用，而她依然极力节俭并拒绝购买洗衣机", "is_correct": true },
+                            { "id": "q4_2", "text": "因为因提拉在宿舍里偷偷用脏水洗衣服，导致整个小区的下水道被堵塞", "is_correct": false },
+                            { "id": "q4_3", "text": "因为因提拉在小区的公共讨论群里公开大声斥责邻居买洗衣机是极度虚荣的行为", "is_correct": false }
+                        ],
+                        "explanation_zh": "在公司全额报销水电的情况下，邻居们极度浪费（ฟุ่มเฟือย）；而因提拉习惯节俭并拒绝洗衣机，在奢靡的环境中特立独行，因此被视为异类。选A。"
+                    }
+                }
+            ],
+            "post_reading": {
+                "comprehension_quiz": {
+                    "topic": {
+                        "question_zh": "1. 这篇阅读材料讨论的核心主题（Topic）是什么？",
+                        "options": [
+                            { "id": "t1", "text": "พฤติกรรมของเพื่อนบ้านและการขาดจิตสาธารณะในหมู่บ้านจัดสรร (邻里利益摩擦与高收入居民公共意识/公德心的缺失)", "is_correct": true },
+                            { "id": "t2", "text": "การทำบัญชีค่าน้ำค่าไฟในบริษัทมีนา (Meena公司的水电费预报和财务审计机制)", "is_correct": false },
+                            { "id": "t3", "text": "วิธีการดูแลแปลงผักสวนครัวปลอดสารพิษ (在城市家庭院中种植厨房蔬菜的详细步骤)", "is_correct": false }
+                        ],
+                        "explanation_zh": "小说以小见大，通过女教师因提拉种菜被偷、邻居随意浪费免费水电的琐事，探讨了现代中产住宅区中市民的私德与公德心（จิตสาธารณะ）危机。选A。"
+                    },
+                    "main_idea": {
+                        "question_zh": "2. 这篇阅读材料的主旨大意（Main Idea）是什么？",
+                        "options": [
+                            { "id": "m1", "text": "รายได้และตำแหน่งหน้าที่การงานสูง ไม่ได้สะท้อนถึงการมีจิตสำนึกที่ดีและจิตสาธารณะเสมอไป (高收入、有体面职位的居民，其道德觉悟与公德心并不一定随社会地位同步提升；在公共生活中，尊重他人产权和具有公德意识依然是关键缺乏的素养。)", "is_correct": true },
+                            { "id": "m2", "text": "การมีวิศวกรและเสมียนเป็นเพื่อนบ้านทำให้อินทิรามีความสุขกับการมีเพื่อนบ้านที่ดี (有工程师和职员当邻居让因提拉过上了非常幸福和睦的社交生活。)", "is_correct": false },
+                            { "id": "m3", "text": "การซักผ้าด้วยมือกะละมังเยอะๆ มีความสะดวกและทันสมัยมากกว่าการใช้เครื่องซักผ้า (相比于洗衣机，用手洗好几脸盆 of clothes is more popular and efficient in high-class Bangkok estates.)", "is_correct": false }
+                        ],
+                        "explanation_zh": "小说将因提拉的极度克己和邻里们不问自取、免费水电大肆浪费进行两极对照，主旨在于批判中产阶级空有社会阶层地位却缺乏基本公德觉悟的荒诞现实。"
+                    },
+                    "supporting_details": {
+                        "question_zh": "3. 以下哪些事实（Supporting Details）在文中被提及并支撑了上述主旨？（多选题）",
+                        "options": [
+                            { "id": "sd1", "text": "เพื่อนบ้านเด็ดผักและกระถินของอินทิราไปใช้โดยไม่เคยขออนุญาตก่อน (邻居们理所当然地掐走因提拉菜园的银合欢和辣椒，从不告知)", "is_correct": true },
+                            { "id": "sd2", "text": "เพื่อนบ้านเปิดแอร์และน้ำทิ้งไว้อย่างฟุ่มเฟือยเพียงเพราะบริษัทเป็นผู้จ่ายให้ (邻居们彻夜开着空调、流着水，仅仅因为公司报销水电费)", "is_correct": true },
+                            { "id": "sd3", "text": "อินทิราใช้น้ำซักผ้าที่เหลือมาถูบ้านเพื่อประหยัดทรัพยากร (因提拉将手洗衣服的废水留下来擦地以极力节省水资源)", "is_correct": true },
+                            { "id": "sd4", "text": "สามีตัดสินใจจ้างน้องชายมาช่วยสร้างเครื่องซักผ้าประหยัดพลังงานตัวแรก (丈夫最终决定雇佣弟弟来为因提拉手工发明一台省电洗衣机)", "is_correct": false }
+                        ],
+                        "explanation_zh": "1, 2, 3均为文中明确提到的细节。1和2用于反衬邻居们公德心的匮乏，3展现了女主角的节约德行。4为凭空编造的干扰项。选择1, 2, 3。"
+                    }
+                },
+                "reflection_writing": {
+                    "prompt_zh": "请用中文或者泰文撰写一段 50 字左右的学习摘要。说明因提拉（Intira）的邻居在采摘蔬菜和使用水电时所表现出来的道德问题，并对其进行简单评价。",
+                    "scaffold_keywords": [
+                        { "word": "จิตสาธารณะ", "zh": "公德心" },
+                        { "word": "ขออนุญาต", "zh": "请求允许" },
+                        { "word": "ฟุ่มเฟือย", "zh": "浪费/奢侈" },
+                        { "word": "สิทธิ", "zh": "权利/产权" }
+                    ],
+                    "model_answer_th": "เพื่อนบ้านเด็ดผักของอินทิราโดยไม่ขออนุญาตและใช้น้ำไฟอย่างฟุ่มเฟือยเพราะบริษัทออกค่าใช้จ่ายให้ แสดงให้เห็นถึงการขาดจิตสาธารณะและไม่เคารพสิทธิของผู้อื่นแม้จะเป็นคนมีระดับ",
+                    "model_answer_zh": "邻居们不打招呼就摘走因提拉的菜，且由于公司承担水电费而极度浪费。这表明即使他们是有地位的人，也缺乏公德心、不尊重他人的权利。"
+                }
+            }
+        };
+
+        // ==========================================
+        // App State Management
+        // ==========================================
+        let currentStep = 1; // 1: pre-reading, 2: in-reading, 3: post-reading
+        let unlockedSectionIndex = 0; // Section index currently unlocked in step 2 (0 to 3)
+        let isPreReadingQuizAnswered = false;
+        let pinnedSentenceId = null;
+        let s1VocabDeck = [];
+        let s1fcIndex = 0;
+        let s1fcFlipped = false;
+        let s1ActiveVocabTab = 'all';
+        let queryCounter = 0;
+        let correctQuizzesCount = 0;
+        let startTime = new Date();
+        let currentSpeech = null;
+        let queryHistory = [];
+
+        // IndexedDB database configuration
+        const DB_NAME = 'LiteracyCoachDB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'vocabDiary';
+
+        // Built-in mini-dictionary for common words in the story
+        const miniDict = {
+            "บ้าน": { thai: "บ้าน", ipa: "/bâːn/", pos: "n.", zh: "家/房子", en: "house/home" },
+            "สามี": { thai: "สามี", ipa: "/sǎː.miː/", pos: "n.", zh: "丈夫", en: "husband" },
+            "ภรรยา": { thai: "ภรรยา", ipa: "/pʰan.rá.jaː/", pos: "n.", zh: "妻子", en: "wife" },
+            "พ่อแม่": { thai: "พ่อแม่", ipa: "/pʰɔ̂ː.mɛ̂ː/", pos: "n.", zh: "父母", en: "parents" },
+            "บริษัท": { thai: "บริษัท", ipa: "/bɔː.rí.sàt/", pos: "n.", zh: "公司", en: "company" },
+            "แต่งงาน": { thai: "แต่งงาน", ipa: "/tɛ̀ŋ.ŋaːn/", pos: "v.", zh: "结婚", en: "to get married" },
+            "กาแฟ": { thai: "กาแฟ", ipa: "/kaː.fɛː/", pos: "n.", zh: "咖啡", en: "coffee" },
+            "ร้านกาแฟ": { thai: "ร้านกาแฟ", ipa: "/ráːn.kaː.fɛː/", pos: "n.", zh: "咖啡馆", en: "coffee shop" },
+            "ครู": { thai: "ครู", ipa: "/kʰruː/", pos: "n.", zh: "老师/教师", en: "teacher" },
+            "ครูอนุบาล": { thai: "ครูอนุบาล", ipa: "/kʰruː.ʔà.nú.baːn/", pos: "n.", zh: "幼儿园教师", en: "kindergarten teacher" },
+            "บ้านพัก": { thai: "บ้านพัก", ipa: "/bâːn.pʰák/", pos: "n.", zh: "宿舍/寄宿处", en: "residence/dormitory" },
+            "กรุงเทพฯ": { thai: "กรุงเทพฯ", ipa: "/kruŋ.tʰêːp/", pos: "n.", zh: "曼谷", en: "Bangkok" },
+            "ผัก": { thai: "ผัก", ipa: "/pʰàk/", pos: "n.", zh: "蔬菜", en: "vegetables" },
+            "ผักสวนครัว": { thai: "ผักสวนครัว", ipa: "/pʰàk.sǔan.kʰrua/", pos: "n.", zh: "厨房蔬菜", en: "kitchen vegetables" },
+            "หญ้า": { thai: "หญ้า", ipa: "/jâː/", pos: "n.", zh: "杂草", en: "grass" },
+            "ถอนหญ้า": { thai: "ถอนหญ้า", ipa: "/tʰɔ̌ːn.jâː/", pos: "v.", zh: "拔草", en: "to weed" },
+            "น้ำ": { thai: "น้ำ", ipa: "/náːm/", pos: "n.", zh: "水", en: "water" },
+            "ไฟ": { thai: "ไฟ", ipa: "/faj/", pos: "n.", zh: "电/火", en: "electricity/fire" },
+            "ประหยัด": { thai: "ประหยัด", ipa: "/prà.jàt/", pos: "v./adj.", zh: "节约/省俭", en: "to save/economical" },
+            "เพื่อนบ้าน": { thai: "เพื่อนบ้าน", ipa: "/pʰɯ̂an.bâːn/", pos: "n.", zh: "邻居", en: "neighbor" },
+            "หมา": { thai: "หมา", ipa: "/mǎː/", pos: "n.", zh: "狗", en: "dog" },
+            "รั้ว": { thai: "รั้ว", ipa: "/rúas/", pos: "n.", zh: "围栏/篱笆", en: "fence" },
+            "ต้นไม้": { thai: "ต้นไม้", ipa: "/tôn.mâːj/", pos: "n.", zh: "树木", en: "tree/plant" },
+            "กระถิน": { thai: "กระถิน", ipa: "/krà.tʰǐn/", pos: "n.", zh: "银合欢", en: "leucaena" },
+            "พริก": { thai: "พริก", ipa: "/pʰrík/", pos: "n.", zh: "辣椒", en: "chili" },
+            "มะเขือเทศ": { thai: "มะเขือเทศ", ipa: "/má.kʰɯ̌a.tʰêːt/", pos: "n.", zh: "西红柿", en: "tomato" },
+            "สิทธิ": { thai: "สิทธิ", ipa: "/sìt.tʰí/", pos: "n.", zh: "权利", en: "right/entitlement" },
+            "ส่วนบุคคล": { thai: "ส่วนบุคคล", ipa: "/sùan.bùk.kʰon/", pos: "adj.", zh: "私人的/个人的", en: "personal/private" },
+            "ระดับ": { thai: "ระดับ", ipa: "/rá.dàp/", pos: "n.", zh: "等级/地位", "en": "level/status" },
+            "เครื่องซักผ้า": { thai: "เครื่องซักผ้า", ipa: "/kʰrɯ̂aŋ.sák.pʰâː/", pos: "n.", zh: "洗衣机", en: "washing machine" },
+            "จิตสาธารณะ": { thai: "จิตสาธารณะ", ipa: "/tɕìt.sǎː.tʰaː.rá.náʔ/", pos: "n.", zh: "公德心", en: "public-mindedness" },
+            "ความภาคภูมิใจ": { thai: "ความภาคภูมิใจ", ipa: "/kʰwaːm.pʰâːk.pʰuːm.tɕaj/", pos: "n.", zh: "自豪/骄傲", en: "pride" },
+            "จิตสำนึก": { thai: "จิตสำนึก", ipa: "/tɕìt.sǎm.nɯ́k/", pos: "n.", zh: "意识/觉悟", en: "consciousness" },
+            "ความรัก": { thai: "ความรัก", ipa: "/kʰwaːm.rák/", pos: "n.", zh: "爱情/爱", en: "love" },
+            "นายช่าง": { thai: "นายช่าง", ipa: "/naːj.tɕʰâːŋ/", pos: "n.", zh: "工程师/技师", en: "engineer/mechanic" },
+            "เสมียน": { thai: "เสมียน", ipa: "/sà.mǐan/", pos: "n.", zh: "办事员/书记", en: "clerk" },
+            "ฟุ่มเฟือย": { thai: "ฟุ่มเฟือย", ipa: "/fûm.fɯaaj/", pos: "adj.", zh: "奢侈/浪费", en: "extravagant" },
+            "ห้ามปราม": { thai: "ห้ามปราม", ipa: "/hâːm.praːm/", pos: "v.", zh: "劝阻/制止", en: "to forbid/admonish" },
+            "ขยันขันแข็ง": { thai: "ขยันขันแข็ง", ipa: "/kʰà.jǎn.kʰǎn.kʰɛ̌ŋ/", pos: "adj.", zh: "勤劳/勤勉", en: "diligent" },
+            "เจริญอาหาร": { thai: "เจริญอาหาร", ipa: "/tɕà.rəːn.ʔaː.hǎːn/", pos: "v.", zh: "胃口大开", en: "to have a good appetite" },
+            "งอกงาม": { thai: "งอกงาม", ipa: "/ŋɔ̂ːk.ŋaːm/", pos: "v./adj.", zh: "茁壮成长/繁茂", en: "luxuriant/growing" }
+        };
+
+        // ==========================================
+        // IndexedDB Setup & Logic
+        // ==========================================
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function saveWordToDiary(word, ipa, pos, zh, en, sourceSentence = '') {
+            try {
+                const db = await initDB();
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                
+                // Check duplicate
+                const words = await getAllDiaryRecords();
+                const exists = words.find(w => w.word.trim() === word.trim());
+                if (exists) {
+                    showToast(`单词 "${word}" 已在生词本中`);
+                    return;
+                }
+
+                const record = {
+                    word: word.trim(),
+                    ipa: ipa || '',
+                    pos: pos || 'n.',
+                    zh: zh || '',
+                    en: en || '',
+                    source: sourceSentence || '',
+                    timestamp: Date.now()
+                };
+                
+                store.add(record);
+                showToast(`成功将 "${word}" 加入生词日记`);
+                queryCounter++;
+                await updateDiaryUI();
+            } catch (err) {
+                console.error("IndexedDB Save Error:", err);
+            }
+        }
+
+        function getAllDiaryRecords() {
+            return new Promise(async (resolve, reject) => {
+                try {
+                    const db = await initDB();
+                    const transaction = db.transaction([STORE_NAME], 'readonly');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.getAll();
+                    request.onsuccess = (e) => resolve(e.target.result || []);
+                    request.onerror = (e) => reject(e.target.error);
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        }
+
+        async function deleteWordFromDiary(id) {
+            try {
+                const db = await initDB();
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                store.delete(id);
+                showToast("已删除该生词");
+                await updateDiaryUI();
+            } catch (err) {
+                console.error("IndexedDB Delete Error:", err);
+            }
+        }
+
+        async function clearAllDiary() {
+            try {
+                const db = await initDB();
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                store.clear();
+                showToast("生词日记已全部清空");
+                await updateDiaryUI();
+            } catch (err) {
+                console.error("IndexedDB Clear Error:", err);
+            }
+        }
+
+        // ==========================================
+        // Web Speech API (TTS) Utility
+        // ==========================================
+        function speakThaiText(text, elementToHighlight = null) {
+            if ('speechSynthesis' in window) {
+                // Cancel existing speech
+                window.speechSynthesis.cancel();
+                
+                if (currentSpeech && elementToHighlight && elementToHighlight.classList.contains('speaking')) {
+                    elementToHighlight.classList.remove('speaking');
+                    currentSpeech = null;
+                    return;
+                }
+
+                // Remove speaking class from other elements
+                document.querySelectorAll('.thai-sentence').forEach(el => el.classList.remove('speaking'));
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                // Set language to Thai (th-TH)
+                utterance.lang = 'th-TH';
+                utterance.rate = 0.85; // Slightly slower for language learners
+
+                if (elementToHighlight) {
+                    elementToHighlight.classList.add('speaking');
+                    utterance.onend = () => {
+                        elementToHighlight.classList.remove('speaking');
+                    };
+                    utterance.onerror = () => {
+                        elementToHighlight.classList.remove('speaking');
+                    };
+                }
+
+                currentSpeech = utterance;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                showToast("您的浏览器不支持语音朗读(TTS)");
+            }
+        }
+
+        // ==========================================
+        // UI Renderers & Workflow Engine
+        // ==========================================
+        
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', async () => {
+            startTime = new Date();
+            
+            // Set metadata
+            document.getElementById('articleTitleZH').textContent = articleData.title_zh;
+            document.getElementById('estTime').textContent = articleData.estimated_reading_time;
+            document.getElementById('levelBadge').textContent = articleData.level;
+            document.getElementById('wordCount').textContent = articleData.word_count;
+            document.getElementById('backgroundContent').textContent = articleData.pre_reading.background_zh;
+
+            // Render Step 1 components
+            s1VocabDeck = getPreReadingVocabDeck();
+            renderS1VocabList();
+            renderPreReadingQuiz();
+
+            // Setup Event Listeners
+            setupGlobalEventListeners();
+            setupSelectionTooltip();
+
+            // Populate Database view
+            await updateDiaryUI();
+
+            // Initialize Smart Dictionary active keywords
+            renderActiveDictWords();
+
+            // Show first step advice
+            pushCoachDialogue(`Sawasdee krub! 我是您的泰语读写素养教练。我们将通过三步法攻克这篇关于<strong>《邻里之间》</strong>的小说。<br><br>首先，请阅读<strong>“活动一：文化背景学习”</strong>以了解大背景，然后点击下方的解锁按钮依次进行词汇学习和预测挑战！`);
+        });
+
+        // 1. Get Pre-reading consolidated deck (deduplicated)
+        function getPreReadingVocabDeck() {
+            const deckMap = {};
+            
+            // Article level
+            articleData.pre_reading.vocab_preview.forEach(v => {
+                deckMap[v.word] = { thai: v.word, ipa: v.ipa, pos: 'n.', zh: v.zh, en: v.en, level: 'article' };
+            });
+            
+            // Section level
+            articleData.sections.forEach(sec => {
+                Object.values(sec.vocabulary_glossary).forEach(v => {
+                    deckMap[v.thai] = { thai: v.thai, ipa: v.ipa, pos: v.pos, zh: v.zh, en: v.en, level: 'section' };
+                });
+            });
+            
+            // Sentence level
+            articleData.sections.forEach(sec => {
+                sec.sentences.forEach(s => {
+                    if (s.glossary) {
+                        s.glossary.forEach(v => {
+                            if (!deckMap[v.word]) {
+                                deckMap[v.word] = { thai: v.word, ipa: v.ipa, pos: v.pos || 'n.', zh: v.word === 'ความภาคภูมิใจ' ? '自豪/骄傲' : v.zh, en: v.en, level: 'sentence' };
+                            }
+                        });
+                    }
+                });
+            });
+            
+            return Object.values(deckMap);
+        }
+
+        window.switchS1VocabTab = function(tab) {
+            s1ActiveVocabTab = tab;
+            
+            const tabs = {
+                all: document.getElementById('s1vTabAll'),
+                article: document.getElementById('s1vTabArticle'),
+                section: document.getElementById('s1vTabSection'),
+                sentence: document.getElementById('s1vTabSentence')
+            };
+            
+            Object.keys(tabs).forEach(k => {
+                if (tabs[k]) {
+                    if (k === tab) {
+                        tabs[k].className = 'px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold';
+                    } else {
+                        tabs[k].className = 'px-2 py-0.5 rounded bg-slate-100 text-slate-500 font-medium';
+                    }
+                }
+            });
+            
+            renderS1VocabList();
+        };
+
+        function renderS1VocabList() {
+            const container = document.getElementById('s1VocabContainer');
+            if (!container) return;
+
+            let filtered = s1VocabDeck;
+            if (s1ActiveVocabTab !== 'all') {
+                filtered = s1VocabDeck.filter(w => w.level === s1ActiveVocabTab);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="text-center text-slate-400 py-6 text-xs col-span-1 md:col-span-2">当前分类下暂无词汇</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(w => {
+                const tagColor = w.level === 'article' ? 'bg-purple-50 text-purple-700 border-purple-200' : (w.level === 'section' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-teal-50 text-teal-700 border-teal-200');
+                const tagLabel = w.level === 'article' ? '文章核心' : (w.level === 'section' ? '段落关键' : '句中难词');
+                
+                return `
+                    <div class="bg-slate-50 border border-slate-200/60 p-3 rounded-xl flex justify-between items-center hover:bg-slate-100/50 transition gap-2">
+                        <div class="min-w-0 flex-grow">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="text-xs font-bold text-slate-800 font-thai tracking-wide cursor-pointer hover:text-indigo-600 font-thai-clickable" onclick="speakThaiText('${w.thai}')">
+                                    ${w.thai} <i class="fas fa-volume-up text-[9px] text-slate-400"></i>
+                                </span>
+                                <span class="text-[8px] bg-slate-200 text-slate-600 px-1 py-0.5 rounded font-bold">${w.pos || 'n.'}</span>
+                                <span class="text-[7px] border px-1 py-0.2 rounded font-bold ${tagColor}">${tagLabel}</span>
+                            </div>
+                            <div class="text-[9px] font-mono text-slate-400">${w.ipa}</div>
+                            <div class="text-[10px] text-slate-500 font-medium truncate mt-0.5" title="${w.zh}">${w.zh}</div>
+                        </div>
+                        <button class="bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white p-1.5 rounded-lg active:scale-90 transition flex-shrink-0" onclick="saveWordToDiary('${w.thai}', '${w.ipa}', '${w.pos || 'n.'}', '${w.zh}', '${w.en}', '')" title="保存到生词本">
+                            <i class="fas fa-plus text-[10px]"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Inline Flashcards in Card 3
+        function initS1Flashcards() {
+            s1fcIndex = 0;
+            s1fcFlipped = false;
+            renderS1Flashcard();
+        }
+
+        function renderS1Flashcard() {
+            if (s1VocabDeck.length === 0) return;
+            const card = s1VocabDeck[s1fcIndex];
+            
+            document.getElementById('s1fcCounter').textContent = `${s1fcIndex + 1} / ${s1VocabDeck.length}`;
+            
+            const front = document.getElementById('s1fcFront');
+            const back = document.getElementById('s1fcBack');
+            
+            front.classList.remove('hidden');
+            back.classList.add('hidden');
+            s1fcFlipped = false;
+
+            document.getElementById('s1fcWord').textContent = card.thai;
+            document.getElementById('s1fcIpa').textContent = card.ipa || '/ /';
+            document.getElementById('s1fcPos').textContent = card.pos || 'n.';
+            document.getElementById('s1fcZh').textContent = card.zh || '未录入释义';
+
+            speakThaiText(card.thai);
+        }
+
+        // 2. Render Pre-reading prediction question
+        function renderPreReadingQuiz() {
+            const q = articleData.pre_reading.prediction_question;
+            document.getElementById('predQuestionText').textContent = q.question_zh;
+            
+            const container = document.getElementById('predOptionsContainer');
+            container.innerHTML = q.options.map(opt => `
+                <button class="option-card w-full text-left p-4 rounded-xl font-medium text-sm text-slate-700 hover:bg-slate-100 flex items-start gap-3 transition" data-opt-id="${opt.id}">
+                    <span class="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center text-xs font-bold text-slate-400 flex-shrink-0 mt-0.5 bg-white select-none">${opt.id.toUpperCase()}</span>
+                    <span>${opt.text}</span>
+                </button>
+            `).join('');
+
+            // Click listener
+            container.querySelectorAll('.option-card').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (isPreReadingQuizAnswered) return;
+                    
+                    const optId = btn.dataset.optId;
+                    const selectedOption = q.options.find(o => o.id === optId);
+                    
+                    // Style options
+                    container.querySelectorAll('.option-card').forEach(card => {
+                        const cardId = card.dataset.optId;
+                        const currOpt = q.options.find(o => o.id === cardId);
+                        
+                        card.classList.remove('selected');
+                        if (currOpt.is_correct) {
+                            card.classList.add('correct');
+                            card.querySelector('span').innerHTML = '<i class="fas fa-check text-[10px]"></i>';
+                            card.querySelector('span').className = 'w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs flex-shrink-0 mt-0.5';
+                        } else if (cardId === optId) {
+                            card.classList.add('incorrect');
+                            card.querySelector('span').innerHTML = '<i class="fas fa-times text-[10px]"></i>';
+                            card.querySelector('span').className = 'w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center text-xs flex-shrink-0 mt-0.5';
+                        }
+                    });
+
+                    isPreReadingQuizAnswered = true;
+                    
+                    // Show feedback
+                    const feedbackEl = document.getElementById('predFeedback');
+                    feedbackEl.classList.remove('hidden');
+                    
+                    if (selectedOption.is_correct) {
+                        feedbackEl.className = "p-4 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 text-sm leading-relaxed";
+                        feedbackEl.innerHTML = `<strong>回答正确！</strong> 没错，小说正是在揭示社会中产阶级群体虽拥有体面的职务与高额的收入，但个人素质和公德心（จิตสาธารณะ）却大打折扣的社会现实冲突。`;
+                        
+                        // Enable next step button
+                        const startBtn = document.getElementById('startReadingBtn');
+                        startBtn.removeAttribute('disabled');
+                        startBtn.innerHTML = '解锁成功！进入正式精读 <i class="fas fa-arrow-right"></i>';
+                        startBtn.className = 'bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold transition active:scale-95 shadow-md text-xs flex items-center gap-1.5';
+                        
+                        document.getElementById('step1Card4Badge').innerHTML = '<i class="fas fa-check text-[9px]"></i>';
+                        document.getElementById('step1Card4Badge').className = 'w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold';
+
+                        pushCoachDialogue(`太棒了！您的预测非常准确。现在我们可以<strong>进入步骤二：逐段精读</strong>。我们已经解锁了第一段的内容，请点击卡片下方的按钮开始精读课文！`);
+                    } else {
+                        feedbackEl.className = "p-3.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 text-[11px] leading-relaxed";
+                        feedbackEl.innerHTML = `<strong>预测反馈：</strong> 邻里冲突和高阶级群体的私德空缺是这篇小说最核心的语篇张力，并非传统的婆媳关系或单纯的宿舍建设问题。`;
+                        
+                        // Still enable to let student learn
+                        const startBtn = document.getElementById('startReadingBtn');
+                        startBtn.removeAttribute('disabled');
+                        startBtn.innerHTML = '了解反馈，进入正式精读 <i class="fas fa-arrow-right"></i>';
+                        startBtn.className = 'bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold transition active:scale-95 shadow-md text-xs flex items-center gap-1.5';
+                        
+                        document.getElementById('step1Card4Badge').innerHTML = '<i class="fas fa-check text-[9px]"></i>';
+                        document.getElementById('step1Card4Badge').className = 'w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold';
+
+                        pushCoachDialogue(`没关系，预测是为了激活您的背景知识。现在请点击卡片下方的按钮进入精读，让我们看看文章具体是怎么叙述这段故事 of 邻居的。`);
+                    }
+                });
+            });
+        }
+
+        // 3. Render Step 2: During-reading (Paragraph cards and their coaching questions)
+        function renderDuringReading() {
+            const container = document.getElementById('paragraphsContainer');
+            container.innerHTML = articleData.sections.map((sec, idx) => {
+                const isUnlocked = idx <= unlockedSectionIndex;
+                const visibilityClass = isUnlocked ? '' : 'step-inactive';
+                
+                return `
+                    <div id="section-card-${idx}" class="p-6 bg-white border border-slate-200 rounded-2xl transition duration-300 space-y-4 relative ${visibilityClass}">
+                        
+                        <!-- Lock Overlay -->
+                        ${!isUnlocked ? `
+                            <div class="absolute inset-0 bg-white/70 backdrop-blur-[2px] rounded-2xl flex flex-col items-center justify-center z-10 select-none" id="lock-overlay-${idx}">
+                                <div class="bg-slate-800 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg"><i class="fas fa-lock text-sm"></i></div>
+                                <span class="text-xs text-slate-500 font-bold mt-2">完成上一段的导读提问解锁</span>
+                            </div>
+                        ` : ''}
+
+                        <!-- Section Title -->
+                        <div class="flex justify-between items-center border-b border-slate-200/60 pb-3 flex-wrap gap-2">
+                            <span class="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md font-bold uppercase tracking-wider">${sec.section_title_zh}</span>
+                            <span class="text-xs text-slate-400 font-mono font-medium">Section ${idx + 1} / 4</span>
+                        </div>
+
+                        <!-- Thai Segmented Text -->
+                        <div class="thai-text text-slate-800 text-lg md:text-xl text-justify font-normal leading-relaxed select-text">
+                            ${sec.sentences.map(s => `
+                                <span class="thai-sentence inline" data-sid="${s.sentence_id}" data-text="${s.thai}">
+                                    ${s.html_render}
+                                </span>
+                            `).join('')}
+                        </div>
+
+                        <!-- Chinese Translation (Collapsible) -->
+                        <div class="chinese-translation-block hidden bg-slate-100/60 border border-slate-200/50 p-4 rounded-xl text-xs text-slate-500 leading-relaxed space-y-2">
+                            ${sec.sentences.map(s => `
+                                <div><strong class="text-indigo-600/70 mr-1.5">[${s.sentence_id}]</strong>${s.translation_zh}</div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Bind sentence listeners (Click to Pin & Hover to display helper)
+            container.querySelectorAll('.thai-sentence').forEach(sentenceEl => {
+                sentenceEl.addEventListener('click', (e) => {
+                    // Avoid triggering pin when clicking span token
+                    if (e.target.classList.contains('token')) return;
+                    
+                    // Do not pin if user is selecting text
+                    const selectedText = window.getSelection().toString().trim();
+                    if (selectedText.length > 0) return;
+                    
+                    const sid = sentenceEl.dataset.sid;
+                    togglePinSentence(sid);
+                });
+
+                // Sentence hover event to update sentenceHelper
+                sentenceEl.addEventListener('mouseenter', () => {
+                    if (pinnedSentenceId !== null) return;
+                    const sid = sentenceEl.dataset.sid;
+                    updateSentenceHelper(sid);
+                });
+            });
+
+            // Bind vocabulary challenge tokens hovering
+            bindVocabTokens();
+
+            // Render/Update Sidebar active coaching question
+            updateSidebarCoachQuestion();
+
+            // Toggle translation block visibility
+            toggleTranslationDisplay();
+        }
+
+        // 3.5 Render Step 3: Full Article Text inside Column 1
+        function renderFullArticleForStep3() {
+            const container = document.getElementById('step3ArticleContent');
+            container.innerHTML = articleData.sections.map((sec, idx) => `
+                <div class="space-y-2.5 border-b border-slate-100 pb-5 last:border-0 last:pb-0">
+                    <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-bold uppercase tracking-wider">${sec.section_title_zh}</span>
+                    <div class="thai-text text-slate-800 text-base md:text-lg text-justify font-normal leading-relaxed select-text">
+                        ${sec.sentences.map(s => `
+                            <span class="thai-sentence inline" data-sid="${s.sentence_id}" data-text="${s.thai}">
+                                ${s.html_render}
+                            </span>
+                        `).join('')}
+                    </div>
+                    <!-- Chinese Translation (Collapsible) -->
+                    <div class="chinese-translation-block hidden bg-slate-50 border border-slate-100 p-3.5 rounded-xl text-xs text-slate-400 leading-relaxed space-y-1">
+                        ${sec.sentences.map(s => `
+                            <div><strong>[${s.sentence_id}]</strong> ${s.translation_zh}</div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            // Bind click to pin and hover to display helper
+            container.querySelectorAll('.thai-sentence').forEach(sentenceEl => {
+                sentenceEl.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('token')) return;
+                    
+                    // Do not pin if user is selecting text
+                    const selectedText = window.getSelection().toString().trim();
+                    if (selectedText.length > 0) return;
+                    
+                    const sid = sentenceEl.dataset.sid;
+                    togglePinSentence(sid);
+                });
+
+                // Sentence hover event to update sentenceHelper
+                sentenceEl.addEventListener('mouseenter', () => {
+                    if (pinnedSentenceId !== null) return;
+                    const sid = sentenceEl.dataset.sid;
+                    updateSentenceHelper(sid);
+                });
+            });
+
+            // Bind hover definitions
+            bindVocabTokens();
+            
+            // Sync translation visual
+            toggleTranslationDisplay();
+        }
+
+        // Bind hovered tokens with custom tooltip position
+        function bindVocabTokens() {
+            const tokens = document.querySelectorAll('.vocab-challenge');
+            const tooltip = document.getElementById('vocabTooltip');
+
+            tokens.forEach(tok => {
+                tok.addEventListener('mouseenter', (e) => {
+                    const vocabId = tok.dataset.vocab;
+                    // Find in appropriate glossary
+                    let vocabData = null;
+                    for (const sec of articleData.sections) {
+                        if (sec.vocabulary_glossary[vocabId]) {
+                            vocabData = sec.vocabulary_glossary[vocabId];
+                            break;
+                        }
+                    }
+                    if (!vocabData) {
+                        // Check pre-reading glossary
+                        const preVoc = articleData.pre_reading.vocab_preview.find(v => v.word === tok.textContent.trim());
+                        if (preVoc) {
+                            vocabData = { thai: preVoc.word, ipa: preVoc.ipa, pos: 'n.', zh: preVoc.zh, en: preVoc.en };
+                        }
+                    }
+
+                    if (vocabData) {
+                        document.getElementById('ttThai').textContent = vocabData.thai;
+                        document.getElementById('ttPos').textContent = vocabData.pos || 'n.';
+                        document.getElementById('ttIpa').textContent = vocabData.ipa;
+                        document.getElementById('ttZh').textContent = vocabData.zh;
+                        document.getElementById('ttEn').textContent = vocabData.en;
+
+                        // Tooltip Positioning
+                        const rect = tok.getBoundingClientRect();
+                        let left = rect.left + window.scrollX + (rect.width/2) - 144;
+                        let top = rect.bottom + window.scrollY + 8;
+
+                        // Screen edge constraints
+                        if (left < 10) left = 10;
+                        if (left + 288 > window.innerWidth) left = window.innerWidth - 300;
+
+                        tooltip.style.left = `${left}px`;
+                        tooltip.style.top = `${top}px`;
+                        tooltip.classList.remove('hidden');
+
+                        // Save button listener
+                        const saveBtn = document.getElementById('ttSaveBtn');
+                        // Clone to strip old event listeners
+                        const newSaveBtn = saveBtn.cloneNode(true);
+                        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+
+                        newSaveBtn.addEventListener('click', async () => {
+                            const sourceSentence = tok.closest('.thai-sentence')?.dataset.text || '';
+                            await saveWordToDiary(vocabData.thai, vocabData.ipa, vocabData.pos, vocabData.zh, vocabData.en, sourceSentence);
+                            tooltip.classList.add('hidden');
+                        });
+                    }
+                });
+
+                tok.addEventListener('mouseleave', (e) => {
+                    // Delay hiding to allow hovering over tooltip itself
+                    tooltipTimeout = setTimeout(() => {
+                        if (!tooltip.matches(':hover')) {
+                            tooltip.classList.add('hidden');
+                        }
+                    }, 100);
+                });
+            });
+
+            // Prevent hiding when hovering tooltip
+            tooltip.addEventListener('mouseleave', () => {
+                tooltip.classList.add('hidden');
+            });
+            tooltip.addEventListener('mouseenter', () => {
+                clearTimeout(tooltipTimeout);
+            });
+        }
+        let tooltipTimeout;
+
+        // Toggle visibility of translation texts
+        function toggleTranslationDisplay() {
+            const isChecked = document.getElementById('translationToggle').checked;
+            document.querySelectorAll('.chinese-translation-block').forEach(block => {
+                if (isChecked) {
+                    block.classList.remove('hidden');
+                } else {
+                    block.classList.add('hidden');
+                }
+            });
+        }
+
+        // 4. Update the Active Paragraph-level coaching quiz on the middle bar
+        function updateSidebarCoachQuestion() {
+            const sidebar = document.getElementById('sectionQuizSidebar');
+            
+            if (unlockedSectionIndex >= articleData.sections.length) {
+                // All paragraphs completed
+                sidebar.classList.add('hidden');
+                document.getElementById('unlockStep3Panel').classList.remove('hidden');
+                return;
+            }
+
+            sidebar.classList.remove('hidden');
+            const sec = articleData.sections[unlockedSectionIndex];
+            
+            document.getElementById('sidebarSectionTitle').textContent = `段落 ${unlockedSectionIndex + 1} 导读提问`;
+            document.getElementById('sidebarQuestionZH').textContent = sec.in_reading_coaching.question_zh;
+
+            const container = document.getElementById('sidebarOptionsContainer');
+            container.innerHTML = sec.in_reading_coaching.options.map(opt => `
+                <button class="option-card w-full text-left p-3.5 rounded-xl font-medium text-xs text-slate-700 hover:bg-slate-50 flex items-start gap-2.5 transition" data-opt-id="${opt.id}">
+                    <span class="w-4.5 h-4.5 rounded-full border border-slate-300 flex items-center justify-center text-[10px] font-bold text-slate-400 bg-white flex-shrink-0 mt-0.5 select-none">${opt.id.slice(-1).toUpperCase()}</span>
+                    <span>${opt.text}</span>
+                </button>
+            `).join('');
+
+            const feedbackEl = document.getElementById('sidebarFeedback');
+            feedbackEl.classList.add('hidden');
+
+            // Add click actions to options
+            container.querySelectorAll('.option-card').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const optId = btn.dataset.optId;
+                    const selected = sec.in_reading_coaching.options.find(o => o.id === optId);
+
+                    // Highlight options
+                    container.querySelectorAll('.option-card').forEach(card => {
+                        const cardId = card.dataset.optId;
+                        const cOpt = sec.in_reading_coaching.options.find(o => o.id === cardId);
+                        card.classList.remove('selected');
+                        
+                        if (cOpt.is_correct) {
+                            card.classList.add('correct');
+                            card.querySelector('span').className = 'w-4.5 h-4.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5';
+                            card.querySelector('span').innerHTML = '<i class="fas fa-check"></i>';
+                        } else if (cardId === optId) {
+                            card.classList.add('incorrect');
+                            card.querySelector('span').className = 'w-4.5 h-4.5 rounded-full bg-rose-500 text-white flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5';
+                            card.querySelector('span').innerHTML = '<i class="fas fa-times"></i>';
+                        }
+                    });
+
+                    feedbackEl.classList.remove('hidden');
+
+                    if (selected.is_correct) {
+                        feedbackEl.className = "p-3.5 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs leading-relaxed";
+                        feedbackEl.innerHTML = `<strong>解析正确：</strong> ${sec.in_reading_coaching.explanation_zh}`;
+                        
+                        // Double-check if we need to unlock next
+                        unlockedSectionIndex++;
+                        correctQuizzesCount++;
+                        
+                        // Push Coach Dialogue for narrative guidance
+                        pushCoachDialogue(`非常棒！您完全理解了段落 ${unlockedSectionIndex}。我们已经解锁了下一段的内容，请继续探索！`);
+                        
+                        // Wait a short duration, then re-render step 2 to unlock visual overlay
+                        setTimeout(() => {
+                            renderDuringReading();
+                            updateReadingProgressBadge();
+                            renderActiveDictWords(); // Update the dictionary keywords automatically when advancing!
+                            
+                            // Scroll the newly unlocked section card to top of leftPanel display area
+                            const newCardIndex = unlockedSectionIndex;
+                            if (newCardIndex < articleData.sections.length) {
+                                const leftPanel = document.getElementById('leftPanel');
+                                const newCard = document.getElementById(`section-card-${newCardIndex}`);
+                                if (leftPanel && newCard) {
+                                    const containerRect = leftPanel.getBoundingClientRect();
+                                    const cardRect = newCard.getBoundingClientRect();
+                                    const relativeTop = cardRect.top - containerRect.top + leftPanel.scrollTop;
+                                    
+                                    leftPanel.scrollTo({
+                                        top: relativeTop - 12,
+                                        behavior: 'smooth'
+                                    });
+                                }
+                            }
+                        }, 2000);
+                    } else {
+                        feedbackEl.className = "p-3.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 text-xs leading-relaxed";
+                        feedbackEl.innerHTML = `<strong>回答错误。</strong><br><strong class="text-rose-900">线索提示：</strong> ${sec.in_reading_coaching.hint_zh}`;
+                        
+                        pushCoachDialogue(`不要灰心，仔细对照段落中的重点单词以及老师为您提供的<strong>“线索提示”</strong>。您可以重新阅读该段后再次尝试。`);
+                    }
+                });
+            });
+        }
+
+        // Update step 2 progress indicator
+        function updateReadingProgressBadge() {
+            const count = Math.min(unlockedSectionIndex, articleData.sections.length);
+            document.getElementById('readingProgressText').textContent = `${count} / ${articleData.sections.length}`;
+        }
+
+        // 5. Render Step 3: Post-reading reflection questions & writing
+        function renderPostReading() {
+            // Render quizzes
+            const quizContainer = document.getElementById('articleComprehensionQuiz');
+            quizContainer.innerHTML = '';
+            
+            const quizTypes = ['topic', 'main_idea', 'supporting_details'];
+            quizTypes.forEach(type => {
+                const q = articleData.post_reading.comprehension_quiz[type];
+                const isMultiple = type === 'supporting_details';
+                const inputType = isMultiple ? 'checkbox' : 'radio';
+                const icon = type === 'topic' ? 'bullseye' : (type === 'main_idea' ? 'lightbulb' : 'list-ul');
+                const color = type === 'topic' ? 'text-purple-600 bg-purple-50 border-purple-200' : (type === 'main_idea' ? 'text-indigo-600 bg-indigo-50 border-indigo-200' : 'text-teal-600 bg-teal-50 border-teal-200');
+
+                const card = document.createElement('div');
+                card.className = 'p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3';
+                card.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg ${color} border flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-${icon} text-xs"></i>
+                        </span>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-[11px] leading-relaxed">${q.question_zh}</h4>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-2" id="opt-container-${type}">
+                        ${q.options.map(opt => `
+                            <label class="option-card flex items-start gap-2.5 p-3 rounded-lg bg-white cursor-pointer select-none text-[10px] text-slate-700 font-medium leading-relaxed">
+                                <input type="${inputType}" name="quiz-${type}" value="${opt.id}" class="w-3.5 h-3.5 text-indigo-600 focus:ring-indigo-500 rounded border-slate-300 flex-shrink-0 mt-0.5">
+                                <span>${opt.text}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                    <div class="feedback-block hidden p-3 rounded-lg border text-[10px] leading-relaxed"></div>
+                `;
+
+                quizContainer.appendChild(card);
+
+                // Check change event
+                const inputs = card.querySelectorAll(`input[name="quiz-${type}"]`);
+                inputs.forEach(input => {
+                    input.addEventListener('change', () => {
+                        if (isMultiple) {
+                            input.closest('.option-card').classList.toggle('selected', input.checked);
+                        } else {
+                            card.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+                            input.closest('.option-card').classList.add('selected');
+                        }
+                    });
+                });
+            });
+
+            // Append Submit Quiz Button for Part A
+            const submitBtnDiv = document.createElement('div');
+            submitBtnDiv.className = 'flex justify-end';
+            submitBtnDiv.innerHTML = `
+                <button id="submitPostQuizBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl font-bold transition active:scale-95 shadow-md flex items-center justify-center gap-1.5 text-xs">
+                    <i class="fas fa-check-double"></i> 提交主旨测试
+                </button>
+            `;
+            quizContainer.appendChild(submitBtnDiv);
+
+            // Bind action
+            document.getElementById('submitPostQuizBtn').addEventListener('click', () => {
+                let allCorrect = true;
+                
+                quizTypes.forEach(type => {
+                    const q = articleData.post_reading.comprehension_quiz[type];
+                    const container = document.getElementById(`opt-container-${type}`);
+                    const feedbackBlock = container.nextElementSibling;
+                    const inputs = container.querySelectorAll('input');
+                    
+                    let isTypeCorrect = true;
+                    
+                    inputs.forEach(input => {
+                        const optId = input.value;
+                        const opt = q.options.find(o => o.id === optId);
+                        const label = input.closest('.option-card');
+                        
+                        label.classList.remove('correct', 'incorrect', 'selected');
+                        
+                        if (opt.is_correct) {
+                            if (input.checked) {
+                                label.classList.add('correct');
+                            } else {
+                                label.classList.add('correct'); // Highlight missed correct answers
+                                label.style.borderStyle = 'dashed';
+                                isTypeCorrect = false;
+                            }
+                        } else {
+                            if (input.checked) {
+                                label.classList.add('incorrect');
+                                isTypeCorrect = false;
+                            }
+                        }
+                        input.disabled = true;
+                    });
+
+                    feedbackBlock.classList.remove('hidden');
+                    if (isTypeCorrect) {
+                        feedbackBlock.className = "feedback-block p-3 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 text-[10px] leading-relaxed";
+                        feedbackBlock.innerHTML = `<strong>解析正确：</strong> ${q.explanation_zh}`;
+                    } else {
+                        feedbackBlock.className = "feedback-block p-3 rounded-lg border border-rose-200 bg-rose-50 text-rose-800 text-[10px] leading-relaxed";
+                        feedbackBlock.innerHTML = `<strong>答案有误：</strong> ${q.explanation_zh}`;
+                        allCorrect = false;
+                    }
+                });
+
+                document.getElementById('submitPostQuizBtn').disabled = true;
+                document.getElementById('submitPostQuizBtn').className = 'w-full bg-slate-300 text-slate-500 py-2 rounded-xl font-bold cursor-not-allowed flex items-center justify-center gap-1.5 text-xs';
+                
+                if (allCorrect) {
+                    pushCoachDialogue(`文章主旨测试全部正确！太赞了！您的语篇逻辑抓取能力非常强。现在请开始在 Part B 中撰写您的反思摘要，让我们把输入转化为输出！`);
+                } else {
+                    pushCoachDialogue(`主旨测试中有一些错漏，可以仔细阅读解析进行复盘。接下来，请继续完成 Part B 的写作练习，这有助于提升您的写作素养。`);
+                }
+            });
+
+            // Render writing prompt, keywords, and hidden model answer
+            document.getElementById('writingPrompt').textContent = `【写作要求】：${articleData.post_reading.reflection_writing.prompt_zh}`;
+            
+            const kwContainer = document.getElementById('scaffoldKeywordsContainer');
+            kwContainer.innerHTML = articleData.post_reading.reflection_writing.scaffold_keywords.map(kw => `
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full border border-slate-200 text-[10px] font-semibold select-none transition" id="kw-badge-${kw.word}">
+                    <i class="far fa-circle text-[9px]" id="kw-icon-${kw.word}"></i>
+                    <span>${kw.word}</span>
+                </span>
+            `).join('');
+
+            document.getElementById('modelAnswerTH').textContent = articleData.post_reading.reflection_writing.model_answer_th;
+            document.getElementById('modelAnswerZH').textContent = articleData.post_reading.reflection_writing.model_answer_zh;
+
+            // Bind writing textarea checks
+            const textarea = document.getElementById('writingTextarea');
+            textarea.addEventListener('input', checkWritingKeywords);
+        }
+
+        // Live check if student typed requested scaffolding keywords
+        function checkWritingKeywords() {
+            const text = document.getElementById('writingTextarea').value;
+            document.getElementById('writingCharCount').textContent = text.length;
+
+            const keywords = articleData.post_reading.reflection_writing.scaffold_keywords;
+            keywords.forEach(kw => {
+                const badge = document.getElementById(`kw-badge-${kw.word}`);
+                const icon = document.getElementById(`kw-icon-${kw.word}`);
+                
+                if (text.includes(kw.word)) {
+                    badge.className = "inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-300 text-[10px] font-semibold select-none transition";
+                    icon.className = "fas fa-check-circle text-emerald-500 text-[9px]";
+                } else {
+                    badge.className = "inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full border border-slate-200 text-[10px] font-semibold select-none transition";
+                    icon.className = "far fa-circle text-[9px]";
+                }
+            });
+        }
+
+        // ==========================================
+        // Event Listeners Configuration
+        // ==========================================
+        function setupGlobalEventListeners() {
+            
+            // Tab Timeline Switching
+            document.getElementById('step1TimelineBtn').addEventListener('click', () => switchStep(1));
+            document.getElementById('step2TimelineBtn').addEventListener('click', () => {
+                if (isPreReadingQuizAnswered) switchStep(2);
+                else showToast("请先完成步骤一的读前预测");
+            });
+            document.getElementById('step3TimelineBtn').addEventListener('click', () => {
+                if (unlockedSectionIndex >= articleData.sections.length) switchStep(3);
+                else showToast("请在步骤二中精读完全部段落，完成导读提问");
+            });
+
+            // Action Buttons
+            document.getElementById('completeCard1Btn').addEventListener('click', () => {
+                const card2 = document.getElementById('step1Card2');
+                const lock2 = document.getElementById('step1Card2Lock');
+                const badge1 = document.getElementById('step1Card1Badge');
+                
+                card2.classList.remove('step-inactive');
+                if (lock2) lock2.classList.add('hidden');
+                
+                badge1.innerHTML = '<i class="fas fa-check text-[9px]"></i>';
+                badge1.className = 'w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold';
+                
+                document.getElementById('card1StatusBadge').innerHTML = '<i class="fas fa-check-circle"></i> 已学习';
+                document.getElementById('card1StatusBadge').className = 'text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded flex items-center gap-1';
+                
+                const badge2 = document.getElementById('step1Card2Badge');
+                badge2.className = 'w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold';
+
+                card2.scrollIntoView({ behavior: 'smooth' });
+                showToast("背景知识学习完成，生词表已解锁！");
+                pushCoachDialogue("太棒了！现在<strong>生词表卡片</strong>已解锁，请在下方点击各个分类标签，预习这篇课文涵盖的各级词汇。");
+            });
+
+            document.getElementById('completeCard2Btn').addEventListener('click', () => {
+                const card3 = document.getElementById('step1Card3');
+                const lock3 = document.getElementById('step1Card3Lock');
+                const badge2 = document.getElementById('step1Card2Badge');
+                
+                card3.classList.remove('step-inactive');
+                if (lock3) lock3.classList.add('hidden');
+                
+                badge2.innerHTML = '<i class="fas fa-check text-[9px]"></i>';
+                badge2.className = 'w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold';
+                
+                const badge3 = document.getElementById('step1Card3Badge');
+                badge3.className = 'w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold';
+
+                initS1Flashcards();
+
+                card3.scrollIntoView({ behavior: 'smooth' });
+                showToast("生词表学习完毕，闪卡复习已解锁！");
+                pushCoachDialogue("非常棒！现在<strong>词汇闪卡活动</strong>已解锁，请点击卡片翻转自我测试，并逐步点击下一个完成复习。");
+            });
+
+            document.getElementById('s1FlashcardElement').addEventListener('click', () => {
+                const front = document.getElementById('s1fcFront');
+                const back = document.getElementById('s1fcBack');
+                if (s1fcFlipped) {
+                    front.classList.remove('hidden');
+                    back.classList.add('hidden');
+                    s1fcFlipped = false;
+                } else {
+                    front.classList.add('hidden');
+                    back.classList.remove('hidden');
+                    s1fcFlipped = true;
+                }
+            });
+
+            document.getElementById('s1fcPrevBtn').addEventListener('click', () => {
+                if (s1fcIndex > 0) {
+                    s1fcIndex--;
+                    renderS1Flashcard();
+                } else {
+                    showToast("这是第一张闪卡");
+                }
+            });
+
+            document.getElementById('s1fcNextBtn').addEventListener('click', () => {
+                if (s1fcIndex < s1VocabDeck.length - 1) {
+                    s1fcIndex++;
+                    renderS1Flashcard();
+                } else {
+                    showToast("已至最后一张闪卡");
+                }
+            });
+
+            document.getElementById('completeCard3Btn').addEventListener('click', () => {
+                const card4 = document.getElementById('step1Card4');
+                const lock4 = document.getElementById('step1Card4Lock');
+                const badge3 = document.getElementById('step1Card3Badge');
+                
+                card4.classList.remove('step-inactive');
+                if (lock4) lock4.classList.add('hidden');
+                
+                badge3.innerHTML = '<i class="fas fa-check text-[9px]"></i>';
+                badge3.className = 'w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold';
+                
+                const badge4 = document.getElementById('step1Card4Badge');
+                badge4.className = 'w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold';
+
+                card4.scrollIntoView({ behavior: 'smooth' });
+                showToast("闪卡复习完成，读前预测已解锁！");
+                pushCoachDialogue("最后一步！请在下方完成<strong>读前预测问题</strong>。完成后即可解锁正式阅读！");
+            });
+
+            document.getElementById('startReadingBtn').addEventListener('click', () => {
+                switchStep(2);
+            });
+            document.getElementById('goToStep3Btn').addEventListener('click', () => {
+                switchStep(3);
+            });
+
+            // Radar Toggle Control
+            const radarCheckbox = document.getElementById('radarToggle');
+            radarCheckbox.addEventListener('change', () => {
+                const body = document.body;
+                if (radarCheckbox.checked) {
+                    body.classList.add('radar-active');
+                    showToast("信号词雷达已开启，突出逻辑关联");
+                } else {
+                    body.classList.remove('radar-active');
+                    showToast("信号词雷达已关闭");
+                }
+            });
+            // Initial class application
+            if (radarCheckbox.checked) document.body.classList.add('radar-active');
+
+            // Translation Toggle
+            document.getElementById('translationToggle').addEventListener('change', () => {
+                toggleTranslationDisplay();
+                showToast(document.getElementById('translationToggle').checked ? "开启中文翻译对照" : "隐藏中文对照");
+            });
+
+            // Reset Journey
+            document.getElementById('resetJourneyBtn').addEventListener('click', () => {
+                if (confirm("确定要重置当前的学习进度吗？这会恢复锁定第一段并清除本节测验记录。")) {
+                    isPreReadingQuizAnswered = false;
+                    unlockedSectionIndex = 0;
+                    pinnedSentenceId = null;
+                    document.querySelectorAll('.thai-sentence').forEach(el => el.classList.remove('pinned'));
+                    correctQuizzesCount = 0;
+                    startTime = new Date();
+                    
+                    // Reset UI
+                    document.getElementById('predFeedback').classList.add('hidden');
+                    document.getElementById('modelComparisonBlock').classList.add('hidden');
+                    document.getElementById('completionDashboard').classList.add('hidden');
+                    document.getElementById('writingTextarea').value = '';
+                    document.getElementById('writingTextarea').disabled = false;
+                    document.getElementById('writingCharCount').textContent = '0';
+                    
+                    const submitWritingBtn = document.getElementById('submitWritingBtn');
+                    submitWritingBtn.disabled = false;
+                    submitWritingBtn.className = 'w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl font-bold transition active:scale-95 shadow-md shadow-emerald-100 flex items-center justify-center gap-1.5 text-sm';
+
+                    const startBtn = document.getElementById('startReadingBtn');
+                    startBtn.setAttribute('disabled', 'true');
+                    startBtn.innerHTML = '锁定中，请先回答预测问题 <i class="fas fa-arrow-right"></i>';
+                    startBtn.className = 'bg-slate-200 text-slate-400 px-6 py-2.5 rounded-xl font-bold cursor-not-allowed text-xs flex items-center gap-1.5';
+
+                    // Reset Step 1 Cards lock states
+                    const lock2 = document.getElementById('step1Card2Lock');
+                    const lock3 = document.getElementById('step1Card3Lock');
+                    const lock4 = document.getElementById('step1Card4Lock');
+                    
+                    const card2 = document.getElementById('step1Card2');
+                    const card3 = document.getElementById('step1Card3');
+                    const card4 = document.getElementById('step1Card4');
+
+                    card2.classList.add('step-inactive');
+                    card3.classList.add('step-inactive');
+                    card4.classList.add('step-inactive');
+
+                    if (lock2) lock2.classList.remove('hidden');
+                    if (lock3) lock3.classList.remove('hidden');
+                    if (lock4) lock4.classList.remove('hidden');
+
+                    // Reset badges
+                    document.getElementById('step1Card1Badge').innerHTML = '1';
+                    document.getElementById('step1Card1Badge').className = 'w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold';
+                    document.getElementById('step1Card2Badge').innerHTML = '2';
+                    document.getElementById('step1Card2Badge').className = 'w-5 h-5 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[10px] font-bold';
+                    document.getElementById('step1Card3Badge').innerHTML = '3';
+                    document.getElementById('step1Card3Badge').className = 'w-5 h-5 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[10px] font-bold';
+                    document.getElementById('step1Card4Badge').innerHTML = '4';
+                    document.getElementById('step1Card4Badge').className = 'w-5 h-5 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[10px] font-bold';
+
+                    document.getElementById('card1StatusBadge').innerHTML = '<i class="fas fa-unlock"></i> 进行中';
+                    document.getElementById('card1StatusBadge').className = 'text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded flex items-center gap-1';
+
+                    // Re-render S1 vocabulary list
+                    s1VocabDeck = getPreReadingVocabDeck();
+                    s1ActiveVocabTab = 'all';
+                    renderS1VocabList();
+                    renderPreReadingQuiz();
+                    switchStep(1);
+                    showToast("学习进度已成功重置");
+                }
+            });
+
+            // Writing submit comparison
+            document.getElementById('submitWritingBtn').addEventListener('click', async () => {
+                const text = document.getElementById('writingTextarea').value.trim();
+                if (!text) {
+                    showToast("请输入您的反思内容再提交");
+                    return;
+                }
+
+                // Lock writing elements
+                document.getElementById('writingTextarea').disabled = true;
+                document.getElementById('submitWritingBtn').disabled = true;
+                document.getElementById('submitWritingBtn').className = 'w-full bg-slate-300 text-slate-500 py-2.5 rounded-xl font-bold cursor-not-allowed flex items-center justify-center gap-1.5 text-sm';
+
+                // Reveal Model Comparison
+                document.getElementById('modelComparisonBlock').classList.remove('hidden');
+
+                // Render metrics dashboard
+                const endTime = new Date();
+                const totalMins = Math.ceil((endTime - startTime) / 60000);
+                
+                document.getElementById('dashTime').textContent = `${totalMins} 分钟`;
+                document.getElementById('dashQueries').textContent = `${queryCounter} 个`;
+                
+                const accuracy = Math.round((correctQuizzesCount / (articleData.sections.length + 1)) * 100);
+                document.getElementById('dashAccuracy').textContent = `${accuracy}%`;
+                
+                document.getElementById('completionDashboard').classList.remove('hidden');
+                
+                // Scroll to dashboard
+                document.getElementById('completionDashboard').scrollIntoView({ behavior: 'smooth' });
+
+                pushCoachDialogue(`祝贺您成功提交了写作总结！我已为您开启了<strong>“参考范文与评测对照”</strong>，请结合您刚才输入时触发的关键词（如 จิตสาธารณะ, ขออนุญาต, ฟุ่มเฟือย, สิทธิ）来检查表达。继续保持！`);
+            });
+
+            // Flashcard deck triggering
+            document.getElementById('toggleFlashcardDeckBtn').addEventListener('click', triggerFlashcards);
+            document.getElementById('closeFlashcardBtn').addEventListener('click', () => {
+                document.getElementById('flashcardDialog').close();
+            });
+
+            // Vocab Diary clearing
+            document.getElementById('clearDiaryBtn').addEventListener('click', () => {
+                if (confirm("确定要删除生词本日记中所有的单词记录吗？此操作不可恢复。")) {
+                    clearAllDiary();
+                }
+            });
+        }
+
+        // Stepped Wizard switcher logic (Stable grid divisions)
+        function switchStep(stepNum) {
+            currentStep = stepNum;
+            
+            // Timeline header bar alignment
+            const timelineProgress = document.getElementById('timelineProgressBar');
+            timelineProgress.style.width = stepNum === 1 ? '33%' : (stepNum === 2 ? '66%' : '100%');
+
+            // Header timeline styling toggle
+            const s1Btn = document.getElementById('step1TimelineBtn');
+            const s2Btn = document.getElementById('step2TimelineBtn');
+            const s3Btn = document.getElementById('step3TimelineBtn');
+            const s1Icon = document.getElementById('step1TimelineIcon');
+            const s2Icon = document.getElementById('step2TimelineIcon');
+            const s3Icon = document.getElementById('step3TimelineIcon');
+
+            [s1Btn, s2Btn, s3Btn].forEach(btn => btn.className = 'flex items-center gap-2 cursor-pointer transition text-slate-400 font-medium');
+            [s1Icon, s2Icon, s3Icon].forEach((icon, idx) => {
+                icon.className = 'w-7 h-7 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs';
+                icon.innerHTML = idx + 1;
+            });
+
+            if (stepNum === 1) {
+                s1Btn.className = 'flex items-center gap-2 cursor-pointer transition text-indigo-600 font-bold';
+                s1Icon.className = 'w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs';
+            } else if (stepNum === 2) {
+                s1Btn.className = 'flex items-center gap-2 cursor-pointer transition text-emerald-600 font-semibold';
+                s1Icon.className = 'w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs';
+                s1Icon.innerHTML = '<i class="fas fa-check text-[10px]"></i>';
+
+                s2Btn.className = 'flex items-center gap-2 cursor-pointer transition text-indigo-600 font-bold';
+                s2Icon.className = 'w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs';
+                
+                // Lazy render Step 2 contents
+                renderDuringReading();
+                updateReadingProgressBadge();
+            } else if (stepNum === 3) {
+                s1Btn.className = 'flex items-center gap-2 cursor-pointer transition text-emerald-600 font-semibold';
+                s1Icon.className = 'w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs';
+                s1Icon.innerHTML = '<i class="fas fa-check text-[10px]"></i>';
+
+                s2Btn.className = 'flex items-center gap-2 cursor-pointer transition text-emerald-600 font-semibold';
+                s2Icon.className = 'w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs';
+                s2Icon.innerHTML = '<i class="fas fa-check text-[10px]"></i>';
+
+                s3Btn.className = 'flex items-center gap-2 cursor-pointer transition text-indigo-600 font-bold';
+                s3Icon.className = 'w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs';
+
+                // Render full article inside left panel
+                renderFullArticleForStep3();
+                // Render middle panels exercises
+                renderPostReading();
+            }
+
+            // Toggle Left Workspace visibility
+            document.getElementById('step1Workspace').classList.toggle('hidden', stepNum !== 1);
+            document.getElementById('step2Workspace').classList.toggle('hidden', stepNum !== 2);
+            document.getElementById('step3ArticleContainer').classList.toggle('hidden', stepNum !== 3);
+
+            // Toggle Middle Workspace visibility
+            document.getElementById('step1MiddlePlaceholder').classList.toggle('hidden', stepNum !== 1);
+            document.getElementById('sectionQuizSidebar').classList.toggle('hidden', stepNum !== 2);
+            document.getElementById('step3Workspace').classList.toggle('hidden', stepNum !== 3);
+
+            // Toggle Sentence Helper visibility
+            document.getElementById('sentenceHelper').classList.toggle('hidden', stepNum === 1);
+
+            // Render current step vocabulary glossary
+            renderActiveDictWords();
+
+            // Coach Interactive Dialogue feedback
+            updateCoachDialogueForStep(stepNum);
+        }
+
+        function updateCoachDialogueForStep(stepNum) {
+            const tipEl = document.getElementById('coachTipText');
+            if (stepNum === 1) {
+                pushCoachDialogue(`请先在读前预热卡片中熟悉大背景与核心词汇，然后完成预测选择题以解锁课文精读。`);
+                tipEl.textContent = "点击重点生词可开启语音合成示范发音。";
+            } else if (stepNum === 2) {
+                pushCoachDialogue(`现在我们处于<strong>精读与导读模块</strong>。请逐段默读，点击句子可以跟读。答对中间导读栏的提问即可解锁下一段。`);
+                tipEl.textContent = "在精读界面，开启“对照翻译”可以辅助理顺句意；划选任何未翻译单词可自动弹出查词保存选项。";
+            } else if (stepNum === 3) {
+                pushCoachDialogue(`做得非常好！您已经顺利读完全文。左侧展示了占屏幕一半宽度的<strong>完整原文</strong>以供参考。请在中间的导读栏中完成主旨测验与反思摘要撰写。`);
+                tipEl.textContent = "输入提示词后，导读栏下方的指示卡会自动转为绿色代表您已将核心表达正确运用！";
+            }
+        }
+
+        function pushCoachDialogue(htmlText) {
+            const container = document.getElementById('coachDialogue');
+            container.innerHTML = `
+                <div class="flex gap-2.5 items-start animate-fade-in-down">
+                    <div class="bg-indigo-900/50 border border-indigo-800/60 p-3 rounded-2xl text-xs leading-relaxed text-slate-200">
+                        ${htmlText}
+                    </div>
+                </div>
+            `;
+        }
+
+        // ==========================================
+        // Active Selection Dictionary Popover
+        // ==========================================
+        function setupSelectionTooltip() {
+            const targetArea = document.getElementById('leftPanel');
+            const actionBar = document.getElementById('selectionActionBar');
+            let selectedText = '';
+
+            document.addEventListener('selectionchange', () => {
+                const selection = window.getSelection();
+                const text = selection.toString().trim();
+                
+                // Filter inside container and ensure adequate text length
+                if (text && text.length > 0 && text.length < 30) {
+                    const range = selection.getRangeAt(0);
+                    if (targetArea.contains(range.commonAncestorContainer)) {
+                        selectedText = text;
+                        document.getElementById('selectedTextSpan').textContent = `"${text}"`;
+                        
+                        const rect = range.getBoundingClientRect();
+                        actionBar.style.left = `${rect.left + window.scrollX + (rect.width/2) - 100}px`;
+                        actionBar.style.top = `${rect.top + window.scrollY - 45}px`;
+                        actionBar.classList.remove('hidden');
+                        actionBar.classList.add('flex');
+                        return;
+                    }
+                }
+                actionBar.classList.add('hidden');
+                actionBar.classList.remove('flex');
+            });
+
+            // Query Selection Dictionary Popover trigger
+            document.getElementById('querySelectionBtn').addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                if (selectedText) {
+                    const word = selectedText.trim();
+                    // Search in miniDict
+                    const dictEntry = miniDict[word] || {
+                        thai: word,
+                        ipa: "/ /",
+                        pos: "n./v.",
+                        zh: "自定义选择词意查询（点击“添加笔记”可直接存入生词日记）",
+                        en: "Custom selection dictionary query result"
+                    };
+
+                    // Add to search queries history (no duplicate)
+                    const exists = queryHistory.find(q => q.thai === dictEntry.thai);
+                    if (!exists) {
+                        queryHistory.unshift(dictEntry);
+                        renderQueryHistory();
+                    }
+
+                    // Show vocabulary popover tooltip at selection bar position
+                    const tooltip = document.getElementById('vocabTooltip');
+                    document.getElementById('ttThai').textContent = dictEntry.thai;
+                    document.getElementById('ttPos').textContent = dictEntry.pos;
+                    document.getElementById('ttIpa').textContent = dictEntry.ipa;
+                    document.getElementById('ttZh').textContent = dictEntry.zh;
+                    document.getElementById('ttEn').textContent = dictEntry.en;
+
+                    // Positioning
+                    tooltip.style.left = actionBar.style.left;
+                    tooltip.style.top = `${parseFloat(actionBar.style.top) + 40}px`;
+                    tooltip.classList.remove('hidden');
+
+                    // Save action clone
+                    const saveBtn = document.getElementById('ttSaveBtn');
+                    const newSaveBtn = saveBtn.cloneNode(true);
+                    saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+                    newSaveBtn.addEventListener('click', async () => {
+                        await saveWordToDiary(dictEntry.thai, dictEntry.ipa, dictEntry.pos, dictEntry.zh, dictEntry.en, '');
+                        tooltip.classList.add('hidden');
+                    });
+
+                    actionBar.classList.add('hidden');
+                    actionBar.classList.remove('flex');
+                    window.getSelection().removeAllRanges();
+                }
+            });
+
+            // Save selection action click
+            document.getElementById('addSelectionToDiaryBtn').addEventListener('mousedown', async (e) => {
+                e.preventDefault();
+                if (selectedText) {
+                    await saveWordToDiary(selectedText, '/ /', 'v./n.', '用户自定义生词', 'User custom look up', '');
+                    window.getSelection().removeAllRanges();
+                    actionBar.classList.add('hidden');
+                }
+            });
+
+            // Speak selection action click
+            document.getElementById('speakSelectionBtn').addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                if (selectedText) {
+                    speakThaiText(selectedText);
+                }
+            });
+        }
+
+        // ==========================================
+        // Smart Dictionary rendering & tab switcher
+        // ==========================================
+        window.switchDictTab = function(tab) {
+            const btnActive = document.getElementById('dictTabActive');
+            const btnQueries = document.getElementById('dictTabQueries');
+            const divActive = document.getElementById('dictContentActive');
+            const divQueries = document.getElementById('dictContentQueries');
+            
+            if (tab === 'active') {
+                btnActive.className = 'px-2 py-0.5 rounded bg-sky-50 text-sky-700 font-bold';
+                btnQueries.className = 'px-2 py-0.5 rounded bg-slate-100 text-slate-500 font-medium';
+                divActive.classList.remove('hidden');
+                divQueries.classList.add('hidden');
+            } else {
+                btnActive.className = 'px-2 py-0.5 rounded bg-slate-100 text-slate-500 font-medium';
+                btnQueries.className = 'px-2 py-0.5 rounded bg-sky-50 text-sky-700 font-bold';
+                divActive.classList.add('hidden');
+                divQueries.classList.remove('hidden');
+            }
+        };
+
+        window.renderActiveDictWords = function() {
+            const container = document.getElementById('dictContentActive');
+            
+            let words = [];
+            if (currentStep === 1) {
+                words = articleData.pre_reading.vocab_preview.map(v => ({
+                    thai: v.word, ipa: v.ipa, pos: 'n.', zh: v.zh, en: v.en
+                }));
+            } else if (currentStep === 2) {
+                const secIndex = Math.min(unlockedSectionIndex, articleData.sections.length - 1);
+                const glossary = articleData.sections[secIndex].vocabulary_glossary;
+                words = Object.values(glossary);
+            } else if (currentStep === 3) {
+                const wordMap = {};
+                articleData.sections.forEach(sec => {
+                    Object.values(sec.vocabulary_glossary).forEach(v => {
+                        wordMap[v.thai] = v;
+                    });
+                });
+                words = Object.values(wordMap);
+            }
+
+            if (words.length === 0) {
+                container.innerHTML = `<div class="text-center text-slate-400 py-6 text-[10px]">当前暂无段落关键词</div>`;
+                return;
+            }
+
+            container.innerHTML = words.map(w => `
+                <div class="bg-slate-50 border border-slate-200/60 p-3 rounded-xl flex justify-between items-center hover:bg-slate-100/50 transition gap-2">
+                    <div class="min-w-0 flex-grow">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-bold text-slate-800 font-thai tracking-wide cursor-pointer hover:text-indigo-600 truncate font-thai-clickable" onclick="speakThaiText('${w.thai}')">
+                                ${w.thai} <i class="fas fa-volume-up text-[9px] text-slate-400"></i>
+                            </span>
+                            <span class="text-[8px] bg-slate-200 text-slate-600 px-1 py-0.5 rounded font-bold">${w.pos || 'n.'}</span>
+                        </div>
+                        <div class="text-[9px] font-mono text-slate-400">${w.ipa}</div>
+                        <div class="text-[10px] text-slate-500 font-medium truncate mt-0.5" title="${w.zh}">${w.zh}</div>
+                    </div>
+                    <button class="bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white p-1.5 rounded-lg active:scale-90 transition flex-shrink-0" onclick="saveWordToDiary('${w.thai}', '${w.ipa}', '${w.pos || 'n.'}', '${w.zh}', '${w.en}', '')" title="保存到生词本">
+                        <i class="fas fa-plus text-[10px]"></i>
+                    </button>
+                </div>
+            `).join('');
+        };
+
+        window.renderQueryHistory = function() {
+            const container = document.getElementById('dictContentQueries');
+            const countEl = document.getElementById('queryHistoryCount');
+            countEl.textContent = queryHistory.length;
+
+            if (queryHistory.length === 0) {
+                container.innerHTML = `<div class="text-center text-slate-400 py-6 text-[10px]" id="emptyQueriesState">暂无划词查询记录</div>`;
+                return;
+            }
+
+            container.innerHTML = queryHistory.map(w => `
+                <div class="bg-slate-50 border border-slate-200/60 p-3 rounded-xl flex justify-between items-center hover:bg-slate-100/50 transition gap-2">
+                    <div class="min-w-0 flex-grow">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-bold text-slate-800 font-thai tracking-wide cursor-pointer hover:text-indigo-600 truncate font-thai-clickable" onclick="speakThaiText('${w.thai}')">
+                                ${w.thai} <i class="fas fa-volume-up text-[9px] text-slate-400"></i>
+                            </span>
+                            <span class="text-[8px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-bold">${w.pos}</span>
+                        </div>
+                        <div class="text-[9px] font-mono text-slate-400">${w.ipa}</div>
+                        <div class="text-[10px] text-slate-500 font-medium truncate mt-0.5" title="${w.zh}">${w.zh}</div>
+                    </div>
+                    <button class="bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white p-1.5 rounded-lg active:scale-90 transition flex-shrink-0" onclick="saveWordToDiary('${w.thai}', '${w.ipa}', '${w.pos}', '${w.zh}', '${w.en}', '')" title="保存到生词本">
+                        <i class="fas fa-plus text-[10px]"></i>
+                    </button>
+                </div>
+            `).join('');
+        };
+
+        // ==========================================
+        // Sentence Helper pinning logic
+        // ==========================================
+        window.togglePinSentence = function(sid) {
+            const allSentences = document.querySelectorAll('.thai-sentence');
+            
+            if (pinnedSentenceId === sid) {
+                pinnedSentenceId = null;
+                allSentences.forEach(el => el.classList.remove('pinned'));
+                
+                const shContent = document.getElementById('shContent');
+                shContent.innerHTML = `
+                    <div class="text-center text-slate-400 py-4 text-[10px] select-none">
+                        <i class="fas fa-mouse-pointer text-xl mb-1.5 block opacity-40"></i>
+                        将鼠标悬停在左侧任意句子上<br>这里将实时展示该句子的重点难词解析
+                    </div>
+                `;
+                showToast("已取消固定句子");
+            } else {
+                pinnedSentenceId = sid;
+                allSentences.forEach(el => {
+                    if (el.dataset.sid === sid) {
+                        el.classList.add('pinned');
+                    } else {
+                        el.classList.remove('pinned');
+                    }
+                });
+                
+                updateSentenceHelper(sid);
+                showToast(`已固定句子 [${sid}] 的难词解析`);
+            }
+        };
+
+        // ==========================================
+        // Sentence Helper view updater
+        // ==========================================
+        window.updateSentenceHelper = function(sentenceId) {
+            const shContent = document.getElementById('shContent');
+            
+            // Find sentence object in articleData
+            let foundSentence = null;
+            for (const sec of articleData.sections) {
+                foundSentence = sec.sentences.find(s => s.sentence_id === sentenceId);
+                if (foundSentence) break;
+            }
+
+            if (!foundSentence || !foundSentence.glossary || foundSentence.glossary.length === 0) {
+                shContent.innerHTML = `
+                    <div class="text-center text-slate-400 py-6 text-[10px] select-none">
+                        当前句子暂无难词解析
+                    </div>
+                `;
+                return;
+            }
+
+            shContent.innerHTML = `
+                <div class="flex justify-between items-center bg-slate-50 border border-slate-200/60 text-slate-500 px-2.5 py-1.5 rounded-xl font-bold mb-2">
+                    <span class="truncate">句子 [${foundSentence.sentence_id}] 难词列表</span>
+                    <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 transition active:scale-95 flex-shrink-0" onclick="speakThaiText('${foundSentence.thai.replace(/'/g, "\\'")}')">
+                        <i class="fas fa-volume-up"></i> 播放此句
+                    </button>
+                </div>
+                <div class="space-y-2.5">
+                    ${foundSentence.glossary.map(w => `
+                        <div class="bg-indigo-50/20 border border-indigo-100/50 p-2.5 rounded-xl flex justify-between items-start hover:bg-indigo-50/40 transition gap-2">
+                            <div class="min-w-0 flex-grow">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-xs font-bold text-slate-800 font-thai tracking-wide cursor-pointer hover:text-indigo-600 font-thai-clickable" onclick="speakThaiText('${w.word}')">
+                                        ${w.word} <i class="fas fa-volume-up text-[8px] text-slate-400"></i>
+                                    </span>
+                                    <span class="text-[8px] bg-indigo-50 text-indigo-700 px-1 py-0.5 rounded font-bold">${w.pos || 'n.'}</span>
+                                </div>
+                                <div class="text-[9px] font-mono text-slate-400">${w.ipa}</div>
+                                <div class="text-[10px] text-slate-600 font-semibold mt-1" title="${w.zh}">${w.zh}</div>
+                            </div>
+                            <button class="bg-white hover:bg-indigo-600 text-slate-400 hover:text-white p-1 rounded-md active:scale-90 transition border border-slate-200 flex-shrink-0" onclick="saveWordToDiary('${w.word}', '${w.ipa}', '${w.pos || 'n.'}', '${w.zh}', '${w.en}', '')" title="保存至日记本">
+                                <i class="fas fa-plus text-[8px]"></i>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        };
+
+        // ==========================================
+        // Flashcard Review Module Logic
+        // ==========================================
+        let flashcardsData = [];
+        let fcCurrentIndex = 0;
+        let isCardFlipped = false;
+
+        async function triggerFlashcards() {
+            flashcardsData = await getAllDiaryRecords();
+            if (flashcardsData.length === 0) {
+                showToast("生词本还没有任何生词，请划词添加后再来复习吧");
+                return;
+            }
+
+            fcCurrentIndex = 0;
+            isCardFlipped = false;
+            document.getElementById('flashcardDialog').showModal();
+            renderFlashcard();
+        }
+
+        function renderFlashcard() {
+            const card = flashcardsData[fcCurrentIndex];
+            document.getElementById('fcCounter').textContent = `${fcCurrentIndex + 1} / ${flashcardsData.length}`;
+
+            // Reset flip card state
+            const front = document.getElementById('flashcardFront');
+            const back = document.getElementById('flashcardBack');
+            
+            front.classList.remove('hidden');
+            back.classList.add('hidden');
+            isCardFlipped = false;
+
+            document.getElementById('fcWord').textContent = card.word;
+            document.getElementById('fcIpa').textContent = card.ipa || '/ /';
+            document.getElementById('fcPos').textContent = card.pos || 'n.';
+            document.getElementById('fcZh').textContent = card.zh || '未录入释义';
+            document.getElementById('fcEn').textContent = card.en || 'No english gloss';
+
+            // Speech pronounce on card show
+            speakThaiText(card.word);
+        }
+
+        // Card click flipping transition
+        document.getElementById('flashcardElement').addEventListener('click', () => {
+            const front = document.getElementById('flashcardFront');
+            const back = document.getElementById('flashcardBack');
+            
+            if (isCardFlipped) {
+                front.classList.remove('hidden');
+                back.classList.add('hidden');
+                isCardFlipped = false;
+            } else {
+                front.classList.add('hidden');
+                back.classList.remove('hidden');
+                isCardFlipped = true;
+            }
+        });
+
+        // Flashcard navigator buttons
+        document.getElementById('fcPrevBtn').addEventListener('click', () => {
+            if (fcCurrentIndex > 0) {
+                fcCurrentIndex--;
+                renderFlashcard();
+            } else {
+                showToast("这已经是第一张卡片了");
+            }
+        });
+
+        document.getElementById('fcNextBtn').addEventListener('click', () => {
+            if (fcCurrentIndex < flashcardsData.length - 1) {
+                fcCurrentIndex++;
+                renderFlashcard();
+            } else {
+                showToast("闪卡复习已全部完成！");
+                document.getElementById('flashcardDialog').close();
+            }
+        });
+
+        // ==========================================
+        // Sidebar Diary View Renderer
+        // ==========================================
+        async function updateDiaryUI() {
+            const records = await getAllDiaryRecords();
+            document.getElementById('vocabCount').textContent = records.length;
+
+            const emptyState = document.getElementById('emptyDiaryState');
+            const diaryContainer = document.getElementById('diaryContainer');
+            
+            // Filter elements to display
+            const listElements = diaryContainer.querySelectorAll('.diary-word-item');
+            listElements.forEach(el => el.remove());
+
+            if (records.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            
+            records.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'diary-word-item bg-slate-50 border border-slate-200 rounded-xl p-3 flex justify-between items-center hover:bg-slate-100/50 transition gap-2.5';
+                card.innerHTML = `
+                    <div class="flex-grow min-w-0">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-extrabold text-slate-800 font-thai tracking-wide cursor-pointer hover:text-indigo-600 truncate flex items-center gap-1.5 font-thai-clickable" onclick="speakThaiText('${item.word}')">
+                                ${item.word}
+                                <i class="fas fa-volume-up text-[9px] text-slate-400"></i>
+                            </span>
+                            <span class="text-[8px] bg-slate-200 text-slate-600 px-1 py-0.5 rounded font-bold">${item.pos || 'n.'}</span>
+                        </div>
+                        <div class="text-[9px] font-mono text-slate-400">${item.ipa}</div>
+                        <div class="text-[11px] text-slate-600 font-medium truncate mt-1" title="${item.zh}">${item.zh}</div>
+                    </div>
+                    <button class="delete-word-btn text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition flex-shrink-0" data-id="${item.id}">
+                        <i class="fas fa-trash-alt text-[10px]"></i>
+                    </button>
+                `;
+                
+                // Bind delete event
+                card.querySelector('.delete-word-btn').addEventListener('click', async (e) => {
+                    const id = parseInt(e.currentTarget.dataset.id, 10);
+                    await deleteWordFromDiary(id);
+                });
+
+                diaryContainer.appendChild(card);
+            });
+        }
+
+        // ==========================================
+        // Helper UI Toast Alert
+        // ==========================================
+        function showToast(message) {
+            let toast = document.getElementById('appToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'appToast';
+                toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-5 py-3 rounded-full text-xs font-bold shadow-2xl z-50 flex items-center gap-2 transition-all duration-300 opacity-0 translate-y-2 pointer-events-none';
+                document.body.appendChild(toast);
+            }
+            
+            toast.innerHTML = `<i class="fas fa-info-circle text-indigo-400"></i> ${message}`;
+            toast.classList.remove('opacity-0', 'translate-y-2', 'pointer-events-none');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2', 'pointer-events-none');
+                toast.classList.remove('opacity-100', 'translate-y-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

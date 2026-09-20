@@ -1,0 +1,2819 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>vCourse.ThaiNotes 后台管理配置</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS (via CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Sarabun', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: radial-gradient(circle at top right, #1a1b35 0%, #0c0e17 100%);
+            min-height: 100vh;
+            color: #f1f5f9;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .accent-gradient {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.3);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.5);
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+    <!-- Header -->
+    <header class="glass-panel border-b border-slate-800 px-6 py-4 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-xl accent-gradient flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-indigo-500/20">T</div>
+            <div>
+                <h1 class="text-lg font-bold leading-none tracking-tight">vCourse.ThaiNotes</h1>
+                <span class="text-xs text-indigo-400 font-semibold uppercase tracking-wider">后台配置与管理中心</span>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-6">
+            <!-- Connection Status -->
+            <div id="connection-status" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
+                <span>正在连接后台...</span>
+            </div>
+            
+            <!-- Quick links -->
+            <nav class="flex items-center gap-2">
+                <a href="/Pages/consoleHFWords.html" class="px-4 py-2 text-sm text-purple-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-purple-500/20">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    <span>高频词管理</span>
+                </a>
+                <a href="/Pages/consoleNotes.html" class="px-4 py-2 text-sm text-amber-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-amber-500/20">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    <span>课程笔记管理</span>
+                </a>
+                <a href="/Pages/consoleSentence.html" class="px-4 py-2 text-sm text-blue-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-blue-500/20">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    <span>句型管理</span>
+                </a>
+                <a href="/Pages/consoleAnki.html" class="px-4 py-2 text-sm text-violet-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-violet-500/20">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    <span>每日错词管理</span>
+                </a>
+                <a href="/Pages/consoleCourseware.html" class="px-4 py-2 text-sm text-sky-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-sky-500/20">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
+                    <span>课件讲义管理</span>
+                </a>
+                <a href="/Pages/consoleCourseStudio.html" class="px-4 py-2 text-sm text-indigo-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-indigo-500/20">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                    <span>课件配置工作室</span>
+                </a>
+                <a href="/Pages/consoleCourseMgt.html" class="px-4 py-2 text-sm text-indigo-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-indigo-500/20">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    <span>科目课时管理</span>
+                </a>
+                <button type="button" id="prompt-btn" class="px-4 py-2 text-sm text-indigo-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-indigo-500/20">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span>Prompt 管理</span>
+                </button>
+                <a href="http://192.168.1.120:3002/Pages/appCourseReview.html" target="_blank" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5">
+                    <span>打开应用入口</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                </a>
+                <button type="button" onclick="assignReviewTask()" class="px-4 py-2 text-sm text-sky-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-sky-500/20">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span>布置任务</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex-grow flex overflow-hidden min-h-0">
+        <!-- Sidebar: Vocab List -->
+        <aside class="w-80 border-r border-slate-800 flex flex-col bg-slate-950/20 shrink-0">
+            <!-- Search & Filters -->
+            <div class="p-4 border-b border-slate-800 space-y-3">
+                <div class="grid grid-cols-5 gap-0.5 p-1 bg-slate-900/60 border border-slate-800 rounded-lg mb-2">
+                    <button id="mode-vocab-btn" onclick="switchMode('vocab')" type="button" class="py-1 text-[10px] font-bold rounded-md bg-indigo-500 text-white shadow transition-all">单词</button>
+                    <button id="mode-grammar-btn" onclick="switchMode('grammar')" type="button" class="py-1 text-[10px] font-bold rounded-md text-slate-400 hover:text-white transition-all">语法</button>
+                    <button id="mode-sentence-btn" onclick="switchMode('sentence')" type="button" class="py-1 text-[10px] font-bold rounded-md text-slate-400 hover:text-white transition-all">句子</button>
+                    <button id="mode-course-btn" onclick="switchMode('course')" type="button" class="py-1 text-[10px] font-bold rounded-md text-slate-400 hover:text-white transition-all">课程</button>
+                    <button id="mode-lesson-btn" onclick="switchMode('lesson')" type="button" class="py-1 text-[10px] font-bold rounded-md text-slate-400 hover:text-white transition-all">章节</button>
+                </div>
+                <div class="relative">
+                    <input type="text" id="search-input" placeholder="搜索..." 
+                        class="w-full bg-slate-900/60 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-200">
+                    <svg class="absolute left-3 top-2.5 w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                
+                <div class="flex flex-col gap-2">
+                    <!-- Course Selector -->
+                    <select id="course-select-filter" class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500">
+                        <option value="">全部课程 (Course)</option>
+                    </select>
+                    <!-- Lesson Selector -->
+                    <select id="lesson-select-filter" class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500">
+                        <option value="">全部章节 (Lesson)</option>
+                    </select>
+                    <div class="flex gap-2">
+                        <button id="import-json-btn" type="button" class="flex-grow py-1.5 text-xs font-semibold text-indigo-400 hover:text-white rounded-lg hover:bg-indigo-500/10 border border-indigo-500/20 hover:border-indigo-500/40 transition duration-200 flex items-center justify-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            <span>导入 JSON</span>
+                        </button>
+                        <button id="add-vocab-btn" type="button" class="px-3 py-1.5 text-xs font-semibold accent-gradient text-white rounded-lg hover:opacity-90 shadow-md shadow-indigo-500/10 hover:shadow-indigo-500/20 transition duration-200 flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            <span>新增</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vocabulary Cards List -->
+            <div id="vocab-list" class="flex-grow overflow-y-auto custom-scrollbar p-3 space-y-2">
+                <!-- Cards will render here -->
+            </div>
+            
+            <!-- Stats Footer -->
+            <div class="p-3 border-t border-slate-800 bg-slate-950/40 text-xs text-slate-500 flex justify-between">
+                <span id="vocab-total">总数: 0</span>
+                <span id="lesson-total">课程数: 0</span>
+            </div>
+        </aside>
+
+        <!-- Right Workspace: Detail Editor -->
+        <main class="flex-grow flex flex-col bg-slate-950/10 overflow-hidden relative">
+            <!-- Empty state -->
+            <div id="editor-empty-state" class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-slate-900/20">
+                <div class="h-16 w-16 rounded-2xl bg-slate-800/50 flex items-center justify-center mb-4 text-slate-600 border border-slate-800">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                </div>
+                <h3 class="text-base font-bold text-slate-300">未选择单词</h3>
+                <p class="text-sm text-slate-500 mt-1 max-w-xs">从左侧列表中选择一个泰语单词进行编辑，或者点击右上角“新增”按钮创建一个新词汇。</p>
+            </div>
+
+            <!-- Form Workspace -->
+            <form id="vocab-editor-form" class="hidden flex-grow flex flex-col overflow-hidden min-h-0">
+                <!-- Editor Header -->
+                <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/10 shrink-0">
+                    <div class="flex items-center gap-3">
+                        <span id="editor-action-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-400">编辑</span>
+                        <h2 id="editor-title" class="text-base font-bold text-white">单词详情</h2>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" id="delete-vocab-btn" class="px-4 py-2 text-xs font-semibold text-rose-400 hover:text-white rounded-lg hover:bg-rose-500/10 border border-rose-500/20 hover:border-rose-500/40 transition duration-200">
+                            删除此单词
+                        </button>
+                        <button type="submit" class="px-5 py-2 text-xs font-semibold accent-gradient text-white rounded-lg hover:opacity-95 shadow-md shadow-indigo-500/15 hover:shadow-indigo-500/25 transition duration-200">
+                            保存修改
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabs Selector -->
+                <div class="px-6 border-b border-slate-800 shrink-0 flex gap-4 bg-slate-900/10">
+                    <button type="button" onclick="switchTab('basic')" id="tab-basic" class="py-3 text-xs font-bold uppercase tracking-wider border-b-2 border-indigo-500 text-indigo-400">基本信息</button>
+                    <button type="button" onclick="switchTab('examples')" id="tab-examples" class="py-3 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-slate-400 hover:text-slate-200">用法与例句</button>
+                    <button type="button" onclick="switchTab('interactions')" id="tab-interactions" class="py-3 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-slate-400 hover:text-slate-200">交互任务 (5)</button>
+                </div>
+
+                <!-- Editor Body -->
+                <div class="flex-grow overflow-y-auto custom-scrollbar p-6 space-y-6 min-h-0">
+                    
+                    <!-- TAB: Basic Info -->
+                    <div id="panel-basic" class="space-y-6">
+                        <div class="grid grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">唯一标识符 (ID)</label>
+                                <input type="text" id="vocab-id" placeholder="如: vp_008" 
+                                    class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                <span class="text-[10px] text-slate-500 mt-1 block">注意：保存后不可更改</span>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">所属课程 ID (lessonId)</label>
+                                <input type="text" id="vocab-lessonId" placeholder="如: lesson_001" 
+                                    class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">排序序号 (order)</label>
+                                <input type="number" id="vocab-order" placeholder="如: 8" 
+                                    class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-6">
+                            <!-- Vocab Fields -->
+                            <div class="vocab-field">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">泰语原词 (headword)</label>
+                                <input type="text" id="vocab-headword" placeholder="如: ประมาณ" 
+                                    class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-medium">
+                            </div>
+                            <div class="vocab-field">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">词性 (pos)</label>
+                                <input type="text" id="vocab-pos" placeholder="如: 副词" 
+                                    class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            </div>
+                            <div class="vocab-field">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">中文释义 (meaning)</label>
+                                <input type="text" id="vocab-meaning" placeholder="如: 大约、大概" 
+                                    class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            </div>
+
+                            <!-- Grammar Fields -->
+                            <div class="grammar-field hidden col-span-3 grid grid-cols-3 gap-6">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">标题 (title)</label>
+                                    <input type="text" id="grammar-title" placeholder="如: สรุปการใช้ การ 和 ความ" 
+                                        class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-medium">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">分类 (category)</label>
+                                    <input type="text" id="grammar-category" placeholder="如: 构词法" 
+                                        class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">概要 (summary)</label>
+                                    <input type="text" id="grammar-summary" placeholder="如: 动名词前缀规则" 
+                                        class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                </div>
+                            </div>
+
+                            <!-- Grammar Extended Fields -->
+                            <div class="grammar-field hidden col-span-3 grid grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">语法规则 (rules) - 用 | 分隔</label>
+                                    <input type="text" id="grammar-rules" placeholder="如: 规则1 | 规则2" 
+                                        class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">易混淆项 (confusables) - 用 | 分隔</label>
+                                    <input type="text" id="grammar-confusables" placeholder="如: 混淆1 | 混淆2" 
+                                        class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                </div>
+                            </div>
+
+                            <!-- Vocab Extended Fields -->
+                            <div class="vocab-field col-span-3 grid grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">用法概要 (rule-summary)</label>
+                                    <input type="text" id="vocab-rule-summary" placeholder="如: 放在名词前" 
+                                        class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">用法结构 (rule-structure)</label>
+                                    <input type="text" id="vocab-rule-structure" placeholder="如: Noun + Verb" 
+                                        class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                </div>
+                            </div>
+
+                            <!-- Shared Metadata Fields -->
+                            <div class="col-span-3 grid grid-cols-3 gap-6">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">难度 (difficulty)</label>
+                                    <select id="vocab-difficulty" class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                        <option value="1">1 - 简单</option>
+                                        <option value="2">2 - 中等</option>
+                                        <option value="3">3 - 困难</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">预估时间 (秒)</label>
+                                    <input type="number" id="vocab-estTime" placeholder="如: 120" value="120"
+                                        class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">标签 (tags) - 逗号分隔</label>
+                                    <input type="text" id="vocab-tags" placeholder="如: N5, 动词" 
+                                        class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- End panel-basic -->
+
+                    <!-- TAB: Rules & Examples -->
+                    <div id="panel-examples" class="hidden space-y-6">
+                        <!-- Examples List -->
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-indigo-500"></span>
+                                    <span>核心教材例句</span>
+                                </h3>
+                                <button type="button" onclick="addExampleRow()" class="px-3 py-1.5 text-xs text-indigo-400 border border-indigo-500/30 hover:border-indigo-500 hover:bg-indigo-500/10 rounded-lg transition duration-200 flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    <span>添加例句</span>
+                                </button>
+                            </div>
+                            
+                            <div id="example-list-container" class="space-y-3">
+                                <!-- Example cards will be dynamically appended here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB: Interactions -->
+                    <div id="panel-interactions" class="hidden space-y-6">
+                        <div class="p-3 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-lg text-xs">
+                            💡 按照 <b>Prompt_Thai_Keyword.md</b> 规范，每个单词<strong>必须包含 5 个交互式练习任务</strong>，涵盖各种不同的语用场景与题型。
+                        </div>
+
+                        <div class="space-y-4" id="interactions-accordion">
+                            <!-- Accordion items for tasks 1-5 will be generated here -->
+                        </div>
+                    </div>
+
+                </div>
+            </form>
+
+            <!-- Course Editor Form -->
+            <form id="course-editor-form" class="hidden flex-grow flex flex-col overflow-hidden min-h-0">
+                <!-- Editor Header -->
+                <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/10 shrink-0">
+                    <div class="flex items-center gap-3">
+                        <span id="course-editor-action-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-400">编辑</span>
+                        <h2 id="course-editor-title" class="text-base font-bold text-white">课程详情</h2>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" id="delete-course-btn" class="px-4 py-2 text-xs font-semibold text-rose-400 hover:text-white rounded-lg hover:bg-rose-500/10 border border-rose-500/20 hover:border-rose-500/40 transition duration-200">
+                            删除此课程
+                        </button>
+                        <button type="submit" class="px-5 py-2 text-xs font-semibold accent-gradient text-white rounded-lg hover:opacity-95 shadow-md shadow-indigo-500/15 hover:shadow-indigo-500/25 transition duration-200">
+                            保存修改
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Editor Body -->
+                <div class="flex-grow overflow-y-auto custom-scrollbar p-6 space-y-6 min-h-0">
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">课程 ID (courseID)</label>
+                            <input type="text" id="course-id" placeholder="如: course_001" 
+                                class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            <span class="text-[10px] text-slate-500 mt-1 block">唯一标识符，保存后不可更改</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">课程名称 (courseName)</label>
+                            <input type="text" id="course-name" placeholder="如: 基础泰语2" 
+                                class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-medium">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">课程描述信息</label>
+                        <textarea id="course-description" placeholder="请输入课程的相关描述信息..." rows="6"
+                            class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Lesson Editor Form -->
+            <form id="lesson-editor-form" class="hidden flex-grow flex flex-col overflow-hidden min-h-0">
+                <!-- Editor Header -->
+                <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/10 shrink-0">
+                    <div class="flex items-center gap-3">
+                        <span id="lesson-editor-action-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-400">编辑</span>
+                        <h2 id="lesson-editor-title" class="text-base font-bold text-white">章节详情</h2>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" id="delete-lesson-btn" class="px-4 py-2 text-xs font-semibold text-rose-400 hover:text-white rounded-lg hover:bg-rose-500/10 border border-rose-500/20 hover:border-rose-500/40 transition duration-200">
+                            删除此章节
+                        </button>
+                        <button type="submit" class="px-5 py-2 text-xs font-semibold accent-gradient text-white rounded-lg hover:opacity-95 shadow-md shadow-indigo-500/15 hover:shadow-indigo-500/25 transition duration-200">
+                            保存修改
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Editor Body -->
+                <div class="flex-grow overflow-y-auto custom-scrollbar p-6 space-y-6 min-h-0">
+                    <div class="grid grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">章节 ID (lessonID)</label>
+                            <input type="text" id="lesson-id" placeholder="如: lesson_001" 
+                                class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            <span class="text-[10px] text-slate-500 mt-1 block">唯一标识符，保存后不可更改</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">所属课程</label>
+                            <select id="lesson-course-id" class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                <!-- Loaded dynamically -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">排序序号 (sortOrder)</label>
+                            <input type="number" id="lesson-sort-order" placeholder="如: 1" 
+                                class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">章节标题</label>
+                        <input type="text" id="lesson-title" placeholder="如: 第1课：大约与数量估计" 
+                            class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-medium">
+                    </div>
+
+                    <!-- Pointers / References lists -->
+                    <div class="grid grid-cols-3 gap-6">
+                        <!-- Vocab selection -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">词汇引用清单 (勾选以引用)</label>
+                                <input type="text" id="lesson-vocab-search" placeholder="过滤单词..." class="bg-slate-900/60 border border-slate-800 rounded px-2 py-0.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500">
+                            </div>
+                            <div id="lesson-vocab-list" class="h-64 overflow-y-auto border border-slate-800 rounded-lg p-3 space-y-2 bg-slate-900/30 custom-scrollbar">
+                                <!-- Checkbox list of all vocabulary -->
+                            </div>
+                        </div>
+
+                        <!-- Grammar selection -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">语法笔记引用清单 (勾选以引用)</label>
+                                <input type="text" id="lesson-grammar-search" placeholder="过滤语法..." class="bg-slate-900/60 border border-slate-800 rounded px-2 py-0.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500">
+                            </div>
+                            <div id="lesson-grammar-list" class="h-64 overflow-y-auto border border-slate-800 rounded-lg p-3 space-y-2 bg-slate-900/30 custom-scrollbar">
+                                <!-- Checkbox list of all grammar notes -->
+                            </div>
+                        </div>
+
+                        <!-- Sentence selection -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">句子引用清单 (勾选以引用)</label>
+                                <input type="text" id="lesson-sentence-search" placeholder="过滤句子..." class="bg-slate-900/60 border border-slate-800 rounded px-2 py-0.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500">
+                            </div>
+                            <div id="lesson-sentence-list" class="h-64 overflow-y-auto border border-slate-800 rounded-lg p-3 space-y-2 bg-slate-900/30 custom-scrollbar">
+                                <!-- Checkbox list of all review sentences -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Sentence Editor Form -->
+            <form id="sentence-editor-form" class="hidden flex-grow flex flex-col overflow-hidden min-h-0">
+                <!-- Editor Header -->
+                <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/10 shrink-0">
+                    <div class="flex items-center gap-3">
+                        <span id="sentence-editor-action-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-400">编辑</span>
+                        <h2 id="sentence-editor-title" class="text-base font-bold text-white">句子详情</h2>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" id="delete-sentence-btn" class="px-4 py-2 text-xs font-semibold text-rose-400 hover:text-white rounded-lg hover:bg-rose-500/10 border border-rose-500/20 hover:border-rose-500/40 transition duration-200">
+                            删除此句子
+                        </button>
+                        <button type="submit" class="px-5 py-2 text-xs font-semibold accent-gradient text-white rounded-lg hover:opacity-95 shadow-md shadow-indigo-500/15 hover:shadow-indigo-500/25 transition duration-200">
+                            保存修改
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabs Selector -->
+                <div class="px-6 border-b border-slate-800 shrink-0 flex gap-4 bg-slate-900/10">
+                    <button type="button" onclick="switchSentenceTab('basic')" id="tab-sentence-basic" class="py-3 text-xs font-bold uppercase tracking-wider border-b-2 border-indigo-500 text-indigo-400">基本与分词</button>
+                    <button type="button" onclick="switchSentenceTab('vocab')" id="tab-sentence-vocab" class="py-3 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-slate-400 hover:text-slate-200">难点词汇</button>
+                    <button type="button" onclick="switchSentenceTab('analysis')" id="tab-sentence-analysis" class="py-3 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-slate-400 hover:text-slate-200">语法点与结构拆解</button>
+                </div>
+
+                <!-- Editor Body -->
+                <div class="flex-grow overflow-y-auto custom-scrollbar p-6 space-y-6 min-h-0">
+                    
+                    <!-- TAB: Basic & Segmented -->
+                    <div id="panel-sentence-basic" class="space-y-6">
+                        <div class="grid grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">唯一标识符 (ID)</label>
+                                <input type="text" id="sentence-id" placeholder="如: s_review_001" 
+                                    class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                <span class="text-[10px] text-slate-500 mt-1 block">注意：保存后不可更改</span>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">关联课时 ID (lessonId)</label>
+                                <input type="text" id="sentence-lessonId" placeholder="如: lesson_001" 
+                                    class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">排序序号 (order)</label>
+                                <input type="number" id="sentence-order" placeholder="如: 1" 
+                                    class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">泰语句子 (thai_sentence)</label>
+                            <input type="text" id="sentence-thai" placeholder="如: ภาษาไทย不难于ที่想" 
+                                class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2.5 text-base text-slate-100 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-medium font-thai">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">中文翻译 (translation_zh)</label>
+                                <input type="text" id="sentence-translation-zh" placeholder="如: 泰语没有想象中那么难。" 
+                                    class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">英文翻译 (translation_en)</label>
+                                <input type="text" id="sentence-translation-en" placeholder="如: Thai is not as hard as you think." 
+                                    class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">分词形式 JSON 数组 (words_segmented)</label>
+                                <span class="text-[10px] text-slate-500">格式: [{ "word": "...", "ipa": "...", "pos": "...", "meaning": "..." }]</span>
+                            </div>
+                            <textarea id="sentence-words-segmented-json" rows="8" placeholder='[\n  { "word": "ภาษา", "ipa": "phaa-sǎa", "pos": "N", "meaning": "语言" }\n]'
+                                class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-xs text-slate-200 placeholder-slate-700 focus:outline-none focus:border-indigo-500 font-mono custom-scrollbar"></textarea>
+                            <span id="sentence-words-segmented-error" class="hidden text-rose-400 text-xs mt-1 block"></span>
+                        </div>
+                    </div>
+
+                    <!-- TAB: Difficult Vocabs -->
+                    <div id="panel-sentence-vocab" class="hidden space-y-6">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">难点词汇 JSON 数组 (difficult_vocab)</label>
+                                <span class="text-[10px] text-slate-500">格式: [{ "vocab_id": "...", "word": "...", "ipa": "...", "meaning_zh": "...", "examples": [...] }]</span>
+                            </div>
+                            <textarea id="sentence-difficult-vocab-json" rows="12" placeholder='[\n  {\n    "vocab_id": "v_082",\n    "word": "ตั้งใจ",\n    "ipa": "tâng-cai",\n    "meaning_zh": "专心/用心",\n    "examples": [\n      { "thai": "...", "chinese": "..." }\n    ]\n  }\n]'
+                                class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-xs text-slate-200 placeholder-slate-700 focus:outline-none focus:border-indigo-500 font-mono custom-scrollbar"></textarea>
+                            <span id="sentence-difficult-vocab-error" class="hidden text-rose-400 text-xs mt-1 block"></span>
+                        </div>
+                    </div>
+
+                    <!-- TAB: Sentence Analysis -->
+                    <div id="panel-sentence-analysis" class="hidden space-y-6">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">重点语法句型 (key_grammar_patterns) JSON 数组</label>
+                                <span class="text-[10px] text-slate-500">格式: [{ "pattern_id": "...", "pattern_name": "...", "explanation": "..." }]</span>
+                            </div>
+                            <textarea id="sentence-grammar-patterns-json" rows="6" placeholder='[\n  { "pattern_id": "pat_045", "pattern_name": "ไม่... อย่างที่คิด", "explanation": "像所想的那样" }\n]'
+                                class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-xs text-slate-200 placeholder-slate-700 focus:outline-none focus:border-indigo-500 font-mono custom-scrollbar"></textarea>
+                            <span id="sentence-grammar-patterns-error" class="hidden text-rose-400 text-xs mt-1 block"></span>
+                        </div>
+
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">结构拆解 (structure_breakdown) JSON 数组</label>
+                                <span class="text-[10px] text-slate-500">格式: [{ "part": "...", "content": "...", "role": "...", "analysis": "..." }]</span>
+                            </div>
+                            <textarea id="sentence-structure-breakdown-json" rows="6" placeholder='[\n  { "part": "主句部分", "content": "ภาษาไทยไม่ยาก", "role": "谓语", "analysis": "ภาษาไทย + ไม่ยาก" }\n]'
+                                class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-xs text-slate-200 placeholder-slate-700 focus:outline-none focus:border-indigo-500 font-mono custom-scrollbar"></textarea>
+                            <span id="sentence-structure-breakdown-error" class="hidden text-rose-400 text-xs mt-1 block"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">学习重点总结 (learning_focus)</label>
+                            <textarea id="sentence-learning-focus" rows="3" placeholder="如: 重点体会泰语中“อย่างที่คิด”这一习惯表达的语序。"
+                                class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 custom-scrollbar"></textarea>
+                        </div>
+                    </div>
+
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <!-- JSON Import Modal -->
+    <div id="import-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4">
+        <div class="w-full max-w-2xl glass-panel rounded-2xl p-6 shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="absolute -right-20 -top-20 w-48 h-48 rounded-full bg-indigo-500/5 blur-3xl"></div>
+            <div class="absolute -left-20 -bottom-20 w-48 h-48 rounded-full bg-purple-500/5 blur-3xl"></div>
+
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4 shrink-0">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    <span>导入 Vocabulary JSON / JSON 数组</span>
+                </h3>
+                <button type="button" onclick="closeImportModal()" class="text-slate-500 hover:text-white transition duration-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div class="flex-grow overflow-y-auto custom-scrollbar space-y-4 pr-1 min-h-0">
+                <p class="text-xs text-slate-400">
+                    请粘贴单个单词的 JSON 对象或包含多个单词的 JSON 数组。格式应当符合 <code>VocabularyConcept</code> 定义。
+                    如果导入的单词已存在（通过 <code>id</code> 进行比对），系统将直接<strong>覆盖更新</strong>原有数据，否则将作为新词汇插入。
+                </p>
+
+                <div>
+                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">粘贴 JSON 内容</label>
+                    <textarea id="import-json-textarea" rows="12" placeholder='[\n  {\n    "id": "vp_001",\n    "lessonId": "lesson_001",\n    "order": 1,\n    "headword": "และ",\n    "pos": "连词",\n    "meaning": "和、与"\n  }\n]'
+                        class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-mono"></textarea>
+                </div>
+
+                <!-- Validation Error Message container -->
+                <div id="import-validation-msg" class="hidden p-3 rounded-lg border text-xs"></div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 border-t border-slate-800 pt-4 mt-4 shrink-0">
+                <button type="button" onclick="closeImportModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200">
+                    取消
+                </button>
+                <button type="button" id="start-import-btn" onclick="processImport()" class="px-5 py-2 text-xs font-semibold accent-gradient text-white rounded-lg hover:opacity-95 shadow-md shadow-indigo-500/15 hover:shadow-indigo-500/25 transition duration-200">
+                    开始导入
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prompt Management Modal -->
+    <div id="prompt-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4">
+        <div class="w-full max-w-4xl glass-panel rounded-2xl p-6 shadow-2xl relative overflow-hidden flex flex-col h-[85vh]">
+            <div class="absolute -right-20 -top-20 w-48 h-48 rounded-full bg-indigo-500/5 blur-3xl"></div>
+            <div class="absolute -left-20 -bottom-20 w-48 h-48 rounded-full bg-purple-500/5 blur-3xl"></div>
+
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4 shrink-0">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span>Prompt MD 模板文件编辑</span>
+                    <select id="prompt-type-select" class="ml-4 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs" onchange="loadPromptContent()">
+                        <option value="vocab">Vocab Prompt</option>
+                        <option value="vocab_list">Vocab Prompt 单词清单</option>
+                        <option value="grammar">Grammar Prompt (Image)</option>
+                        <option value="grammar_text">Grammar Prompt (Text)</option>
+                        <option value="sentence">Sentence Prompt (句子)</option>
+                    </select>
+                </h3>
+                <button type="button" onclick="closePromptModal()" class="text-slate-500 hover:text-white transition duration-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div class="flex-grow flex flex-col min-h-0 space-y-4">
+                <p class="text-xs text-slate-400">
+                    在此处阅读与修改 AI 提取泰语词汇的系统 Prompt 定义。点击右下角的“复制 Prompt”可以直接复制内容到剪贴板，方便在 AI 对话框中进行交互操作。
+                </p>
+
+                <div class="flex-grow min-h-0 flex flex-col">
+                    <textarea id="prompt-textarea" class="w-full flex-grow bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-mono custom-scrollbar resize-none"></textarea>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between border-t border-slate-800 pt-4 mt-4 shrink-0">
+                <div>
+                    <button type="button" onclick="copyPromptContent()" class="px-4 py-2 text-xs font-semibold text-indigo-400 hover:text-white rounded-lg hover:bg-indigo-500/10 border border-indigo-500/20 hover:border-indigo-500/40 transition duration-200 flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-5 4h5m-5 4h5m-5 4h5"></path></svg>
+                        <span>复制 Prompt</span>
+                    </button>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button type="button" onclick="closePromptModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200">
+                        取消
+                    </button>
+                    <button type="button" id="save-prompt-btn" onclick="savePromptContent()" class="px-5 py-2 text-xs font-semibold accent-gradient text-white rounded-lg hover:opacity-95 shadow-md shadow-indigo-500/15 hover:shadow-indigo-500/25 transition duration-200">
+                        保存修改
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Alert -->
+    <div id="toast" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 px-5 py-3 rounded-xl shadow-xl transition-all duration-300 flex items-center gap-2 pointer-events-none z-50">
+        <span id="toast-icon"></span>
+        <span id="toast-message" class="font-medium text-sm"></span>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let contentMode = 'vocab';
+        let allVocabData = [];
+        let allCourses = [];
+        let allLessons = [];
+        let allGlobalVocabs = [];
+        let allGlobalGrammars = [];
+        let allGlobalSentences = [];
+        
+        let activeVocabId = null;
+        let activeCourseId = null;
+        let activeLessonId = null;
+        let activeSentenceId = null;
+        let isCreatingNew = false;
+
+        function generateUniqueId(prefix) {
+            const timestamp = Date.now().toString();
+            const randomNum = Math.floor(Math.random() * 100000000).toString();
+            const combined = timestamp + randomNum;
+            
+            // Simple cyrb53 or MurmurHash-like hashing function for synchronous unique 12-char hex ID
+            let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+            for (let i = 0, ch; i < combined.length; i++) {
+                ch = combined.charCodeAt(i);
+                h1 = Math.imul(h1 ^ ch, 2654435761);
+                h2 = Math.imul(h2 ^ ch, 1597334677);
+            }
+            h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+            h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+            const hashHex = ((h1 >>> 0).toString(16).padStart(8, '0') + (h2 >>> 0).toString(16).padStart(8, '0'));
+            
+            const separator = (prefix === 'vp' || prefix === 'gn' || prefix === 's_review') ? '_' : '-';
+            return `${prefix}${separator}${hashHex.slice(0, 12)}`;
+        }
+        
+        // DOM Cache
+        const connectionStatus = document.getElementById('connection-status');
+        const vocabListContainer = document.getElementById('vocab-list');
+        const searchInput = document.getElementById('search-input');
+        const courseSelectFilter = document.getElementById('course-select-filter');
+        const lessonSelectFilter = document.getElementById('lesson-select-filter');
+        const editorEmptyState = document.getElementById('editor-empty-state');
+        const vocabEditorForm = document.getElementById('vocab-editor-form');
+        const courseEditorForm = document.getElementById('course-editor-form');
+        const lessonEditorForm = document.getElementById('lesson-editor-form');
+        
+        const editorActionBadge = document.getElementById('editor-action-badge');
+        const editorTitle = document.getElementById('editor-title');
+        const addVocabBtn = document.getElementById('add-vocab-btn');
+        const importJsonBtn = document.getElementById('import-json-btn');
+        const promptBtn = document.getElementById('prompt-btn');
+        const deleteVocabBtn = document.getElementById('delete-vocab-btn');
+        const exampleListContainer = document.getElementById('example-list-container');
+        const interactionsAccordion = document.getElementById('interactions-accordion');
+        
+        const vocabTotalEl = document.getElementById('vocab-total');
+        const lessonTotalEl = document.getElementById('lesson-total');
+
+        // Initial Boot
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchData();
+            
+            // Events
+            searchInput.addEventListener('input', renderList);
+            courseSelectFilter.addEventListener('change', () => {
+                populateLessonFilters();
+                renderList();
+            });
+            lessonSelectFilter.addEventListener('change', renderList);
+            
+            addVocabBtn.addEventListener('click', () => {
+                if (contentMode === 'vocab' || contentMode === 'grammar') {
+                    startCreateMode();
+                } else if (contentMode === 'sentence') {
+                    startCreateSentenceMode();
+                } else if (contentMode === 'course') {
+                    startCreateCourseMode();
+                } else if (contentMode === 'lesson') {
+                    startCreateLessonMode();
+                }
+            });
+            
+            importJsonBtn.addEventListener('click', openImportModal);
+            promptBtn.addEventListener('click', openPromptModal);
+            vocabEditorForm.addEventListener('submit', handleFormSubmit);
+            deleteVocabBtn.addEventListener('click', handleVocabDelete);
+            
+            // Course, Lesson & Sentence events
+            courseEditorForm.addEventListener('submit', handleCourseFormSubmit);
+            document.getElementById('delete-course-btn').addEventListener('click', handleCourseDelete);
+            
+            lessonEditorForm.addEventListener('submit', handleLessonFormSubmit);
+            document.getElementById('delete-lesson-btn').addEventListener('click', handleLessonDelete);
+
+            document.getElementById('sentence-editor-form').addEventListener('submit', handleSentenceFormSubmit);
+            document.getElementById('delete-sentence-btn').addEventListener('click', handleSentenceDelete);
+            
+            // Dynamic filtering in lesson checkboxes
+            document.getElementById('lesson-vocab-search').addEventListener('input', (e) => {
+                const query = e.target.value.trim().toLowerCase();
+                const labels = document.querySelectorAll('#lesson-vocab-list label');
+                labels.forEach(label => {
+                    const text = label.textContent.toLowerCase();
+                    label.classList.toggle('hidden', query && !text.includes(query));
+                });
+            });
+
+            document.getElementById('lesson-grammar-search').addEventListener('input', (e) => {
+                const query = e.target.value.trim().toLowerCase();
+                const labels = document.querySelectorAll('#lesson-grammar-list label');
+                labels.forEach(label => {
+                    const text = label.textContent.toLowerCase();
+                    label.classList.toggle('hidden', query && !text.includes(query));
+                });
+            });
+
+            document.getElementById('lesson-sentence-search').addEventListener('input', (e) => {
+                const query = e.target.value.trim().toLowerCase();
+                const labels = document.querySelectorAll('#lesson-sentence-list label');
+                labels.forEach(label => {
+                    const text = label.textContent.toLowerCase();
+                    label.classList.toggle('hidden', query && !text.includes(query));
+                });
+            });
+        });
+
+        // Show toast helper
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toast-icon');
+            const toastMessage = document.getElementById('toast-message');
+            
+            toastMessage.innerText = message;
+            
+            if (type === 'success') {
+                toast.className = "fixed bottom-6 right-6 transform transition-all duration-300 flex items-center gap-2 pointer-events-none z-50 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-xl opacity-100 translate-y-0";
+                toastIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>`;
+            } else {
+                toast.className = "fixed bottom-6 right-6 transform transition-all duration-300 flex items-center gap-2 pointer-events-none z-50 bg-rose-600 text-white px-5 py-3 rounded-xl shadow-xl opacity-100 translate-y-0";
+                toastIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>`;
+            }
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // Fetch entire database
+        
+        async function fetchAllRelatedData() {
+            try {
+                const resC = await fetch(`${API_BASE}/api/courses`);
+                if (resC.ok) allCourses = await resC.json();
+                
+                const resL = await fetch(`${API_BASE}/api/lessons`);
+                if (resL.ok) allLessons = await resL.json();
+                
+                const resV = await fetch(`${API_BASE}/api/vocabulary`);
+                if (resV.ok) allGlobalVocabs = await resV.json();
+                
+                const resG = await fetch(`${API_BASE}/api/grammar`);
+                if (resG.ok) allGlobalGrammars = await resG.json();
+
+                const resS = await fetch(`${API_BASE}/api/review-sentences`);
+                if (resS.ok) allGlobalSentences = await resS.json();
+            } catch (err) {
+                console.error("Failed to load courses/lessons metadata:", err);
+            }
+        }
+
+        function switchMode(mode) {
+            contentMode = mode;
+            
+            const btnVocab = document.getElementById('mode-vocab-btn');
+            const btnGrammar = document.getElementById('mode-grammar-btn');
+            const btnSentence = document.getElementById('mode-sentence-btn');
+            const btnCourse = document.getElementById('mode-course-btn');
+            const btnLesson = document.getElementById('mode-lesson-btn');
+            
+            const btns = [btnVocab, btnGrammar, btnSentence, btnCourse, btnLesson];
+            btns.forEach(b => {
+                b.className = "py-1 text-[10px] font-bold rounded-md text-slate-400 hover:text-white transition-all";
+            });
+            
+            let activeBtn = btnVocab;
+            if (mode === 'vocab') activeBtn = btnVocab;
+            else if (mode === 'grammar') activeBtn = btnGrammar;
+            else if (mode === 'sentence') activeBtn = btnSentence;
+            else if (mode === 'course') activeBtn = btnCourse;
+            else if (mode === 'lesson') activeBtn = btnLesson;
+            
+            activeBtn.className = "py-1 text-[10px] font-bold rounded-md bg-indigo-500 text-white shadow transition-all";
+            
+            const courseFilter = document.getElementById('course-select-filter');
+            const lessonFilter = document.getElementById('lesson-select-filter');
+            
+            if (mode === 'vocab' || mode === 'grammar' || mode === 'sentence') {
+                courseFilter.classList.remove('hidden');
+                lessonFilter.classList.remove('hidden');
+                searchInput.placeholder = mode === 'vocab' ? "搜索泰语单词或中文释义..." : (mode === 'grammar' ? "搜索语法点标题或分类..." : "搜索泰语句子或翻译...");
+            } else if (mode === 'lesson') {
+                courseFilter.classList.remove('hidden');
+                lessonFilter.classList.add('hidden');
+                searchInput.placeholder = "搜索章节标题...";
+            } else if (mode === 'course') {
+                courseFilter.classList.add('hidden');
+                lessonFilter.classList.add('hidden');
+                searchInput.placeholder = "搜索课程名称...";
+            }
+            
+            // Hide all forms
+            vocabEditorForm.classList.add('hidden');
+            document.getElementById('course-editor-form').classList.add('hidden');
+            document.getElementById('lesson-editor-form').classList.add('hidden');
+            document.getElementById('sentence-editor-form').classList.add('hidden');
+            editorEmptyState.classList.remove('hidden');
+            
+            fetchData();
+        }
+
+        async function fetchData() {
+            try {
+                // Ensure all metadata is fetched
+                await fetchAllRelatedData();
+                
+                if (contentMode === 'vocab') {
+                    allVocabData = allGlobalVocabs;
+                } else if (contentMode === 'grammar') {
+                    allVocabData = allGlobalGrammars;
+                } else if (contentMode === 'sentence') {
+                    allVocabData = allGlobalSentences.map(s => {
+                        const firstAssoc = s.courses && s.courses.length > 0 ? s.courses[0] : {};
+                        return {
+                            id: s.id,
+                            lessonId: firstAssoc.lessonId || null,
+                            courseId: firstAssoc.courseId || null,
+                            order: s.data_json?.order || 1,
+                            headword: s.thai_sentence,
+                            meaning: s.translation_zh,
+                            pos: '句子',
+                            metadata: {
+                                difficulty: s.data_json?.difficulty || 2,
+                                estimatedTimeSec: s.data_json?.estimatedTimeSec || 120,
+                                tags: s.data_json?.tags || []
+                            },
+                            raw: s
+                        };
+                    });
+                }
+                
+                // Update connection status UI
+                connectionStatus.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+                connectionStatus.innerHTML = `<span class="h-2 w-2 rounded-full bg-emerald-500"></span><span>服务已连接</span>`;
+                
+                populateCourseFilters();
+                renderList();
+            } catch (err) {
+                console.error("Fetch failed:", err);
+                connectionStatus.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20";
+                connectionStatus.innerHTML = `<span class="h-2 w-2 rounded-full bg-rose-500"></span><span>服务器断开</span>`;
+                showToast("无法获取数据，请确保后台服务已启动 (Port 3002)", "error");
+            }
+        }
+
+        function populateCourseFilters() {
+            const courseSelect = document.getElementById('course-select-filter');
+            const prevCourse = courseSelect.value;
+            
+            courseSelect.innerHTML = '<option value="">全部课程 (Course)</option>';
+            allCourses.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = `${c.name} (${c.id})`;
+                courseSelect.appendChild(opt);
+            });
+            
+            if (prevCourse && allCourses.some(c => c.id === prevCourse)) {
+                courseSelect.value = prevCourse;
+            }
+            
+            populateLessonFilters();
+        }
+
+        function populateLessonFilters() {
+            const courseSelect = document.getElementById('course-select-filter');
+            const lessonSelect = document.getElementById('lesson-select-filter');
+            
+            const selectedCourseId = courseSelect.value;
+            const prevLesson = lessonSelect.value;
+            
+            lessonSelect.innerHTML = '<option value="">全部章节 (Lesson)</option>';
+            
+            const filteredLessons = selectedCourseId 
+                ? allLessons.filter(l => l.course_id === selectedCourseId)
+                : allLessons;
+                
+            filteredLessons.sort((a, b) => a.sort_order - b.sort_order).forEach(l => {
+                const opt = document.createElement('option');
+                opt.value = l.id;
+                opt.textContent = `${l.title} (${l.id})`;
+                lessonSelect.appendChild(opt);
+            });
+            
+            if (prevLesson && filteredLessons.some(l => l.id === prevLesson)) {
+                lessonSelect.value = prevLesson;
+            }
+        }
+
+        // Render Sidebar List
+        function renderList() {
+            const query = searchInput.value.trim().toLowerCase();
+            const courseSelect = document.getElementById('course-select-filter');
+            const lessonSelect = document.getElementById('lesson-select-filter');
+            
+            const selectedCourseId = courseSelect.value;
+            const selectedLessonId = lessonSelect.value;
+            
+            // Calculate set of valid IDs for filtering
+            let allowedIds = null;
+            let legacyLessonIds = null;
+            
+            if (selectedLessonId) {
+                // Filter by specific lesson
+                const lesson = allLessons.find(l => l.id === selectedLessonId);
+                if (lesson) {
+                    let ids;
+                    if (contentMode === 'vocab') ids = lesson.content?.vocabularyIds;
+                    else if (contentMode === 'grammar') ids = lesson.content?.grammarNoteIds;
+                    else if (contentMode === 'sentence') {
+                        const lessonSentences = allGlobalSentences.filter(s => 
+                            s.courses && s.courses.some(c => c.lessonId === selectedLessonId)
+                        );
+                        ids = lessonSentences.map(s => s.id);
+                    }
+                    allowedIds = new Set(ids || []);
+                }
+                legacyLessonIds = new Set([selectedLessonId]);
+            } else if (selectedCourseId) {
+                // Filter by course (all lessons of that course)
+                const courseLessons = allLessons.filter(l => l.course_id === selectedCourseId);
+                const ids = [];
+                courseLessons.forEach(l => {
+                    let itemIds;
+                    if (contentMode === 'vocab') itemIds = l.content?.vocabularyIds;
+                    else if (contentMode === 'grammar') itemIds = l.content?.grammarNoteIds;
+                    else if (contentMode === 'sentence') {
+                        const lessonSentences = allGlobalSentences.filter(s => 
+                            s.courses && s.courses.some(c => c.lessonId === l.id)
+                        );
+                        itemIds = lessonSentences.map(s => s.id);
+                    }
+                    if (itemIds) ids.push(...itemIds);
+                });
+                allowedIds = new Set(ids);
+                legacyLessonIds = new Set(courseLessons.map(l => l.id));
+            }
+
+            if (contentMode === 'vocab' || contentMode === 'grammar' || contentMode === 'sentence') {
+                const filtered = allVocabData.filter(item => {
+                    const matchesSearch = !query || 
+                        (contentMode === 'vocab' && (item.headword?.toLowerCase().includes(query) || item.meaning?.toLowerCase().includes(query))) ||
+                        (contentMode === 'grammar' && (item.title?.toLowerCase().includes(query) || item.category?.toLowerCase().includes(query) || item.summary?.toLowerCase().includes(query))) ||
+                        (contentMode === 'sentence' && (item.headword?.toLowerCase().includes(query) || item.meaning?.toLowerCase().includes(query)));
+                    
+                    let matchesLesson = true;
+                    if (allowedIds !== null) {
+                        matchesLesson = allowedIds.has(item.id) || (item.lessonId && legacyLessonIds.has(item.lessonId));
+                    }
+                    
+                    return matchesSearch && matchesLesson;
+                });
+                
+                // Render Cards
+                vocabListContainer.innerHTML = '';
+                if (filtered.length === 0) {
+                    let name = '单词';
+                    if (contentMode === 'grammar') name = '语法';
+                    else if (contentMode === 'sentence') name = '句子';
+                    vocabListContainer.innerHTML = `<div class="text-slate-600 text-xs text-center py-8">未匹配到任何${name}</div>`;
+                } else {
+                    filtered.forEach(item => {
+                        const card = document.createElement('button');
+                        card.type = 'button';
+                        const isActive = (contentMode === 'sentence') ? (item.id === activeSentenceId) : (item.id === activeVocabId);
+                        card.className = `w-full text-left p-3.5 rounded-xl border flex flex-col gap-1 transition duration-200 hover:bg-slate-800/30 ${isActive ? 'bg-indigo-600/20 border-indigo-500/60 shadow-inner' : 'bg-slate-900/30 border-slate-800/80'}`;
+                        card.onclick = () => {
+                            if (contentMode === 'sentence') {
+                                loadSentenceDetail(item.id);
+                            } else {
+                                loadVocabDetail(item.id);
+                            }
+                        };
+                        
+                        card.innerHTML = `
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] text-slate-500 font-semibold tracking-wider uppercase">${item.lessonId || '无章节'} · #${item.order || '0'}</span>
+                                <span class="text-[10px] px-1.5 py-0.5 rounded ${item.metadata?.difficulty === 3 ? 'bg-rose-500/10 text-rose-400' : item.metadata?.difficulty === 2 ? 'bg-amber-500/10 text-amber-400' : 'bg-emerald-500/10 text-emerald-400'}">${item.pos || (contentMode === 'vocab' ? '词汇' : (contentMode === 'grammar' ? '语法点' : '句子'))}</span>
+                            </div>
+                            <div class="text-sm font-bold text-white mt-1">${(contentMode === 'vocab' || contentMode === 'sentence') ? item.headword : item.title}</div>
+                            <div class="text-xs text-slate-400 truncate">${(contentMode === 'vocab' || contentMode === 'sentence') ? item.meaning : item.summary}</div>
+                        `;
+                        vocabListContainer.appendChild(card);
+                    });
+                }
+                
+                vocabTotalEl.textContent = `总数: ${filtered.length}`;
+                lessonTotalEl.textContent = `章节数: ${allLessons.length}`;
+            } else if (contentMode === 'course') {
+                const filtered = allCourses.filter(item => !query || item.name.toLowerCase().includes(query) || item.id.toLowerCase().includes(query));
+                vocabListContainer.innerHTML = '';
+                if (filtered.length === 0) {
+                    vocabListContainer.innerHTML = '<div class="text-slate-600 text-xs text-center py-8">未匹配到任何课程</div>';
+                } else {
+                    filtered.forEach(item => {
+                        const card = document.createElement('button');
+                        card.type = 'button';
+                        card.className = `w-full text-left p-3.5 rounded-xl border flex flex-col gap-1 transition duration-200 hover:bg-slate-800/30 ${item.id === activeCourseId ? 'bg-indigo-600/20 border-indigo-500/60 shadow-inner' : 'bg-slate-900/30 border-slate-800/80'}`;
+                        card.onclick = () => loadCourseDetail(item.id);
+                        card.innerHTML = `
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] text-indigo-400 font-semibold tracking-wider uppercase">${item.id}</span>
+                            </div>
+                            <div class="text-sm font-bold text-white mt-1">${item.name}</div>
+                            <div class="text-xs text-slate-400 truncate">${item.description || '无描述'}</div>
+                        `;
+                        vocabListContainer.appendChild(card);
+                    });
+                }
+                vocabTotalEl.textContent = `课程总数: ${allCourses.length}`;
+                lessonTotalEl.textContent = `章节总数: ${allLessons.length}`;
+            } else if (contentMode === 'lesson') {
+                const filtered = allLessons.filter(item => {
+                    const matchesSearch = !query || item.title.toLowerCase().includes(query) || item.id.toLowerCase().includes(query);
+                    const matchesCourse = !selectedCourseId || item.course_id === selectedCourseId;
+                    return matchesSearch && matchesCourse;
+                });
+                
+                vocabListContainer.innerHTML = '';
+                if (filtered.length === 0) {
+                    vocabListContainer.innerHTML = '<div class="text-slate-600 text-xs text-center py-8">未匹配到任何章节</div>';
+                } else {
+                    filtered.forEach(item => {
+                        const card = document.createElement('button');
+                        card.type = 'button';
+                        card.className = `w-full text-left p-3.5 rounded-xl border flex flex-col gap-1 transition duration-200 hover:bg-slate-800/30 ${item.id === activeLessonId ? 'bg-indigo-600/20 border-indigo-500/60 shadow-inner' : 'bg-slate-900/30 border-slate-800/80'}`;
+                        card.onclick = () => loadLessonDetail(item.id);
+                        
+                        const vocabCount = item.content?.vocabularyIds?.length || 0;
+                        const grammarCount = item.content?.grammarNoteIds?.length || 0;
+                        
+                        card.innerHTML = `
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] text-indigo-400 font-semibold tracking-wider uppercase">${item.course_id} · #${item.sort_order}</span>
+                                <span class="text-[10px] text-slate-500 font-semibold">${item.id}</span>
+                            </div>
+                            <div class="text-sm font-bold text-white mt-1">${item.title}</div>
+                            <div class="text-[10px] text-slate-400 mt-1">关联: ${vocabCount} 单词 · ${grammarCount} 语法</div>
+                        `;
+                        vocabListContainer.appendChild(card);
+                    });
+                }
+                vocabTotalEl.textContent = `章节总数: ${filtered.length}`;
+                lessonTotalEl.textContent = `课程总数: ${allCourses.length}`;
+            }
+        }
+
+        function switchTab(tabId) {
+            const tabs = ['basic', 'examples', 'interactions'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                const panel = document.getElementById(`panel-${t}`);
+                if (t === tabId) {
+                    btn.classList.add('border-indigo-500', 'text-indigo-400');
+                    btn.classList.remove('border-transparent', 'text-slate-400');
+                    panel.classList.remove('hidden');
+                } else {
+                    btn.classList.remove('border-indigo-500', 'text-indigo-400');
+                    btn.classList.add('border-transparent', 'text-slate-400');
+                    panel.classList.add('hidden');
+                }
+            });
+        }
+
+        function switchSentenceTab(tab) {
+            const tabs = ['basic', 'vocab', 'analysis'];
+            tabs.forEach(t => {
+                const button = document.getElementById(`tab-sentence-${t}`);
+                const panel = document.getElementById(`panel-sentence-${t}`);
+                if (t === tab) {
+                    button.className = "py-3 text-xs font-bold uppercase tracking-wider border-b-2 border-indigo-500 text-indigo-400";
+                    panel.classList.remove('hidden');
+                } else {
+                    button.className = "py-3 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-slate-400 hover:text-slate-200";
+                    panel.classList.add('hidden');
+                }
+            });
+        }
+
+        function loadSentenceDetail(id) {
+            isCreatingNew = false;
+            activeSentenceId = id;
+            
+            const item = allGlobalSentences.find(s => s.id === id);
+            if (!item) return;
+
+            document.getElementById('sentence-id').value = item.id;
+            document.getElementById('sentence-id').disabled = true;
+
+            const firstAssoc = item.courses && item.courses.length > 0 ? item.courses[0] : {};
+            document.getElementById('sentence-lessonId').value = firstAssoc.lessonId || '';
+            document.getElementById('sentence-order').value = item.data_json?.order || 1;
+            document.getElementById('sentence-thai').value = item.thai_sentence || '';
+            document.getElementById('sentence-translation-zh').value = item.translation_zh || '';
+            document.getElementById('sentence-translation-en').value = item.data_json?.translation_en || '';
+            document.getElementById('sentence-learning-focus').value = item.data_json?.sentence_analysis?.learning_focus || '';
+
+            // Format JSON textareas beautifully
+            document.getElementById('sentence-words-segmented-json').value = item.data_json?.words_segmented 
+                ? JSON.stringify(item.data_json.words_segmented, null, 2)
+                : '[]';
+            document.getElementById('sentence-difficult-vocab-json').value = item.data_json?.difficult_vocab 
+                ? JSON.stringify(item.data_json.difficult_vocab, null, 2)
+                : '[]';
+            document.getElementById('sentence-grammar-patterns-json').value = item.data_json?.sentence_analysis?.key_grammar_patterns 
+                ? JSON.stringify(item.data_json.sentence_analysis.key_grammar_patterns, null, 2)
+                : '[]';
+            document.getElementById('sentence-structure-breakdown-json').value = item.data_json?.sentence_analysis?.structure_breakdown 
+                ? JSON.stringify(item.data_json.sentence_analysis.structure_breakdown, null, 2)
+                : '[]';
+
+            // Clear errors
+            document.getElementById('sentence-words-segmented-error').classList.add('hidden');
+            document.getElementById('sentence-difficult-vocab-error').classList.add('hidden');
+            document.getElementById('sentence-grammar-patterns-error').classList.add('hidden');
+            document.getElementById('sentence-structure-breakdown-error').classList.add('hidden');
+
+            document.getElementById('sentence-editor-action-badge').innerText = "编辑";
+            document.getElementById('sentence-editor-action-badge').className = "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-400";
+            document.getElementById('sentence-editor-title').innerText = item.thai_sentence.slice(0, 15) + (item.thai_sentence.length > 15 ? '...' : '');
+
+            // Show sentence form
+            vocabEditorForm.classList.add('hidden');
+            document.getElementById('course-editor-form').classList.add('hidden');
+            document.getElementById('lesson-editor-form').classList.add('hidden');
+            document.getElementById('sentence-editor-form').classList.remove('hidden');
+            editorEmptyState.classList.add('hidden');
+
+            switchSentenceTab('basic');
+            renderList();
+        }
+
+        function startCreateSentenceMode() {
+            isCreatingNew = true;
+            activeSentenceId = null;
+
+            document.getElementById('sentence-id').value = generateUniqueId('s_review');
+            document.getElementById('sentence-id').disabled = false;
+            
+            const firstVocab = allVocabData[0];
+            document.getElementById('sentence-lessonId').value = firstVocab ? firstVocab.lessonId : 'lesson_001';
+            document.getElementById('sentence-order').value = allVocabData.length + 1;
+            document.getElementById('sentence-thai').value = '';
+            document.getElementById('sentence-translation-zh').value = '';
+            document.getElementById('sentence-translation-en').value = '';
+            document.getElementById('sentence-learning-focus').value = '';
+
+            // Templates for JSON areas
+            document.getElementById('sentence-words-segmented-json').value = '[\n  {\n    "word": "ภาษา",\n    "ipa": "phaa-sǎa",\n    "pos": "N",\n    "meaning": "语言"\n  }\n]';
+            document.getElementById('sentence-difficult-vocab-json').value = '[\n  {\n    "vocab_id": "v_082",\n    "word": "ตั้งใจ",\n    "ipa": "tâng-cai",\n    "meaning_zh": "专心/用心",\n    "meaning_en": "to intend; concentrate",\n    "pos": "动词",\n    "examples": [\n      {\n        "thai": "เขาตั้งใจเรียนมาก",\n        "chinese": "他非常用心学习。",\n        "english": "He studies very hard."\n      }\n    ]\n  }\n]';
+            document.getElementById('sentence-grammar-patterns-json').value = '[\n  {\n    "pattern_id": "pat_045",\n    "pattern_name": "ไม่... อย่างที่คิด",\n    "explanation": "不像所想的那样"\n  }\n]';
+            document.getElementById('sentence-structure-breakdown-json').value = '[\n  {\n    "part": "主句部分",\n    "content": "ภาษาไทยไม่ยาก",\n    "role": "陈述事实",\n    "analysis": "ภาษาไทย + ไม่ยาก"\n  }\n]';
+
+            // Clear errors
+            document.getElementById('sentence-words-segmented-error').classList.add('hidden');
+            document.getElementById('sentence-difficult-vocab-error').classList.add('hidden');
+            document.getElementById('sentence-grammar-patterns-error').classList.add('hidden');
+            document.getElementById('sentence-structure-breakdown-error').classList.add('hidden');
+
+            document.getElementById('sentence-editor-action-badge').innerText = "新增";
+            document.getElementById('sentence-editor-action-badge').className = "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400";
+            document.getElementById('sentence-editor-title').innerText = "创建新句子复习卡";
+
+            vocabEditorForm.classList.add('hidden');
+            document.getElementById('course-editor-form').classList.add('hidden');
+            document.getElementById('lesson-editor-form').classList.add('hidden');
+            document.getElementById('sentence-editor-form').classList.remove('hidden');
+            editorEmptyState.classList.add('hidden');
+
+            switchSentenceTab('basic');
+        }
+
+        // Load detail form
+        function loadVocabDetail(id) {
+            isCreatingNew = false;
+            activeVocabId = id;
+            
+            const vocab = allVocabData.find(item => item.id === id);
+            if (!vocab) return;
+            
+            // Render basic inputs
+            document.getElementById('vocab-id').value = vocab.id;
+            document.getElementById('vocab-id').disabled = true; // Disable id modification
+            document.getElementById('vocab-lessonId').value = vocab.lessonId;
+            document.getElementById('vocab-order').value = vocab.order;
+            document.getElementById('vocab-headword').value = vocab.headword || '';
+            document.getElementById('vocab-pos').value = vocab.pos || '';
+            document.getElementById('vocab-meaning').value = vocab.meaning || '';
+            document.getElementById('grammar-title').value = vocab.title || '';
+            document.getElementById('grammar-category').value = vocab.category || '';
+            document.getElementById('grammar-summary').value = vocab.summary || '';
+            document.getElementById('grammar-rules').value = (vocab.rules || []).join(' | ');
+            document.getElementById('grammar-confusables').value = (vocab.confusables || []).join(' | ');
+            
+            document.getElementById('vocab-difficulty').value = vocab.metadata?.difficulty || 1;
+            document.getElementById('vocab-estTime').value = vocab.metadata?.estimatedTimeSec || 120;
+            document.getElementById('vocab-tags').value = vocab.metadata?.tags ? vocab.metadata.tags.join(', ') : '';
+            
+            document.getElementById('vocab-rule-summary').value = vocab.usageRule?.summary || '';
+            document.getElementById('vocab-rule-structure').value = vocab.usageRule?.structure || '';
+            
+            // Load examples
+            exampleListContainer.innerHTML = '';
+            if (vocab.examples && vocab.examples.length > 0) {
+                vocab.examples.forEach(ex => addExampleRow(ex.thai, ex.chinese, ex.focusSpan, ex.annotation, ex.isCorrect !== false));
+            } else {
+                addExampleRow(); // At least one empty row
+            }
+            
+            // Load interactions
+            renderInteractionsEditor(vocab.interactions || []);
+
+            // UI adjustments
+            editorActionBadge.innerText = "编辑";
+            editorActionBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-400";
+            editorTitle.innerText = contentMode === 'vocab' ? `${vocab.headword} (${vocab.meaning})` : `${vocab.title}`;
+            deleteVocabBtn.classList.remove('hidden');
+            
+            editorEmptyState.classList.add('hidden');
+            vocabEditorForm.classList.remove('hidden');
+            
+            switchTab('basic');
+            renderList(); // highlights active card
+        }
+
+        // Start Creation Mode
+        function startCreateMode() {
+            isCreatingNew = true;
+            activeVocabId = null;
+            
+            // Reset form
+            document.getElementById('vocab-id').value = generateUniqueId(contentMode === 'vocab' ? 'vp' : 'gn');
+            document.getElementById('vocab-id').disabled = false; // Enabled for new item
+            document.getElementById('vocab-lessonId').value = allVocabData[0]?.lessonId || 'lesson_001';
+            document.getElementById('vocab-order').value = allVocabData.length + 1;
+            document.getElementById('vocab-headword').value = '';
+            document.getElementById('vocab-pos').value = '';
+            document.getElementById('vocab-meaning').value = '';
+            document.getElementById('grammar-title').value = '';
+            document.getElementById('grammar-category').value = '';
+            document.getElementById('grammar-summary').value = '';
+            document.getElementById('grammar-rules').value = '';
+            document.getElementById('grammar-confusables').value = '';
+            
+            document.getElementById('vocab-difficulty').value = '2';
+            document.getElementById('vocab-estTime').value = '120';
+            document.getElementById('vocab-tags').value = '';
+            
+            document.getElementById('vocab-rule-summary').value = '';
+            document.getElementById('vocab-rule-structure').value = '';
+            
+            exampleListContainer.innerHTML = '';
+            addExampleRow(); // empty template
+            
+            // Pre-initialize standard 5 interactions
+            const defaultInteractions = [
+                { id: "task_1", type: "position_insert", instruction: "将词语拖到正确插槽位置", difficulty: 1, hints: ["提示1", "提示2"], feedback: { correct: "正确！", wrong: "不对哦，再试试。" }, payload: { contextParts: [], targetWord: "", correctSlotIndex: 0 } },
+                { id: "task_2", type: "fill_blank", instruction: "选择正确的词填入空白处", difficulty: 2, hints: ["提示1", "提示2"], feedback: { correct: "正确！", wrong: "不对哦，再试试。" }, payload: { sentenceWithBlank: "", options: [] } },
+                { id: "task_3", type: "sentence_build", instruction: "点击词块，组成正确的句子", difficulty: 2, hints: ["提示1", "提示2"], feedback: { correct: "正确！", wrong: "不对哦，再试试。" }, payload: { chunks: [], acceptableOrders: [] } },
+                { id: "task_4", type: "scenario_judge", instruction: "判断以下哪种情况适合使用该词语", difficulty: 2, hints: ["提示1", "提示2"], feedback: { correct: "正确！", wrong: "不对哦，再试试。" }, payload: { scenarios: [] } },
+                { id: "task_5", type: "error_detect", instruction: "找出句子中的错误并选择原因", difficulty: 3, hints: ["提示1", "提示2"], feedback: { correct: "正确！", wrong: "不对哦，再试试。" }, payload: { targetSentence: "", choices: [] } }
+            ];
+            
+            renderInteractionsEditor(defaultInteractions);
+
+            editorActionBadge.innerText = "新增";
+            editorActionBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400";
+            editorTitle.innerText = "创建新词汇";
+            deleteVocabBtn.classList.add('hidden'); // Cannot delete a non-saved item
+            
+            editorEmptyState.classList.add('hidden');
+            vocabEditorForm.classList.remove('hidden');
+            
+            switchTab('basic');
+            renderList();
+        }
+
+        // Manage Dynamic Example Rows
+        function addExampleRow(thai = '', chinese = '', focusSpan = '', annotation = '', isCorrect = true) {
+            const card = document.createElement('div');
+            card.className = "glass-panel p-4 rounded-xl relative space-y-3 group border border-slate-800/60";
+            
+            card.innerHTML = `
+                <button type="button" onclick="this.parentElement.remove()" class="absolute right-3 top-3 text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">泰语例句 (thai)</label>
+                        <input type="text" value="${thai}" placeholder="例句泰语文本" class="ex-thai w-full bg-slate-900/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">中文释义 (chinese)</label>
+                        <input type="text" value="${chinese}" placeholder="例句中文翻译" class="ex-chinese w-full bg-slate-900/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">高亮词段 (focusSpan) - 可选</label>
+                        <input type="text" value="${focusSpan}" placeholder="句子中高亮显示的部分" class="ex-focus w-full bg-slate-900/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 font-medium">
+                    </div>
+                    <div class="grammar-field ${contentMode === 'grammar' ? '' : 'hidden'}">
+                        <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">解析标注 (annotation)</label>
+                        <input type="text" value="${annotation}" placeholder="语法解析" class="ex-annotation w-full bg-slate-900/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+                <div class="grammar-field ${contentMode === 'grammar' ? '' : 'hidden'} mt-2">
+                    <label class="flex items-center gap-1 text-[10px] text-slate-300">
+                        <input type="checkbox" class="ex-iscorrect" ${isCorrect ? 'checked' : ''}>
+                        <span>是否为正确用法的例句</span>
+                    </label>
+                </div>
+            `;
+            exampleListContainer.appendChild(card);
+        }
+
+        // Render 5 Accordion Interaction Tasks
+        function renderInteractionsEditor(tasks) {
+            interactionsAccordion.innerHTML = '';
+            
+            // Generate exactly 5 standard blocks if the list is shorter, else display what we have
+            const count = Math.max(5, tasks.length);
+            const taskTypes = ['position_insert', 'fill_blank', 'sentence_build', 'scenario_judge', 'error_detect'];
+            
+            for (let i = 0; i < count; i++) {
+                const task = tasks[i] || {
+                    id: `task_${i+1}`,
+                    type: taskTypes[i] || 'fill_blank',
+                    instruction: '',
+                    difficulty: 2,
+                    hints: ['', ''],
+                    feedback: { correct: '', wrong: '' },
+                    payload: {}
+                };
+                
+                const card = document.createElement('div');
+                card.className = "border border-slate-800 rounded-xl overflow-hidden bg-slate-900/10";
+                
+                // Set default hints & feedback
+                const hints = task.hints || ['', ''];
+                const feedback = task.feedback || { correct: '', wrong: '' };
+                const payload = task.payload || {};
+                
+                // Helper to render type-specific payload editor
+                let payloadEditorHtml = '';
+                
+                if (task.type === 'position_insert') {
+                    const partsStr = payload.contextParts ? payload.contextParts.join('|') : '';
+                    payloadEditorHtml = `
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-semibold text-slate-400 mb-1">句子组成部分 (contextParts) 用竖线 | 分隔</label>
+                                <input type="text" class="task-ctx-parts w-full bg-slate-950/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none" value="${partsStr}" placeholder="如: 我们学习泰语 | 8小时 | 每周">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-400 mb-1">目标插入词 (targetWord)</label>
+                                    <input type="text" class="task-target-word w-full bg-slate-950/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none" value="${payload.targetWord || ''}" placeholder="如: ประมาณ">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-400 mb-1">正确插槽索引 (0-index)</label>
+                                    <input type="number" class="task-slot-idx w-full bg-slate-950/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none" value="${payload.correctSlotIndex || 0}" min="0">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (task.type === 'fill_blank') {
+                    const options = payload.options || [
+                        { id: 'opt_1', text: '', isCorrect: false },
+                        { id: 'opt_2', text: '', isCorrect: false },
+                        { id: 'opt_3', text: '', isCorrect: false },
+                        { id: 'opt_4', text: '', isCorrect: false }
+                    ];
+                    
+                    let optionsHtml = '';
+                    options.forEach((opt, oIdx) => {
+                        optionsHtml += `
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] text-slate-500 font-bold">${oIdx+1}</span>
+                                <input type="text" class="task-opt-text-${i} w-full bg-slate-950/60 border border-slate-800 rounded px-2.5 py-1 text-xs text-slate-200" value="${opt.text || ''}" placeholder="选项文字">
+                                <label class="flex items-center gap-1 shrink-0 text-[10px] text-slate-400">
+                                    <input type="checkbox" class="task-opt-correct-${i}" ${opt.isCorrect ? 'checked' : ''}>
+                                    <span>正确</span>
+                                </label>
+                            </div>
+                        `;
+                    });
+                    
+                    payloadEditorHtml = `
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-[10px] font-semibold text-slate-400 mb-1">包含空白下划线的句子 (______表示填空)</label>
+                                <input type="text" class="task-sentence-blank w-full bg-slate-950/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none" value="${payload.sentenceWithBlank || ''}" placeholder="如: เขาอยู่กว่างโจว ______ ๒๐ ปีแล้ว">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                ${optionsHtml}
+                            </div>
+                        </div>
+                    `;
+                } else if (task.type === 'sentence_build') {
+                    // Chunks
+                    const chunksStr = payload.chunks ? payload.chunks.map(c => c.text).join('|') : '';
+                    
+                    // Acceptable Orders (Comma separated values per line)
+                    let ordersStr = '';
+                    if (payload.acceptableOrders) {
+                        ordersStr = payload.acceptableOrders.map(order => {
+                            // If order contains ID strings, map them back to indexes or keep IDs
+                            return order.join(',');
+                        }).join('\n');
+                    }
+                    
+                    payloadEditorHtml = `
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-semibold text-slate-400 mb-1">词块列表 (chunks) 用竖线 | 分隔</label>
+                                <textarea class="task-chunks-str w-full bg-slate-950/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none" rows="3" placeholder="每个短词块: ผม | ไปเมืองไทย | ประมาณ | ๒-๓ เดือน | ปีหนึ่ง">${chunksStr}</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold text-slate-400 mb-1">可接受的语序排列 (每行一个, 英文逗号分隔ID, 如: c1,c2,c3)</label>
+                                <textarea class="task-orders-str w-full bg-slate-950/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none font-mono" rows="3" placeholder="c1,c2,c3,c4,c5&#10;c5,c1,c2,c3,c4">${ordersStr}</textarea>
+                                <span class="text-[9px] text-slate-500 mt-1 block">说明：第一个词块自动分配 ID: c1，第二个 c2，以此类推。</span>
+                            </div>
+                        </div>
+                    `;
+                } else if (task.type === 'scenario_judge') {
+                    const scenarios = payload.scenarios || [
+                        { id: 'sc_1', text: '', shouldUse: false, reason: '' },
+                        { id: 'sc_2', text: '', shouldUse: false, reason: '' }
+                    ];
+                    
+                    let scenariosHtml = '';
+                    scenarios.forEach((sc, sIdx) => {
+                        scenariosHtml += `
+                            <div class="glass-panel p-3 rounded-lg border border-slate-800 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[10px] font-bold text-slate-400">情境 ${sIdx+1}</span>
+                                    <label class="flex items-center gap-1 text-[10px] text-slate-300">
+                                        <input type="checkbox" class="task-sc-should-${i}" ${sc.shouldUse ? 'checked' : ''}>
+                                        <span>应使用该词</span>
+                                    </label>
+                                </div>
+                                <input type="text" class="task-sc-text-${i} w-full bg-slate-950/60 border border-slate-800 rounded px-2 py-1 text-xs text-slate-200" value="${sc.text || ''}" placeholder="情景描述（如：你知道确切的价格为100泰铢）">
+                                <input type="text" class="task-sc-reason-${i} w-full bg-slate-950/60 border border-slate-800 rounded px-2 py-1 text-xs text-slate-200" value="${sc.reason || ''}" placeholder="对/错解释说明（如：确切数字不需要用ประมาณ）">
+                            </div>
+                        `;
+                    });
+                    
+                    payloadEditorHtml = `
+                        <div class="grid grid-cols-2 gap-3">
+                            ${scenariosHtml}
+                        </div>
+                    `;
+                } else if (task.type === 'error_detect') {
+                    const choices = payload.choices || [
+                        { id: 'err_1', text: '位置错误', isCorrectChoice: false },
+                        { id: 'err_2', text: '不应该用', isCorrectChoice: false },
+                        { id: 'err_3', text: '量词错误', isCorrectChoice: false },
+                        { id: 'err_4', text: '句子正确', isCorrectChoice: false }
+                    ];
+                    
+                    let choicesHtml = '';
+                    choices.forEach((choice, cIdx) => {
+                        choicesHtml += `
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] text-slate-500 font-bold">${cIdx+1}</span>
+                                <input type="text" class="task-choice-text-${i} w-full bg-slate-950/60 border border-slate-800 rounded px-2.5 py-1 text-xs text-slate-200" value="${choice.text || ''}" placeholder="选项文字">
+                                <label class="flex items-center gap-1 shrink-0 text-[10px] text-slate-400">
+                                    <input type="checkbox" class="task-choice-correct-${i}" ${choice.isCorrectChoice ? 'checked' : ''}>
+                                    <span>正确答案</span>
+                                </label>
+                            </div>
+                        `;
+                    });
+                    
+                    payloadEditorHtml = `
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-[10px] font-semibold text-slate-400 mb-1">包含典型错误的泰语句子 (targetSentence)</label>
+                                <input type="text" class="task-target-sentence w-full bg-slate-950/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none" value="${payload.targetSentence || ''}" placeholder="如: ฉันกินข้าวประมาณ ๓ จานทุกวัน">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                ${choicesHtml}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <!-- Header -->
+                    <div class="px-4 py-3 bg-slate-900/60 border-b border-slate-800 flex items-center justify-between cursor-pointer" onclick="toggleAccordion('task-body-${i}')">
+                        <div class="flex items-center gap-2.5">
+                            <span class="h-5 w-5 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400 border border-slate-700">${i+1}</span>
+                            <div>
+                                <span class="text-xs font-bold text-slate-200">任务 ID: ${task.id}</span>
+                                <span class="text-[10px] ml-2 px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">${task.type}</span>
+                            </div>
+                        </div>
+                        <svg id="arrow-task-body-${i}" class="w-4 h-4 text-slate-500 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    
+                    <!-- Form Fields body -->
+                    <div id="task-body-${i}" class="hidden p-4 space-y-4 border-t border-slate-950/40 bg-slate-950/20">
+                        <!-- Hidden meta -->
+                        <input type="hidden" class="task-index-val" value="${i}">
+                        <input type="hidden" class="task-id-val" value="${task.id}">
+                        <input type="hidden" class="task-type-val" value="${task.type}">
+                        
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="col-span-2">
+                                <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">指令说明 (instruction)</label>
+                                <input type="text" class="task-instruction w-full bg-slate-950/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none" value="${task.instruction || ''}" required placeholder="对练习步骤的指导指令...">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">任务难度 (difficulty)</label>
+                                <select class="task-difficulty w-full bg-slate-950/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none">
+                                    <option value="1" ${task.difficulty == 1 ? 'selected' : ''}>1 - 容易</option>
+                                    <option value="2" ${task.difficulty == 2 ? 'selected' : ''}>2 - 普通</option>
+                                    <option value="3" ${task.difficulty == 3 ? 'selected' : ''}>3 - 困难</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Hints -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">提示 1 (hint 1)</label>
+                                <input type="text" class="task-hint-1 w-full bg-slate-950/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none" value="${hints[0] || ''}" placeholder="给学徒的第一个思考线索">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">提示 2 (hint 2)</label>
+                                <input type="text" class="task-hint-2 w-full bg-slate-950/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none" value="${hints[1] || ''}" placeholder="给学徒的第二个细节线索">
+                            </div>
+                        </div>
+
+                        <!-- Feedback -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">答对反馈 (feedback.correct)</label>
+                                <input type="text" class="task-fb-correct w-full bg-slate-950/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none" value="${feedback.correct || ''}" placeholder="答对后给予的鼓励或语法补充">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">答错反馈 (feedback.wrong)</label>
+                                <input type="text" class="task-fb-wrong w-full bg-slate-950/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none" value="${feedback.wrong || ''}" placeholder="答错后给予的纠错或解析说明">
+                            </div>
+                        </div>
+                        
+                        <!-- Payload Config border -->
+                        <div class="border-t border-slate-800/80 pt-4">
+                            <span class="block text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-3">题型自定义数据 (Payload)</span>
+                            ${payloadEditorHtml}
+                        </div>
+                    </div>
+                `;
+                
+                interactionsAccordion.appendChild(card);
+            }
+        }
+
+        // Toggle Accordion Panel
+        function toggleAccordion(panelId) {
+            const panel = document.getElementById(panelId);
+            const arrow = document.getElementById(`arrow-${panelId}`);
+            
+            if (panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                arrow.classList.add('rotate-180');
+            } else {
+                panel.classList.add('hidden');
+                arrow.classList.remove('rotate-180');
+            }
+        }
+
+        // Form Submission (Create or Update)
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('vocab-id').value.trim();
+            const lessonId = document.getElementById('vocab-lessonId').value.trim();
+            const order = parseInt(document.getElementById('vocab-order').value);
+            const headword = document.getElementById('vocab-headword').value.trim();
+            const pos = document.getElementById('vocab-pos').value.trim();
+            const meaning = document.getElementById('vocab-meaning').value.trim();
+            const title = document.getElementById('grammar-title').value.trim();
+            const category = document.getElementById('grammar-category').value.trim();
+            const summary = document.getElementById('grammar-summary').value.trim();
+            const rules = document.getElementById('grammar-rules').value.split('|').map(x => x.trim()).filter(Boolean);
+            const confusables = document.getElementById('grammar-confusables').value.split('|').map(x => x.trim()).filter(Boolean);
+            
+            const difficulty = parseInt(document.getElementById('vocab-difficulty').value);
+            const estTime = parseInt(document.getElementById('vocab-estTime').value) || 120;
+            const tags = document.getElementById('vocab-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+            
+            const ruleSummary = document.getElementById('vocab-rule-summary').value.trim();
+            const ruleStructure = document.getElementById('vocab-rule-structure').value.trim();
+            
+            // Gather examples
+            const examples = [];
+            const exCards = exampleListContainer.querySelectorAll('.glass-panel');
+            exCards.forEach(card => {
+                const thai = card.querySelector('.ex-thai').value.trim();
+                const chinese = card.querySelector('.ex-chinese').value.trim();
+                const focusSpan = card.querySelector('.ex-focus').value.trim();
+                const annotation = card.querySelector('.ex-annotation') ? card.querySelector('.ex-annotation').value.trim() : '';
+                const isCorrect = card.querySelector('.ex-iscorrect') ? card.querySelector('.ex-iscorrect').checked : true;
+                
+                if (thai && chinese) {
+                    const ex = { thai, chinese };
+                    if (focusSpan) ex.focusSpan = focusSpan;
+                    if (contentMode === 'grammar') {
+                        if (annotation) ex.annotation = annotation;
+                        ex.isCorrect = isCorrect;
+                    }
+                    examples.push(ex);
+                }
+            });
+            
+            // Gather interactions
+            const interactions = [];
+            const panels = interactionsAccordion.querySelectorAll('.task-index-val');
+            panels.forEach(pInput => {
+                const idx = parseInt(pInput.value);
+                const container = document.getElementById(`task-body-${idx}`);
+                
+                const tId = container.querySelector('.task-id-val').value;
+                // Generate a real task ID in form "vocabId_task_N" to maintain consistency
+                const taskRealId = `${id}_task_${idx+1}`;
+                
+                const tType = container.querySelector('.task-type-val').value;
+                const tInst = container.querySelector('.task-instruction').value.trim();
+                const tDiff = parseInt(container.querySelector('.task-difficulty').value);
+                
+                const tH1 = container.querySelector('.task-hint-1').value.trim();
+                const tH2 = container.querySelector('.task-hint-2').value.trim();
+                const hints = [tH1, tH2].filter(Boolean);
+                
+                const correctFb = container.querySelector('.task-fb-correct').value.trim();
+                const wrongFb = container.querySelector('.task-fb-wrong').value.trim();
+                const feedback = { correct: correctFb, wrong: wrongFb };
+                
+                let payload = {};
+                
+                // Parse Payload depending on type
+                if (tType === 'position_insert') {
+                    const partsInput = container.querySelector('.task-ctx-parts').value;
+                    const contextParts = partsInput.split('|').map(p => p.trim()).filter(Boolean);
+                    const targetWord = container.querySelector('.task-target-word').value.trim();
+                    const correctSlotIndex = parseInt(container.querySelector('.task-slot-idx').value) || 0;
+                    
+                    payload = { contextParts, targetWord, correctSlotIndex };
+                } else if (tType === 'fill_blank') {
+                    const sentenceWithBlank = container.querySelector('.task-sentence-blank').value.trim();
+                    const options = [];
+                    for (let o = 0; o < 4; o++) {
+                        const text = container.querySelector(`.task-opt-text-${idx}`).parentElement.parentElement.querySelectorAll('input[type="text"]')[o].value.trim();
+                        const isCorrect = container.querySelector(`.task-opt-text-${idx}`).parentElement.parentElement.querySelectorAll('input[type="checkbox"]')[o].checked;
+                        if (text) {
+                            options.push({ id: `opt_${o+1}`, text, isCorrect });
+                        }
+                    }
+                    payload = { sentenceWithBlank, options };
+                } else if (tType === 'sentence_build') {
+                    const chunksText = container.querySelector('.task-chunks-str').value;
+                    const chunks = chunksText.split('|').map((c, cIdx) => {
+                        return { id: `c${cIdx+1}`, text: c.trim() };
+                    }).filter(c => c.text);
+                    
+                    const ordersText = container.querySelector('.task-orders-str').value;
+                    const acceptableOrders = ordersText.split('\n')
+                        .map(line => line.split(',').map(item => item.trim()).filter(Boolean))
+                        .filter(arr => arr.length > 0);
+                        
+                    payload = { chunks, acceptableOrders };
+                } else if (tType === 'scenario_judge') {
+                    const scList = [];
+                    for (let s = 0; s < 2; s++) {
+                        const text = container.querySelectorAll(`input.task-sc-text-${idx}`)[s].value.trim();
+                        const shouldUse = container.querySelectorAll(`input.task-sc-should-${idx}`)[s].checked;
+                        const reason = container.querySelectorAll(`input.task-sc-reason-${idx}`)[s].value.trim();
+                        if (text) {
+                            scList.push({ id: `sc_${s+1}`, text, shouldUse, reason });
+                        }
+                    }
+                    payload = { scenarios: scList };
+                } else if (tType === 'error_detect') {
+                    const targetSentence = container.querySelector('.task-target-sentence').value.trim();
+                    const choices = [];
+                    for (let c = 0; c < 4; c++) {
+                        const text = container.querySelectorAll(`input.task-choice-text-${idx}`)[c].value.trim();
+                        const isCorrectChoice = container.querySelectorAll(`input.task-choice-correct-${idx}`)[c].checked;
+                        if (text) {
+                            choices.push({ id: `err_${c+1}`, text, isCorrectChoice });
+                        }
+                    }
+                    payload = { targetSentence, choices };
+                }
+                
+                interactions.push({
+                    id: taskRealId,
+                    type: tType,
+                    instruction: tInst,
+                    difficulty: tDiff,
+                    hints,
+                    feedback,
+                    payload
+                });
+            });
+
+            // Construct final payload object
+            let finalPayload = {};
+            if (contentMode === 'vocab') {
+                finalPayload = {
+                    id, lessonId, order, headword, pos, meaning,
+                    usageRule: { summary: ruleSummary, structure: ruleStructure },
+                    examples, metadata: { difficulty, estimatedTimeSec: estTime, tags }, interactions
+                };
+            } else {
+                finalPayload = {
+                    id, lessonId, order, title, category, summary, rules, confusables,
+                    usageRule: { summary: ruleSummary, structure: ruleStructure },
+                    examples, metadata: { difficulty, estimatedTimeSec: estTime, tags }, interactions
+                };
+            }
+
+            const basePath = contentMode === 'vocab' ? 'vocabulary' : 'grammar';
+            const url = isCreatingNew ? `${API_BASE}/api/${basePath}` : `${API_BASE}/api/${basePath}/${id}`;
+            const method = isCreatingNew ? 'POST' : 'PUT';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(finalPayload)
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.error || "保存失败");
+                }
+
+                showToast(isCreatingNew ? "添加词汇成功！" : "更新词汇成功！");
+                
+                // Refresh list and reload detail
+                await fetchData();
+                loadVocabDetail(id);
+            } catch (err) {
+                console.error("Save failed:", err);
+                showToast(err.message, "error");
+            }
+        }
+
+        // Delete Vocabulary
+        async function handleVocabDelete() {
+            if (!activeVocabId) return;
+            
+            const vocab = allVocabData.find(item => item.id === activeVocabId);
+            if (!vocab) return;
+            
+            const name = contentMode === 'vocab' ? `单词 "${vocab.headword}"` : `语法 "${vocab.title}"`;
+            const confirmed = confirm(`警告: 您确定要永久删除 ${name} 吗？此操作无法撤销。`);
+            if (!confirmed) return;
+
+            try {
+                const basePath = contentMode === 'vocab' ? 'vocabulary' : 'grammar';
+                const res = await fetch(`${API_BASE}/api/${basePath}/${activeVocabId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.error || "删除失败");
+                }
+
+                showToast("单词已成功删除");
+                
+                // Hide editor and reset list
+                activeVocabId = null;
+                vocabEditorForm.classList.add('hidden');
+                editorEmptyState.classList.remove('hidden');
+                
+                await fetchData();
+            } catch (err) {
+                console.error("Delete failed:", err);
+                showToast(err.message, "error");
+            }
+        }
+
+        // ==========================================
+        // Sentence Handlers
+        // ==========================================
+        async function handleSentenceFormSubmit(e) {
+            e.preventDefault();
+            
+            const sentenceId = document.getElementById('sentence-id').value.trim();
+            const lessonId = document.getElementById('sentence-lessonId').value.trim();
+            const orderNum = parseInt(document.getElementById('sentence-order').value) || 1;
+            const thai = document.getElementById('sentence-thai').value.trim();
+            const translationZh = document.getElementById('sentence-translation-zh').value.trim();
+            const translationEn = document.getElementById('sentence-translation-en').value.trim();
+            const focus = document.getElementById('sentence-learning-focus').value.trim();
+
+            if (!sentenceId || !thai || !translationZh) {
+                showToast("ID、泰语句子和中文释义为必填项", "error");
+                return;
+            }
+
+            // Parse and validate JSON areas
+            let wordsSegmented = [];
+            let difficultVocab = [];
+            let keyGrammar = [];
+            let breakdown = [];
+
+            try {
+                wordsSegmented = JSON.parse(document.getElementById('sentence-words-segmented-json').value);
+                document.getElementById('sentence-words-segmented-error').classList.add('hidden');
+            } catch (err) {
+                const errEl = document.getElementById('sentence-words-segmented-error');
+                errEl.innerText = "JSON 格式错误: " + err.message;
+                errEl.classList.remove('hidden');
+                switchSentenceTab('basic');
+                return;
+            }
+
+            try {
+                difficultVocab = JSON.parse(document.getElementById('sentence-difficult-vocab-json').value);
+                document.getElementById('sentence-difficult-vocab-error').classList.add('hidden');
+            } catch (err) {
+                const errEl = document.getElementById('sentence-difficult-vocab-error');
+                errEl.innerText = "JSON 格式错误: " + err.message;
+                errEl.classList.remove('hidden');
+                switchSentenceTab('vocab');
+                return;
+            }
+
+            try {
+                keyGrammar = JSON.parse(document.getElementById('sentence-grammar-patterns-json').value);
+                document.getElementById('sentence-grammar-patterns-error').classList.add('hidden');
+            } catch (err) {
+                const errEl = document.getElementById('sentence-grammar-patterns-error');
+                errEl.innerText = "JSON 格式错误: " + err.message;
+                errEl.classList.remove('hidden');
+                switchSentenceTab('analysis');
+                return;
+            }
+
+            try {
+                breakdown = JSON.parse(document.getElementById('sentence-structure-breakdown-json').value);
+                document.getElementById('sentence-structure-breakdown-error').classList.add('hidden');
+            } catch (err) {
+                const errEl = document.getElementById('sentence-structure-breakdown-error');
+                errEl.innerText = "JSON 格式错误: " + err.message;
+                errEl.classList.remove('hidden');
+                switchSentenceTab('analysis');
+                return;
+            }
+
+            // Construct payload
+            const lessonObj = allLessons.find(l => l.id === lessonId);
+            const courseId = lessonObj ? lessonObj.course_id : 'course_001';
+
+            const payload = {
+                id: sentenceId,
+                thai_sentence: thai,
+                translation_zh: translationZh,
+                courses: [{ courseId, lessonId }],
+                data_json: {
+                    id: sentenceId,
+                    thai_sentence: thai,
+                    translation_zh: translationZh,
+                    translation_en: translationEn,
+                    order: orderNum,
+                    words_segmented: wordsSegmented,
+                    difficult_vocab: difficultVocab,
+                    sentence_analysis: {
+                        key_grammar_patterns: keyGrammar,
+                        structure_breakdown: breakdown,
+                        learning_focus: focus
+                    }
+                }
+            };
+
+            const url = isCreatingNew ? `${API_BASE}/api/review-sentences` : `${API_BASE}/api/review-sentences/${sentenceId}`;
+            const method = isCreatingNew ? 'POST' : 'PUT';
+
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    showToast(isCreatingNew ? "创建句子成功" : "保存修改成功");
+                    await fetchData();
+                    loadSentenceDetail(sentenceId);
+                } else {
+                    const errData = await res.json();
+                    showToast("保存失败: " + (errData.error || "未知错误"), "error");
+                }
+            } catch (err) {
+                console.error("Save sentence failed:", err);
+                showToast("网络请求失败", "error");
+            }
+        }
+
+        async function handleSentenceDelete() {
+            if (!activeSentenceId) return;
+            if (!confirm("确定要永久删除此句子卡片吗？该操作不可撤销！")) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/review-sentences/${activeSentenceId}`, { method: 'DELETE' });
+                if (res.ok) {
+                    showToast("句子已成功删除");
+                    activeSentenceId = null;
+                    document.getElementById('sentence-editor-form').classList.add('hidden');
+                    editorEmptyState.classList.remove('hidden');
+                    await fetchData();
+                } else {
+                    const errData = await res.json();
+                    showToast("删除失败: " + (errData.error || "未知错误"), "error");
+                }
+            } catch (err) {
+                console.error("Delete sentence failed:", err);
+                showToast("网络请求失败", "error");
+            }
+        }
+
+        // ==========================================
+        // JSON Import Logic
+        // ==========================================
+        function openImportModal() {
+            const modal = document.getElementById('import-modal');
+            const textarea = document.getElementById('import-json-textarea');
+            const msg = document.getElementById('import-validation-msg');
+            textarea.value = '';
+            msg.className = "hidden";
+            modal.classList.remove('hidden');
+        }
+
+        function closeImportModal() {
+            document.getElementById('import-modal').classList.add('hidden');
+        }
+
+        async function processImport() {
+            const textarea = document.getElementById('import-json-textarea');
+            const valMsg = document.getElementById('import-validation-msg');
+            const raw = textarea.value.trim();
+            
+            if (!raw) {
+                showValidationMsg("请输入 JSON 数据", "error");
+                return;
+            }
+
+            let parsed;
+            try {
+                parsed = JSON.parse(raw);
+            } catch (err) {
+                showValidationMsg(`JSON 解析失败: ${err.message}`, "error");
+                return;
+            }
+
+            // Standardize to array
+            const items = Array.isArray(parsed) ? parsed : [parsed];
+
+            if (items.length === 0) {
+                showValidationMsg("JSON 数组不能为空", "error");
+                return;
+            }
+
+            const selectedCourseId = courseSelectFilter.value;
+            const selectedLessonId = lessonSelectFilter.value;
+
+            // Validate fields
+            const validatedItems = [];
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                
+                // Smart mapping for legacy fields
+                if (item.word && !item.headword) item.headword = item.word;
+                if (item.partOfSpeech && !item.pos) item.pos = item.partOfSpeech;
+
+                // Determine if grammar note, sentence, or vocabulary
+                let isGrammar = false;
+                let isSentence = false;
+                if (item.id && typeof item.id === 'string' && (item.id.startsWith('gn_') || item.id.startsWith('gn-'))) {
+                    isGrammar = true;
+                } else if (item.id && typeof item.id === 'string' && (item.id.startsWith('s_review') || item.id.startsWith('sr-'))) {
+                    isSentence = true;
+                } else if (item.thai_sentence && item.translation_zh) {
+                    isSentence = true;
+                } else if (item.title && !item.headword) {
+                    isGrammar = true;
+                }
+
+                const prefix = isSentence ? 's_review' : (isGrammar ? 'gn' : 'vp');
+                const originalIdForLogging = item.id || (isSentence ? (item.thai_sentence || `第${i+1}个句子`) : (isGrammar ? (item.title || `第${i+1}个语法`) : (item.headword || `第${i+1}个单词`)));
+                
+                // Set system unique ID if not present
+                if (!item.id) {
+                    item.id = generateUniqueId(prefix);
+                }
+                
+                // Autofill lessonId if selected in UI filter
+                if (!item.lessonId && selectedLessonId) {
+                    item.lessonId = selectedLessonId;
+                }
+                if (item.order === undefined) {
+                    item.order = null;
+                }
+                
+                if (isSentence) {
+                    if (!item.thai_sentence) { showValidationMsg(`句子 '${originalIdForLogging}' 缺少 'thai_sentence'`, "error"); return; }
+                    if (!item.translation_zh) { showValidationMsg(`句子 '${originalIdForLogging}' 缺少 'translation_zh'`, "error"); return; }
+                    
+                    const targetLessonId = item.lessonId || selectedLessonId || 'lesson_001';
+                    const lessonObj = allLessons.find(l => l.id === targetLessonId);
+                    const targetCourseId = lessonObj ? lessonObj.course_id : (selectedCourseId || 'course_001');
+                    
+                    if (!item.data_json) {
+                        item.data_json = {
+                            id: item.id,
+                            thai_sentence: item.thai_sentence,
+                            translation_zh: item.translation_zh,
+                            translation_en: item.translation_en || '',
+                            order: item.order || (i + 1),
+                            words_segmented: item.words_segmented || [],
+                            difficult_vocab: item.difficult_vocab || [],
+                            sentence_analysis: item.sentence_analysis || {
+                                key_grammar_patterns: [],
+                                structure_breakdown: [],
+                                learning_focus: ''
+                            }
+                        };
+                    }
+                    item.courses = [{ courseId: targetCourseId, lessonId: targetLessonId }];
+                } else if (!isGrammar) {
+                    if (!item.headword) { showValidationMsg(`单词 '${originalIdForLogging}' 缺少 'headword'`, "error"); return; }
+                    if (!item.pos) { showValidationMsg(`单词 '${originalIdForLogging}' 缺少 'pos'`, "error"); return; }
+                    if (!item.meaning) { showValidationMsg(`单词 '${originalIdForLogging}' 缺少 'meaning'`, "error"); return; }
+                } else {
+                    if (!item.title) { showValidationMsg(`语法 '${originalIdForLogging}' 缺少 'title'`, "error"); return; }
+                }
+
+                if (!isSentence) {
+                    // Standardize default properties to match complete VocabularyConcept
+                    if (!item.usageRule) {
+                        item.usageRule = { summary: "", structure: "" };
+                    }
+                    if (!item.examples) {
+                        item.examples = [];
+                    }
+                    if (!item.metadata) {
+                        item.metadata = { difficulty: 2, estimatedTimeSec: 120, tags: [] };
+                    }
+                    if (!item.interactions) {
+                        item.interactions = [];
+                    } else if (Array.isArray(item.interactions)) {
+                        item.interactions.forEach((task, idx) => {
+                            task.id = `${item.id}_task_${idx + 1}`;
+                        });
+                    }
+                }
+
+                validatedItems.push(item);
+            }
+
+            // Perform upsert requests
+            showValidationMsg("正在导入数据，请稍后...", "info");
+            document.getElementById('start-import-btn').disabled = true;
+
+            let createdCount = 0;
+            let updatedCount = 0;
+            let errors = [];
+            const importedIds = [];
+
+            try {
+                for (const item of validatedItems) {
+                    const isSentence = item.id.startsWith('s_review');
+                    const isGrammar = !isSentence && (item.id.startsWith('gn_') || item.id.startsWith('gn-'));
+                    
+                    let basePath;
+                    if (isSentence) basePath = 'review-sentences';
+                    else if (isGrammar) basePath = 'grammar';
+                    else basePath = 'vocabulary';
+                    
+                    const exists = isSentence
+                        ? allGlobalSentences.some(s => s.id === item.id)
+                        : (isGrammar ? allGlobalGrammars.some(g => g.id === item.id) : allGlobalVocabs.some(v => v.id === item.id));
+                        
+                    const method = exists ? 'PUT' : 'POST';
+                    const url = exists ? `${API_BASE}/api/${basePath}/${item.id}` : `${API_BASE}/api/${basePath}`;
+
+                    const res = await fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(item)
+                    });
+
+                    if (res.ok) {
+                        if (exists) updatedCount++;
+                        else createdCount++;
+                        importedIds.push(item.id);
+                    } else {
+                        const errData = await res.json();
+                        errors.push(`导入 '${item.id}' 失败: ${errData.error || res.statusText}`);
+                    }
+                }
+
+                // Synchronize imported items to selected lesson if selected
+                if (selectedCourseId && selectedLessonId && importedIds.length > 0) {
+                    const lesson = allLessons.find(l => l.id === selectedLessonId);
+                    if (lesson) {
+                        let modified = false;
+                        let sentenceIds = allGlobalSentences
+                            .filter(s => s.courses && s.courses.some(c => c.lessonId === selectedLessonId))
+                            .map(s => s.id);
+                            
+                        if (!lesson.content) {
+                            lesson.content = { vocabularyIds: [], grammarNoteIds: [] };
+                        }
+                        if (!lesson.content.vocabularyIds) lesson.content.vocabularyIds = [];
+                        if (!lesson.content.grammarNoteIds) lesson.content.grammarNoteIds = [];
+
+                        for (const id of importedIds) {
+                            const isSentence = id.startsWith('s_review');
+                            const isGrammar = !isSentence && (id.startsWith('gn_') || id.startsWith('gn-'));
+                            
+                            if (isSentence) {
+                                if (!sentenceIds.includes(id)) {
+                                    sentenceIds.push(id);
+                                    modified = true;
+                                }
+                            } else if (isGrammar) {
+                                if (!lesson.content.grammarNoteIds.includes(id)) {
+                                    lesson.content.grammarNoteIds.push(id);
+                                    modified = true;
+                                }
+                            } else {
+                                if (!lesson.content.vocabularyIds.includes(id)) {
+                                    lesson.content.vocabularyIds.push(id);
+                                    modified = true;
+                                }
+                            }
+                        }
+
+                        if (modified) {
+                            const putPayload = {
+                                id: lesson.id,
+                                courseId: lesson.course_id,
+                                sortOrder: lesson.sort_order,
+                                title: lesson.title,
+                                content: lesson.content,
+                                sentenceIds: sentenceIds
+                            };
+
+                            const putRes = await fetch(`${API_BASE}/api/lessons/${lesson.id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(putPayload)
+                            });
+
+                            if (!putRes.ok) {
+                                errors.push("关联关系同步到章节失败，请在章节管理中手动勾选关联。");
+                            }
+                        }
+                    }
+                }
+
+                if (errors.length > 0) {
+                    showValidationMsg(`导入完成，但存在一些错误:\n${errors.join('\n')}`, "warning");
+                    showToast(`部分导入成功: 新增 ${createdCount} 个，更新 ${updatedCount} 个`, "error");
+                } else {
+                    closeImportModal();
+                    showToast(`导入并成功关联所选章节: 新增 ${createdCount} 个，更新 ${updatedCount} 个`);
+                }
+                
+                // Refresh list
+                await fetchData();
+
+            } catch (err) {
+                showValidationMsg(`网络请求失败: ${err.message}`, "error");
+            } finally {
+                document.getElementById('start-import-btn').disabled = false;
+            }
+        }
+
+        function showValidationMsg(text, type = "error") {
+            const msg = document.getElementById('import-validation-msg');
+            msg.innerText = text;
+            msg.classList.remove('hidden');
+            
+            if (type === 'error') {
+                msg.className = "p-3 rounded-lg border text-xs bg-rose-500/10 border-rose-500/30 text-rose-400";
+            } else if (type === 'warning') {
+                msg.className = "p-3 rounded-lg border text-xs bg-amber-500/10 border-amber-500/30 text-amber-400 whitespace-pre-line";
+            } else if (type === 'info') {
+                msg.className = "p-3 rounded-lg border text-xs bg-indigo-500/10 border-indigo-500/30 text-indigo-400";
+            }
+        }
+
+        // ==========================================
+        // Prompt Markdown Management Logic
+        // ==========================================
+        async function openPromptModal() {
+            const modal = document.getElementById('prompt-modal');
+            modal.classList.remove('hidden');
+            
+            const selectEl = document.getElementById('prompt-type-select');
+            const hasOption = Array.from(selectEl.options).some(opt => opt.value === contentMode);
+            if (hasOption) {
+                selectEl.value = contentMode;
+            } else {
+                selectEl.value = 'vocab';
+            }
+            await loadPromptContent();
+        }
+
+        async function loadPromptContent() {
+            const type = document.getElementById('prompt-type-select').value;
+            const textarea = document.getElementById('prompt-textarea');
+            textarea.value = '正在加载 Prompt 内容...';
+            try {
+                const res = await fetch(`${API_BASE}/api/prompt?type=${type}`);
+                if (!res.ok) throw new Error("加载 Prompt 失败");
+                const data = await res.json();
+                textarea.value = data.content;
+            } catch (err) {
+                console.error("Load prompt failed:", err);
+                textarea.value = `加载失败: ${err.message}`;
+                showToast("获取 Prompt Markdown 失败", "error");
+            }
+        }
+
+        function closePromptModal() {
+            document.getElementById('prompt-modal').classList.add('hidden');
+        }
+
+        async function savePromptContent() {
+            const textarea = document.getElementById('prompt-textarea');
+            const content = textarea.value;
+            const saveBtn = document.getElementById('save-prompt-btn');
+
+            saveBtn.disabled = true;
+            saveBtn.innerText = '正在保存...';
+
+            try {
+                const type = document.getElementById('prompt-type-select').value;
+                const res = await fetch(`${API_BASE}/api/prompt?type=${type}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.error || "保存失败");
+                }
+
+                showToast("Prompt 模板文件保存成功！");
+                closePromptModal();
+            } catch (err) {
+                console.error("Save prompt failed:", err);
+                showToast(err.message, "error");
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerText = '保存修改';
+            }
+        }
+
+        async function copyPromptContent() {
+            const textarea = document.getElementById('prompt-textarea');
+            const content = textarea.value;
+            
+            try {
+                await navigator.clipboard.writeText(content);
+                showToast("Prompt 已成功复制到剪贴板！");
+            } catch (err) {
+                console.error("Copy failed:", err);
+                showToast("复制失败，请手动选择复制", "error");
+            }
+        }
+
+        // ==========================================
+        // Courses CRUD JS Controllers
+        // ==========================================
+        function loadCourseDetail(id) {
+            isCreatingNew = false;
+            activeCourseId = id;
+            
+            const course = allCourses.find(c => c.id === id);
+            if (!course) return;
+            
+            document.getElementById('course-id').value = course.id;
+            document.getElementById('course-id').disabled = true;
+            document.getElementById('course-name').value = course.name;
+            document.getElementById('course-description').value = course.description || '';
+            
+            document.getElementById('course-editor-action-badge').innerText = "编辑";
+            document.getElementById('course-editor-action-badge').className = "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-400";
+            document.getElementById('course-editor-title').innerText = course.name;
+            document.getElementById('delete-course-btn').classList.remove('hidden');
+            
+            editorEmptyState.classList.add('hidden');
+            vocabEditorForm.classList.add('hidden');
+            document.getElementById('lesson-editor-form').classList.add('hidden');
+            document.getElementById('course-editor-form').classList.remove('hidden');
+            
+            renderList();
+        }
+
+        function startCreateCourseMode() {
+            isCreatingNew = true;
+            activeCourseId = null;
+            
+            document.getElementById('course-id').value = generateUniqueId('course');
+            document.getElementById('course-id').disabled = false;
+            document.getElementById('course-name').value = '';
+            document.getElementById('course-description').value = '';
+            
+            document.getElementById('course-editor-action-badge').innerText = "新增";
+            document.getElementById('course-editor-action-badge').className = "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400";
+            document.getElementById('course-editor-title').innerText = "创建新课程";
+            document.getElementById('delete-course-btn').classList.add('hidden');
+            
+            editorEmptyState.classList.add('hidden');
+            vocabEditorForm.classList.add('hidden');
+            document.getElementById('lesson-editor-form').classList.add('hidden');
+            document.getElementById('course-editor-form').classList.remove('hidden');
+        }
+
+        async function handleCourseFormSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('course-id').value.trim();
+            const name = document.getElementById('course-name').value.trim();
+            const description = document.getElementById('course-description').value.trim();
+            
+            if (!id || !name) {
+                showToast("请输入课程 ID 与名称", "error");
+                return;
+            }
+            
+            const payload = { id, name, description };
+            const url = isCreatingNew ? `${API_BASE}/api/courses` : `${API_BASE}/api/courses/${id}`;
+            const method = isCreatingNew ? 'POST' : 'PUT';
+            
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.error || "保存失败");
+                }
+                
+                showToast("课程保存成功！");
+                await fetchAllRelatedData();
+                activeCourseId = id;
+                isCreatingNew = false;
+                await fetchData();
+                loadCourseDetail(id);
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        }
+
+        async function handleCourseDelete() {
+            if (!activeCourseId) return;
+            if (!confirm(`确定要删除课程 "${activeCourseId}" 吗？这将会级联删除它底下的所有章节！`)) return;
+            
+            try {
+                const res = await fetch(`${API_BASE}/api/courses/${activeCourseId}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error("删除失败");
+                showToast("课程已成功删除");
+                
+                await fetchAllRelatedData();
+                activeCourseId = null;
+                document.getElementById('course-editor-form').classList.add('hidden');
+                editorEmptyState.classList.remove('hidden');
+                await fetchData();
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        }
+
+        // ==========================================
+        // Chapters (Lessons) CRUD JS Controllers
+        // ==========================================
+        function renderLessonItemSelectors(selectedVocabIds = [], selectedGrammarIds = [], selectedSentenceIds = []) {
+            const vocabContainer = document.getElementById('lesson-vocab-list');
+            const grammarContainer = document.getElementById('lesson-grammar-list');
+            const sentenceContainer = document.getElementById('lesson-sentence-list');
+            
+            vocabContainer.innerHTML = '';
+            allGlobalVocabs.forEach(v => {
+                const checked = selectedVocabIds.includes(v.id) ? 'checked' : '';
+                const item = document.createElement('label');
+                item.className = "flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-800/40 cursor-pointer text-xs text-slate-300 border border-transparent hover:border-slate-800 transition duration-150";
+                item.innerHTML = `
+                    <input type="checkbox" name="lesson-vocab" value="${v.id}" ${checked} class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500 border-slate-700 bg-slate-800">
+                    <div class="flex-grow">
+                        <span class="font-semibold text-white">${v.headword}</span>
+                        <span class="text-slate-400 ml-1">(${v.meaning})</span>
+                        <span class="text-[9px] text-slate-500 font-mono block">${v.id}</span>
+                    </div>
+                `;
+                vocabContainer.appendChild(item);
+            });
+            
+            grammarContainer.innerHTML = '';
+            allGlobalGrammars.forEach(g => {
+                const checked = selectedGrammarIds.includes(g.id) ? 'checked' : '';
+                const item = document.createElement('label');
+                item.className = "flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-800/40 cursor-pointer text-xs text-slate-300 border border-transparent hover:border-slate-800 transition duration-150";
+                item.innerHTML = `
+                    <input type="checkbox" name="lesson-grammar" value="${g.id}" ${checked} class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500 border-slate-700 bg-slate-800">
+                    <div class="flex-grow">
+                        <span class="font-semibold text-white">${g.title}</span>
+                        <span class="text-slate-400 ml-1">(${g.category})</span>
+                        <span class="text-[9px] text-slate-500 font-mono block">${g.id}</span>
+                    </div>
+                `;
+                grammarContainer.appendChild(item);
+            });
+
+            sentenceContainer.innerHTML = '';
+            allGlobalSentences.forEach(s => {
+                const checked = selectedSentenceIds.includes(s.id) ? 'checked' : '';
+                const item = document.createElement('label');
+                item.className = "flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-800/40 cursor-pointer text-xs text-slate-300 border border-transparent hover:border-slate-800 transition duration-150";
+                item.innerHTML = `
+                    <input type="checkbox" name="lesson-sentence" value="${s.id}" ${checked} class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500 border-slate-700 bg-slate-800">
+                    <div class="flex-grow">
+                        <span class="font-semibold text-white">${s.thai_sentence}</span>
+                        <span class="text-slate-400 ml-1">(${s.translation_zh})</span>
+                        <span class="text-[9px] text-slate-500 font-mono block">${s.id}</span>
+                    </div>
+                `;
+                sentenceContainer.appendChild(item);
+            });
+        }
+
+        function loadLessonDetail(id) {
+            isCreatingNew = false;
+            activeLessonId = id;
+            
+            const lesson = allLessons.find(l => l.id === id);
+            if (!lesson) return;
+            
+            document.getElementById('lesson-id').value = lesson.id;
+            document.getElementById('lesson-id').disabled = true;
+            document.getElementById('lesson-sort-order').value = lesson.sort_order;
+            document.getElementById('lesson-title').value = lesson.title;
+            
+            // Populate courses selector inside lesson editor
+            const courseSelect = document.getElementById('lesson-course-id');
+            courseSelect.innerHTML = '';
+            allCourses.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = `${c.name} (${c.id})`;
+                courseSelect.appendChild(opt);
+            });
+            courseSelect.value = lesson.course_id;
+            
+            // Load referenced checklists
+            const vocabularyIds = lesson.content?.vocabularyIds || [];
+            const grammarNoteIds = lesson.content?.grammarNoteIds || [];
+            renderLessonItemSelectors(vocabularyIds, grammarNoteIds);
+            
+            // Reset filters in lesson item checklists
+            document.getElementById('lesson-vocab-search').value = '';
+            document.getElementById('lesson-grammar-search').value = '';
+            
+            // UI adjustments
+            document.getElementById('lesson-editor-action-badge').innerText = "编辑";
+            document.getElementById('lesson-editor-action-badge').className = "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-400";
+            document.getElementById('lesson-editor-title').innerText = lesson.title;
+            document.getElementById('delete-lesson-btn').classList.remove('hidden');
+            
+            editorEmptyState.classList.add('hidden');
+            vocabEditorForm.classList.add('hidden');
+            document.getElementById('course-editor-form').classList.add('hidden');
+            document.getElementById('lesson-editor-form').classList.remove('hidden');
+            
+            renderList();
+        }
+
+        function startCreateLessonMode() {
+            isCreatingNew = true;
+            activeLessonId = null;
+            
+            document.getElementById('lesson-id').value = generateUniqueId('lesson');
+            document.getElementById('lesson-id').disabled = false;
+            document.getElementById('lesson-sort-order').value = allLessons.length + 1;
+            document.getElementById('lesson-title').value = '';
+            
+            // Populate courses selector
+            const courseSelect = document.getElementById('lesson-course-id');
+            courseSelect.innerHTML = '';
+            allCourses.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = `${c.name} (${c.id})`;
+                courseSelect.appendChild(opt);
+            });
+            if (allCourses.length > 0) {
+                courseSelect.value = allCourses[0].id;
+            }
+            
+            renderLessonItemSelectors([], []);
+            
+            // Reset filters in lesson item checklists
+            document.getElementById('lesson-vocab-search').value = '';
+            document.getElementById('lesson-grammar-search').value = '';
+            
+            document.getElementById('lesson-editor-action-badge').innerText = "新增";
+            document.getElementById('lesson-editor-action-badge').className = "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400";
+            document.getElementById('lesson-editor-title').innerText = "创建新章节";
+            document.getElementById('delete-lesson-btn').classList.add('hidden');
+            
+            editorEmptyState.classList.add('hidden');
+            vocabEditorForm.classList.add('hidden');
+            document.getElementById('course-editor-form').classList.add('hidden');
+            document.getElementById('lesson-editor-form').classList.remove('hidden');
+        }
+
+        async function handleLessonFormSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('lesson-id').value.trim();
+            const courseId = document.getElementById('lesson-course-id').value;
+            const sortOrder = parseInt(document.getElementById('lesson-sort-order').value, 10);
+            const title = document.getElementById('lesson-title').value.trim();
+            
+            if (!id || !courseId || isNaN(sortOrder) || !title) {
+                showToast("请填写章节所有基本信息", "error");
+                return;
+            }
+            
+            // Gather checked checkboxes
+            const vocabCheckboxes = document.querySelectorAll('input[name="lesson-vocab"]:checked');
+            const vocabularyIds = Array.from(vocabCheckboxes).map(cb => cb.value);
+            
+            const grammarCheckboxes = document.querySelectorAll('input[name="lesson-grammar"]:checked');
+            const grammarNoteIds = Array.from(grammarCheckboxes).map(cb => cb.value);
+
+            const sentenceCheckboxes = document.querySelectorAll('input[name="lesson-sentence"]:checked');
+            const sentenceIds = Array.from(sentenceCheckboxes).map(cb => cb.value);
+            
+            const payload = {
+                id,
+                courseId,
+                sortOrder,
+                title,
+                content: { vocabularyIds, grammarNoteIds },
+                sentenceIds
+            };
+            
+            const url = isCreatingNew ? `${API_BASE}/api/lessons` : `${API_BASE}/api/lessons/${id}`;
+            const method = isCreatingNew ? 'POST' : 'PUT';
+            
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.error || "保存失败");
+                }
+                
+                showToast("章节保存成功！");
+                await fetchAllRelatedData();
+                activeLessonId = id;
+                isCreatingNew = false;
+                await fetchData();
+                loadLessonDetail(id);
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        }
+
+        async function handleLessonDelete() {
+            if (!activeLessonId) return;
+            if (!confirm(`确定要删除章节 "${activeLessonId}" 吗？`)) return;
+            
+            try {
+                const res = await fetch(`${API_BASE}/api/lessons/${activeLessonId}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error("删除失败");
+                showToast("章节已成功删除");
+                
+                await fetchAllRelatedData();
+                activeLessonId = null;
+                document.getElementById('lesson-editor-form').classList.add('hidden');
+                editorEmptyState.classList.remove('hidden');
+                await fetchData();
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        }
+
+        async function assignReviewTask() {
+            const courseSelect = document.getElementById('course-select-filter');
+            const lessonSelect = document.getElementById('lesson-select-filter');
+            
+            const courseId = courseSelect ? courseSelect.value : '';
+            const lessonId = lessonSelect ? lessonSelect.value : '';
+
+            if (!courseId || !lessonId) {
+                alert("请先在筛选条件中选择科目和课时！");
+                return;
+            }
+
+            const courseName = courseSelect.options[courseSelect.selectedIndex].text;
+            const lessonTitle = lessonSelect.options[lessonSelect.selectedIndex].text;
+
+            // Prompt the user to select task type
+            const type = prompt("请输入要布置的任务类型：\n1. 仅布置【词汇复习】任务\n2. 仅布置【语法复习】任务\n3. 同时布置【词汇】和【语法】复习任务", "3");
+            if (type === null) return; // user cancelled
+
+            const tasksToAssign = [];
+
+            if (type === "1" || type === "3") {
+                tasksToAssign.push({
+                    title: `复习词汇：${courseName} - ${lessonTitle}`,
+                    action: {
+                        actionURL: `http://192.168.1.120:3002/Pages/appCourseReview.html?lessonID=${lessonId}&purpose=vocab`
+                    },
+                    due_date: "2026-07-15T23:59:59Z",
+                    priority: "high",
+                    status: "pending",
+                    description: "复习词汇",
+                    category_id: "cat-study",
+                    tags: [courseName]
+                });
+            }
+
+            if (type === "2" || type === "3") {
+                tasksToAssign.push({
+                    title: `复习语法：${courseName} - ${lessonTitle}`,
+                    action: {
+                        actionURL: `http://192.168.1.120:3002/Pages/appCourseReview.html?lessonID=${lessonId}&purpose=grammar`
+                    },
+                    due_date: "2026-07-15T23:59:59Z",
+                    priority: "high",
+                    status: "pending",
+                    description: "复习语法",
+                    category_id: "cat-study",
+                    tags: [courseName]
+                });
+            }
+
+            if (tasksToAssign.length === 0) {
+                alert("未选择有效的任务类型！");
+                return;
+            }
+
+            try {
+                showToast("正在布置任务...", "info");
+                let successCount = 0;
+                for (const payload of tasksToAssign) {
+                    const res = await fetch('http://192.168.1.120:3006/api/app/tasks', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.ok) {
+                        successCount++;
+                    }
+                }
+
+                if (successCount === tasksToAssign.length) {
+                    showToast("任务布置成功！", "success");
+                    alert("任务布置成功！");
+                } else if (successCount > 0) {
+                    showToast("部分任务布置成功！", "warning");
+                    alert("部分任务布置成功！");
+                } else {
+                    showToast("布置任务失败", "error");
+                    alert("布置任务失败");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("网络连接失败，无法布置任务", "error");
+                alert("网络连接失败，无法布置任务");
+            }
+        }
+    </script>
+</body>
+</html>

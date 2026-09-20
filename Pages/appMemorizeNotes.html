@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Bullet Notes Card - Sukhothai</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
+        body { font-family: 'Sarabun', sans-serif; background-color: #fdfbf7; /* 复古纸张色 */ }
+        
+        /* 闪卡 3D 翻转动画 */
+        .perspective { perspective: 1000px; }
+        .flip-card-inner { transition: transform 0.6s; transform-style: preserve-3d; position: relative; width: 100%; height: 100%; }
+        .flip-card-inner.flipped { transform: rotateY(180deg); }
+        .flip-card-front, .flip-card-back { 
+            backface-visibility: hidden; 
+            position: absolute; 
+            width: 100%; 
+            height: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 1rem; 
+            padding: 2rem;
+        }
+        .flip-card-back { transform: rotateY(180deg); }
+        
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- 2. 模式一：渐进式呈现 (治分心) ---
+        const PresentationMode = ({ noteData }) => {
+            const [expandedIdx, setExpandedIdx] = useState(null);
+
+            return (
+                <div className="space-y-4 fade-in">
+                    <div className="text-center mb-6">
+                        <h2 className="text-3xl font-bold text-amber-900">{noteData.era}</h2>
+                        <p className="text-amber-700 font-medium italic">{noteData.persona} | {noteData.timeframe}</p>
+                    </div>
+                    
+                    <div className="space-y-3">
+                        {noteData.points.map((point, idx) => (
+                            <div key={point.id || idx} className="border border-amber-200 rounded-lg overflow-hidden bg-white shadow-sm">
+                                <button 
+                                    onClick={() => setExpandedIdx(expandedIdx === idx ? null : idx)}
+                                    className="w-full flex justify-between items-center p-4 text-left hover:bg-amber-50 transition"
+                                >
+                                    <span className="font-bold text-amber-800">{point.title}</span>
+                                    <span className={`transform transition-transform ${expandedIdx === idx ? 'rotate-180' : ''}`}>▼</span>
+                                </button>
+                                {expandedIdx === idx && (
+                                    <div className="p-4 pt-0 text-gray-600 border-t border-amber-100 bg-amber-50/50 fade-in leading-relaxed">
+                                        {point.detail}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                    <p className="text-xs text-center text-gray-400 mt-6 font-sans">💡 点击标题展开详细要点，保持手眼协同</p>
+                </div>
+            );
+        };
+
+        // --- 3. 模式二：闪卡回忆 (治健忘) ---
+        const FlashcardMode = ({ noteData }) => {
+            const [isFlipped, setIsFlipped] = useState(false);
+            const [cardIdx, setCardIdx] = useState(0);
+            const [status, setStatus] = useState(null); // 'mastered', 'fuzzy', 'forgot'
+
+            if (!noteData.flashcards || noteData.flashcards.length === 0) {
+                return <div className="text-center py-10 text-gray-500 font-sans">当前笔记未设置记忆卡片。</div>;
+            }
+
+            const card = noteData.flashcards[cardIdx];
+
+            const handleEval = (s) => {
+                setStatus(s);
+                setTimeout(() => {
+                    setStatus(null);
+                    setIsFlipped(false);
+                    // 自动跳转到下一张卡片，支持循环
+                    setCardIdx((prevIdx) => (prevIdx + 1) % noteData.flashcards.length);
+                }, 1000);
+            };
+
+            const handlePrev = (e) => {
+                e.stopPropagation();
+                setIsFlipped(false);
+                setStatus(null);
+                setCardIdx((prevIdx) => (prevIdx - 1 + noteData.flashcards.length) % noteData.flashcards.length);
+            };
+
+            const handleNext = (e) => {
+                e.stopPropagation();
+                setIsFlipped(false);
+                setStatus(null);
+                setCardIdx((prevIdx) => (prevIdx + 1) % noteData.flashcards.length);
+            };
+
+            return (
+                <div className="fade-in flex flex-col items-center">
+                    {/* 卡片主体 */}
+                    <div className="perspective w-full max-w-md h-64 mb-6 cursor-pointer" onClick={() => setIsFlipped(!isFlipped)}>
+                        <div className={`flip-card-inner ${isFlipped ? 'flipped' : ''}`}>
+                            <div className="flip-card-front bg-white border-2 border-amber-300 shadow-lg">
+                                <span className="text-xs text-gray-400 absolute top-4 left-4">Q</span>
+                                <p className="text-xl font-bold text-center text-gray-800 px-4">{card.front}</p>
+                                <p className="text-xs text-amber-600 mt-4 font-sans">点击翻转查看答案</p>
+                            </div>
+                            <div className="flip-card-back bg-amber-600 text-white border-2 border-amber-700 shadow-lg relative">
+                                <span className="text-xs text-amber-200 absolute top-4 left-4">A</span>
+                                <p className="text-xl font-bold text-center px-4">{card.back}</p>
+                                {status && (
+                                    <div className="absolute inset-0 bg-black/60 rounded-xl flex items-center justify-center fade-in">
+                                        <span className="text-lg font-bold text-white px-4 py-2 rounded-lg bg-amber-800/90 border border-amber-600 font-sans">
+                                            {status === 'mastered' && "秒记 ✅"}
+                                            {status === 'fuzzy' && "有点模糊 🤔"}
+                                            {status === 'forgot' && "完全忘了 ❌"}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 翻页控制与进度指示 */}
+                    <div className="flex items-center justify-between w-full max-w-md mb-6 px-4">
+                        <button 
+                            onClick={handlePrev}
+                            disabled={status !== null}
+                            className="px-4 py-2 text-sm font-semibold bg-amber-100 text-amber-800 rounded-lg hover:bg-amber-200 transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            上张 ◀
+                        </button>
+                        <span className="text-sm font-bold text-amber-900 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200">
+                            {cardIdx + 1} / {noteData.flashcards.length}
+                        </span>
+                        <button 
+                            onClick={handleNext}
+                            disabled={status !== null}
+                            className="px-4 py-2 text-sm font-semibold bg-amber-100 text-amber-800 rounded-lg hover:bg-amber-200 transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            ▶ 下张
+                        </button>
+                    </div>
+
+                    {/* 评估按钮 */}
+                    {isFlipped && !status && (
+                        <div className="flex gap-4 fade-in font-sans">
+                            <button onClick={() => handleEval('mastered')} className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 font-bold active:scale-95 transition">秒记 ✅</button>
+                            <button onClick={() => handleEval('fuzzy')} className="px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 font-bold active:scale-95 transition">有点模糊 🤔</button>
+                            <button onClick={() => handleEval('forgot')} className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-bold active:scale-95 transition">完全忘了 ❌</button>
+                        </div>
+                    )}
+                    <p className="text-xs text-center text-gray-400 mt-8 font-sans">💡 主动回忆刺激神经突触，请结合真实状态打分</p>
+                </div>
+            );
+        };
+
+        // --- 4. 模式三：混淆项测验 (治不愿思考) ---
+        const QuizMode = ({ noteData }) => {
+            const [selectedId, setSelectedId] = useState(null);
+            
+            if (!noteData.quiz || !noteData.quiz.question) {
+                return <div className="text-center py-10 text-gray-500 font-sans">当前笔记未设置随堂测验。</div>;
+            }
+
+            const q = noteData.quiz;
+
+            const handleSelect = (id) => {
+                setSelectedId(id);
+            };
+
+            return (
+                <div className="fade-in font-sans">
+                    <h3 className="text-lg font-bold text-gray-800 mb-6 text-center leading-relaxed">{q.question}</h3>
+                    <div className="space-y-3">
+                        {q.options.map(opt => {
+                            let btnClass = "w-full text-left p-4 rounded-lg border transition flex flex-col ";
+                            if (selectedId === null) {
+                                btnClass += "border-gray-200 hover:border-amber-400 hover:bg-amber-50";
+                            } else {
+                                if (opt.isCorrect) btnClass += "bg-green-50 border-green-500 text-green-800";
+                                else if (selectedId === opt.id) btnClass += "bg-red-50 border-red-500 text-red-800";
+                                else btnClass += "opacity-50 border-gray-200";
+                            }
+
+                            return (
+                                <button key={opt.id} onClick={() => selectedId === null && handleSelect(opt.id)} disabled={selectedId !== null} className={btnClass}>
+                                    <span className="font-bold">{opt.text}</span>
+                                    {selectedId !== null && selectedId === opt.id && !opt.isCorrect && (
+                                        <span className="text-sm mt-2 text-red-600 font-normal italic">💡 {opt.explanation}</span>
+                                    )}
+                                    {selectedId !== null && opt.isCorrect && (
+                                        <span className="text-sm mt-2 text-green-600 font-normal italic">✅ {opt.explanation}</span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    {selectedId !== null && (
+                        <button onClick={() => setSelectedId(null)} className="mt-6 w-full py-2 text-sm text-amber-700 underline font-semibold">再试一次</button>
+                    )}
+                    <p className="text-xs text-center text-gray-400 mt-6">💡 通过对比混淆项，彻底理清易错概念</p>
+                </div>
+            );
+        };
+
+        // --- 5. 模式四：综述填空 (治被动) ---
+        const SummaryMode = ({ noteData }) => {
+            if (!noteData.summary || !noteData.summary.textParts || noteData.summary.textParts.length === 0) {
+                return <div className="text-center py-10 text-gray-500 font-sans">当前笔记未设置总结填空。</div>;
+            }
+
+            const [slots, setSlots] = useState(Array(noteData.summary.blanks.length).fill(null));
+            
+            const handleWordClick = (word) => {
+                const emptyIdx = slots.findIndex(s => s === null);
+                if (emptyIdx !== -1) {
+                    const newSlots = [...slots];
+                    newSlots[emptyIdx] = word;
+                    setSlots(newSlots);
+                }
+            };
+
+            const handleSlotClick = (idx) => {
+                const newSlots = [...slots];
+                newSlots[idx] = null;
+                setSlots(newSlots);
+            };
+
+            const isComplete = slots.every(s => s !== null);
+            const isCorrect = JSON.stringify(slots) === JSON.stringify(noteData.summary.blanks);
+
+            // 渲染句子
+            const renderSentence = () => {
+                let blankIdx = 0;
+                return noteData.summary.textParts.map((part, i) => {
+                    if (part && part.startsWith("BLANK_")) {
+                        const currentBlankIdx = blankIdx++;
+                        const word = slots[currentBlankIdx];
+                        return (
+                            <span 
+                                key={i} 
+                                onClick={() => word && handleSlotClick(currentBlankIdx)}
+                                className={`inline-block min-w-[100px] mx-1 px-2 py-1 border-b-2 border-dashed text-center font-bold transition
+                                    ${word ? 'border-amber-500 text-amber-800 bg-amber-100 rounded cursor-pointer hover:bg-red-50 hover:text-red-600' : 'border-gray-300 text-gray-400'}
+                                `}
+                            >
+                                {word || "______"}
+                            </span>
+                        );
+                    }
+                    return <span key={i} className="text-gray-700">{part}</span>;
+                });
+            };
+
+            return (
+                <div className="fade-in font-sans">
+                    <div className="bg-white p-6 rounded-xl border border-amber-200 shadow-sm mb-6 text-lg leading-relaxed text-center">
+                        {renderSentence()}
+                    </div>
+
+                    <div className="flex flex-wrap gap-3 justify-center mb-6">
+                        {noteData.summary.wordPool.map(word => {
+                            const isUsed = slots.includes(word);
+                            return (
+                                <button 
+                                    key={word} 
+                                    onClick={() => !isUsed && handleWordClick(word)}
+                                    disabled={isUsed}
+                                    className={`px-4 py-2 rounded-lg border shadow-sm font-medium transition
+                                        ${isUsed ? 'bg-gray-105 text-gray-300 border-gray-200 cursor-not-allowed' : 'bg-white border-amber-300 text-amber-800 hover:bg-amber-50 hover:-translate-y-0.5'}
+                                    `}
+                                >
+                                    {word}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {isComplete && (
+                        <div className={`text-center p-4 rounded-lg font-bold fade-in ${isCorrect ? 'bg-green-105 text-green-700' : 'bg-red-105 text-red-700'}`}>
+                            {isCorrect ? "🎉 完美！你掌握了这段综述。" : "❌ 顺序或选词有误，点击填入的词块可取出重选。"}
+                        </div>
+                    )}
+                    <p className="text-xs text-center text-gray-400 mt-6">💡 提供脚手架，通过“选词填空”完成输出，降低畏难情绪</p>
+                </div>
+            );
+        };
+
+        // --- 6. 主学习卡片控制器 ---
+        const BulletNotesCard = ({ noteData, onBack, showBackButton }) => {
+            const [activeMode, setActiveMode] = useState('presentation');
+
+            const tabs = [
+                { id: 'presentation', icon: '👁️', label: '渐进呈现' },
+                { id: 'flashcard', icon: '🃏', label: '闪卡回忆' },
+                { id: 'quiz', icon: '❓', label: '混淆测验' },
+                { id: 'summary', icon: '✍️', label: '综述填空' }
+            ];
+
+            return (
+                <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden border-t-8 border-amber-500 my-10">
+                    {/* 顶部 Header */}
+                    <div className="bg-amber-50 p-6 border-b border-amber-100 flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            {showBackButton && (
+                                <button 
+                                    onClick={onBack}
+                                    className="p-2 rounded-xl bg-amber-100 hover:bg-amber-250 text-amber-900 hover:-translate-x-0.5 transition duration-150 shadow-sm border border-amber-200 flex items-center justify-center h-9 w-9 font-bold"
+                                    title="返回笔记列表"
+                                >
+                                    ←
+                                </button>
+                            )}
+                            <div>
+                                <h1 className="text-2xl font-bold text-amber-900 leading-none">Interactive Notes</h1>
+                                <p className="text-xs text-amber-700 font-semibold mt-1.5">{noteData.topic}</p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Current Module</div>
+                            <div className="font-bold text-amber-800 text-sm mt-0.5">{noteData.era}</div>
+                        </div>
+                    </div>
+
+                    {/* Tab 导航 */}
+                    <div className="flex border-b border-gray-200 bg-gray-50 font-sans">
+                        {tabs.map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveMode(tab.id)}
+                                className={`flex-1 py-3 text-sm font-semibold transition flex flex-col items-center gap-1
+                                    ${activeMode === tab.id 
+                                    ? "text-amber-700 border-b-2 border-amber-600 bg-white" 
+                                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"}
+                                `}
+                            >
+                                <span className="text-lg">{tab.icon}</span>
+                                <span>{tab.label}</span>
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* 内容区 */}
+                    <div className="p-8 min-h-[400px]">
+                        {activeMode === 'presentation' && <PresentationMode noteData={noteData} />}
+                        {activeMode === 'flashcard' && <FlashcardMode noteData={noteData} />}
+                        {activeMode === 'quiz' && <QuizMode noteData={noteData} />}
+                        {activeMode === 'summary' && <SummaryMode noteData={noteData} />}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- 7. 全局入口与选择器 ---
+        const App = () => {
+            const [loading, setLoading] = useState(true);
+            const [notesList, setNotesList] = useState([]);
+            const [selectedNote, setSelectedNote] = useState(null);
+
+            useEffect(() => {
+                const loadNotes = async () => {
+                    setLoading(true);
+                    try {
+                        const params = new URLSearchParams(window.location.search);
+                        const uuid = params.get('uuid');
+                        const lessonId = params.get('lessonId');
+
+                        if (uuid) {
+                            // Direct uuid load
+                            const res = await fetch(`/api/notes/${uuid}`);
+                            if (res.ok) {
+                                const data = await res.json();
+                                setSelectedNote(data.noteContent);
+                                setLoading(false);
+                                return;
+                            }
+                        } else if (lessonId) {
+                            // Load by lesson
+                            const res = await fetch(`/api/notes?lessonId=${lessonId}`);
+                            if (res.ok) {
+                                const data = await res.json();
+                                if (data && data.length > 0) {
+                                    setSelectedNote(data[0].noteContent);
+                                    setLoading(false);
+                                    return;
+                                }
+                            }
+                        }
+
+                        // Load list
+                        const resList = await fetch('/api/notes');
+                        if (resList.ok) {
+                            const data = await resList.json();
+                            setNotesList(data);
+                            // If exactly one note exists, load it directly
+                            if (data.length === 1 && !uuid && !lessonId) {
+                                setSelectedNote(data[0].noteContent);
+                            }
+                        }
+                    } catch(e) {
+                        console.error("加载笔记出错:", e);
+                    } finally {
+                        setLoading(false);
+                    }
+                };
+
+                loadNotes();
+            }, []);
+
+            if (loading) {
+                return (
+                    <div className="flex flex-col items-center justify-center min-h-screen text-amber-800 font-sans">
+                        <svg className="animate-spin h-8 w-8 text-amber-600 mb-3" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span className="font-semibold text-sm">加载课程笔记中...</span>
+                    </div>
+                );
+            }
+
+            if (selectedNote) {
+                return (
+                    <BulletNotesCard 
+                        noteData={selectedNote} 
+                        showBackButton={notesList.length > 1}
+                        onBack={() => setSelectedNote(null)} 
+                    />
+                );
+            }
+
+            return (
+                <div className="max-w-4xl mx-auto my-12 px-6 font-sans">
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl font-bold text-amber-950 flex items-center justify-center gap-2">
+                            <span>📚</span>
+                            <span>泰语课程学习笔记</span>
+                        </h1>
+                        <p className="text-sm text-amber-700/80 mt-2 font-medium">
+                            选择一个章节的互动笔记，进入沉浸式渐进回忆与自测背诵。
+                        </p>
+                    </div>
+
+                    {notesList.length === 0 ? (
+                        <div className="bg-white rounded-2xl p-10 text-center border border-amber-200/60 shadow-sm">
+                            <span className="text-4xl">📭</span>
+                            <h3 className="text-base font-bold text-amber-900 mt-3">未找到任何课程笔记</h3>
+                            <p className="text-xs text-amber-700/70 mt-1">
+                                请前往课程笔记配置后台新增笔记，并将其关联至对应的科目和章节课时。
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {notesList.map(note => {
+                                const tags = note.tags || [];
+                                const courses = note.courses || [];
+                                return (
+                                    <div 
+                                        key={note.uuid}
+                                        onClick={() => setSelectedNote(note.noteContent)}
+                                        className="bg-white border border-amber-200/60 hover:border-amber-400 p-6 rounded-2xl hover:shadow-xl hover:-translate-y-0.5 transition duration-200 cursor-pointer flex flex-col justify-between"
+                                    >
+                                        <div>
+                                            <h3 className="font-bold text-lg text-amber-950 line-clamp-2 leading-snug">
+                                                {note.topic}
+                                            </h3>
+                                            <p className="text-xs text-amber-800/80 mt-1 font-semibold">
+                                                {note.noteContent.era}
+                                            </p>
+                                            <p className="text-[11px] text-amber-750/70 italic mt-2">
+                                                {note.noteContent.persona} | {note.noteContent.timeframe}
+                                            </p>
+                                            {tags.length > 0 && (
+                                                <div className="flex flex-wrap gap-1 mt-3">
+                                                    {tags.map(t => (
+                                                        <span key={t} className="bg-amber-50 text-amber-750 border border-amber-100 px-1.5 py-0.5 rounded text-[10px] font-semibold">
+                                                            {t}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        {courses.length > 0 && (
+                                            <div className="mt-4 pt-3 border-t border-amber-50 flex flex-wrap gap-1.5">
+                                                {courses.map((c, i) => (
+                                                    <span key={i} className="bg-gray-50 text-gray-500 border border-gray-150 px-1.5 py-0.5 rounded text-[9px] font-medium font-sans">
+                                                        课时: {c.lessonId}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

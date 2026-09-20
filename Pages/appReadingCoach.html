@@ -1,0 +1,2724 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thai Reading Explorer - 沉浸式语篇阅读训练</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+Thai:wght@300;400;500;600;700&display=swap');
+        
+        body { font-family: 'Noto Sans SC', 'Noto Serif Thai', sans-serif; background-color: #f1f5f9; color: #334155; }
+        
+        /* 单词查询模块样式 */
+        .writing-mode-vertical {
+            writing-mode: vertical-rl;
+            text-combine-upright: all;
+        }
+
+        #selectionToolbar {
+            position: absolute;
+            z-index: 50;
+            background-color: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(51, 65, 85, 0.8);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+        }
+
+        #querySidebar {
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .font-thai {
+            font-family: 'Noto Serif Thai', 'Noto Sans Thai', sans-serif;
+        }
+
+        .font-thai-clickable {
+            cursor: pointer;
+            transition: color 0.15s ease-in-out;
+        }
+        .font-thai-clickable:hover {
+            color: #2563eb;
+        }
+        .font-thai-clickable:hover .fa-volume-up {
+            color: #2563eb;
+        }
+
+        .animate-spin-slow {
+            animation: spin 8s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 泰语排版优化 */
+        .thai-text { font-family: 'Noto Serif Thai', sans-serif; font-size: 1.4rem; line-height: 2.4; letter-spacing: 0.02em; color: #1e293b; }
+        .thai-sentence { display: inline; transition: background-color 0.2s; border-radius: 4px; padding: 1px 3px; margin: 0 1px; }
+        .thai-sentence:nth-child(odd) { background-color: rgba(51, 65, 85, 0.04); }
+        .thai-sentence:nth-child(even) { background-color: transparent; }
+        .thai-sentence:hover { background-color: rgba(37, 99, 235, 0.08) !important; }
+        .thai-trans-sentence { font-size: 1.4rem; display: inline; transition: background-color 0.2s; border-radius: 4px; padding: 1px 3px; margin: 0 1px; }
+        .thai-trans-sentence:hover { background-color: rgba(37, 99, 235, 0.08) !important; }
+
+        /* 信号词雷达 (Radar) */
+        .radar-on .signal-cause { background-color: #ffedd5; color: #c2410c; padding: 2px 6px; border-radius: 6px; font-weight: 600; border: 1px solid #fdba74; }
+        .radar-on .signal-add { background-color: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 6px; font-weight: 600; border: 1px solid #86efac; }
+        .radar-on .signal-contrast { background-color: #e0e7ff; color: #4338ca; padding: 2px 6px; border-radius: 6px; font-weight: 600; border: 1px solid #a5b4fc; }
+        .radar-on .signal-example { background-color: #fef08a; color: #a16207; padding: 2px 6px; border-radius: 6px; font-weight: 600; border: 1px solid #fde047; }
+
+        /* 预分词与生词 Hover */
+        .token { display: inline; user-select: none; }
+        .vocab-challenge { 
+            border-bottom: 2px dashed #f59e0b; 
+            cursor: help; 
+            transition: all 0.2s ease; 
+            padding-bottom: 2px; 
+        }
+        .vocab-challenge:hover { 
+            background-color: #fef3c7; 
+            color: #b45309; 
+            border-bottom-style: solid; 
+        }
+
+        /* 全局 Tooltip */
+        #global-tooltip { 
+            position: absolute; z-index: 1000; background: white; 
+            border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); 
+            border-radius: 12px; padding: 16px; width: 280px; 
+            pointer-events: none; opacity: 0; transform: translateY(10px); 
+            transition: opacity 0.2s, transform 0.2s; 
+        }
+        #global-tooltip.show { opacity: 1; transform: translateY(0); }
+
+        /* 题目选项交互状态 */
+        .quiz-option { 
+            transition: all 0.2s ease; cursor: pointer; 
+            border: 2px solid #e2e8f0; background-color: #ffffff;
+        }
+        .quiz-option:hover { border-color: #94a3b8; background-color: #f8fafc; }
+        .quiz-option.selected { border-color: #3b82f6; background-color: #eff6ff; color: #1d4ed8; }
+        
+        /* 提交后的反馈状态 */
+        .quiz-option.correct { border-color: #22c55e; background-color: #dcfce7; color: #166534; font-weight: 600; }
+        .quiz-option.incorrect { border-color: #ef4444; background-color: #fef2f2; color: #991b1b; text-decoration: line-through; }
+        .quiz-option.missed { border-color: #eab308; background-color: #fef9c3; color: #854d0e; }
+        
+        .quiz-option input { pointer-events: none; } /* 提交后禁用点击 */
+
+        /* 词汇配对练习样式 */
+        .match-card-selected {
+            border-color: #8b5cf6 !important; /* purple-500 */
+            background-color: #f5f3ff !important; /* purple-50 */
+            color: #7c3aed !important;
+        }
+        .shake-wrong {
+            background-color: rgba(239, 68, 68, 0.08) !important;
+            border-color: #ef4444 !important;
+            animation: shake 0.4s;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        /* 句子重点/易错标记样式 */
+        .trans-sentence-item {
+            transition: all 0.2s ease-in-out;
+            border-left: 4px solid transparent;
+        }
+        .trans-sentence-item.is-tagged-important {
+            background-color: #fffbeb !important; /* amber-50 */
+            border-left: 4px solid #f59e0b !important; /* amber-500 */
+            border-color: #fde68a !important; /* amber-200 */
+        }
+        .trans-sentence-item.is-tagged-error {
+            background-color: #fff1f2 !important; /* rose-50 */
+            border-left: 4px solid #f43f5e !important; /* rose-500 */
+            border-color: #fecdd3 !important; /* rose-200 */
+        }
+        .trans-sentence-item.is-tagged-important.is-tagged-error {
+            background: linear-gradient(to right, #fffbeb, #fff1f2) !important;
+            border-left: 4px solid #ea580c !important; /* orange-600 */
+            border-color: #fed7aa !important; /* orange-200 */
+        }
+        
+        /* 泰语正文中的标记联动样式 */
+        .thai-sentence.thai-marked-important {
+            border-bottom: 2px dashed #f59e0b !important;
+            background-color: rgba(254, 243, 199, 0.6) !important;
+        }
+        .thai-sentence.thai-marked-error {
+            border-bottom: 2px dashed #f43f5e !important;
+            background-color: rgba(255, 228, 230, 0.6) !important;
+        }
+        .thai-sentence.thai-marked-important.thai-marked-error {
+            border-bottom: 2px double #ea580c !important;
+            background-color: rgba(255, 237, 213, 0.7) !important;
+        }
+        
+        /* 标签按钮激活状态 */
+        .tag-btn-important.active {
+            background-color: #f59e0b !important;
+            color: #ffffff !important;
+            border-color: #d97706 !important;
+            box-shadow: 0 1px 3px rgba(245, 158, 11, 0.3);
+        }
+        .tag-btn-important.active i {
+            color: #ffffff !important;
+        }
+        .tag-btn-error.active {
+            background-color: #f43f5e !important;
+            color: #ffffff !important;
+            border-color: #e11d48 !important;
+            box-shadow: 0 1px 3px rgba(244, 63, 94, 0.3);
+        }
+        .tag-btn-error.active i {
+            color: #ffffff !important;
+        }
+
+        @keyframes badgePop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-badge-pop {
+            animation: badgePop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* 文章视图 Tab 切换按钮样式 */
+        .article-tab-btn {
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s ease-in-out;
+        }
+        .article-tab-btn.active {
+            background-color: #ffffff;
+            color: #2563eb;
+            font-weight: 700;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+        .article-tab-btn:not(.active) {
+            background-color: transparent;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .article-tab-btn:not(.active):hover {
+            color: #1e293b;
+            background-color: rgba(255, 255, 255, 0.6);
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { thaiBlue: '#2563eb', thaiGreen: '#16a34a' } } }
+        }
+    </script>
+</head>
+<body class="h-screen overflow-hidden flex flex-col bg-slate-50">
+
+    <!-- 顶部导航与工具栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-40 border-b border-gray-200">
+        <div class="w-full px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <!-- Sidebar Toggle Button -->
+                <button id="toggleArticleSidebarBtn" class="mr-4 text-gray-500 hover:text-gray-700 transition active:scale-95">
+                    <i class="fas fa-bars text-lg"></i>
+                </button>
+                <h1 class="text-xl font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-book-reader text-thaiBlue mr-3"></i>
+                    泰语语篇阅读训练 <span class="text-xs font-normal text-gray-400 ml-2 mt-1">A2-B1 综合理解</span>
+                </h1>
+            </div>
+            <div class="flex gap-4 items-center">
+                <!-- 文章管理按钮 -->
+                <a href="/Pages/consoleReadingCoach.html" class="flex items-center bg-gray-100 px-4 py-2 rounded-full hover:bg-gray-200 transition text-sm font-medium text-gray-600 active:scale-95 shadow-sm">
+                    <i class="fas fa-tasks text-gray-500 mr-1.5"></i> 文章管理
+                </a>
+                <!-- 设置历史按钮 -->
+                <button id="settingsBtn" class="flex items-center bg-gray-100 px-4 py-2 rounded-full hover:bg-gray-200 transition text-sm font-medium text-gray-600 active:scale-95 shadow-sm">
+                    <i class="fas fa-cog text-gray-500 mr-1.5"></i> 设置
+                </button>
+                <!-- 信号词雷达开关 -->
+                <label class="flex items-center cursor-pointer bg-gray-100 px-4 py-2 rounded-full hover:bg-gray-200 transition">
+                    <span class="text-sm font-medium mr-2 text-gray-600"><i class="fas fa-satellite-dish text-orange-500 mr-1"></i> 信号词雷达</span>
+                    <div class="relative inline-block w-10 h-6">
+                        <input type="checkbox" id="radarToggle" class="sr-only peer" checked>
+                        <div class="w-10 h-6 bg-gray-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                    </div>
+                </label>
+                <!-- 全文翻译开关 -->
+                <label class="flex items-center cursor-pointer bg-gray-100 px-4 py-2 rounded-full hover:bg-gray-200 transition">
+                    <span class="text-sm font-medium mr-2 text-gray-600"><i class="fas fa-language text-blue-500 mr-1"></i> 中文翻译</span>
+                    <div class="relative inline-block w-10 h-6">
+                        <input type="checkbox" id="transToggle" class="sr-only peer">
+                        <div class="w-10 h-6 bg-gray-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                    </div>
+                </label>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex-grow flex w-full min-h-0 overflow-hidden">
+        <!-- Left Sidebar: Article Navigation -->
+        <aside id="articleSidebar" class="w-64 border-r border-gray-200 bg-white flex flex-col flex-shrink-0 transition-all duration-300">
+            <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+                <span class="font-bold text-gray-700">文章清单</span>
+            </div>
+            <!-- Search bar -->
+            <div class="p-3 border-b border-gray-100">
+                <div class="relative">
+                    <input type="text" id="articleSearch" placeholder="搜索文章..." class="w-full text-xs bg-slate-50 border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:border-thaiBlue">
+                    <i class="fas fa-search absolute left-2.5 top-2.5 text-gray-400 text-xs"></i>
+                </div>
+            </div>
+            <!-- Article list -->
+            <div id="articleList" class="flex-grow overflow-y-auto p-2 space-y-1">
+                <!-- Dynamically loaded -->
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+            <main class="w-full max-w-4xl mx-auto p-6 flex flex-col gap-8">
+                
+                <!-- 阅读材料区 -->
+                <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b pb-4">
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <h2 id="article-title-heading" class="text-lg font-bold text-gray-700 flex items-center">
+                                <i class="fas fa-landmark text-gray-400 mr-2"></i> 阅读材料：泰国历史与王国
+                            </h2>
+                            <span id="article-meta-badge" class="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-medium">难度：A2-B1 | 句数：12</span>
+                        </div>
+
+                        <!-- 文章显示模式 Tab 切换 -->
+                        <div class="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200 shrink-0 self-start sm:self-auto select-none" role="tablist" aria-label="文章显示模式">
+                            <button type="button" id="tab-article-raw" onclick="switchArticleView('raw')" class="article-tab-btn active px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5" title="切换至泰语原文视图">
+                                <i class="fas fa-align-left text-xs"></i>
+                                <span>原文视图</span>
+                            </button>
+                            <button type="button" id="tab-article-trans" onclick="switchArticleView('trans')" class="article-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5" title="切换至按照句子中文翻译视图">
+                                <i class="fas fa-language text-sm"></i>
+                                <span>句子中文翻译视图</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 泰语正文 (原文视图) -->
+                    <div id="paragraph-container" class="thai-text mb-6 text-justify">
+                        <!-- JS 动态渲染 -->
+                    </div>
+
+                    <!-- 按照句子中文翻译视图 (默认隐藏) -->
+                    <div id="translation-container" class="hidden bg-slate-50 p-6 rounded-xl border border-slate-200 space-y-3 text-sm text-slate-600 leading-relaxed mb-6">
+                        <!-- JS 动态渲染 -->
+                    </div>
+                </section>
+
+                <!-- 答题区 -->
+                <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+                    <h2 class="text-lg font-bold text-gray-700 flex items-center mb-6">
+                        <i class="fas fa-tasks text-thaiGreen mr-2"></i> 阅读理解测试
+                    </h2>
+                    <div id="quiz-container" class="space-y-8">
+                        <!-- JS 动态渲染 3 个题目 -->
+                    </div>
+
+                    <!-- 操作栏 -->
+                    <div class="mt-8 pt-6 border-t flex justify-between items-center">
+                        <button id="resetBtn" class="text-gray-500 hover:text-gray-700 flex items-center text-sm">
+                            <i class="fas fa-redo mr-2"></i> 重置答案
+                        </button>
+                        <button id="submitBtn" class="bg-thaiBlue text-white px-8 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition font-bold text-lg flex items-center">
+                            <i class="fas fa-paper-plane mr-2"></i> 提交并查看解析
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 词汇配对练习区 -->
+                <section id="vocab-practice-section" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 hidden">
+                    <h2 class="text-lg font-bold text-gray-700 flex items-center mb-6">
+                        <i class="fas fa-spell-check text-violet-600 mr-2"></i> 词汇配对强化练习
+                    </h2>
+                    
+                    <div id="match-practice-container" class="space-y-6">
+                        <!-- Progress/Instructions -->
+                        <div class="flex justify-between items-center text-xs font-bold text-slate-500">
+                            <span>匹配进度</span>
+                            <span id="match-progress-text" class="text-violet-600">已配对 0 / 0</span>
+                        </div>
+                        
+                        <!-- Progress Bar -->
+                        <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
+                            <div id="match-progress-bar" class="h-full bg-gradient-to-r from-violet-500 to-indigo-600 transition-all duration-300" style="width: 0%"></div>
+                        </div>
+
+                        <!-- Instructions -->
+                        <div class="p-3 bg-violet-50 border border-violet-100 rounded-xl text-xs text-violet-700 font-medium flex items-center gap-2">
+                            <i class="fas fa-info-circle text-sm text-violet-500"></i>
+                            <span>请拖拽上方**泰语单词**到下方对应的**中文释义**槽中，或者依次点击它们进行配对。</span>
+                        </div>
+
+                        <!-- Match Grid -->
+                        <div class="flex flex-col gap-6">
+                            <!-- Words Bank -->
+                            <div class="space-y-2">
+                                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                    <i class="fas fa-language text-sm"></i>
+                                    <span>泰语单词银行 (拖拽或点击)</span>
+                                </div>
+                                <div id="match-thai-column" class="flex flex-wrap gap-2.5 p-4 bg-slate-50 border border-slate-200 rounded-2xl min-h-[72px] items-center">
+                                    <!-- Dynamic cards -->
+                                </div>
+                            </div>
+
+                            <!-- Meanings Column -->
+                            <div class="space-y-2">
+                                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                    <i class="fas fa-th-list text-sm"></i>
+                                    <span>中文释义配对槽 (拖拽或点击)</span>
+                                </div>
+                                <div id="match-chinese-column" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <!-- Dynamic slots -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex justify-between items-center pt-4 border-t border-slate-100">
+                            <button id="resetMatchBtn" class="text-gray-500 hover:text-gray-700 flex items-center text-sm">
+                                <i class="fas fa-redo mr-2"></i> 重置词汇练习
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 反馈结果区 -->
+                <section id="feedback-section" class="hidden bg-white rounded-2xl shadow-sm border-2 border-thaiGreen p-8">
+                    <div id="feedback-content"></div>
+                </section>
+
+            </main>
+        </div>
+
+        <!-- 侧边栏悬浮开关按钮 -->
+        <button id="sidebarToggleBtn" class="fixed right-0 top-1/3 bg-thaiBlue text-white py-4 px-2.5 rounded-l-xl shadow-xl hover:bg-blue-700 transition-all duration-300 flex flex-col items-center gap-1.5 border border-r-0 border-blue-400 select-none z-40">
+            <i class="fas fa-chevron-left transition-transform duration-300" id="sidebarToggleIcon"></i>
+            <span class="text-xs font-bold tracking-widest writing-mode-vertical mt-0.5">生词释义</span>
+        </button>
+
+        <!-- 单词查询侧边栏 -->
+        <aside id="querySidebar" class="w-0 overflow-hidden border-l border-transparent bg-white h-full flex flex-col transition-all duration-300 z-30 flex-shrink-0">
+            <!-- 侧边栏标题栏 -->
+            <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50 flex-shrink-0">
+                <h3 class="text-base font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-book text-thaiBlue mr-2"></i> 查询生词列表
+                </h3>
+                <button id="closeSidebarBtn" class="text-gray-400 hover:text-gray-600 transition p-1">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+
+            <!-- 手动查询输入框 -->
+            <div class="p-4 border-b border-gray-100 bg-white flex-shrink-0 space-y-2.5">
+                <div class="flex items-center gap-2 font-sans">
+                    <div class="flex items-center gap-1.5 text-[11px] text-slate-500 font-semibold shrink-0">
+                        <i class="ph ph-key text-blue-600"></i>
+                        <span>Auth Token:</span>
+                    </div>
+                    <input 
+                        type="password" 
+                        id="workerAuthToken" 
+                        placeholder="Worker AI 访问密钥 (Bearer Token)" 
+                        autocomplete="off"
+                        class="w-full text-[11px] bg-slate-50 border border-gray-200 rounded-lg px-2.5 py-1 focus:outline-none focus:border-thaiBlue font-mono text-slate-700 placeholder-slate-400"
+                    />
+                </div>
+                <div class="flex gap-2">
+                    <div class="relative flex-grow">
+                        <input type="text" id="manualQueryInput" placeholder="输入泰语单词查询..." class="w-full text-sm bg-slate-50 border border-gray-200 rounded-xl pl-8 pr-3 py-2 focus:outline-none focus:border-thaiBlue">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400 text-xs"></i>
+                    </div>
+                    <button id="manualQueryBtn" class="bg-thaiBlue hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-xl transition active:scale-95 flex items-center justify-center">
+                        查询
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 侧边栏查词记录滚动区域 -->
+            <div class="flex-grow overflow-y-auto p-4 space-y-4 hidden" id="sidebarListContainer"></div>
+            
+            <!-- 空状态提示 -->
+            <div class="flex-grow flex flex-col items-center justify-center p-6 text-gray-400 text-center select-none" id="sidebarEmptyState">
+                <i class="fas fa-search text-4xl mb-3 block text-slate-300"></i>
+                <p class="text-sm">在文章中选中单词并点击</p>
+                <p class="text-sm font-semibold text-thaiBlue mt-1">“查询单词”</p>
+            </div>
+        </aside>
+    </div>
+
+    <!-- 全局 Tooltip 容器 -->
+    <div id="global-tooltip">
+        <div class="flex justify-between items-start mb-2">
+            <span class="text-2xl font-bold text-gray-800 thai-text" id="tt-thai"></span>
+            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-medium" id="tt-pos"></span>
+        </div>
+        <div class="text-sm text-gray-500 font-mono mb-3" id="tt-ipa"></div>
+        <div class="space-y-1 border-t pt-2">
+            <div class="flex items-center"><span class="text-red-500 mr-2 text-xs font-bold">中</span><span class="text-gray-700 font-medium" id="tt-zh"></span></div>
+            <div class="flex items-center"><span class="text-blue-500 mr-2 text-xs font-bold">EN</span><span class="text-gray-500 text-sm" id="tt-en"></span></div>
+        </div>
+    </div>
+
+
+
+    <!-- 选中单词弹出微型工具栏 -->
+    <div id="selectionToolbar" class="fixed hidden text-white rounded-full px-4 py-2 shadow-xl border border-slate-700 items-center gap-2 z-50 transition-all duration-150 text-xs font-semibold select-none">
+        <button id="queryBtn" class="flex items-center gap-1.5 hover:text-blue-300 active:scale-95 transition">
+            <i class="fas fa-search text-[10px]"></i> 查询单词
+        </button>
+    </div>
+
+    <!-- 原生设置历史记录 Dialog -->
+    <dialog id="settingsDialog" class="rounded-2xl shadow-2xl p-0 border border-gray-200 max-w-lg w-full backdrop:bg-black/50 overflow-hidden">
+        <div class="flex flex-col h-[520px] bg-white">
+            <!-- 头部 -->
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-cog text-thaiBlue mr-2 animate-spin-slow"></i> 设置与查词历史
+                </h3>
+                <button id="closeSettingsBtn" class="text-gray-400 hover:text-gray-600 transition p-1">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+            <!-- 列表容器 -->
+            <div class="p-6 flex-grow overflow-y-auto space-y-4 bg-slate-50/50" id="historyListContainer">
+                <!-- 由 JS 渲染 -->
+            </div>
+            <!-- 底部操作栏 -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center flex-shrink-0">
+                <button id="clearHistoryBtn" class="text-red-500 hover:text-red-700 text-sm font-medium flex items-center gap-1.5 transition active:scale-95">
+                    <i class="fas fa-trash-alt"></i> 清空记录
+                </button>
+                <button id="closeSettingsFooterBtn" class="bg-thaiBlue text-white px-5 py-2 rounded-xl hover:bg-blue-700 transition text-sm font-semibold active:scale-95 shadow-md">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </dialog>
+
+    <script>
+        // ==========================================
+        // 核心数据源：泰国历史语篇 (动态加载)
+        // ==========================================
+        let appData = null;
+
+        // ==========================================
+        // 状态与 DOM 引用
+        // ==========================================
+        const tooltip = document.getElementById('global-tooltip');
+        let tooltipTimeout;
+        let isSubmitted = false;
+
+        // ==========================================
+        // 查词与设置模块 DOM 引用 & 状态
+        // ==========================================
+        const sidebar = document.getElementById('querySidebar');
+        const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+        const sidebarToggleIcon = document.getElementById('sidebarToggleIcon');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        const sidebarListContainer = document.getElementById('sidebarListContainer');
+        const sidebarEmptyState = document.getElementById('sidebarEmptyState');
+        
+        const selectionToolbar = document.getElementById('selectionToolbar');
+        const queryBtn = document.getElementById('queryBtn');
+        
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsDialog = document.getElementById('settingsDialog');
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        const closeSettingsFooterBtn = document.getElementById('closeSettingsFooterBtn');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const historyListContainer = document.getElementById('historyListContainer');
+
+        let selectedWordText = '';
+
+        // ==========================================
+        // 泰语语音播放功能
+        // ==========================================
+        window.playAudioDirect = (text) => {
+            if (!text) return;
+            const url = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(text)}`;
+            new Audio(url).play().catch(err => console.error("Audio playback error:", err));
+        };
+
+        // Helper to get raw plain text from HTML string
+        function getCleanText(html) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            return tempDiv.textContent || tempDiv.innerText || "";
+        }
+
+        // Helper to escape HTML characters for safe attribute embedding
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Helper to copy text to clipboard with fallback for non-secure contexts
+        function copyTextToClipboard(text) {
+            return new Promise((resolve, reject) => {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(resolve).catch(err => {
+                        console.warn("navigator.clipboard copy failed, trying fallback...", err);
+                        if (fallbackCopyText(text)) {
+                            resolve();
+                        } else {
+                            reject(err);
+                        }
+                    });
+                } else {
+                    if (fallbackCopyText(text)) {
+                        resolve();
+                    } else {
+                        reject(new Error("Clipboard API not supported and fallback failed"));
+                    }
+                }
+            });
+        }
+
+        function fallbackCopyText(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            let successful = false;
+            try {
+                successful = document.execCommand('copy');
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+            }
+            document.body.removeChild(textArea);
+            return successful;
+        }
+
+        // ==========================================
+        // IndexedDB 存储逻辑 (查词历史 & 句子重点/易错标签)
+        // ==========================================
+        const DB_NAME = 'ThaiReadingCoachDB';
+        const DB_VERSION = 2;
+        const STORE_NAME = 'wordQueries';
+        const TAGS_STORE_NAME = 'sentenceTags';
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    // 1. 查词历史表
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                    }
+                    // 2. 新增句子标签表 (包含文章id、段落id、句子id、标志状态、日期等)
+                    if (!db.objectStoreNames.contains(TAGS_STORE_NAME)) {
+                        const store = db.createObjectStore(TAGS_STORE_NAME, { keyPath: 'id' });
+                        store.createIndex('articleId', 'articleId', { unique: false });
+                        store.createIndex('article_paragraph_sentence', ['articleId', 'paragraphId', 'sentenceId'], { unique: false });
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        // 缓存当前加载文章的标签映射：key 为 `${paragraphId}_${sentenceId}`, value 为 Set(['important', 'error'])
+        const currentArticleTagsMap = new Map();
+
+        // 获取指定文章的所有标签记录
+        async function getSentenceTagsByArticle(articleId) {
+            if (!articleId) return [];
+            try {
+                const db = await initDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([TAGS_STORE_NAME], 'readonly');
+                    const store = transaction.objectStore(TAGS_STORE_NAME);
+                    const index = store.index('articleId');
+                    const request = index.getAll(articleId);
+                    request.onsuccess = (e) => resolve(e.target.result || []);
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to read sentence tags from IndexedDB:', err);
+                return [];
+            }
+        }
+
+        // 切换标签状态（打标签 / 取消标签）并持久化到 IndexedDB
+        async function toggleSentenceTagInDB(articleId, paragraphId, sentenceId, tagType) {
+            if (!articleId || !paragraphId || !sentenceId || !tagType) return null;
+            try {
+                const db = await initDB();
+                const recordId = `${articleId}_${paragraphId}_${sentenceId}_${tagType}`;
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([TAGS_STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(TAGS_STORE_NAME);
+                    const getReq = store.get(recordId);
+                    
+                    getReq.onsuccess = () => {
+                        const existing = getReq.result;
+                        if (existing) {
+                            // 已经存在此标签 -> 再次点击取消该标签 (delete)
+                            const delReq = store.delete(recordId);
+                            delReq.onsuccess = () => resolve({ action: 'removed', tagType, recordId });
+                            delReq.onerror = (e) => reject(e.target.error);
+                        } else {
+                            // 尚未标记 -> 点击一次打标签 (put)
+                            const now = new Date();
+                            const record = {
+                                id: recordId,
+                                articleId: articleId,           // 文章id
+                                paragraphId: paragraphId,       // 段落id
+                                sentenceId: sentenceId,         // 句子id
+                                tagType: tagType,               // 标签类型: 'important' | 'error'
+                                status: tagType === 'important' ? '重要' : '易错', // 标志状态
+                                statusCode: tagType,
+                                date: now.toLocaleString('zh-CN', { hour12: false }), // 格式化日期
+                                isoDate: now.toISOString(),
+                                timestamp: Date.now()           // 时间戳
+                            };
+                            const addReq = store.put(record);
+                            addReq.onsuccess = () => resolve({ action: 'added', tagType, record });
+                            addReq.onerror = (e) => reject(e.target.error);
+                        }
+                    };
+                    getReq.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to toggle sentence tag in IndexedDB:', err);
+                return null;
+            }
+        }
+
+        // 更新单个句子的视觉标记和按钮状态
+        function updateSentenceTagUI(paragraphId, sentenceId) {
+            const key = `${paragraphId}_${sentenceId}`;
+            const tags = currentArticleTagsMap.get(key) || new Set();
+            const hasImportant = tags.has('important');
+            const hasError = tags.has('error');
+
+            const itemEl = document.getElementById(`trans-item-${paragraphId}-${sentenceId}`);
+            const badgeContainer = document.getElementById(`tags-badge-${paragraphId}-${sentenceId}`);
+            
+            // 1. 更新重点与易错按钮样式及提示
+            if (itemEl) {
+                const importantBtn = itemEl.querySelector('.tag-btn-important');
+                if (importantBtn) {
+                    if (hasImportant) {
+                        importantBtn.classList.add('active');
+                        importantBtn.title = '已标记为重点 (点击取消)';
+                        const icon = importantBtn.querySelector('i');
+                        if (icon) icon.className = 'fas fa-star text-xs';
+                    } else {
+                        importantBtn.classList.remove('active');
+                        importantBtn.title = '标记为重点 (点击切换)';
+                        const icon = importantBtn.querySelector('i');
+                        if (icon) icon.className = 'far fa-star text-xs';
+                    }
+                }
+
+                const errorBtn = itemEl.querySelector('.tag-btn-error');
+                if (errorBtn) {
+                    if (hasError) {
+                        errorBtn.classList.add('active');
+                        errorBtn.title = '已标记为易错 (点击取消)';
+                        const icon = errorBtn.querySelector('i');
+                        if (icon) icon.className = 'fas fa-circle-exclamation text-xs';
+                    } else {
+                        errorBtn.classList.remove('active');
+                        errorBtn.title = '标记为易错 (点击切换)';
+                        const icon = errorBtn.querySelector('i');
+                        if (icon) icon.className = 'far fa-circle-exclamation text-xs';
+                    }
+                }
+
+                // 2. 更新整条句子卡片外观（左侧高亮边框和醒目背景）
+                itemEl.classList.remove('is-tagged-important', 'is-tagged-error');
+                if (hasImportant) itemEl.classList.add('is-tagged-important');
+                if (hasError) itemEl.classList.add('is-tagged-error');
+            }
+
+            // 3. 渲染醒目的标记符号徽章 (重要 ⭐ / 易错 ⚠️)
+            if (badgeContainer) {
+                let badgesHtml = '';
+                if (hasImportant) {
+                    badgesHtml += `
+                        <span class="tag-badge-important inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-xs animate-badge-pop">
+                            <i class="fas fa-star text-amber-500"></i> 重点
+                        </span>
+                    `;
+                }
+                if (hasError) {
+                    badgesHtml += `
+                        <span class="tag-badge-error inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-900 border border-rose-300 shadow-xs animate-badge-pop">
+                            <i class="fas fa-circle-exclamation text-rose-500"></i> 易错
+                        </span>
+                    `;
+                }
+                badgeContainer.innerHTML = badgesHtml;
+                badgeContainer.classList.toggle('hidden', !hasImportant && !hasError);
+            }
+
+            // 4. 同步更新泰语正文区域对应句子的视觉标记符号
+            const thaiSentenceEl = document.querySelector(`.thai-sentence[data-sid="${sentenceId}"]`);
+            if (thaiSentenceEl) {
+                thaiSentenceEl.classList.remove('thai-marked-important', 'thai-marked-error');
+                if (hasImportant) thaiSentenceEl.classList.add('thai-marked-important');
+                if (hasError) thaiSentenceEl.classList.add('thai-marked-error');
+            }
+        }
+
+        // 更新顶部标签统计概览栏
+        function updateTagsSummaryStats() {
+            let importantCount = 0;
+            let errorCount = 0;
+            for (const tags of currentArticleTagsMap.values()) {
+                if (tags.has('important')) importantCount++;
+                if (tags.has('error')) errorCount++;
+            }
+            const statImpEl = document.getElementById('stat-important-count');
+            const statErrEl = document.getElementById('stat-error-count');
+            if (statImpEl) {
+                statImpEl.innerHTML = `<i class="fas fa-star text-amber-500 text-[10px]"></i> 重点 ${importantCount}`;
+            }
+            if (statErrEl) {
+                statErrEl.innerHTML = `<i class="fas fa-circle-exclamation text-rose-500 text-[10px]"></i> 易错 ${errorCount}`;
+            }
+        }
+
+        // 加载当前文章的所有标签并应用到界面
+        async function loadAndApplySentenceTags(articleId) {
+            currentArticleTagsMap.clear();
+            if (!articleId) {
+                updateTagsSummaryStats();
+                return;
+            }
+            
+            const records = await getSentenceTagsByArticle(articleId);
+            records.forEach(rec => {
+                const key = `${rec.paragraphId}_${rec.sentenceId}`;
+                if (!currentArticleTagsMap.has(key)) {
+                    currentArticleTagsMap.set(key, new Set());
+                }
+                currentArticleTagsMap.get(key).add(rec.tagType);
+            });
+
+            // 遍历并更新所有已渲染句子的 UI 状态
+            if (appData && appData.paragraphs) {
+                appData.paragraphs.forEach(p => {
+                    const pid = p.paragraph_id || p.id || 'p1';
+                    if (p.sentences) {
+                        p.sentences.forEach(s => {
+                            const sid = s.sentence_id || s.id;
+                            updateSentenceTagUI(pid, sid);
+                        });
+                    }
+                });
+            }
+            updateTagsSummaryStats();
+        }
+
+        // 点击标签按钮的处理函数 (同一标签点击一次打标签，已打标签则取消)
+        async function handleTagButtonClick(articleId, paragraphId, sentenceId, tagType) {
+            if (!articleId) {
+                articleId = window.activeArticleUuid;
+            }
+            if (!articleId || !paragraphId || !sentenceId || !tagType) return;
+
+            const key = `${paragraphId}_${sentenceId}`;
+            if (!currentArticleTagsMap.has(key)) {
+                currentArticleTagsMap.set(key, new Set());
+            }
+            const tagSet = currentArticleTagsMap.get(key);
+
+            // 乐观更新内存状态，实现零延迟反馈
+            const willRemove = tagSet.has(tagType);
+            if (willRemove) {
+                tagSet.delete(tagType);
+            } else {
+                tagSet.add(tagType);
+            }
+
+            // 立即刷新 UI
+            updateSentenceTagUI(paragraphId, sentenceId);
+            updateTagsSummaryStats();
+
+            // 异步持久化到本地 IndexedDB
+            const res = await toggleSentenceTagInDB(articleId, paragraphId, sentenceId, tagType);
+            if (!res) {
+                // 若失败回滚内存状态
+                if (willRemove) {
+                    tagSet.add(tagType);
+                } else {
+                    tagSet.delete(tagType);
+                }
+                updateSentenceTagUI(paragraphId, sentenceId);
+                updateTagsSummaryStats();
+            }
+        }
+
+        async function saveQueryRecord(word, explanations) {
+            try {
+                const db = await initDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const record = {
+                        word,
+                        explanations,
+                        timestamp: Date.now(),
+                        isCoreWordSaved: savedCoreWordsSet.has(word)
+                    };
+                    const request = store.add(record);
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to save to IndexedDB:', err);
+            }
+        }
+
+        async function getQueryHistory() {
+            try {
+                const db = await initDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_NAME], 'readonly');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.getAll();
+                    request.onsuccess = (e) => {
+                        const records = e.target.result || [];
+                        records.sort((a, b) => b.timestamp - a.timestamp);
+                        resolve(records);
+                    };
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to read from IndexedDB:', err);
+                return [];
+            }
+        }
+
+        async function deleteQueryRecord(id) {
+            try {
+                const db = await initDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.delete(id);
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to delete from IndexedDB:', err);
+            }
+        }
+
+        async function updateQueryRecord(id, updates) {
+            try {
+                const db = await initDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.get(id);
+                    request.onsuccess = () => {
+                        const record = request.result;
+                        if (record) {
+                            Object.assign(record, updates);
+                            const putRequest = store.put(record);
+                            putRequest.onsuccess = () => resolve(true);
+                            putRequest.onerror = (e) => reject(e.target.error);
+                        } else {
+                            resolve(false);
+                        }
+                    };
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to update in IndexedDB:', err);
+                return false;
+            }
+        }
+
+        async function clearQueryHistory() {
+            try {
+                const db = await initDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.clear();
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to clear IndexedDB:', err);
+            }
+        }
+
+        // ==========================================
+        // 浮动选择工具栏逻辑
+        // ==========================================
+        document.addEventListener('selectionchange', () => {
+            const selection = window.getSelection();
+            if (selection.isCollapsed) {
+                selectionToolbar.classList.add('hidden');
+                return;
+            }
+
+            const text = selection.toString().trim();
+            if (!text) {
+                selectionToolbar.classList.add('hidden');
+                return;
+            }
+
+            const range = selection.getRangeAt(0);
+            const container = document.getElementById('paragraph-container');
+            const transContainer = document.getElementById('translation-container');
+            
+            const ancestorNode = range.commonAncestorContainer;
+            const ancestorEl = ancestorNode.nodeType === Node.ELEMENT_NODE ? ancestorNode : ancestorNode.parentElement;
+            
+            // 确保选择的文本处于文章段落区域内或翻译泰语区域内，且包含泰语字符
+            const inParagraph = container && container.contains(ancestorEl);
+            const inTranslation = transContainer && transContainer.contains(ancestorEl);
+            const hasThai = /[\u0e00-\u0e7f]/.test(text);
+
+            if ((inParagraph || inTranslation) && hasThai) {
+                selectedWordText = text;
+                selectionToolbar.classList.remove('hidden');
+                
+                const rect = range.getBoundingClientRect();
+                
+                // 计算浮动工具栏的最佳位置（上方居中）
+                const toolbarWidth = 92; // 估算大约宽度
+                const toolbarHeight = 32; // 估算大约高度
+                
+                const left = rect.left + rect.width / 2 - toolbarWidth / 2;
+                const top = rect.top - toolbarHeight - 8;
+                
+                selectionToolbar.style.left = `${Math.max(10, Math.min(left, window.innerWidth - toolbarWidth - 10))}px`;
+                selectionToolbar.style.top = `${Math.max(10, Math.min(top, window.innerHeight - toolbarHeight - 10)) + window.scrollY}px`;
+            } else {
+                selectionToolbar.classList.add('hidden');
+            }
+        });
+
+        // 阻止 mousedown 的默认行为，防止点击工具栏导致选中区域消失
+        selectionToolbar.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+        });
+
+        // ==========================================
+        // 单词侧边栏控制与查询逻辑
+        // ==========================================
+        function toggleSidebar(open) {
+            const isOpen = open !== undefined ? open : sidebar.classList.contains('w-0');
+            if (isOpen) {
+                sidebar.classList.remove('w-0', 'border-transparent');
+                sidebar.classList.add('w-80', 'md:w-96', 'border-gray-200');
+                
+                sidebarToggleBtn.classList.remove('right-0');
+                sidebarToggleBtn.classList.add('right-80', 'md:right-96');
+                
+                sidebarToggleIcon.classList.remove('fa-chevron-left');
+                sidebarToggleIcon.classList.add('fa-chevron-right');
+            } else {
+                sidebar.classList.remove('w-80', 'md:w-96', 'border-gray-200');
+                sidebar.classList.add('w-0', 'border-transparent');
+                
+                sidebarToggleBtn.classList.remove('right-80', 'md:right-96');
+                sidebarToggleBtn.classList.add('right-0');
+                
+                sidebarToggleIcon.classList.remove('fa-chevron-right');
+                sidebarToggleIcon.classList.add('fa-chevron-left');
+            }
+        }
+
+        sidebarToggleBtn.addEventListener('click', () => toggleSidebar());
+        closeSidebarBtn.addEventListener('click', () => toggleSidebar(false));
+
+        // 绑定列表的语音播放、删除与保存核心词事件监听（使用非行内事件委托）
+        sidebarListContainer.addEventListener('click', async (e) => {
+            const saveBtn = e.target.closest('.save-core-word-btn');
+            if (saveBtn) {
+                const word = saveBtn.dataset.word;
+                const recordId = saveBtn.dataset.id ? parseInt(saveBtn.dataset.id, 10) : null;
+                if (word) {
+                    await handleSaveCoreWord(word, recordId, saveBtn);
+                }
+                return;
+            }
+
+            const deleteBtn = e.target.closest('.delete-sidebar-item-btn');
+            if (deleteBtn) {
+                const id = parseInt(deleteBtn.dataset.id, 10);
+                if (!isNaN(id)) {
+                    await deleteQueryRecord(id);
+                    await updateSidebarView();
+                    if (settingsDialog && settingsDialog.open) {
+                        await renderHistoryInDialog();
+                    }
+                    renderReading();
+                }
+                return;
+            }
+
+            const clickable = e.target.closest('.font-thai-clickable');
+            if (clickable) {
+                const word = clickable.dataset.word;
+                if (word) window.playAudioDirect(word);
+            }
+        });
+
+        historyListContainer.addEventListener('click', async (e) => {
+            const saveBtn = e.target.closest('.save-core-word-btn');
+            if (saveBtn) {
+                const word = saveBtn.dataset.word;
+                const recordId = saveBtn.dataset.id ? parseInt(saveBtn.dataset.id, 10) : null;
+                if (word) {
+                    await handleSaveCoreWord(word, recordId, saveBtn);
+                }
+                return;
+            }
+
+            const clickable = e.target.closest('.font-thai-clickable');
+            if (clickable) {
+                const word = clickable.dataset.word;
+                if (word) window.playAudioDirect(word);
+            }
+        });
+
+        // ==========================================
+        // 核心词汇生成与保存 (Worker AI /core-word 接口)
+        // ==========================================
+        const savedCoreWordsSet = new Set();
+
+        async function loadExistingCoreWords() {
+            try {
+                const res = await fetch('/api/core-words');
+                if (res.ok) {
+                    const words = await res.json();
+                    if (Array.isArray(words)) {
+                        words.forEach(w => {
+                            if (w.word) savedCoreWordsSet.add(w.word.trim());
+                        });
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to load existing core words:', e);
+            }
+        }
+
+        async function getThaiWordDetails(word) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 12000); // 设置 12 秒安全超时
+
+            try {
+                const headers = typeof getWorkerAuthHeaders === 'function'
+                    ? getWorkerAuthHeaders({ "Content-Type": "application/json" })
+                    : { "Content-Type": "application/json" };
+
+                const response = await fetch("https://thai-semantic-match-worker.alexszhang.workers.dev/core-word", {
+                    method: "POST",
+                    headers: headers,
+                    body: JSON.stringify({ word }),
+                    signal: controller.signal
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP 错误 ${response.status}`);
+                }
+
+                const data = await response.json();
+                return data;
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+
+        async function handleSaveCoreWord(word, recordId, btnElement) {
+            if (!word) return;
+
+            try {
+                btnElement.disabled = true;
+                btnElement.className = "save-core-word-btn px-2.5 py-1 text-xs font-semibold text-indigo-400 bg-indigo-50 border border-indigo-200 rounded-lg transition flex items-center gap-1.5 cursor-wait opacity-80";
+                btnElement.innerHTML = `<i class="fas fa-spinner fa-spin text-xs"></i><span>Saving...</span>`;
+
+                // 1. 调用 Worker AI /core-word 获得 Pages/appCoreWords.html 格式的结构化核心词数据
+                const coreWordData = await getThaiWordDetails(word);
+                if (!coreWordData || !coreWordData.word) {
+                    throw new Error('Worker AI 未能返回有效核心词数据');
+                }
+
+                // 2. 获取当前文章关联课时
+                let lessonId = null;
+                if (window.currentArticle && Array.isArray(window.currentArticle.courses) && window.currentArticle.courses.length > 0) {
+                    lessonId = window.currentArticle.courses[0].lessonId || null;
+                }
+
+                const payload = {
+                    ...coreWordData,
+                    lessonId: lessonId
+                };
+
+                // 3. 提交至核心词存储接口 (/api/core-words)
+                const saveRes = await fetch('/api/core-words', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!saveRes.ok) {
+                    const errData = await saveRes.json().catch(() => ({}));
+                    throw new Error(errData.error || `保存失败 (${saveRes.status})`);
+                }
+
+                // 4. 更新前端状态缓存与 IndexedDB 记录
+                savedCoreWordsSet.add(word);
+                if (recordId) {
+                    await updateQueryRecord(recordId, { isCoreWordSaved: true, coreWordData: coreWordData });
+                }
+
+                showToast(`核心词「${word}」已成功保存至核心词库！`, 'success');
+                await updateSidebarView();
+                if (typeof renderHistoryInDialog === 'function' && settingsDialog && settingsDialog.open) {
+                    await renderHistoryInDialog();
+                }
+            } catch (err) {
+                console.error('Save core word error:', err);
+                showToast(`保存核心词失败: ${err.message || '网络或接口异常'}`, 'error');
+                btnElement.disabled = false;
+                btnElement.className = "save-core-word-btn px-2.5 py-1 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 active:scale-95 border border-rose-200 rounded-lg transition flex items-center gap-1.5 cursor-pointer";
+                btnElement.innerHTML = `<i class="fas fa-redo text-xs"></i><span>Retry Save</span>`;
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            let container = document.getElementById('coach-toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'coach-toast-container';
+                container.className = 'fixed bottom-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none font-sans';
+                document.body.appendChild(container);
+            }
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-emerald-600 text-white shadow-emerald-600/30' : (type === 'error' ? 'bg-rose-600 text-white shadow-rose-600/30' : 'bg-slate-800 text-white shadow-slate-800/30');
+            const iconClass = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle');
+            toast.className = `${bgClass} text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto max-w-sm border border-white/20`;
+            toast.innerHTML = `<i class="fas ${iconClass} text-sm shrink-0"></i> <span class="leading-tight">${message}</span>`;
+            container.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3200);
+        }
+
+        // 更新侧边栏界面
+        async function updateSidebarView() {
+            const history = await getQueryHistory();
+            if (history && history.length > 0) {
+                sidebarEmptyState.classList.add('hidden');
+                sidebarListContainer.classList.remove('hidden');
+                sidebarListContainer.innerHTML = history.map(item => {
+                    const timeStr = new Date(item.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                    let expHtml = '';
+                    if (item.explanations && item.explanations.length > 0) {
+                        expHtml = item.explanations.map(exp => `
+                            <div class="flex items-baseline gap-2 py-0.5">
+                                <span class="text-[10px] bg-blue-100 text-blue-700 px-1 py-0.5 rounded font-black flex-shrink-0">译</span>
+                                <span class="text-gray-700 font-medium text-sm">${exp.meanCh}</span>
+                                <span class="text-xs text-gray-400">(${exp.meanEn})</span>
+                            </div>
+                        `).join('');
+                    } else {
+                        expHtml = `<p class="text-xs text-gray-500 italic mt-2 border-t pt-2">未找到该单词的详细解释</p>`;
+                    }
+
+                    const isSaved = savedCoreWordsSet.has(item.word) || item.isCoreWordSaved;
+
+                    let coreDetailsHtml = '';
+                    if (item.coreWordData) {
+                        const cw = item.coreWordData;
+                        coreDetailsHtml = `
+                            <div class="mt-2.5 pt-2 border-t border-dashed border-indigo-200/80 space-y-1.5 font-sans">
+                                <div class="flex items-center justify-between text-[11px]">
+                                    <span class="font-bold text-indigo-600 flex items-center gap-1">
+                                        <i class="fas fa-cube text-[10px]"></i> 核心词解析
+                                    </span>
+                                    ${cw.ipa ? `<span class="font-mono text-slate-400 text-[10px]">${cw.ipa}</span>` : ''}
+                                </div>
+                                ${Array.isArray(cw.meanings) ? cw.meanings.map(m => `
+                                    <div class="bg-white/80 p-2 rounded-lg border border-indigo-100/60 text-xs space-y-1">
+                                        <div class="flex items-center gap-1.5 font-medium text-slate-700">
+                                            <span class="px-1.5 py-0.2 bg-indigo-50 text-indigo-600 rounded text-[10px] font-mono font-bold">${m.part_of_speech || '词'}</span>
+                                            <span>${m.meaning}</span>
+                                        </div>
+                                        ${Array.isArray(m.examples) && m.examples.length > 0 ? `
+                                            <div class="pl-2 border-l-2 border-indigo-200 text-[11px] text-slate-500 space-y-0.5">
+                                                ${m.examples.map(ex => `
+                                                    <div>
+                                                        <div class="font-thai text-slate-700 font-medium">${ex.sentence}</div>
+                                                        <div class="text-[10px] text-slate-400">${ex.meaning}</div>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `).join('') : ''}
+                            </div>
+                        `;
+                    }
+
+                    return `
+                        <div class="bg-gray-50 border border-gray-100 rounded-xl p-4 shadow-sm relative transition-all duration-300 hover:shadow-md">
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="text-lg font-bold text-slate-800 font-thai font-thai-clickable flex items-center gap-1.5" data-word="${item.word}" title="点击播放发音">
+                                    ${item.word}
+                                    <i class="fas fa-volume-up text-xs text-gray-400 transition-colors"></i>
+                                </h4>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">${timeStr}</span>
+                                    <button class="delete-sidebar-item-btn text-gray-400 hover:text-red-600 transition p-1" data-id="${item.id}" title="删除记录">
+                                        <i class="fas fa-trash-alt text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="space-y-1.5 mt-2 border-t pt-2 border-gray-200/60">
+                                ${expHtml}
+                            </div>
+                            ${coreDetailsHtml}
+                            <div class="mt-3 pt-2.5 border-t border-gray-200/60 flex items-center justify-between">
+                                ${isSaved ? `
+                                    <button class="save-core-word-btn px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/90 rounded-lg flex items-center gap-1.5 cursor-default select-none" data-word="${item.word}" data-id="${item.id}" disabled title="该词汇已保存至核心词库">
+                                        <i class="fas fa-check-circle text-emerald-500 text-xs"></i>
+                                        <span>Saved Core Word</span>
+                                    </button>
+                                    <span class="text-[10px] text-slate-400 font-sans">已录入核心词库</span>
+                                ` : `
+                                    <button class="save-core-word-btn px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 active:scale-95 border border-indigo-200 rounded-lg transition flex items-center gap-1.5 cursor-pointer shadow-2xs" data-word="${item.word}" data-id="${item.id}" title="通过 Worker AI 生成核心词 JSON 释义并保存至核心词库">
+                                        <i class="fas fa-bookmark text-indigo-500 text-xs"></i>
+                                        <span>save core word</span>
+                                    </button>
+                                    <span class="text-[10px] text-slate-400 font-sans">生成核心词条</span>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                sidebarEmptyState.classList.remove('hidden');
+                sidebarListContainer.classList.add('hidden');
+                sidebarListContainer.innerHTML = '';
+            }
+        }
+
+        async function queryWord(word) {
+            if (!word) return;
+
+            // 展开侧边栏
+            toggleSidebar(true);
+            
+            // 展现列表，隐藏空状态
+            sidebarEmptyState.classList.add('hidden');
+            sidebarListContainer.classList.remove('hidden');
+
+            // 插入加载状态卡片
+            const loaderId = 'query-loader-' + Date.now();
+            const loaderHtml = `
+                <div id="${loaderId}" class="bg-gray-50 border border-gray-100 rounded-xl p-4 shadow-sm relative animate-pulse flex flex-col gap-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-base font-bold text-gray-800 font-thai">${word}</span>
+                        <span class="text-xs text-gray-400">正在查询...</span>
+                    </div>
+                    <div class="h-4 bg-gray-200 rounded w-3/4 mt-2"></div>
+                    <div class="h-4 bg-gray-200 rounded w-1/2 mt-1"></div>
+                </div>
+            `;
+            sidebarListContainer.insertAdjacentHTML('afterbegin', loaderHtml);
+            sidebarListContainer.scrollTop = 0;
+
+            try {
+                const response = await fetch("https://thai-semantic-match-worker.alexszhang.workers.dev/explain", {
+                    method: "POST",
+                    headers: getWorkerAuthHeaders(),
+                    body: JSON.stringify({
+                        word: word
+                    })
+                });
+
+                if (response.status === 401) {
+                    throw new Error("401 未授权访问：请检查 API Auth Token 是否正确！");
+                }
+
+                if (!response.ok) {
+                    throw new Error(`请求失败 (${response.status})`);
+                }
+
+                const resText = await response.text();
+                const result = resText ? JSON.parse(resText) : {};
+                
+                // 保存至 IndexedDB
+                await saveQueryRecord(word, result);
+                
+                // 动态突出高亮当前查询的词
+                const firstExp = result && result.length > 0 ? result[0] : {};
+                const explanationData = {
+                    zh: result ? result.map(e => e.meanCh).join('; ') : '',
+                    en: result ? result.map(e => e.meanEn).join('; ') : '',
+                    pos: firstExp.pos || '词汇',
+                    ipa: firstExp.ipa || ''
+                };
+                highlightWordInSentences(word, explanationData);
+                
+                // 刷新侧边栏（会自动去掉 loader 并渲染最新的结果卡片）
+                await updateSidebarView();
+                
+                // 如果设置历史对话框处于开启状态，同步刷新
+                if (settingsDialog.open) {
+                    await renderHistoryInDialog();
+                }
+            } catch (error) {
+                console.error('API Query Error:', error);
+                const loader = document.getElementById(loaderId);
+                if (loader) {
+                    loader.classList.remove('animate-pulse');
+                    loader.className = "bg-red-50 border border-red-100 rounded-xl p-4 shadow-sm relative";
+                    loader.innerHTML = `
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-base font-bold text-red-800 font-thai">${word}</span>
+                            <span class="text-xs text-red-500">查询失败</span>
+                        </div>
+                        <p class="text-xs text-red-600 mt-2 border-t border-red-100 pt-2">
+                            错误信息: ${error.message || '网络连接失败'}
+                        </p>
+                    `;
+                }
+            }
+        }
+
+        queryBtn.addEventListener('click', async () => {
+            const word = selectedWordText.trim();
+            if (!word) return;
+
+            // 隐藏工具栏并清除选择
+            selectionToolbar.classList.add('hidden');
+            window.getSelection().removeAllRanges();
+
+            await queryWord(word);
+        });
+
+        // 绑定手动输入查询事件
+        const manualQueryInput = document.getElementById('manualQueryInput');
+        const manualQueryBtn = document.getElementById('manualQueryBtn');
+        
+        async function triggerManualQuery() {
+            const word = manualQueryInput.value.trim();
+            if (!word) return;
+            manualQueryInput.value = ''; // 清空输入框
+            await queryWord(word);
+        }
+
+        manualQueryBtn.addEventListener('click', triggerManualQuery);
+        manualQueryInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                triggerManualQuery();
+            }
+        });
+
+        // ==========================================
+        // 设置对话框交互逻辑
+        // ==========================================
+        settingsBtn.addEventListener('click', async () => {
+            await renderHistoryInDialog();
+            settingsDialog.showModal();
+        });
+
+        closeSettingsBtn.addEventListener('click', () => {
+            settingsDialog.close();
+        });
+
+        closeSettingsFooterBtn.addEventListener('click', () => {
+            settingsDialog.close();
+        });
+
+        settingsDialog.addEventListener('click', (e) => {
+            const rect = settingsDialog.getBoundingClientRect();
+            const isInDialog = (rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
+                rect.left <= e.clientX && e.clientX <= rect.left + rect.width);
+            if (!isInDialog) {
+                settingsDialog.close();
+            }
+        });
+
+        async function renderHistoryInDialog() {
+            const history = await getQueryHistory();
+            if (!history || history.length === 0) {
+                historyListContainer.innerHTML = `
+                    <div class="text-center py-16 text-gray-400 select-none">
+                        <i class="fas fa-history text-4xl mb-3 block text-gray-300"></i>
+                        暂无单词查询历史记录
+                    </div>
+                `;
+                return;
+            }
+
+            historyListContainer.innerHTML = history.map(item => {
+                const dateStr = new Date(item.timestamp).toLocaleString('zh-CN', {
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                let explanationSummary = '';
+                if (item.explanations && item.explanations.length > 0) {
+                    explanationSummary = item.explanations.map(exp => `${exp.meanCh} (${exp.meanEn})`).join(', ');
+                } else {
+                    explanationSummary = '未找到详细释义';
+                }
+
+                const isSaved = savedCoreWordsSet.has(item.word) || item.isCoreWordSaved;
+
+                return `
+                    <div class="flex justify-between items-center bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition gap-4">
+                        <div class="flex-grow min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-lg font-bold text-slate-800 font-thai font-thai-clickable flex items-center gap-1.5 truncate" data-word="${item.word}" title="点击播放发音">
+                                    ${item.word}
+                                    <i class="fas fa-volume-up text-xs text-gray-400 transition-colors"></i>
+                                </span>
+                                <span class="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">${dateStr}</span>
+                            </div>
+                            <div class="text-sm text-gray-500 truncate" title="${explanationSummary}">
+                                ${explanationSummary}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            ${isSaved ? `
+                                <button class="save-core-word-btn px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/90 rounded-lg flex items-center gap-1.5 cursor-default select-none" data-word="${item.word}" data-id="${item.id}" disabled title="已保存至核心词库">
+                                    <i class="fas fa-check-circle text-emerald-500 text-xs"></i>
+                                    <span>Saved Core Word</span>
+                                </button>
+                            ` : `
+                                <button class="save-core-word-btn px-2.5 py-1 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 active:scale-95 border border-indigo-200 rounded-lg transition flex items-center gap-1.5 cursor-pointer shadow-2xs" data-word="${item.word}" data-id="${item.id}" title="通过 Worker AI 生成核心词 JSON 释义并保存至核心词库">
+                                    <i class="fas fa-bookmark text-indigo-500 text-xs"></i>
+                                    <span>save core word</span>
+                                </button>
+                            `}
+                            <button class="delete-history-btn text-gray-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition active:scale-90 flex-shrink-0" data-id="${item.id}" title="删除记录">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            historyListContainer.querySelectorAll('.delete-history-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = parseInt(btn.dataset.id, 10);
+                    if (isNaN(id)) return;
+                    await deleteQueryRecord(id);
+                    await renderHistoryInDialog();
+                    await updateSidebarView();
+                    renderReading();
+                });
+            });
+        }
+
+        clearHistoryBtn.addEventListener('click', async () => {
+            if (confirm('确定要清空所有的单词查询记录吗？此操作无法撤销。')) {
+                await clearQueryHistory();
+                await renderHistoryInDialog();
+                await updateSidebarView();
+                renderReading();
+            }
+        });
+
+        // ==========================================
+        // 关键词及生词标记高亮逻辑
+        // ==========================================
+        function highlightWordInElement(element, word, data) {
+            const walk = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+            let node;
+            const textNodes = [];
+            while (node = walk.nextNode()) {
+                let parent = node.parentElement;
+                let isInsideChallenge = false;
+                while (parent && parent !== element) {
+                    if (parent.classList.contains('vocab-challenge') || parent.classList.contains('queried-vocab-challenge')) {
+                        isInsideChallenge = true;
+                        break;
+                    }
+                    parent = parent.parentElement;
+                }
+                if (!isInsideChallenge && node.nodeValue.includes(word)) {
+                    textNodes.push(node);
+                }
+            }
+
+            textNodes.forEach(textNode => {
+                const parent = textNode.parentElement;
+                const text = textNode.nodeValue;
+                const parts = text.split(word);
+                
+                const fragment = document.createDocumentFragment();
+                parts.forEach((part, i) => {
+                    if (part) {
+                        fragment.appendChild(document.createTextNode(part));
+                    }
+                    if (i < parts.length - 1) {
+                        const span = document.createElement('span');
+                        span.className = 'queried-vocab-challenge border-bottom-2-dashed-blue cursor-help transition-all duration-200';
+                        span.style.borderBottom = '2px dashed #2563eb';
+                        span.style.paddingBottom = '2px';
+                        span.dataset.thai = word;
+                        span.dataset.zh = data.zh || '';
+                        span.dataset.ipa = data.ipa || '';
+                        span.dataset.pos = data.pos || '';
+                        span.dataset.en = data.en || '';
+                        
+                        span.addEventListener('mouseenter', () => {
+                            span.style.backgroundColor = '#eff6ff';
+                            span.style.color = '#1e40af';
+                        });
+                        span.addEventListener('mouseleave', () => {
+                            span.style.backgroundColor = '';
+                            span.style.color = '';
+                        });
+
+                        span.appendChild(document.createTextNode(word));
+                        fragment.appendChild(span);
+                    }
+                });
+                parent.replaceChild(fragment, textNode);
+            });
+        }
+
+        function highlightWordInSentences(word, data) {
+            const sentences = document.querySelectorAll('.thai-sentence, .thai-trans-sentence');
+            sentences.forEach(sentence => {
+                if (sentence.textContent.includes(word)) {
+                    highlightWordInElement(sentence, word, data);
+                }
+            });
+        }
+
+        async function applyHistoryHighlights() {
+            const history = await getQueryHistory();
+            if (history && history.length > 0) {
+                history.forEach(item => {
+                    const firstExp = item.explanations && item.explanations.length > 0 ? item.explanations[0] : {};
+                    const data = {
+                        zh: item.explanations ? item.explanations.map(e => e.meanCh).join('; ') : '',
+                        en: item.explanations ? item.explanations.map(e => e.meanEn).join('; ') : '',
+                        pos: firstExp.pos || '词汇',
+                        ipa: firstExp.ipa || ''
+                    };
+                    highlightWordInSentences(item.word, data);
+                });
+            }
+        }
+
+        // ==========================================
+        // 1. 渲染阅读材料
+        // ==========================================
+        function renderReading() {
+            if (!appData) return;
+            const paraContainer = document.getElementById('paragraph-container');
+            const transContainer = document.getElementById('translation-container');
+            
+            // 兼容处理：若为旧的扁平句子格式，在内存中临时包装为单段落结构
+            if (!appData.paragraphs && appData.sentences) {
+                appData.paragraphs = [{
+                    paragraph_id: "p1",
+                    sentences: appData.sentences
+                }];
+            }
+
+            if (!appData.paragraphs) return;
+
+            // 1. 渲染泰语段落（段落之间通过 <p class="mb-5 leading-loose"> 分隔，保持排版工整）
+            paraContainer.innerHTML = appData.paragraphs.map(p => {
+                const pid = p.paragraph_id || p.id || 'p1';
+                return `
+                    <p class="mb-5 leading-loose text-justify text-slate-800" data-pid="${pid}">
+                        ${p.sentences.map(s => {
+                            const sid = s.sentence_id || s.id;
+                            return `<span class="thai-sentence hover:bg-yellow-50/50 rounded transition duration-150 cursor-pointer" data-pid="${pid}" data-sid="${sid}">${s.html_render}</span>`;
+                        }).join(' ')}
+                    </p>
+                `;
+            }).join('');
+
+            // 2. 渲染中文翻译（顶部统计概览条、段落分块、句子卡片、重点/易错标记按钮及显著徽章）
+            const summaryBarHtml = `
+                <div class="tags-summary-header flex items-center justify-between pb-3 mb-4 border-b border-slate-200/80 text-xs text-slate-500">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="font-bold text-slate-700 flex items-center gap-1.5"><i class="fas fa-tags text-blue-500"></i> 句子标注状态：</span>
+                        <span id="stat-important-count" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold inline-flex items-center gap-1 shadow-xs">
+                            <i class="fas fa-star text-amber-500 text-[10px]"></i> 重点 0
+                        </span>
+                        <span id="stat-error-count" class="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-semibold inline-flex items-center gap-1 shadow-xs">
+                            <i class="fas fa-circle-exclamation text-rose-500 text-[10px]"></i> 易错 0
+                        </span>
+                    </div>
+                    <div class="text-[11px] text-slate-400">
+                        点击句子右侧“重点/易错”按钮即可标注或取消
+                    </div>
+                </div>
+            `;
+
+            const paragraphsHtml = appData.paragraphs.map(p => {
+                const pid = p.paragraph_id || p.id || 'p1';
+                const sentencesHtml = p.sentences.map(s => {
+                    const sid = s.sentence_id || s.id;
+                    const cleanThai = getCleanText(s.html_render);
+                    const escapedThai = escapeHtml(cleanThai);
+                    const sentenceIndex = sid.replace(/^[^\d]*/, '') || sid;
+                    return `
+                        <div class="trans-sentence-item relative p-3 rounded-xl border border-slate-200/80 bg-white hover:border-slate-300 transition-all duration-150" 
+                             id="trans-item-${pid}-${sid}" 
+                             data-paragraph-id="${pid}" 
+                             data-sentence-id="${sid}">
+                            <div class="flex items-center justify-between gap-2 mb-1.5 pb-1.5 border-b border-slate-100">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="font-bold text-xs text-slate-500 bg-slate-50 border border-slate-200/60 px-1.5 py-0.5 rounded min-w-[28px] text-center">[${sentenceIndex}]</span>
+                                    <!-- 显著标记符号徽章区域 -->
+                                    <div class="sentence-tags-badge-container flex items-center gap-1.5 hidden" id="tags-badge-${pid}-${sid}">
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-1 bg-slate-50 p-0.5 rounded-lg border border-slate-200/50">
+                                    <button class="play-sentence-btn text-slate-400 hover:text-blue-600 transition active:scale-90 p-1 px-1.5 rounded flex items-center justify-center text-xs" data-text="${escapedThai}" title="播放发音">
+                                        <i class="fas fa-volume-up"></i>
+                                    </button>
+                                    <button class="copy-sentence-btn text-slate-400 hover:text-blue-600 transition active:scale-90 p-1 px-1.5 rounded flex items-center justify-center text-xs" data-text="${escapedThai}" title="复制原文">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    <span class="w-[1px] h-3 bg-slate-200 mx-0.5"></span>
+                                    <!-- 重点标签按钮：点击一次打标签，已标签再次点击则取消 -->
+                                    <button class="tag-sentence-btn tag-btn-important text-slate-400 hover:text-amber-600 hover:bg-amber-50 p-1 px-2 rounded-md transition duration-150 text-xs flex items-center gap-1 active:scale-95 border border-transparent" 
+                                            data-tag="important" 
+                                            data-pid="${pid}" 
+                                            data-sid="${sid}" 
+                                            title="标记为重点 (点击切换)">
+                                        <i class="far fa-star text-xs"></i>
+                                        <span class="text-xs font-medium">重点</span>
+                                    </button>
+                                    <!-- 易错标签按钮：点击一次打标签，已标签再次点击则取消 -->
+                                    <button class="tag-sentence-btn tag-btn-error text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-1 px-2 rounded-md transition duration-150 text-xs flex items-center gap-1 active:scale-95 border border-transparent" 
+                                            data-tag="error" 
+                                            data-pid="${pid}" 
+                                            data-sid="${sid}" 
+                                            title="标记为易错 (点击切换)">
+                                        <i class="far fa-circle-exclamation text-xs"></i>
+                                        <span class="text-xs font-medium">易错</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="font-thai text-base text-slate-800 mb-1 leading-relaxed">
+                                <span class="thai-trans-sentence">${cleanThai}</span>
+                            </div>
+                            <div class="text-slate-600 leading-relaxed text-sm bg-slate-50/50 p-2 rounded-lg border border-slate-100/60">
+                                ${s.translation_zh}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                return `
+                    <div class="pb-6 mb-6 last:mb-0 last:pb-0 border-b-2 border-black last:border-b-0 space-y-3">
+                        ${sentencesHtml}
+                    </div>
+                `;
+            }).join('');
+
+            transContainer.innerHTML = summaryBarHtml + paragraphsHtml;
+
+            // 自动高亮历史查询单词
+            applyHistoryHighlights();
+
+            // 如果当前已有激活文章，加载并应用该文章在 IndexedDB 中的标签
+            if (window.activeArticleUuid) {
+                loadAndApplySentenceTags(window.activeArticleUuid);
+            }
+
+            // 保持/应用当前选择的文章显示模式 (原文视图 vs 句子中文翻译视图)
+            switchArticleView(currentArticleView);
+        }
+
+        // ==========================================
+        // 1.1 文章视图模式切换 (原文视图 vs 句子中文翻译视图)
+        // ==========================================
+        let currentArticleView = 'raw'; // 'raw' | 'trans'
+
+        function switchArticleView(mode) {
+            currentArticleView = (mode === 'trans') ? 'trans' : 'raw';
+            const paraContainer = document.getElementById('paragraph-container');
+            const transContainer = document.getElementById('translation-container');
+            const tabRaw = document.getElementById('tab-article-raw');
+            const tabTrans = document.getElementById('tab-article-trans');
+            const transToggle = document.getElementById('transToggle');
+
+            if (currentArticleView === 'trans') {
+                if (paraContainer) paraContainer.classList.add('hidden');
+                if (transContainer) transContainer.classList.remove('hidden');
+
+                if (tabRaw) tabRaw.classList.remove('active');
+                if (tabTrans) tabTrans.classList.add('active');
+
+                if (transToggle && !transToggle.checked) {
+                    transToggle.checked = true;
+                }
+            } else {
+                if (transContainer) transContainer.classList.add('hidden');
+                if (paraContainer) paraContainer.classList.remove('hidden');
+
+                if (tabTrans) tabTrans.classList.remove('active');
+                if (tabRaw) tabRaw.classList.add('active');
+
+                if (transToggle && transToggle.checked) {
+                    transToggle.checked = false;
+                }
+            }
+        }
+        window.switchArticleView = switchArticleView;
+
+        // ==========================================
+        // 2. 渲染测试题目
+        // ==========================================
+        function renderQuiz() {
+            if (!appData) return;
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = '';
+            const types = ['topic', 'main_idea', 'supporting_details'];
+
+            types.forEach(type => {
+                const q = appData.comprehension_quiz[type];
+                const isMultiple = q.type === 'multiple';
+                const inputType = isMultiple ? 'checkbox' : 'radio';
+                const icon = type === 'topic' ? 'bullseye' : (type === 'main_idea' ? 'lightbulb' : 'list-ul');
+                const color = type === 'topic' ? 'text-purple-600 bg-purple-50' : (type === 'main_idea' ? 'text-blue-600 bg-blue-50' : 'text-teal-600 bg-teal-50');
+
+                const card = document.createElement('div');
+                card.className = 'p-6 bg-slate-50 rounded-xl border border-slate-200';
+                card.innerHTML = `
+                    <h3 class="font-bold text-gray-800 mb-4 flex items-center text-lg">
+                        <span class="w-8 h-8 rounded-full ${color} flex items-center justify-center mr-3">
+                            <i class="fas fa-${icon} text-sm"></i>
+                        </span>
+                        ${q.question_zh}
+                        ${isMultiple ? '<span class="ml-2 text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">多选</span>' : ''}
+                    </h3>
+                    <div class="space-y-3" id="opts-${type}">
+                        ${q.options.map(opt => `
+                            <label class="quiz-option flex items-center p-4 rounded-lg" data-opt-id="${opt.id}">
+                                <input type="${inputType}" name="quiz-${type}" value="${opt.id}" class="w-5 h-5 text-thaiBlue focus:ring-thaiBlue mr-4 flex-shrink-0">
+                                <span class="thai-text text-gray-700 text-base leading-relaxed">${opt.text}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(card);
+
+                // 绑定选中样式
+                card.querySelectorAll('input').forEach(input => {
+                    input.addEventListener('change', () => {
+                        if (isSubmitted) return;
+                        if (!isMultiple) {
+                            card.querySelectorAll('.quiz-option').forEach(l => l.classList.remove('selected'));
+                        }
+                        const label = input.closest('.quiz-option');
+                        if (input.checked) {
+                            label.classList.add('selected');
+                        } else {
+                            label.classList.remove('selected');
+                        }
+                    });
+                });
+            });
+        }
+
+        // ==========================================
+        // 2.5 词汇配对练习逻辑
+        // ==========================================
+        let matchSelectedThaiId = null;
+        let matchSelectedThaiCard = null;
+        let matchMatchedSet = new Set();
+        let matchTotalCount = 0;
+
+        function renderVocabPractice() {
+            const section = document.getElementById('vocab-practice-section');
+            const thaiCol = document.getElementById('match-thai-column');
+            const chineseCol = document.getElementById('match-chinese-column');
+            
+            // 重置状态
+            matchSelectedThaiId = null;
+            matchSelectedThaiCard = null;
+            matchMatchedSet.clear();
+            
+            if (!appData || !appData.vocabulary_glossary || Object.keys(appData.vocabulary_glossary).length === 0) {
+                section.classList.add('hidden');
+                return;
+            }
+            
+            section.classList.remove('hidden');
+            
+            // 提取词汇
+            const vocabList = [];
+            Object.keys(appData.vocabulary_glossary).forEach(key => {
+                const item = appData.vocabulary_glossary[key];
+                vocabList.push({
+                    id: key,
+                    thai: item.thai || key,
+                    zh: item.zh || '',
+                    ipa: item.ipa || '',
+                    pos: item.pos || ''
+                });
+            });
+
+            matchTotalCount = vocabList.length;
+            updateMatchProgress();
+
+            // 随机打乱
+            const shuffledThai = [...vocabList].sort(() => Math.random() - 0.5);
+            const shuffledChinese = [...vocabList].sort(() => Math.random() - 0.5);
+
+            // 渲染泰语单词卡片
+            thaiCol.innerHTML = '';
+            shuffledThai.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "thai-drag-card bg-white border border-slate-200 hover:border-violet-400 rounded-xl px-4 py-2 text-center cursor-grab active:cursor-grabbing font-thai text-lg font-bold transition shadow-sm select-none hover:shadow-md";
+                card.id = `match-thai-card-${item.id}`;
+                card.dataset.id = item.id;
+                card.draggable = true;
+                card.textContent = item.thai;
+
+                // 拖拽事件
+                card.ondragstart = (e) => {
+                    e.dataTransfer.setData('text/plain', item.id);
+                    card.classList.add('opacity-50');
+                };
+                card.ondragend = () => {
+                    card.classList.remove('opacity-50');
+                };
+
+                // 点击事件（用于依次点击配对）
+                card.onclick = () => {
+                    selectMatchThaiCard(card, item.id);
+                };
+
+                thaiCol.appendChild(card);
+            });
+
+            // 渲染中文释义插槽
+            chineseCol.innerHTML = '';
+            shuffledChinese.forEach(item => {
+                const slot = document.createElement('div');
+                slot.className = "chinese-drop-slot bg-white border border-slate-200 rounded-xl p-3 flex flex-col gap-2 transition min-h-[76px] justify-center items-center hover:shadow-sm cursor-pointer";
+                slot.id = `match-chinese-slot-${item.id}`;
+                slot.dataset.id = item.id;
+
+                slot.innerHTML = `
+                    <div class="text-sm font-semibold text-slate-700 font-sans text-center">${item.zh}</div>
+                    <div class="drop-zone border border-dashed border-slate-200 bg-slate-50/50 rounded-lg p-2 min-h-[40px] flex items-center justify-center text-[10px] text-slate-400 font-sans mt-1 w-full">
+                        拖拽或点击配对
+                    </div>
+                `;
+
+                // 拖拽悬停视觉效果
+                slot.ondragover = (e) => {
+                    e.preventDefault();
+                    if (!matchMatchedSet.has(item.id)) {
+                        slot.classList.add('border-violet-400', 'bg-violet-50/30');
+                    }
+                };
+                slot.ondragleave = () => {
+                    slot.classList.remove('border-violet-400', 'bg-violet-50/30');
+                };
+
+                // 放下事件
+                slot.ondrop = (e) => {
+                    e.preventDefault();
+                    slot.classList.remove('border-violet-400', 'bg-violet-50/30');
+                    const draggedId = e.dataTransfer.getData('text/plain');
+                    handleMatchAttempt(draggedId, item.id, slot);
+                };
+
+                // 点击事件
+                slot.onclick = () => {
+                    if (matchSelectedThaiId) {
+                        handleMatchAttempt(matchSelectedThaiId, item.id, slot);
+                    }
+                };
+
+                chineseCol.appendChild(slot);
+            });
+        }
+
+        function selectMatchThaiCard(card, id) {
+            if (matchMatchedSet.has(id)) return;
+
+            document.querySelectorAll('.thai-drag-card').forEach(c => {
+                c.classList.remove('match-card-selected');
+            });
+
+            if (matchSelectedThaiId === id) {
+                matchSelectedThaiId = null;
+                matchSelectedThaiCard = null;
+            } else {
+                card.classList.add('match-card-selected');
+                matchSelectedThaiId = id;
+                matchSelectedThaiCard = card;
+            }
+        }
+
+        function handleMatchAttempt(thaiId, slotId, slot) {
+            if (matchMatchedSet.has(slotId)) return;
+
+            if (thaiId === slotId) {
+                // 配对正确
+                matchMatchedSet.add(thaiId);
+
+                // 隐藏泰语卡片
+                const thaiCard = document.getElementById(`match-thai-card-${thaiId}`);
+                if (thaiCard) {
+                    thaiCard.classList.add('hidden');
+                }
+
+                // 更新中文卡片插槽
+                const dropzone = slot.querySelector('.drop-zone');
+                if (dropzone) {
+                    dropzone.innerHTML = `
+                        <div class="flex items-center justify-center gap-1.5 text-emerald-700 font-bold font-thai text-base">
+                            <i class="fas fa-check-circle text-emerald-500 text-sm"></i>
+                            <span>${appData.vocabulary_glossary[thaiId].thai}</span>
+                        </div>
+                    `;
+                    dropzone.className = "w-full border border-emerald-500 bg-emerald-50/30 rounded-lg p-2 min-h-[40px] flex items-center justify-center mt-1";
+                }
+
+                slot.className = "chinese-drop-slot bg-emerald-50/10 border border-emerald-300 rounded-xl p-3 flex flex-col gap-2 transition min-h-[76px] justify-center items-center";
+                
+                // 清除当前选择
+                if (matchSelectedThaiId === thaiId) {
+                    matchSelectedThaiId = null;
+                    matchSelectedThaiCard = null;
+                }
+
+                // 播放发音
+                const thaiWord = appData.vocabulary_glossary[thaiId].thai;
+                if (window.playAudioDirect) {
+                    window.playAudioDirect(thaiWord.replace(/\s+/g, ''));
+                }
+
+                updateMatchProgress();
+            } else {
+                // 配对错误：抖动动效
+                slot.classList.add('shake-wrong');
+                setTimeout(() => {
+                    slot.classList.remove('shake-wrong');
+                }, 400);
+
+                // 清除选中效果以便重新尝试
+                if (matchSelectedThaiCard) {
+                    matchSelectedThaiCard.classList.remove('match-card-selected');
+                }
+                matchSelectedThaiId = null;
+                matchSelectedThaiCard = null;
+            }
+        }
+
+        function updateMatchProgress() {
+            const count = matchMatchedSet.size;
+            document.getElementById('match-progress-text').textContent = `已配对 ${count} / ${matchTotalCount}`;
+            
+            const pct = matchTotalCount > 0 ? (count / matchTotalCount) * 100 : 0;
+            document.getElementById('match-progress-bar').style.width = `${pct}%`;
+        }
+
+        // ==========================================
+        // 3. 全局交互：Hover 词典 (Tooltip)
+        // ==========================================
+        document.addEventListener('mouseover', (e) => {
+            const target = e.target.closest('.vocab-challenge, .queried-vocab-challenge');
+            if (target && !isSubmitted) { // 提交后禁用查词，强迫复习
+                clearTimeout(tooltipTimeout);
+                let data = null;
+                if (target.classList.contains('vocab-challenge')) {
+                    data = appData ? appData.vocabulary_glossary[target.dataset.vocab] : null;
+                } else if (target.classList.contains('queried-vocab-challenge')) {
+                    data = {
+                        thai: target.dataset.thai,
+                        ipa: target.dataset.ipa,
+                        pos: target.dataset.pos,
+                        zh: target.dataset.zh,
+                        en: target.dataset.en
+                    };
+                }
+
+                if (data) {
+                    document.getElementById('tt-thai').textContent = data.thai || '';
+                    document.getElementById('tt-ipa').textContent = data.ipa || '';
+                    document.getElementById('tt-pos').textContent = data.pos || '';
+                    document.getElementById('tt-zh').textContent = data.zh || '';
+                    document.getElementById('tt-en').textContent = data.en || '';
+                    
+                    const rect = target.getBoundingClientRect();
+                    let top = rect.bottom + window.scrollY + 10;
+                    let left = rect.left + window.scrollX;
+                    
+                    // 边界检测：防止右侧溢出
+                    if (left + 280 > window.innerWidth) {
+                        left = window.innerWidth - 300;
+                    }
+                    // 边界检测：防止底部溢出
+                    if (top + 150 > window.innerHeight + window.scrollY) {
+                        top = rect.top + window.scrollY - 160;
+                    }
+ 
+                    tooltip.style.top = `${top}px`;
+                    tooltip.style.left = `${left}px`;
+                    tooltip.classList.add('show');
+                }
+            }
+        });
+ 
+        document.addEventListener('mouseout', (e) => {
+            if (e.target.closest('.vocab-challenge, .queried-vocab-challenge')) {
+                tooltipTimeout = setTimeout(() => tooltip.classList.remove('show'), 200);
+            }
+        });
+
+        // ==========================================
+        // 4. 工具栏开关逻辑
+        // ==========================================
+        document.getElementById('radarToggle').addEventListener('change', (e) => {
+            document.body.classList.toggle('radar-on', e.target.checked);
+        });
+        document.body.classList.add('radar-on'); // 默认开启
+
+        document.getElementById('transToggle').addEventListener('change', (e) => {
+            switchArticleView(e.target.checked ? 'trans' : 'raw');
+        });
+
+        // ==========================================
+        // 5. 提交与反馈逻辑
+        // ==========================================
+        document.getElementById('submitBtn').addEventListener('click', () => {
+            if (!appData || isSubmitted) return;
+            isSubmitted = true;
+            
+            let totalScore = 0;
+            const totalQuestions = 3;
+            const feedbackSection = document.getElementById('feedback-section');
+            const feedbackContent = document.getElementById('feedback-content');
+            let detailHtml = '';
+
+            const types = ['topic', 'main_idea', 'supporting_details'];
+            
+            types.forEach(type => {
+                const q = appData.comprehension_quiz[type];
+                const isMultiple = q.type === 'multiple';
+                const inputs = document.querySelectorAll(`#opts-${type} input`);
+                const correctIds = q.options.filter(o => o.is_correct).map(o => o.id);
+                
+                let userSelected = Array.from(inputs).filter(i => i.checked).map(i => i.value);
+                let isQuestionCorrect = false;
+
+                // 视觉反馈渲染
+                inputs.forEach(input => {
+                    const label = input.closest('.quiz-option');
+                    label.classList.remove('selected');
+                    
+                    if (input.checked && correctIds.includes(input.value)) {
+                        label.classList.add('correct');
+                        label.insertAdjacentHTML('beforeend', '<i class="fas fa-check-circle text-green-500 ml-auto text-xl"></i>');
+                    } else if (input.checked && !correctIds.includes(input.value)) {
+                        label.classList.add('incorrect');
+                        label.insertAdjacentHTML('beforeend', '<i class="fas fa-times-circle text-red-500 ml-auto text-xl"></i>');
+                    } else if (!input.checked && correctIds.includes(input.value)) {
+                        label.classList.add('missed');
+                        label.insertAdjacentHTML('beforeend', '<i class="fas fa-exclamation-circle text-yellow-500 ml-auto text-xl"></i>');
+                    }
+                    input.disabled = true;
+                });
+
+                // 计算该题得分
+                if (isMultiple) {
+                    isQuestionCorrect = (userSelected.length === correctIds.length && userSelected.every(id => correctIds.includes(id)));
+                } else {
+                    isQuestionCorrect = (userSelected.length === 1 && correctIds.includes(userSelected[0]));
+                }
+
+                if (isQuestionCorrect) totalScore++;
+                
+                // 生成解析文本
+                const statusIcon = isQuestionCorrect ? '<i class="fas fa-check-circle text-green-500 mr-2"></i>' : '<i class="fas fa-times-circle text-red-500 mr-2"></i>';
+                const statusText = isQuestionCorrect ? '回答正确' : '回答错误';
+                detailHtml += `
+                    <div class="flex items-center p-3 bg-slate-50 rounded-lg mb-2">
+                        ${statusIcon}
+                        <span class="font-medium ${isQuestionCorrect ? 'text-green-700' : 'text-red-700'}">${q.question_zh.split('.')[0]}：${statusText}</span>
+                    </div>
+                `;
+            });
+
+            // 渲染最终反馈面板
+            feedbackSection.classList.remove('hidden');
+            const scoreColor = totalScore === totalQuestions ? 'text-green-600' : (totalScore > 0 ? 'text-yellow-600' : 'text-red-600');
+            
+            feedbackContent.innerHTML = `
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-chart-pie text-thaiGreen mr-3"></i> 测试报告
+                </h2>
+                <div class="flex items-center justify-between bg-slate-50 p-6 rounded-xl mb-6 border border-slate-200">
+                    <div>
+                        <p class="text-gray-500 text-sm mb-1">最终得分</p>
+                        <p class="text-5xl font-black ${scoreColor}">${totalScore} <span class="text-2xl text-gray-400 font-normal">/ ${totalQuestions}</span></p>
+                    </div>
+                    <div class="text-right text-sm text-gray-600 max-w-xs">
+                        ${totalScore === totalQuestions ? '🎉 完美！你精准掌握了语篇的核心逻辑与细节。' : '💡 提示：请查看下方标红的选项（选错）和标黄的选项（漏选），结合原文信号词重新思考。'}
+                    </div>
+                </div>
+                <h3 class="font-bold text-gray-700 mb-3">详细解析：</h3>
+                ${detailHtml}
+                <div class="mt-6 pt-4 border-t text-sm text-gray-500">
+                    <i class="fas fa-info-circle mr-1"></i> 提示：提交后已禁用生词 Hover 查词功能。请尝试通过上下文和信号词（雷达高亮）来复习错题。
+                </div>
+            `;
+
+            // 禁用提交按钮
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').classList.add('opacity-50', 'cursor-not-allowed');
+            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-check mr-2"></i> 已提交';
+
+            // 滚动到反馈区
+            feedbackSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
+        // ==========================================
+        // 6. 重置逻辑
+        // ==========================================
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            isSubmitted = false;
+            document.getElementById('feedback-section').classList.add('hidden');
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('submitBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-paper-plane mr-2"></i> 提交并查看解析';
+            renderQuiz(); // 重新渲染题目以清除状态
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // 词汇练习重置
+        const resetMatchBtn = document.getElementById('resetMatchBtn');
+        if (resetMatchBtn) {
+            resetMatchBtn.addEventListener('click', () => {
+                renderVocabPractice();
+            });
+        }
+
+        // ==========================================
+        // 7. 文章加载与 API 集成 (支持 URL 参数与深度链接)
+        // ==========================================
+        window.activeArticleUuid = null;
+        window.firstAvailableUuid = null;
+
+        // 从当前页面 URL 中解析文章 ID (支持 ?id=..., ?uuid=..., ?articleId=..., ?article_id=... 及 Hash 参数)
+        function getArticleIdFromUrl() {
+            try {
+                // 1. 优先从 window.location.search 获取
+                const urlParams = new URLSearchParams(window.location.search);
+                let id = urlParams.get('id') || urlParams.get('uuid') || urlParams.get('articleId') || urlParams.get('article_id');
+                if (id) return id.trim();
+
+                // 2. 备用从 window.location.hash 中提取参数 (如 #?id=... 或 #id=...)
+                if (window.location.hash) {
+                    const hash = window.location.hash.startsWith('#') ? window.location.hash.substring(1) : window.location.hash;
+                    const qIndex = hash.indexOf('?');
+                    const hashQuery = qIndex !== -1 ? hash.substring(qIndex + 1) : (hash.includes('=') ? hash : '');
+                    if (hashQuery) {
+                        const hashParams = new URLSearchParams(hashQuery);
+                        id = hashParams.get('id') || hashParams.get('uuid') || hashParams.get('articleId') || hashParams.get('article_id');
+                        if (id) return id.trim();
+                    }
+                }
+            } catch (e) {
+                console.warn("解析 URL 参数失败:", e);
+            }
+            return '';
+        }
+
+        // 同步浏览器地址栏 URL 参数 (保持 ?id=... 与当前阅读文章一致，便于收藏与分享)
+        function syncUrlArticleId(uuid, pushHistory = false) {
+            if (!uuid) return;
+            try {
+                const url = new URL(window.location.href);
+                const currentId = url.searchParams.get('id');
+                // 如果当前 URL 中已经是标准 ?id=uuid 且没有冗余别名参数，则无需重复更新
+                if (currentId === uuid && !url.searchParams.has('uuid') && !url.searchParams.has('articleId') && !url.searchParams.has('article_id')) {
+                    return;
+                }
+                url.searchParams.set('id', uuid);
+                url.searchParams.delete('uuid');
+                url.searchParams.delete('articleId');
+                url.searchParams.delete('article_id');
+
+                if (pushHistory) {
+                    window.history.pushState({ articleId: uuid }, '', url.toString());
+                } else {
+                    window.history.replaceState({ articleId: uuid }, '', url.toString());
+                }
+            } catch (e) {
+                console.warn('同步 URL 参数失败:', e);
+            }
+        }
+
+        function highlightAndExpandActive(uuid) {
+            if (!uuid) return;
+            window.activeArticleUuid = uuid;
+            
+            let matchedEl = null;
+            document.querySelectorAll('.article-item').forEach(el => {
+                if (el.dataset.uuid === uuid) {
+                    matchedEl = el;
+                    el.classList.add('bg-blue-50', 'border-blue-200', 'text-blue-700');
+                    el.classList.remove('border-transparent', 'text-gray-600');
+                    
+                    // Traverse up parents to remove 'hidden' class from accordions
+                    let parent = el.parentElement;
+                    while (parent && parent.id !== 'articleList') {
+                        if (parent.classList.contains('subject-lessons') || parent.classList.contains('lesson-readings')) {
+                            if (parent.classList.contains('hidden')) {
+                                parent.classList.remove('hidden');
+                                // rotate corresponding icon
+                                const icon = document.getElementById('icon-' + parent.id);
+                                if (icon) icon.classList.add('rotate-180');
+                            }
+                        }
+                        parent = parent.parentElement;
+                    }
+                } else {
+                    el.classList.remove('bg-blue-50', 'border-blue-200', 'text-blue-700');
+                    el.classList.add('border-transparent', 'text-gray-600');
+                }
+            });
+
+            if (matchedEl) {
+                matchedEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        }
+
+        window.toggleAccordion = function(id) {
+            const el = document.getElementById(id);
+            const icon = document.getElementById('icon-' + id);
+            if (!el) return;
+            
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                if (icon) icon.classList.add('rotate-180');
+            } else {
+                el.classList.add('hidden');
+                if (icon) icon.classList.remove('rotate-180');
+            }
+        }
+
+        window.loadArticle = async function(uuid, updateHistory = true, pushHistory = false) {
+            if (!uuid) return;
+            try {
+                window.activeArticleUuid = uuid;
+                if (updateHistory) {
+                    syncUrlArticleId(uuid, pushHistory);
+                }
+
+                document.getElementById('paragraph-container').innerHTML = '<div class="text-center py-8 text-slate-400 italic"><i class="fas fa-spinner fa-spin mr-2"></i>正在加载文章内容...</div>';
+                const transContainer = document.getElementById('translation-container');
+                if (transContainer) {
+                    transContainer.innerHTML = '<div class="text-center py-8 text-slate-400 italic"><i class="fas fa-spinner fa-spin mr-2"></i>正在加载文章内容...</div>';
+                }
+                
+                const res = await fetch(`/api/readings/${encodeURIComponent(uuid)}`);
+                if (!res.ok) {
+                    if (res.status === 404) {
+                        throw new Error(`未找到指定的阅读文章 (ID: ${uuid})`);
+                    }
+                    throw new Error(`加载文章失败 (HTTP ${res.status})`);
+                }
+                const data = await res.json();
+                
+                // Highlight active selection UI and expand parent folders
+                highlightAndExpandActive(uuid);
+
+                // Update page metadata and title
+                document.getElementById('article-title-heading').innerHTML = `
+                    <i class="fas fa-landmark text-gray-400 mr-2"></i> 阅读材料：${escapeHtml(data.title)}
+                `;
+                document.getElementById('article-meta-badge').textContent = `
+                    科目：${data.subject || '未分类'} | 难度：${data.difficulty} | 单词数：${data.word_count}
+                `;
+                if (data.title) {
+                    document.title = `${data.title} - 泰语语篇阅读训练`;
+                }
+
+                // Set appData and reset state
+                window.currentArticle = data;
+                appData = data.content;
+                isSubmitted = false;
+                
+                // Reset quiz submit button
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> 提交并查看解析';
+
+                // Hide feedback
+                document.getElementById('feedback-section').classList.add('hidden');
+
+                // Render article, quiz and vocab practice
+                renderReading();
+                renderQuiz();
+                renderVocabPractice();
+
+                // 加载并显示本文章的历史句子标签
+                await loadAndApplySentenceTags(uuid);
+            } catch (err) {
+                console.error("加载文章失败:", err);
+                switchArticleView('raw');
+                const defaultBtnHtml = window.firstAvailableUuid && window.firstAvailableUuid !== uuid
+                    ? `<button onclick="loadArticle('${window.firstAvailableUuid}', true, true)" class="mt-4 px-4 py-2 bg-thaiBlue hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-sm active:scale-95 inline-flex items-center gap-1.5"><i class="fas fa-book-open"></i>阅读首篇可用文章</button>`
+                    : '';
+                document.getElementById('paragraph-container').innerHTML = `
+                    <div class="text-center py-10 px-4 space-y-3">
+                        <div class="inline-flex p-3 rounded-full bg-red-50 text-red-500 mb-1">
+                            <i class="fas fa-exclamation-circle text-2xl"></i>
+                        </div>
+                        <div class="text-base text-red-600 font-semibold">${escapeHtml(err.message)}</div>
+                        <p class="text-xs text-slate-400 max-w-md mx-auto">请确认 URL 中的文章 ID 参数是否正确，或在左侧文章清单中选择其他文章进行阅读。</p>
+                        ${defaultBtnHtml}
+                    </div>
+                `;
+            }
+        }
+
+        async function loadArticleList(search = '') {
+            const listEl = document.getElementById('articleList');
+            listEl.innerHTML = '<div class="text-center py-6 text-slate-400 text-xs italic">加载中...</div>';
+            
+            try {
+                const [resCourses, resLessons, resReadings] = await Promise.all([
+                    fetch('/api/courses'),
+                    fetch('/api/lessons'),
+                    fetch('/api/readings')
+                ]);
+                
+                if (!resCourses.ok || !resLessons.ok || !resReadings.ok) {
+                    throw new Error("从服务器加载数据失败");
+                }
+                
+                const courses = await resCourses.json();
+                const lessons = await resLessons.json();
+                const readings = await resReadings.json();
+                
+                const query = search.trim().toLowerCase();
+                const filteredReadings = readings.filter(art => {
+                    const titleMatch = art.title.toLowerCase().includes(query);
+                    const subjectMatch = (art.subject || '').toLowerCase().includes(query);
+                    return !query || titleMatch || subjectMatch;
+                });
+                
+                if (filteredReadings.length === 0) {
+                    listEl.innerHTML = '<div class="text-center py-6 text-slate-400 text-xs italic">无符合条件的文章</div>';
+                    return;
+                }
+                
+                const coursesMap = {};
+                courses.forEach(c => {
+                    coursesMap[c.id] = {
+                        id: c.id,
+                        name: c.name,
+                        lessons: {}
+                    };
+                });
+                
+                lessons.forEach(l => {
+                    if (coursesMap[l.course_id]) {
+                        coursesMap[l.course_id].lessons[l.id] = {
+                            id: l.id,
+                            title: l.title,
+                            readings: []
+                        };
+                    }
+                });
+                
+                const uncategorizedReadings = [];
+                
+                filteredReadings.forEach(art => {
+                    if (art.courses && art.courses.length > 0) {
+                        art.courses.forEach(assoc => {
+                            if (coursesMap[assoc.courseId] && coursesMap[assoc.courseId].lessons[assoc.lessonId]) {
+                                coursesMap[assoc.courseId].lessons[assoc.lessonId].readings.push(art);
+                            } else {
+                                if (!uncategorizedReadings.some(u => u.uuid === art.uuid)) {
+                                    uncategorizedReadings.push(art);
+                                }
+                            }
+                        });
+                    } else {
+                        uncategorizedReadings.push(art);
+                    }
+                });
+                
+                let html = '<div class="space-y-2">';
+                
+                courses.forEach(c => {
+                    const courseObj = coursesMap[c.id];
+                    let hasReadings = false;
+                    const courseLessonsHtml = Object.values(courseObj.lessons).map(l => {
+                        if (l.readings.length > 0) {
+                            hasReadings = true;
+                            
+                            const readingsHtml = l.readings.map(art => `
+                                <button class="article-item w-full text-left p-2 rounded-lg border text-xs transition duration-150 flex flex-col gap-1 border-transparent text-gray-600 hover:bg-slate-50 hover:border-gray-250" 
+                                    data-uuid="${art.uuid}" 
+                                    onclick="loadArticle('${art.uuid}', true, true)">
+                                    <span class="font-bold text-gray-800 text-xs truncate w-full">${art.title}</span>
+                                    <div class="flex justify-between text-[10px] text-gray-400">
+                                        <span>难度: ${art.difficulty}</span>
+                                        <span>单词: ${art.word_count}</span>
+                                    </div>
+                                </button>
+                            `).join('');
+                            
+                            const isHidden = query ? '' : 'hidden';
+                            const iconClass = query ? 'rotate-180' : '';
+                            return `
+                                <div class="lesson-group">
+                                    <button class="lesson-header w-full flex items-center justify-between py-1.5 pr-2 text-xs font-semibold text-gray-600 hover:text-blue-600 transition" onclick="toggleAccordion('lesson-${l.id}')">
+                                        <div class="flex items-center gap-1.5 truncate">
+                                            <i class="fas fa-bookmark text-amber-500 text-[10px]"></i>
+                                            <span class="truncate">${l.title}</span>
+                                        </div>
+                                        <i class="fas fa-chevron-down text-gray-400 text-[10px] transition-transform duration-200 ${iconClass}" id="icon-lesson-${l.id}"></i>
+                                    </button>
+                                    <div class="lesson-readings ${isHidden} pl-3 pr-1 py-1 space-y-1" id="lesson-${l.id}">
+                                        ${readingsHtml}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        return '';
+                    }).join('');
+                    
+                    if (hasReadings) {
+                        const isHidden = query ? '' : 'hidden';
+                        const iconClass = query ? 'rotate-180' : '';
+                        html += `
+                            <div class="subject-group border border-gray-100 rounded-xl overflow-hidden bg-slate-50/50">
+                                <button class="subject-header w-full flex items-center justify-between p-2.5 text-xs font-bold text-gray-700 bg-slate-100 hover:bg-slate-200/80 transition duration-150" onclick="toggleAccordion('subject-${c.id}')">
+                                    <div class="flex items-center gap-2 truncate">
+                                        <i class="fas fa-folder text-blue-500"></i>
+                                        <span class="truncate">${c.name}</span>
+                                    </div>
+                                    <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200 ${iconClass}" id="icon-subject-${c.id}"></i>
+                                </button>
+                                <div class="subject-lessons ${isHidden} pl-2.5 py-1.5 space-y-1.5" id="subject-${c.id}">
+                                    ${courseLessonsHtml}
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                if (uncategorizedReadings.length > 0) {
+                    const readingsHtml = uncategorizedReadings.map(art => `
+                        <button class="article-item w-full text-left p-2 rounded-lg border text-xs transition duration-150 flex flex-col gap-1 border-transparent text-gray-600 hover:bg-slate-50 hover:border-gray-250" 
+                            data-uuid="${art.uuid}" 
+                            onclick="loadArticle('${art.uuid}', true, true)">
+                            <span class="font-bold text-gray-800 text-xs truncate w-full">${art.title}</span>
+                            <div class="flex justify-between text-[10px] text-gray-400">
+                                <span>难度: ${art.difficulty}</span>
+                                <span>单词: ${art.word_count}</span>
+                            </div>
+                        </button>
+                    `).join('');
+                    
+                    const isHidden = query ? '' : 'hidden';
+                    const iconClass = query ? 'rotate-180' : '';
+                    html += `
+                        <div class="subject-group border border-gray-100 rounded-xl overflow-hidden bg-slate-50/50">
+                            <button class="subject-header w-full flex items-center justify-between p-2.5 text-xs font-bold text-gray-700 bg-slate-100 hover:bg-slate-200/80 transition duration-150" onclick="toggleAccordion('subject-uncategorized')">
+                                <div class="flex items-center gap-2 truncate">
+                                    <i class="fas fa-folder-open text-gray-500"></i>
+                                    <span class="truncate">未分类文章</span>
+                                </div>
+                                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200 ${iconClass}" id="icon-subject-uncategorized"></i>
+                            </button>
+                            <div class="subject-lessons ${isHidden} pl-2.5 py-1.5 space-y-1" id="subject-uncategorized">
+                                ${readingsHtml}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                html += '</div>';
+                listEl.innerHTML = html;
+                
+                if (readings.length > 0) {
+                    window.firstAvailableUuid = readings[0].uuid;
+                }
+
+                if (window.activeArticleUuid) {
+                    highlightAndExpandActive(window.activeArticleUuid);
+                } else {
+                    const queryUuid = getArticleIdFromUrl();
+                    if (queryUuid) {
+                        loadArticle(queryUuid, false, false);
+                    } else if (readings.length > 0) {
+                        loadArticle(readings[0].uuid, true, false);
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                listEl.innerHTML = `<div class="text-center py-6 text-red-500 text-xs italic">加载失败: ${err.message}</div>`;
+            }
+        }
+
+        // 监听浏览器前进/后退导航，与 URL 中的文章 ID 保持同步
+        window.addEventListener('popstate', () => {
+            const urlId = getArticleIdFromUrl();
+            if (urlId && urlId !== window.activeArticleUuid) {
+                loadArticle(urlId, false, false);
+            }
+        });
+
+        // Toggle Sidebar smoothly
+        document.getElementById('toggleArticleSidebarBtn').addEventListener('click', () => {
+            const sidebar = document.getElementById('articleSidebar');
+            if (sidebar.classList.contains('w-0')) {
+                sidebar.classList.remove('w-0', 'border-r-0', 'overflow-hidden');
+                sidebar.classList.add('w-64');
+            } else {
+                sidebar.classList.remove('w-64');
+                sidebar.classList.add('w-0', 'border-r-0', 'overflow-hidden');
+            }
+        });
+
+        // Search articles
+        document.getElementById('articleSearch').addEventListener('input', (e) => {
+            loadArticleList(e.target.value);
+        });
+
+        // ==========================================
+        // 初始化
+        // ==========================================
+        initDB().catch(err => console.error("Could not init IndexedDB", err));
+        loadExistingCoreWords().then(() => updateSidebarView()).catch(err => console.error("Could not load core words", err));
+        
+        // 如果 URL 参数中指定了文章 ID，立即直接开始加载该文章进行阅读
+        const initialArticleId = getArticleIdFromUrl();
+        if (initialArticleId) {
+            loadArticle(initialArticleId, false, false);
+        }
+
+        loadArticleList();
+        updateSidebarView();
+
+        // 绑定翻译列表的句子播放、复制与重点/易错打标签事件监听（事件委托）
+        const transContainer = document.getElementById('translation-container');
+        if (transContainer) {
+            transContainer.addEventListener('click', async (e) => {
+                // 1. 句子重点 / 易错 标签按钮点击
+                const tagBtn = e.target.closest('.tag-sentence-btn');
+                if (tagBtn) {
+                    e.stopPropagation();
+                    const pid = tagBtn.dataset.pid;
+                    const sid = tagBtn.dataset.sid;
+                    const tag = tagBtn.dataset.tag;
+                    await handleTagButtonClick(window.activeArticleUuid, pid, sid, tag);
+                    return;
+                }
+                // 2. 播放发音
+                const playBtn = e.target.closest('.play-sentence-btn');
+                if (playBtn) {
+                    let text = playBtn.dataset.text;
+                    if (text) {
+                        text = text.replace(/\s+/g, '');
+                        window.playAudioDirect(text);
+                    }
+                    return;
+                }
+                // 3. 复制原文
+                const copyBtn = e.target.closest('.copy-sentence-btn');
+                if (copyBtn) {
+                    let text = copyBtn.dataset.text;
+                    if (text) {
+                        text = text.replace(/\s+/g, '');
+                        copyTextToClipboard(text).then(() => {
+                            const icon = copyBtn.querySelector('i');
+                            const originalClass = icon.className;
+                            icon.className = "fas fa-check text-green-600";
+                            copyBtn.title = "已复制";
+                            setTimeout(() => {
+                                icon.className = originalClass;
+                                copyBtn.title = "复制原文";
+                            }, 1500);
+                        }).catch(err => console.error("Copy failed", err));
+                    }
+                }
+            });
+        }
+
+        const TOKEN_STORAGE_KEY = 'workerai_auth_token';
+
+        function getWorkerAuthHeaders(extraHeaders = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                ...extraHeaders
+            };
+            const inputEl = document.getElementById('workerAuthToken');
+            const token = (inputEl ? inputEl.value : (localStorage.getItem(TOKEN_STORAGE_KEY) || '')).trim();
+            if (token && token.length > 0) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            return headers;
+        }
+
+        function clearWorkerAuthToken() {
+            const inputEl = document.getElementById('workerAuthToken');
+            if (inputEl) inputEl.value = '';
+            localStorage.removeItem(TOKEN_STORAGE_KEY);
+        }
+
+        function initWorkerAuthTokenSync() {
+            const inputEl = document.getElementById('workerAuthToken');
+            if (!inputEl) return;
+            inputEl.value = localStorage.getItem(TOKEN_STORAGE_KEY) || '';
+            inputEl.addEventListener('input', () => {
+                localStorage.setItem(TOKEN_STORAGE_KEY, inputEl.value.trim());
+            });
+        }
+        document.addEventListener('DOMContentLoaded', initWorkerAuthTokenSync);
+    </script>
+</body>
+</html>

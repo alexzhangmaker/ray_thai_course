@@ -1,0 +1,15 @@
+{
+  "name": "thainotes-backend",
+  "version": "1.0.0",
+  "description": "Backend service for Thai vocabulary management",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "sqlite3": "^5.1.7"
+  }
+}

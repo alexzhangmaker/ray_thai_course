@@ -1,0 +1,2035 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语语境词汇研习 (Words in Context) - vCourse.ThaiNotes</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Serif+Thai:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Noto Sans SC', 'sans-serif'],
+                        thai: ['Noto Serif Thai', 'Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #eef2ff;
+            --correct: #10b981;
+            --wrong: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            background: #f1f5f9;
+            color: #0f172a;
+            min-height: 100vh;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.02);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.2);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.4);
+        }
+
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 10px 24px rgba(79, 70, 229, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .wordset-nav-btn {
+            transition: all 0.2s ease;
+        }
+
+        .wordset-nav-btn:hover {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            transform: translateX(3px);
+        }
+
+        .wordset-nav-btn.active {
+            background: #ffffff;
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.12);
+            border-left-width: 4px;
+            border-left-color: var(--primary);
+        }
+
+        .option-choice-btn {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            padding: 16px 20px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            user-select: none;
+        }
+
+        .option-choice-btn:hover:not(.locked) {
+            border-color: var(--primary);
+            background: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.08);
+        }
+
+        .option-choice-btn.selected-correct {
+            background: #ecfdf5 !important;
+            border-color: #10b981 !important;
+            color: #065f46 !important;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.2) !important;
+        }
+
+        .option-choice-btn.selected-wrong {
+            background: #fef2f2 !important;
+            border-color: #ef4444 !important;
+            color: #991b1b !important;
+            animation: shake 0.38s ease-in-out;
+            box-shadow: 0 4px 14px rgba(239, 68, 68, 0.2) !important;
+        }
+
+        .option-choice-btn.reveal-correct {
+            background: #ecfdf5 !important;
+            border-color: #10b981 !important;
+            color: #065f46 !important;
+            border-style: dashed;
+        }
+
+        .option-choice-btn.faded {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+
+        .writing-mode-vertical {
+            writing-mode: vertical-rl;
+            text-combine-upright: all;
+        }
+
+        /* 选中单词微型工具栏 */
+        #selectionToolbar {
+            position: fixed;
+            z-index: 60;
+            background-color: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(51, 65, 85, 0.8);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 高亮目标词语 */
+        .highlight-target-word {
+            background-color: #e0e7ff;
+            color: #4338ca;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            border-bottom: 2px solid #6366f1;
+            text-decoration-thickness: 2px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden relative">
+
+    <!-- Top App Bar -->
+    <header class="bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0 z-20 shadow-sm font-sans">
+        <div class="flex items-center gap-2.5">
+            <button id="leftNavHeaderBtn" onclick="toggleLeftNav()" class="p-2 rounded-xl text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 transition border border-slate-200" title="切换/收起词集目录导航栏">
+                <i class="ph-bold ph-sidebar-simple text-base"></i>
+            </button>
+            <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center shadow-md shadow-indigo-500/20 text-white">
+                <i class="ph-bold ph-chats-circle text-lg"></i>
+            </div>
+            <div>
+                <h1 class="text-base font-bold text-slate-800 flex items-center gap-2 leading-none">
+                    <span>vCourse.ThaiNotes</span>
+                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 font-semibold border border-indigo-200/60">语境词汇研习 (Words in Context)</span>
+                </h1>
+                <span class="text-[11px] text-slate-400 font-medium block mt-0.5">例句语境选择题自测 · 动态干扰项生成 · IndexedDB 本地得分沉淀</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <!-- Stats Indicators -->
+            <div class="hidden sm:flex items-center gap-2.5">
+                <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200 text-xs font-bold shadow-sm" title="当前词集掌握进度">
+                    <i class="ph-fill ph-chart-line-up text-indigo-500 text-sm"></i>
+                    <span>已测: <span id="topBarStudiedCount">0</span> 词</span>
+                </div>
+                <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 text-xs font-bold shadow-sm" title="平均得分">
+                    <i class="ph-fill ph-star text-emerald-500 text-sm"></i>
+                    <span>均分: <span id="topBarAvgScore">0.0</span> / 5.0</span>
+                </div>
+            </div>
+
+            <!-- Dict Drawer Trigger Button -->
+            <button onclick="toggleDictDrawer()" type="button" class="px-3.5 py-1.5 text-xs text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition duration-150 flex items-center gap-1.5 border border-indigo-200 font-bold shadow-sm">
+                <i class="ph-bold ph-translate text-sm text-indigo-600"></i>
+                <span>查词助手</span>
+                <span id="dict-history-badge" class="px-1.5 py-0.2 rounded-full bg-indigo-200 text-indigo-800 text-[10px]">0</span>
+            </button>
+
+            <!-- Links to other apps -->
+            <a href="/Pages/appCoreWords.html" class="hidden md:flex px-3 py-1.5 text-xs text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 rounded-xl transition duration-150 items-center gap-1.5 border border-slate-200 font-medium">
+                <i class="ph ph-book-open text-sm"></i>
+                <span>核心词汇课时复习</span>
+            </a>
+            <a href="/Pages/consoleWordset.html" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 text-xs text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 rounded-xl transition duration-150 flex items-center gap-1.5 border border-slate-200 font-medium">
+                <i class="ph ph-gear-six text-sm"></i>
+                <span>词集管理后台</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Two-Column Layout -->
+    <div class="flex-grow flex overflow-hidden min-h-0 relative">
+        
+        <!-- 左侧导航栏悬浮展开按钮 (折叠时显示) -->
+        <button id="leftNavEdgeToggleBtn" onclick="toggleLeftNav()" class="fixed left-0 top-1/3 bg-white text-slate-700 hover:text-indigo-600 py-3.5 px-2 rounded-r-2xl shadow-2xl hover:bg-slate-50 transition-all duration-300 flex flex-col items-center gap-1.5 border border-l-0 border-slate-200 select-none z-40 cursor-pointer hidden">
+            <i class="ph-bold ph-caret-right transition-transform duration-300 text-xs" id="leftNavToggleIcon"></i>
+            <span class="text-[11px] font-bold tracking-widest writing-mode-vertical mt-0.5">词集目录</span>
+        </button>
+
+        <!-- Left Sidebar: Wordsets Navigation -->
+        <aside id="leftSidebar" class="w-80 md:w-88 border-r border-slate-200 bg-slate-50/70 flex flex-col shrink-0 transition-all duration-300 overflow-hidden">
+            
+            <!-- Filters Header -->
+            <div class="p-4 border-b border-slate-200 space-y-3 bg-white font-sans shrink-0">
+                <!-- Tag / Category Selector -->
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                        <i class="ph ph-bookmarks text-indigo-600 text-sm"></i>
+                        <span>词汇集分类 (Category / Tag)</span>
+                    </label>
+                    <select id="tag-select" onchange="onTagSelectChange()" 
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition duration-150">
+                        <option value="">全部词集 (All Wordsets)</option>
+                    </select>
+                </div>
+
+                <!-- Search Input inside set -->
+                <div class="relative">
+                    <input type="text" id="search-input" oninput="onSearchWordsetInput()" placeholder="搜索词集名称 / 标签..." 
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition duration-150">
+                    <i class="ph ph-magnifying-glass absolute left-3 top-2 text-slate-400 text-sm"></i>
+                </div>
+            </div>
+
+            <!-- Wordsets Navigation List Header -->
+            <div class="p-3 border-b border-slate-200/60 bg-slate-100/50 flex justify-between items-center text-xs font-bold text-slate-500 font-sans">
+                <span>单词集列表 (Word Sets)</span>
+                <div class="flex items-center gap-1.5">
+                    <span id="wordset-count-badge" class="px-2 py-0.5 rounded-full bg-white text-slate-600 border border-slate-200 text-[10px]">0 组</span>
+                    <button onclick="toggleLeftNav(false)" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition" title="收起词集导航">
+                        <i class="ph-bold ph-caret-left text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- List Container -->
+            <div id="wordsetListContainer" class="flex-grow overflow-y-auto custom-scrollbar p-3 space-y-2">
+                <div class="flex flex-col items-center justify-center h-32 text-slate-400 text-xs">
+                    <i class="ph ph-spinner animate-spin text-lg text-indigo-500 mb-1"></i>
+                    <span>正在载入单词集...</span>
+                </div>
+            </div>
+
+            <!-- Bottom Scope Stats -->
+            <div class="p-3.5 border-t border-slate-200 bg-white text-xs text-slate-500 flex justify-between items-center shrink-0 font-sans">
+                <span id="sidebarTotalSets">词集总量: 0</span>
+                <span class="text-indigo-600 font-semibold flex items-center gap-1">
+                    <i class="ph-bold ph-database text-sm"></i>
+                    <span>IndexedDB 成绩沉淀</span>
+                </span>
+            </div>
+        </aside>
+
+        <!-- Right Main Interactive Content Workspace -->
+        <main class="flex-grow flex flex-col bg-slate-100/60 overflow-hidden relative">
+            
+            <!-- Breadcrumb & Workspace Header -->
+            <div class="px-8 py-3.5 bg-white border-b border-slate-200/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shrink-0">
+                <div>
+                    <div class="flex items-center gap-2 text-xs text-slate-400 font-medium">
+                        <span id="bc-category-name">分类标签</span>
+                        <i class="ph ph-caret-right text-[10px]"></i>
+                        <span id="bc-wordset-title" class="text-slate-700 font-semibold">单词集名称</span>
+                    </div>
+                    <h2 id="workspace-title" class="text-lg font-bold text-slate-800 flex items-center gap-2.5 mt-0.5">
+                        <span id="workspace-main-title">泰语语境学习词集</span>
+                        <span id="current-set-count-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 font-semibold border border-indigo-200/60">共 0 词</span>
+                    </h2>
+                </div>
+
+                <div id="viewSelectionActions" class="flex items-center gap-2">
+                    <button onclick="resetCurrentSetProgress()" type="button" class="px-3.5 py-2 text-xs font-semibold text-slate-500 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-xl transition duration-150 flex items-center gap-1" title="重置本单词集在IndexedDB中的学习结果与评分">
+                        <i class="ph ph-arrow-counter-clockwise"></i>
+                        <span>重置本集进度</span>
+                    </button>
+                    <button onclick="startBatchStudySession(true)" type="button" class="px-3.5 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition duration-150 flex items-center gap-1.5" title="只练习未学习或得分较低（<4分）的词汇">
+                        <i class="ph-bold ph-hourglass-high"></i>
+                        <span>攻克薄弱词汇</span>
+                    </button>
+                    <button onclick="startBatchStudySession(false)" type="button" class="px-4 py-2 text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-500/15 hover:shadow-indigo-500/25 transition duration-150 flex items-center gap-1.5">
+                        <i class="ph-bold ph-play text-sm"></i>
+                        <span>开始完整语境学习</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- VIEW 1: Wordset Cards Overview Grid -->
+            <div id="viewSelection" class="flex-grow overflow-y-auto custom-scrollbar p-6 md:p-8">
+                <!-- Summary banner for current set progress -->
+                <div id="set-progress-banner" class="mb-6 p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="h-12 w-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xl shrink-0">
+                            <i class="ph-bold ph-chart-donut"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-bold text-slate-800">当前单词集语境研习进展</h3>
+                                <span id="banner-progress-pct" class="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 font-bold font-mono">0%</span>
+                            </div>
+                            <p id="banner-progress-detail" class="text-xs text-slate-500 mt-1">已测 0 / 0 词 · 待巩固 0 词 · 平均掌握分 0.0 分 (IndexedDB 已同步)</p>
+                        </div>
+                    </div>
+                    <div class="w-full sm:w-56">
+                        <div class="flex justify-between text-[11px] text-slate-400 font-semibold mb-1">
+                            <span>完成度</span>
+                            <span id="banner-pct-text">0%</span>
+                        </div>
+                        <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                            <div id="banner-progress-bar" class="h-full bg-gradient-to-r from-indigo-500 via-indigo-600 to-emerald-500 transition-all duration-300" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Word Cards Grid -->
+                <div id="wordsListContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <!-- Cards injected dynamically -->
+                </div>
+            </div>
+
+            <!-- VIEW 2: Immersive In-Context Study Session -->
+            <div id="viewExercise" class="hidden flex-grow flex flex-col overflow-hidden bg-slate-50">
+                <!-- Exercise Header Bar -->
+                <div class="px-8 py-3 bg-white border-b border-slate-200 flex items-center justify-between shrink-0 font-sans">
+                    <button onclick="goBackToSelection()" class="text-xs font-semibold text-slate-500 hover:text-indigo-600 flex items-center gap-1.5 py-1.5 px-3 rounded-lg hover:bg-slate-100 transition">
+                        <i class="ph-bold ph-arrow-left text-sm"></i>
+                        <span>返回单词列表</span>
+                    </button>
+
+                    <div class="flex items-center gap-4 w-1/2 max-w-sm">
+                        <div class="flex-grow">
+                            <div class="flex justify-between text-[11px] font-bold text-slate-500 mb-1">
+                                <span id="exProgressIndex">进度: 1 / 1</span>
+                                <span id="wordProgressTitle" class="font-thai text-indigo-600 font-bold"></span>
+                            </div>
+                            <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                <div id="exProgressBarFill" class="h-full bg-indigo-600 rounded-full transition-all duration-300" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <div class="text-[11px] text-slate-400 hidden sm:flex items-center gap-1 font-mono">
+                            <i class="ph-bold ph-keyboard"></i>
+                            <span>快捷键: [1-4]选答案 · [←/→]切卡片 · [Enter]下一词</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exercise Content Body -->
+                <div class="flex-grow overflow-y-auto custom-scrollbar p-6 md:p-8 flex justify-center items-start">
+                    <div class="w-full max-w-3xl flex flex-col justify-between min-h-[500px]">
+                        <div id="exerciseContent" class="space-y-6">
+                            <!-- Dynamic Flashcard Body injected here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- 侧边栏悬浮开关按钮 (查词助手) -->
+        <button id="dictToggleBtn" onclick="toggleDictDrawer()" class="fixed right-0 top-1/3 bg-indigo-600 text-white py-3.5 px-2 rounded-l-2xl shadow-2xl hover:bg-indigo-700 transition-all duration-300 flex flex-col items-center gap-1.5 border border-r-0 border-indigo-400 select-none z-40 cursor-pointer">
+            <i class="ph-bold ph-caret-left transition-transform duration-300 text-xs" id="dictToggleIcon"></i>
+            <span class="text-[11px] font-bold tracking-widest writing-mode-vertical mt-0.5">查词助手</span>
+        </button>
+
+        <!-- Slide-over Dict Drawer -->
+        <aside id="dictDrawer" class="w-0 border-l border-transparent bg-white flex flex-col shrink-0 transition-all duration-300 overflow-hidden shadow-2xl z-30 font-sans">
+            <!-- Drawer Header -->
+            <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
+                <div class="flex items-center gap-2 text-indigo-700 font-bold text-sm">
+                    <i class="ph-bold ph-translate text-base"></i>
+                    <span>泰语查词助手</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <button onclick="clearAllDictHistory()" class="text-[11px] text-slate-400 hover:text-rose-600 px-2 py-1 rounded transition" title="清空所有查词历史">
+                        清空
+                    </button>
+                    <button onclick="toggleDictDrawer(false)" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition">
+                        <i class="ph-bold ph-x text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Manual Input Search Bar -->
+            <div class="p-4 border-b border-slate-100 bg-white">
+                <div class="flex gap-2">
+                    <input type="text" id="manualQueryInput" placeholder="输入泰语单词查询..." onkeydown="if(event.key === 'Enter') triggerManualQuery()"
+                        class="flex-grow bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-thai text-slate-800 focus:outline-none focus:border-indigo-500">
+                    <button onclick="triggerManualQuery()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition">
+                        查询
+                    </button>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-2">提示：在页面任意位置划选泰语单词，可点击弹出按钮快速查词。</p>
+            </div>
+
+            <!-- Dict Records List -->
+            <div id="dictListContainer" class="flex-grow overflow-y-auto custom-scrollbar p-4 space-y-3">
+                <!-- Dynamically injected items -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="dictEmptyState" class="flex flex-col items-center justify-center flex-grow p-8 text-center text-slate-400">
+                <div class="h-12 w-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-500 mb-3">
+                    <i class="ph ph-books text-2xl"></i>
+                </div>
+                <p class="text-xs font-semibold text-slate-600">暂无查词记录</p>
+                <p class="text-[11px] text-slate-400 mt-1">划选页面泰语或输入上方单词查词</p>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- Text Selection Floating Toolbar -->
+    <div id="selectionToolbar" class="hidden rounded-full px-3 py-1.5 flex items-center gap-2 cursor-pointer transition duration-150">
+        <button onclick="onQueryBtnClick()" class="text-white text-xs font-semibold flex items-center gap-1.5 hover:text-indigo-300">
+            <i class="ph-bold ph-translate text-sm text-indigo-400"></i>
+            <span>查词</span>
+        </button>
+    </div>
+
+    <!-- Session Completion Modal -->
+    <div id="sessionCompleteModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-100 text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div class="h-16 w-16 mx-auto rounded-3xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center text-3xl shadow-sm">
+                <i class="ph-fill ph-trophy"></i>
+            </div>
+            
+            <div>
+                <h3 class="text-xl font-bold text-slate-800">本组语境研习完成！</h3>
+                <p class="text-xs text-slate-500 mt-1" id="modalSessionSummary">已完成全部例句词义选择题自测</p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div>
+                    <div class="text-xs text-slate-400 font-semibold">自测题数</div>
+                    <div class="text-base font-bold text-slate-800 mt-0.5" id="modalTotalAnswered">0</div>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400 font-semibold">首测正确率</div>
+                    <div class="text-base font-bold text-emerald-600 mt-0.5" id="modalAccuracy">0%</div>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400 font-semibold">平均掌握分</div>
+                    <div class="text-base font-bold text-indigo-600 mt-0.5" id="modalAvgScore">0.0</div>
+                </div>
+            </div>
+
+            <div id="modalWeakWordsContainer" class="text-left space-y-1.5 hidden">
+                <span class="text-xs font-bold text-amber-700 flex items-center gap-1">
+                    <i class="ph-bold ph-warning-circle"></i>
+                    <span>建议复习的薄弱词汇:</span>
+                </span>
+                <div id="modalWeakWordsList" class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar p-2 bg-amber-50/60 rounded-xl border border-amber-200/60 text-xs">
+                </div>
+            </div>
+
+            <div class="flex gap-2.5 pt-2">
+                <button onclick="closeCompleteModal(false)" class="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-100 transition">
+                    返回列表
+                </button>
+                <button onclick="closeCompleteModal(true)" class="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shadow-md shadow-indigo-500/20 transition">
+                    再次巩固自测
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // ==========================================
+        // State Management
+        // ==========================================
+        let allWordsets = [];
+        let activeWordset = null;
+        let activeWordsetWords = [];
+        let selectedTag = '';
+        let searchQuery = '';
+
+        // Study Card Queue & Session State
+        let studyQueue = [];
+        let currentWordIndex = 0;
+        let currentWord = null;
+        let currentQuestion = null;
+        let isQuestionAnswered = false;
+        let selectedOptionIndex = null;
+        let currentWordScore = 0;
+
+        // Session Stats
+        let sessionResults = {
+            total: 0,
+            correctCount: 0,
+            scores: [],
+            weakWords: []
+        };
+
+        // Cache answers in current session: { [wordId]: { question, selectedOptionIndex, isCorrect, score } }
+        let sessionAnswersMap = {};
+
+        // IndexedDB Scores Cache: { [compositeKey: `${wordsetId}_${wordId}`]: Record }
+        let wordScoresMap = {};
+
+        // Fallback distractors in case set has very few words
+        const FALLBACK_DISTRACTORS = [
+            "常见 / 经常遇到", "流行 / 蔓延", "幸福 / 快乐", "谢谢 / 感谢", 
+            "高兴 / 乐意", "悲伤 / 难过", "美丽 / 漂亮", "重要 / 关键",
+            "工作 / 劳动", "学习 / 钻研", "旅行 / 游玩", "思考 / 考虑"
+        ];
+
+        // Text Selection & Dict
+        let selectedWordText = '';
+
+        // ==========================================
+        // IndexedDB Database Setup (需求4: 本地得分存储)
+        // ==========================================
+        const CTX_DB_NAME = 'ThaiWordsInContextDB';
+        const CTX_DB_VERSION = 1;
+        const CTX_SCORE_STORE = 'contextStudyScores';
+        const CTX_SET_STORE = 'contextSetSummaries';
+
+        function initContextDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(CTX_DB_NAME, CTX_DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(CTX_SCORE_STORE)) {
+                        const store = db.createObjectStore(CTX_SCORE_STORE, { keyPath: 'compositeKey' });
+                        store.createIndex('wordsetId', 'wordsetId', { unique: false });
+                        store.createIndex('wordId', 'wordId', { unique: false });
+                        store.createIndex('score', 'score', { unique: false });
+                        store.createIndex('lastStudiedAt', 'lastStudiedAt', { unique: false });
+                    }
+                    if (!db.objectStoreNames.contains(CTX_SET_STORE)) {
+                        db.createObjectStore(CTX_SET_STORE, { keyPath: 'wordsetId' });
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function loadAllScoresFromIndexedDB() {
+            try {
+                const db = await initContextDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([CTX_SCORE_STORE], 'readonly');
+                    const store = transaction.objectStore(CTX_SCORE_STORE);
+                    const req = store.getAll();
+                    req.onsuccess = (e) => {
+                        const list = e.target.result || [];
+                        wordScoresMap = {};
+                        list.forEach(item => {
+                            wordScoresMap[item.compositeKey] = item;
+                        });
+                        resolve(wordScoresMap);
+                    };
+                    req.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error("Failed to load scores from IndexedDB:", err);
+                wordScoresMap = {};
+                return {};
+            }
+        }
+
+        async function saveWordScoreToIndexedDB(wordsetId, word, isCorrect, score) {
+            const compositeKey = `${wordsetId}_${word.id}`;
+            const prev = wordScoresMap[compositeKey] || { studyCount: 0 };
+            const record = {
+                compositeKey,
+                wordsetId,
+                wordId: word.id,
+                word: word.word || word.headword || '',
+                meaning: word.meaning || '',
+                score: Math.max(0, Math.min(5, score)),
+                isCorrect: Boolean(isCorrect),
+                studyCount: (prev.studyCount || 0) + 1,
+                lastStudiedAt: Date.now()
+            };
+
+            wordScoresMap[compositeKey] = record;
+
+            try {
+                const db = await initContextDB();
+                const tx = db.transaction([CTX_SCORE_STORE], 'readwrite');
+                tx.objectStore(CTX_SCORE_STORE).put(record);
+            } catch (err) {
+                console.error("Failed to save score to IndexedDB:", err);
+            }
+
+            // Also mirror progress into ThaiCoreWordsReviewDB for system-wide sync
+            try {
+                mirrorProgressToCoreWordsDB(word.id, wordsetId, score);
+            } catch (e) {
+                console.warn("Mirroring to CoreWordsReviewDB skipped:", e);
+            }
+
+            updateTopBarStats();
+        }
+
+        async function mirrorProgressToCoreWordsDB(wordId, lessonId, score) {
+            const CORE_DB_NAME = 'ThaiCoreWordsReviewDB';
+            const CORE_DB_VERSION = 3;
+            const CORE_STORE = 'coreWordProgress';
+            try {
+                const req = indexedDB.open(CORE_DB_NAME, CORE_DB_VERSION);
+                req.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(CORE_STORE)) {
+                        const store = db.createObjectStore(CORE_STORE, { keyPath: 'wordId' });
+                        store.createIndex('lessonId', 'lessonId', { unique: false });
+                        store.createIndex('status', 'status', { unique: false });
+                        store.createIndex('lastReviewedAt', 'lastReviewedAt', { unique: false });
+                    }
+                };
+                req.onsuccess = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(CORE_STORE)) {
+                        db.close();
+                        return;
+                    }
+                    const tx = db.transaction([CORE_STORE], 'readwrite');
+                    tx.objectStore(CORE_STORE).put({
+                        wordId,
+                        lessonId: lessonId || 'wordset_default',
+                        status: 'reviewed',
+                        masteryScore: score,
+                        lastReviewedAt: Date.now()
+                    });
+                };
+            } catch (e) {}
+        }
+
+        async function resetCurrentSetProgress() {
+            if (!activeWordset || activeWordsetWords.length === 0) return;
+            if (!confirm(`确定要重置当前单词集 "${activeWordset.title}" 的所有学习评分吗？本地 IndexedDB 记录将被清空。`)) {
+                return;
+            }
+
+            try {
+                const db = await initContextDB();
+                const tx = db.transaction([CTX_SCORE_STORE], 'readwrite');
+                const store = tx.objectStore(CTX_SCORE_STORE);
+
+                activeWordsetWords.forEach(w => {
+                    const key = `${activeWordset.uuid}_${w.id}`;
+                    delete wordScoresMap[key];
+                    store.delete(key);
+                });
+
+                alert("当前单词集评分记录已重置！");
+                renderWordsetSidebar();
+                renderWordCardsGrid();
+                updateTopBarStats();
+            } catch (err) {
+                console.error("Failed to reset set progress:", err);
+                alert("重置记录失败: " + err.message);
+            }
+        }
+
+        // ==========================================
+        // Dictionary DB (划词助手历史记录)
+        // ==========================================
+        const DICT_DB_NAME = 'ThaiReadingCoachDB';
+        const DICT_DB_VERSION = 2;
+        const DICT_STORE_NAME = 'wordQueries';
+
+        function initDictDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DICT_DB_NAME, DICT_DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(DICT_STORE_NAME)) {
+                        db.createObjectStore(DICT_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                    }
+                    if (!db.objectStoreNames.contains('sentenceTags')) {
+                        const store = db.createObjectStore('sentenceTags', { keyPath: 'id' });
+                        store.createIndex('articleId', 'articleId', { unique: false });
+                        store.createIndex('article_paragraph_sentence', ['articleId', 'paragraphId', 'sentenceId'], { unique: false });
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function saveDictQueryRecord(word, explanations) {
+            try {
+                const db = await initDictDB();
+                const tx = db.transaction([DICT_STORE_NAME], 'readwrite');
+                tx.objectStore(DICT_STORE_NAME).add({
+                    word,
+                    explanations,
+                    timestamp: Date.now()
+                });
+            } catch (err) {
+                console.error("Save dict record failed", err);
+            }
+        }
+
+        async function loadDictRecords() {
+            try {
+                const db = await initDictDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction([DICT_STORE_NAME], 'readonly');
+                    const store = tx.objectStore(DICT_STORE_NAME);
+                    const req = store.getAll();
+                    req.onsuccess = (e) => resolve(e.target.result || []);
+                    req.onerror = (e) => reject(e.target.error);
+                });
+            } catch (e) {
+                return [];
+            }
+        }
+
+        async function clearAllDictHistory() {
+            if (!confirm("确定要清空查词助手的所有查询历史吗？")) return;
+            try {
+                const db = await initDictDB();
+                const tx = db.transaction([DICT_STORE_NAME], 'readwrite');
+                tx.objectStore(DICT_STORE_NAME).clear();
+                await updateDictDrawerView();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // ==========================================
+        // App Lifecycle & Initialization (需求1: 启动与URL参数)
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initContextDB();
+            await loadAllScoresFromIndexedDB();
+            initSelectionToolbar();
+            initKeyboardShortcuts();
+            await updateDictDrawerView();
+            await fetchAllWordsets();
+        });
+
+        async function fetchAllWordsets() {
+            try {
+                // 1. Fetch from /api/wordsets
+                const res = await fetch('/api/wordsets');
+                if (res.ok) {
+                    const data = await res.json();
+                    allWordsets = Array.isArray(data) ? data : [];
+                }
+
+                // If wordsets are empty, fallback to lessons/core-words adapter
+                if (allWordsets.length === 0) {
+                    await fetchLessonsFallback();
+                }
+
+                populateTagDropdown();
+                renderWordsetSidebar();
+
+                // 2. Check URL params for direct routing (需求1)
+                handleUrlParamsRouting();
+            } catch (err) {
+                console.error("Failed to load wordsets:", err);
+                // Fallback to lessons
+                await fetchLessonsFallback();
+                populateTagDropdown();
+                renderWordsetSidebar();
+                handleUrlParamsRouting();
+            }
+        }
+
+        async function fetchLessonsFallback() {
+            try {
+                const [resL, resV] = await Promise.all([
+                    fetch('/api/lessons'),
+                    fetch('/api/core-words')
+                ]);
+                if (resL.ok && resV.ok) {
+                    const lessons = await resL.json();
+                    const vocabs = await resV.json();
+                    
+                    allWordsets = lessons.map(lesson => {
+                        const words = vocabs.filter(v => v.lessonId === lesson.id || (lesson.content?.vocabularyIds?.includes(v.id)));
+                        return {
+                            uuid: lesson.id,
+                            title: lesson.title || `课时 ${lesson.id}`,
+                            tags: lesson.course_id || '核心词汇课时',
+                            words: words.map(w => ({
+                                id: w.id,
+                                word: w.word || w.headword,
+                                ipa: w.ipa || '',
+                                meaning: w.meanings?.[0]?.meaning || w.meaning || '',
+                                examples: (w.meanings?.[0]?.examples || []).map(ex => ({
+                                    thai: ex.sentence || '',
+                                    chinese: ex.meaning || ''
+                                }))
+                            }))
+                        };
+                    });
+                }
+            } catch (e) {
+                console.warn("Fallback fetch lessons failed", e);
+            }
+        }
+
+        // ==========================================
+        // URL Parameter Routing (需求1)
+        // ==========================================
+        function handleUrlParamsRouting() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const paramId = urlParams.get('id') || urlParams.get('uuid') || urlParams.get('wordset_id') || urlParams.get('set_id') || urlParams.get('lesson_id');
+            const mode = urlParams.get('mode');
+            const autoStart = urlParams.get('study') === '1' || mode === 'study';
+
+            let target = null;
+            if (paramId) {
+                target = allWordsets.find(ws => ws.uuid === paramId || ws.id === paramId);
+            }
+
+            if (!target && allWordsets.length > 0) {
+                target = allWordsets[0];
+            }
+
+            if (target) {
+                selectWordset(target.uuid, { updateUrl: false, autoStart });
+            } else {
+                document.getElementById('workspace-main-title').textContent = "未找到任何单词集";
+                document.getElementById('wordsListContainer').innerHTML = `
+                    <div class="col-span-full py-16 text-center text-slate-400">
+                        <i class="ph ph-warning-circle text-4xl text-slate-300 mb-2"></i>
+                        <p class="text-sm font-semibold">暂无词汇集数据</p>
+                        <a href="/Pages/consoleWordset.html" target="_blank" class="mt-3 inline-block text-xs text-indigo-600 hover:underline font-bold">前往词集后台新建词汇集</a>
+                    </div>
+                `;
+            }
+        }
+
+        function syncUrlParameter(uuid) {
+            const newUrl = new URL(window.location);
+            newUrl.searchParams.set('id', uuid);
+            window.history.pushState({ id: uuid }, '', newUrl.toString());
+        }
+
+        // ==========================================
+        // Sidebar & Filters UI
+        // ==========================================
+        function populateTagDropdown() {
+            const tagSelect = document.getElementById('tag-select');
+            const tags = new Set();
+            allWordsets.forEach(ws => {
+                if (ws.tags) {
+                    ws.tags.split(/[,，/| ]+/).forEach(t => {
+                        const clean = t.trim();
+                        if (clean) tags.add(clean);
+                    });
+                }
+            });
+
+            tagSelect.innerHTML = '<option value="">全部词集 (All Wordsets)</option>';
+            Array.from(tags).sort().forEach(tag => {
+                const opt = document.createElement('option');
+                opt.value = tag;
+                opt.textContent = tag;
+                tagSelect.appendChild(opt);
+            });
+        }
+
+        function onTagSelectChange() {
+            selectedTag = document.getElementById('tag-select').value;
+            renderWordsetSidebar();
+            
+            // Auto select first match in filtered list if active is filtered out
+            const filtered = getFilteredWordsets();
+            if (filtered.length > 0 && (!activeWordset || !filtered.some(w => w.uuid === activeWordset.uuid))) {
+                selectWordset(filtered[0].uuid);
+            }
+        }
+
+        function onSearchWordsetInput() {
+            searchQuery = document.getElementById('search-input').value.trim().toLowerCase();
+            renderWordsetSidebar();
+        }
+
+        function getFilteredWordsets() {
+            return allWordsets.filter(ws => {
+                const matchTag = !selectedTag || (ws.tags && ws.tags.includes(selectedTag));
+                const matchSearch = !searchQuery || 
+                    (ws.title && ws.title.toLowerCase().includes(searchQuery)) ||
+                    (ws.tags && ws.tags.toLowerCase().includes(searchQuery));
+                return matchTag && matchSearch;
+            });
+        }
+
+        function renderWordsetSidebar() {
+            const container = document.getElementById('wordsetListContainer');
+            const filtered = getFilteredWordsets();
+
+            document.getElementById('wordset-count-badge').textContent = `${filtered.length} 组`;
+            document.getElementById('sidebarTotalSets').textContent = `词集总量: ${allWordsets.length}`;
+
+            container.innerHTML = '';
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-xs text-slate-400">未找到匹配的词汇集</div>`;
+                return;
+            }
+
+            filtered.forEach(ws => {
+                const isActive = activeWordset && activeWordset.uuid === ws.uuid;
+                const words = Array.isArray(ws.words) ? ws.words : [];
+                
+                // Calculate progress from IndexedDB
+                let studiedCount = 0;
+                let totalScore = 0;
+                words.forEach(w => {
+                    const key = `${ws.uuid}_${w.id}`;
+                    if (wordScoresMap[key] && wordScoresMap[key].studyCount > 0) {
+                        studiedCount++;
+                        totalScore += (wordScoresMap[key].score || 0);
+                    }
+                });
+
+                const avgScore = studiedCount > 0 ? (totalScore / studiedCount).toFixed(1) : null;
+                const isFullyDone = words.length > 0 && studiedCount >= words.length;
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `wordset-nav-btn w-full p-3 rounded-xl border border-slate-200 text-left cursor-pointer flex flex-col gap-1.5 ${isActive ? 'active' : ''}`;
+                btn.onclick = () => selectWordset(ws.uuid);
+
+                btn.innerHTML = `
+                    <div class="flex items-center justify-between gap-1">
+                        <span class="text-xs font-bold ${isActive ? 'text-indigo-600' : 'text-slate-800'} truncate">${ws.title}</span>
+                        <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold shrink-0 ${isFullyDone ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80' : 'bg-slate-100 text-slate-600'}">
+                            ${words.length} 词
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between text-[11px] text-slate-400">
+                        <span class="truncate max-w-[150px] font-medium text-slate-500">${ws.tags || '词集'}</span>
+                        <span class="${isFullyDone ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">
+                            ${studiedCount > 0 ? `${studiedCount}/${words.length} 词 · ${avgScore}分` : '待自测'}
+                        </span>
+                    </div>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        // ==========================================
+        // Wordset Selection & Overview View
+        // ==========================================
+        function selectWordset(uuid, options = {}) {
+            const { updateUrl = true, autoStart = false } = options;
+            const target = allWordsets.find(w => w.uuid === uuid);
+            if (!target) return;
+
+            activeWordset = target;
+            activeWordsetWords = Array.isArray(target.words) ? target.words : [];
+
+            if (updateUrl) {
+                syncUrlParameter(target.uuid);
+            }
+
+            // Sync Header & Breadcrumbs
+            document.getElementById('bc-category-name').textContent = target.tags || '综合泰语';
+            document.getElementById('bc-wordset-title').textContent = target.title;
+            document.getElementById('workspace-main-title').textContent = target.title;
+            document.getElementById('current-set-count-badge').textContent = `共 ${activeWordsetWords.length} 词`;
+
+            renderWordsetSidebar();
+            renderWordCardsGrid();
+            updateTopBarStats();
+
+            // Auto scroll sidebar to active button
+            setTimeout(() => {
+                const container = document.getElementById('wordsetListContainer');
+                if (container) {
+                    const activeBtn = container.querySelector('.wordset-nav-btn.active');
+                    if (activeBtn) {
+                        activeBtn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                    }
+                }
+            }, 50);
+
+            if (autoStart && activeWordsetWords.length > 0) {
+                startBatchStudySession(false);
+            } else {
+                goBackToSelection();
+            }
+        }
+
+        function renderWordCardsGrid() {
+            const container = document.getElementById('wordsListContainer');
+            container.innerHTML = '';
+
+            if (activeWordsetWords.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-16 text-center text-slate-400">
+                        <i class="ph ph-notebook text-3xl mb-2 text-slate-300"></i>
+                        <p class="text-sm font-semibold">该单词集暂无词汇</p>
+                    </div>
+                `;
+                updateBannerProgress(0, 0, 0, '0.0');
+                return;
+            }
+
+            let studiedInSet = 0;
+            let totalScoreInSet = 0;
+
+            activeWordsetWords.forEach((word, idx) => {
+                const key = `${activeWordset.uuid}_${word.id}`;
+                const scoreRec = wordScoresMap[key];
+                const hasScore = scoreRec && scoreRec.studyCount > 0;
+                
+                if (hasScore) {
+                    studiedInSet++;
+                    totalScoreInSet += scoreRec.score;
+                }
+
+                // Extract example
+                let exThai = '';
+                let exCh = '';
+                if (Array.isArray(word.examples) && word.examples.length > 0) {
+                    exThai = word.examples[0].thai || word.examples[0].sentence || '';
+                    exCh = word.examples[0].chinese || word.examples[0].meaning || '';
+                } else if (Array.isArray(word.meanings) && word.meanings[0]?.examples?.length > 0) {
+                    exThai = word.meanings[0].examples[0].sentence || '';
+                    exCh = word.meanings[0].examples[0].meaning || '';
+                }
+
+                const card = document.createElement('div');
+                card.className = 'glass-card p-5 rounded-2xl flex flex-col justify-between space-y-4';
+                
+                const scoreBadgeHtml = getScoreBadgeHtml(scoreRec);
+
+                card.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <div class="flex items-baseline gap-2">
+                                    <span class="text-2xl font-bold font-thai text-indigo-700 tracking-wide select-text">${word.word}</span>
+                                    <button type="button" onclick="event.stopPropagation(); playAudioDirect('${(word.word || '').replace(/'/g, "\\'")}')" class="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="朗读发音">
+                                        <i class="ph-bold ph-speaker-high text-sm"></i>
+                                    </button>
+                                </div>
+                                ${word.ipa ? `<span class="text-xs text-slate-400 font-mono block mt-0.5">${word.ipa}</span>` : ''}
+                            </div>
+                            <div class="shrink-0">
+                                ${scoreBadgeHtml}
+                            </div>
+                        </div>
+
+                        <!-- Meaning -->
+                        <div class="pt-2 border-t border-slate-100">
+                            <span class="text-xs font-semibold text-slate-700">${word.meaning || word.meanings?.[0]?.meaning || '暂无中文释义'}</span>
+                        </div>
+
+                        <!-- Example preview -->
+                        ${exThai ? `
+                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
+                                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                    <i class="ph-bold ph-quotes"></i>
+                                    <span>例句语境</span>
+                                </div>
+                                <div class="font-thai text-xs font-medium text-slate-800 select-text line-clamp-2">${exThai}</div>
+                                <div class="text-[11px] text-slate-400 select-text line-clamp-1">${exCh}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                        <div class="text-[11px] text-slate-400 font-mono">
+                            <span>#${idx + 1} · ID: ${word.id}</span>
+                        </div>
+                        <button onclick="startSingleStudySession('${word.id}')" class="px-3.5 py-1.5 text-xs font-bold text-indigo-600 hover:text-white bg-indigo-50 hover:bg-indigo-600 rounded-xl transition duration-150 flex items-center gap-1.5 shadow-sm cursor-pointer">
+                            <i class="ph-bold ph-lightning"></i>
+                            <span>${hasScore ? '再测此词' : '语境研习'}</span>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            const avgScore = studiedInSet > 0 ? (totalScoreInSet / studiedInSet).toFixed(1) : '0.0';
+            updateBannerProgress(activeWordsetWords.length, studiedInSet, activeWordsetWords.length - studiedInSet, avgScore);
+        }
+
+        function updateBannerProgress(total, studied, pending, avgScore) {
+            const pct = total > 0 ? Math.round((studied / total) * 100) : 0;
+            document.getElementById('banner-progress-pct').textContent = `${pct}%`;
+            document.getElementById('banner-pct-text').textContent = `${pct}%`;
+            document.getElementById('banner-progress-detail').textContent = `已测 ${studied} / ${total} 词 · 待巩固 ${pending} 词 · 平均掌握分 ${avgScore} 分 (IndexedDB 存储)`;
+            document.getElementById('banner-progress-bar').style.width = `${pct}%`;
+        }
+
+        function updateTopBarStats() {
+            if (!activeWordset || activeWordsetWords.length === 0) return;
+            let studied = 0;
+            let sumScore = 0;
+            activeWordsetWords.forEach(w => {
+                const key = `${activeWordset.uuid}_${w.id}`;
+                if (wordScoresMap[key] && wordScoresMap[key].studyCount > 0) {
+                    studied++;
+                    sumScore += wordScoresMap[key].score;
+                }
+            });
+            const avg = studied > 0 ? (sumScore / studied).toFixed(1) : '0.0';
+            document.getElementById('topBarStudiedCount').textContent = studied;
+            document.getElementById('topBarAvgScore').textContent = avg;
+        }
+
+        function getScoreBadgeHtml(scoreRec) {
+            if (!scoreRec || !scoreRec.studyCount) {
+                return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">待学习</span>`;
+            }
+            const score = scoreRec.score;
+            if (score >= 5) {
+                return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                    <i class="ph-fill ph-check-circle text-emerald-500"></i>5分 · 熟练
+                </span>`;
+            } else if (score >= 3) {
+                return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                    <i class="ph-fill ph-star-half text-amber-500"></i>${score}分 · 良好
+                </span>`;
+            } else {
+                return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1">
+                    <i class="ph-fill ph-warning-circle text-rose-500"></i>${score}分 · 需巩固
+                </span>`;
+            }
+        }
+
+        // ==========================================
+        // Question & Distractor Generation (需求3: 语境例句 + 随机干扰项)
+        // ==========================================
+        function generateContextQuestion(targetWord, allWordsInSet) {
+            const correctMeaning = (targetWord.meaning || targetWord.meanings?.[0]?.meaning || '').trim();
+
+            // Collect distractor options from the SAME wordset
+            const otherMeanings = [];
+            const seenMeanings = new Set([correctMeaning]);
+
+            allWordsInSet.forEach(w => {
+                if (w.id === targetWord.id || w.word === targetWord.word) return;
+                const m = (w.meaning || w.meanings?.[0]?.meaning || '').trim();
+                if (m && !seenMeanings.has(m)) {
+                    seenMeanings.add(m);
+                    otherMeanings.push(m);
+                }
+            });
+
+            // Randomly shuffle other meanings
+            shuffleArray(otherMeanings);
+
+            // Pick 3 distractors
+            let distractors = otherMeanings.slice(0, 3);
+
+            // If wordset has fewer words, supplement with fallback distractors
+            if (distractors.length < 3) {
+                for (const fb of FALLBACK_DISTRACTORS) {
+                    if (!seenMeanings.has(fb)) {
+                        seenMeanings.add(fb);
+                        distractors.push(fb);
+                        if (distractors.length >= 3) break;
+                    }
+                }
+            }
+
+            // Build options array
+            const options = [
+                { text: correctMeaning, isCorrect: true },
+                ...distractors.map(m => ({ text: m, isCorrect: false }))
+            ];
+
+            // Shuffle the 4 options
+            shuffleArray(options);
+
+            const labels = ['A', 'B', 'C', 'D'];
+            options.forEach((opt, idx) => {
+                opt.label = labels[idx];
+                opt.numKey = (idx + 1).toString();
+            });
+
+            // Extract example sentence
+            let exampleThai = '';
+            let exampleChinese = '';
+            if (Array.isArray(targetWord.examples) && targetWord.examples.length > 0) {
+                exampleThai = targetWord.examples[0].thai || targetWord.examples[0].sentence || '';
+                exampleChinese = targetWord.examples[0].chinese || targetWord.examples[0].meaning || '';
+            } else if (Array.isArray(targetWord.meanings) && targetWord.meanings[0]?.examples?.length > 0) {
+                exampleThai = targetWord.meanings[0].examples[0].sentence || '';
+                exampleChinese = targetWord.meanings[0].examples[0].meaning || '';
+            }
+
+            if (!exampleThai) {
+                exampleThai = `ประโยคตัวอย่างสำหรับคำว่า "${targetWord.word}"`;
+                exampleChinese = `单词 "${targetWord.word}" 的语境例句`;
+            }
+
+            return {
+                targetWord,
+                correctMeaning,
+                exampleThai,
+                exampleChinese,
+                options
+            };
+        }
+
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // ==========================================
+        // Immersive Card Study Flow (需求2: 上一个/下一个卡片切换)
+        // ==========================================
+        function startBatchStudySession(onlyWeak = false) {
+            if (!activeWordset || activeWordsetWords.length === 0) {
+                alert("当前单词集无词汇可学！");
+                return;
+            }
+
+            let words = [...activeWordsetWords];
+            if (onlyWeak) {
+                words = words.filter(w => {
+                    const key = `${activeWordset.uuid}_${w.id}`;
+                    return !wordScoresMap[key] || wordScoresMap[key].score < 4;
+                });
+                if (words.length === 0) {
+                    alert("太棒了！当前词集所有单词均已达到熟练掌握（≥4分）！即将进行全部单词自测。");
+                    words = [...activeWordsetWords];
+                }
+            }
+
+            studyQueue = words;
+            currentWordIndex = 0;
+            sessionResults = {
+                total: studyQueue.length,
+                correctCount: 0,
+                scores: [],
+                weakWords: []
+            };
+
+            launchWordCard(studyQueue[currentWordIndex]);
+        }
+
+        function startSingleStudySession(wordId) {
+            const index = activeWordsetWords.findIndex(w => w.id === wordId);
+            if (index !== -1) {
+                studyQueue = activeWordsetWords;
+                currentWordIndex = index;
+            } else {
+                const word = activeWordsetWords.find(w => w.id === wordId);
+                if (!word) return;
+                studyQueue = [word];
+                currentWordIndex = 0;
+            }
+
+            sessionResults = {
+                total: studyQueue.length,
+                correctCount: 0,
+                scores: [],
+                weakWords: []
+            };
+
+            launchWordCard(studyQueue[currentWordIndex]);
+        }
+
+        function goBackToSelection() {
+            document.getElementById('viewExercise').classList.add('hidden');
+            document.getElementById('viewSelection').classList.remove('hidden');
+            document.getElementById('viewSelectionActions').classList.remove('hidden');
+            renderWordCardsGrid();
+        }
+
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function launchWordCard(word) {
+            currentWord = word;
+            document.getElementById('viewSelection').classList.add('hidden');
+            document.getElementById('viewSelectionActions').classList.add('hidden');
+            document.getElementById('viewExercise').classList.remove('hidden');
+
+            const total = studyQueue.length;
+            document.getElementById('exProgressIndex').textContent = `进度: ${currentWordIndex + 1} / ${total}`;
+            document.getElementById('exProgressBarFill').style.width = `${((currentWordIndex + 1) / total) * 100}%`;
+            document.getElementById('wordProgressTitle').textContent = word.word || '';
+
+            // Check if already answered in current session
+            const pastAnswer = sessionAnswersMap[word.id];
+            if (pastAnswer) {
+                currentQuestion = pastAnswer.question;
+                isQuestionAnswered = true;
+                selectedOptionIndex = pastAnswer.selectedOptionIndex;
+                currentWordScore = pastAnswer.score;
+                renderContextQuestionCard(currentQuestion);
+                restoreAnsweredState(pastAnswer);
+            } else {
+                isQuestionAnswered = false;
+                selectedOptionIndex = null;
+                currentWordScore = 0;
+                currentQuestion = generateContextQuestion(word, activeWordsetWords);
+                renderContextQuestionCard(currentQuestion);
+            }
+        }
+
+        function renderContextQuestionCard(question) {
+            const container = document.getElementById('exerciseContent');
+            const targetWord = question.targetWord;
+            const hasPrev = currentWordIndex > 0;
+            const hasNext = currentWordIndex < studyQueue.length - 1;
+
+            // Highlight target word in the example sentence if contained
+            let formattedSentence = question.exampleThai;
+            const wordText = targetWord.word || '';
+            if (wordText && formattedSentence.includes(wordText)) {
+                formattedSentence = formattedSentence.replace(
+                    new RegExp(escapeRegExp(wordText), 'g'),
+                    `<span class="highlight-target-word">${wordText}</span>`
+                );
+            }
+
+            container.innerHTML = `
+                <!-- Top Card Header: Prev/Next & Word Target -->
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 flex items-center justify-between gap-3 font-sans">
+                    <!-- Prev Button -->
+                    <button id="cardPrevBtn" onclick="navigateWordCard(-1)" 
+                        class="h-12 w-12 rounded-2xl border flex items-center justify-center transition duration-150 shrink-0 ${hasPrev ? 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 border-slate-200 shadow-sm active:scale-95 cursor-pointer' : 'text-slate-300 border-slate-100 cursor-not-allowed opacity-40'}" 
+                        ${!hasPrev ? 'disabled' : ''} 
+                        title="${hasPrev ? '上一张卡片 (快捷键: ← 或 [ )' : '已经是第一张'}">
+                        <i class="ph-bold ph-caret-left text-2xl"></i>
+                    </button>
+
+                    <!-- Target Word Info Center -->
+                    <div class="text-center flex-grow px-2">
+                        <span class="text-[11px] font-bold text-indigo-600 uppercase tracking-wider bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200/60 inline-block mb-1.5">
+                            语境词义自测 · 推测词义
+                        </span>
+                        <div class="flex items-center justify-center gap-3">
+                            <span class="text-3xl sm:text-4xl font-bold font-thai text-indigo-800 tracking-wide select-text">${targetWord.word}</span>
+                            <button type="button" onclick="playAudioDirect('${(targetWord.word || '').replace(/'/g, "\\'")}')" class="p-2 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 rounded-xl transition cursor-pointer" title="朗读单词发音 (快捷键: 空格键)">
+                                <i class="ph-bold ph-speaker-high text-xl"></i>
+                            </button>
+                        </div>
+                        ${targetWord.ipa ? `<span class="text-xs font-mono text-slate-400 block mt-1">${targetWord.ipa}</span>` : ''}
+                    </div>
+
+                    <!-- Next Button -->
+                    <button id="cardNextBtn" onclick="navigateWordCard(1)" 
+                        class="h-12 w-12 rounded-2xl border flex items-center justify-center transition duration-150 shrink-0 text-slate-400 border-slate-200 hover:text-indigo-600 hover:bg-indigo-50 cursor-pointer"
+                        title="${hasNext ? '下一张卡片 (快捷键: → 或 Enter)' : '完成自测'}">
+                        <i class="ph-bold ${hasNext ? 'ph-caret-right' : 'ph-check'} text-2xl"></i>
+                    </button>
+                </div>
+
+                <!-- Context Sentence Card (需求3: 呈现给用户的是例句) -->
+                <div class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-7 shadow-sm space-y-4 font-sans">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                            <i class="ph-fill ph-quotes text-indigo-600 text-sm"></i>
+                            <span>泰语语境例句 (Context Sentence)</span>
+                        </span>
+                        <button type="button" onclick="playAudioDirect('${(question.exampleThai || '').replace(/'/g, "\\'")}')" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-200/60 transition cursor-pointer" title="朗读整条例句">
+                            <i class="ph-bold ph-speaker-high"></i>
+                            <span>朗读整句</span>
+                        </button>
+                    </div>
+
+                    <!-- Thai Sentence with Target Word Highlight -->
+                    <div class="p-4 sm:p-5 rounded-2xl bg-indigo-50/40 border border-indigo-100/80">
+                        <div class="font-thai text-xl sm:text-2xl text-slate-800 leading-relaxed font-normal select-text">
+                            ${formattedSentence}
+                        </div>
+                    </div>
+
+                    <!-- Chinese Meaning Placeholder or Revealed Area -->
+                    <div id="exampleChineseBox" class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                        <span id="exampleChineseText" class="italic select-text text-slate-400">
+                            💡 请结合例句，选择下方最贴合该词在句中的中文释义
+                        </span>
+                        <button id="btnPeekTranslation" onclick="peekExampleTranslation()" class="text-[11px] font-bold text-indigo-600 hover:underline shrink-0">
+                            查看句意提示
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Multiple Choice Options (需求3: 4个选项，含来自本词集的干扰项) -->
+                <div class="space-y-3 font-sans">
+                    <div class="flex items-center justify-between text-xs font-bold text-slate-600 px-1">
+                        <span>请选择目标单词在例句中的正确含义：</span>
+                        <span class="text-slate-400 font-normal">支持按键盘键 [1] [2] [3] [4]</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        ${question.options.map((opt, idx) => `
+                            <button id="opt-btn-${idx}" onclick="handleOptionSelect(${idx})" 
+                                class="option-choice-btn text-left group">
+                                <div class="flex items-center gap-3">
+                                    <span class="h-8 w-8 rounded-xl bg-slate-100 text-slate-700 font-bold font-mono text-xs flex items-center justify-center border border-slate-200 group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:border-indigo-200 transition">
+                                        ${opt.label}
+                                    </span>
+                                    <span class="text-sm font-bold text-slate-800">${opt.text}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] text-slate-400 font-mono opacity-60">[${opt.numKey}]</span>
+                                    <span id="opt-icon-${idx}" class="text-lg"></span>
+                                </div>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Feedback & Score Rating Box (Answered State) -->
+                <div id="exerciseFeedbackPanel" class="hidden bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4 font-sans animate-in fade-in duration-200">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                        <div class="flex items-center gap-3">
+                            <div id="feedbackIconBox" class="h-10 w-10 rounded-xl flex items-center justify-center text-xl shrink-0"></div>
+                            <div>
+                                <h4 id="feedbackTitle" class="text-sm font-bold text-slate-800"></h4>
+                                <p id="feedbackDetail" class="text-xs text-slate-500 mt-0.5"></p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-slate-500">本题得分:</span>
+                            <span id="feedbackScoreDisplay" class="text-base font-extrabold text-indigo-600 px-3 py-1 bg-indigo-50 rounded-xl border border-indigo-200"></span>
+                        </div>
+                    </div>
+
+                    <!-- Fine-tune Score Buttons & Retake Button -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs font-semibold text-slate-500">微调评分:</span>
+                                <div class="flex gap-1">
+                                    ${[1, 2, 3, 4, 5].map(s => `
+                                        <button onclick="overrideCardScore(${s})" id="btn-score-${s}" class="w-7 h-7 rounded-lg text-xs font-bold font-mono transition border active:scale-95 cursor-pointer bg-slate-50 hover:bg-indigo-50 text-slate-600 border-slate-200">
+                                            ${s}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <button onclick="retakeCurrentQuestion()" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1 hover:underline ml-1">
+                                <i class="ph ph-arrow-counter-clockwise"></i>
+                                <span>重做此题</span>
+                            </button>
+                        </div>
+
+                        <!-- Next / Complete Action Button -->
+                        <button onclick="navigateWordCard(1)" class="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-xs bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-500/20 active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer">
+                            <span>${hasNext ? '进入下一个单词' : '查看学习结算'}</span>
+                            <i class="ph-bold ${hasNext ? 'ph-arrow-right' : 'ph-check'} text-sm"></i>
+                            <span class="text-[10px] font-mono opacity-80">(Enter)</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function restoreAnsweredState(past) {
+            const idx = past.selectedOptionIndex;
+            const isCorrect = past.isCorrect;
+
+            currentQuestion.options.forEach((opt, i) => {
+                const btn = document.getElementById(`opt-btn-${i}`);
+                if (!btn) return;
+                btn.classList.add('locked');
+
+                if (i === idx) {
+                    if (isCorrect) {
+                        btn.classList.add('selected-correct');
+                        document.getElementById(`opt-icon-${i}`).innerHTML = '<i class="ph-fill ph-check-circle text-emerald-600"></i>';
+                    } else {
+                        btn.classList.add('selected-wrong');
+                        document.getElementById(`opt-icon-${i}`).innerHTML = '<i class="ph-fill ph-x-circle text-rose-600"></i>';
+                    }
+                } else if (opt.isCorrect) {
+                    btn.classList.add('reveal-correct');
+                    document.getElementById(`opt-icon-${i}`).innerHTML = '<i class="ph-bold ph-check text-emerald-600"></i>';
+                } else {
+                    btn.classList.add('faded');
+                }
+            });
+
+            const chineseTextEl = document.getElementById('exampleChineseText');
+            const peekBtn = document.getElementById('btnPeekTranslation');
+            if (chineseTextEl) {
+                chineseTextEl.className = "text-xs font-semibold text-slate-700 select-text";
+                chineseTextEl.innerHTML = `<span class="text-indigo-600 font-bold mr-1">[例句翻译]</span> ${currentQuestion.exampleChinese}`;
+            }
+            if (peekBtn) peekBtn.classList.add('hidden');
+
+            renderFeedbackPanel(isCorrect, past.score);
+
+            const nextBtn = document.getElementById('cardNextBtn');
+            if (nextBtn) {
+                nextBtn.className = "h-12 w-12 rounded-2xl border flex items-center justify-center transition duration-150 shrink-0 bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-500/25 ring-2 ring-indigo-300 ring-offset-2 scale-105 active:scale-95 cursor-pointer";
+            }
+        }
+
+        function retakeCurrentQuestion() {
+            if (!currentWord) return;
+            delete sessionAnswersMap[currentWord.id];
+            isQuestionAnswered = false;
+            selectedOptionIndex = null;
+            currentWordScore = 0;
+            currentQuestion = generateContextQuestion(currentWord, activeWordsetWords);
+            renderContextQuestionCard(currentQuestion);
+        }
+
+        // ==========================================
+        // User Answer Handling & Scoring (需求3 & 需求4)
+        // ==========================================
+        async function handleOptionSelect(idx) {
+            if (isQuestionAnswered || !currentQuestion) return;
+
+            isQuestionAnswered = true;
+            selectedOptionIndex = idx;
+
+            const selectedOpt = currentQuestion.options[idx];
+            const isCorrect = selectedOpt.isCorrect;
+            const targetWord = currentQuestion.targetWord;
+
+            // Disable all option buttons
+            currentQuestion.options.forEach((opt, i) => {
+                const btn = document.getElementById(`opt-btn-${i}`);
+                if (!btn) return;
+                btn.classList.add('locked');
+
+                if (i === idx) {
+                    if (isCorrect) {
+                        btn.classList.add('selected-correct');
+                        document.getElementById(`opt-icon-${i}`).innerHTML = '<i class="ph-fill ph-check-circle text-emerald-600"></i>';
+                    } else {
+                        btn.classList.add('selected-wrong');
+                        document.getElementById(`opt-icon-${i}`).innerHTML = '<i class="ph-fill ph-x-circle text-rose-600"></i>';
+                    }
+                } else if (opt.isCorrect) {
+                    // Reveal the correct option
+                    btn.classList.add('reveal-correct');
+                    document.getElementById(`opt-icon-${i}`).innerHTML = '<i class="ph-bold ph-check text-emerald-600"></i>';
+                } else {
+                    btn.classList.add('faded');
+                }
+            });
+
+            // Reveal example translation
+            const chineseTextEl = document.getElementById('exampleChineseText');
+            const peekBtn = document.getElementById('btnPeekTranslation');
+            if (chineseTextEl) {
+                chineseTextEl.className = "text-xs font-semibold text-slate-700 select-text";
+                chineseTextEl.innerHTML = `<span class="text-indigo-600 font-bold mr-1">[例句翻译]</span> ${currentQuestion.exampleChinese}`;
+            }
+            if (peekBtn) peekBtn.classList.add('hidden');
+
+            // Calculate Score (5 for first-try correct, 2 for wrong)
+            currentWordScore = isCorrect ? 5 : 2;
+
+            // Cache in sessionAnswersMap
+            sessionAnswersMap[targetWord.id] = {
+                question: currentQuestion,
+                selectedOptionIndex: idx,
+                isCorrect,
+                score: currentWordScore
+            };
+
+            // Record into Session Results
+            sessionResults.scores.push(currentWordScore);
+            if (isCorrect) {
+                sessionResults.correctCount++;
+            } else {
+                sessionResults.weakWords.push(targetWord);
+            }
+
+            // Save to IndexedDB (需求4)
+            await saveWordScoreToIndexedDB(activeWordset.uuid, targetWord, isCorrect, currentWordScore);
+
+            // Show Feedback Panel
+            renderFeedbackPanel(isCorrect, currentWordScore);
+
+            // Highlight Next button on top
+            const nextBtn = document.getElementById('cardNextBtn');
+            if (nextBtn) {
+                nextBtn.className = "h-12 w-12 rounded-2xl border flex items-center justify-center transition duration-150 shrink-0 bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-500/25 ring-2 ring-indigo-300 ring-offset-2 scale-105 active:scale-95 cursor-pointer";
+            }
+        }
+
+        function renderFeedbackPanel(isCorrect, score) {
+            const panel = document.getElementById('exerciseFeedbackPanel');
+            if (!panel) return;
+            panel.classList.remove('hidden');
+
+            const iconBox = document.getElementById('feedbackIconBox');
+            const titleEl = document.getElementById('feedbackTitle');
+            const detailEl = document.getElementById('feedbackDetail');
+            const scoreDisplay = document.getElementById('feedbackScoreDisplay');
+
+            if (isCorrect) {
+                iconBox.className = "h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center text-xl shrink-0";
+                iconBox.innerHTML = '<i class="ph-fill ph-check-circle"></i>';
+                titleEl.textContent = "回答完全正确！";
+                detailEl.textContent = `释义准确推断！成绩已自动写入 IndexedDB 本地数据库`;
+            } else {
+                iconBox.className = "h-10 w-10 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center text-xl shrink-0";
+                iconBox.innerHTML = '<i class="ph-fill ph-x-circle"></i>';
+                titleEl.textContent = "回答有误，继续巩固！";
+                detailEl.textContent = `已标出正确释义，已记录至错题库与 IndexedDB`;
+            }
+
+            scoreDisplay.textContent = `${score} 分`;
+            highlightScoreButton(score);
+        }
+
+        function highlightScoreButton(score) {
+            [1, 2, 3, 4, 5].forEach(s => {
+                const btn = document.getElementById(`btn-score-${s}`);
+                if (!btn) return;
+                if (s === score) {
+                    btn.className = "w-8 h-8 rounded-lg text-xs font-bold font-mono transition border active:scale-95 cursor-pointer bg-indigo-600 text-white border-indigo-600 shadow-sm ring-2 ring-indigo-200";
+                } else {
+                    btn.className = "w-8 h-8 rounded-lg text-xs font-bold font-mono transition border active:scale-95 cursor-pointer bg-slate-50 hover:bg-indigo-50 text-slate-600 border-slate-200";
+                }
+            });
+        }
+
+        async function overrideCardScore(newScore) {
+            if (!currentWord || !activeWordset) return;
+            currentWordScore = newScore;
+            highlightScoreButton(newScore);
+            document.getElementById('feedbackScoreDisplay').textContent = `${newScore} 分`;
+            await saveWordScoreToIndexedDB(activeWordset.uuid, currentWord, newScore >= 4, newScore);
+        }
+
+        function peekExampleTranslation() {
+            if (!currentQuestion) return;
+            const chineseTextEl = document.getElementById('exampleChineseText');
+            const peekBtn = document.getElementById('btnPeekTranslation');
+            if (chineseTextEl) {
+                chineseTextEl.className = "text-xs font-semibold text-slate-700 select-text";
+                chineseTextEl.innerHTML = `<span class="text-indigo-600 font-bold mr-1">[例句翻译]</span> ${currentQuestion.exampleChinese}`;
+            }
+            if (peekBtn) peekBtn.classList.add('hidden');
+        }
+
+        // ==========================================
+        // Card Navigation (上一张 / 下一张 / 快捷键)
+        // ==========================================
+        function navigateWordCard(direction) {
+            const nextIdx = currentWordIndex + direction;
+
+            if (nextIdx < 0) return;
+
+            if (nextIdx >= studyQueue.length) {
+                // Completed session!
+                showSessionCompleteModal();
+                return;
+            }
+
+            currentWordIndex = nextIdx;
+            launchWordCard(studyQueue[currentWordIndex]);
+        }
+
+        function showSessionCompleteModal() {
+            const modal = document.getElementById('sessionCompleteModal');
+            modal.classList.remove('hidden');
+
+            const total = sessionResults.scores.length || studyQueue.length;
+            const correct = sessionResults.correctCount;
+            const sumScore = sessionResults.scores.reduce((a, b) => a + b, 0);
+            const avg = total > 0 ? (sumScore / total).toFixed(1) : '0.0';
+            const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+            document.getElementById('modalTotalAnswered').textContent = `${total} 题`;
+            document.getElementById('modalAccuracy').textContent = `${accuracy}%`;
+            document.getElementById('modalAvgScore').textContent = `${avg} 分`;
+
+            // Weak words container
+            const weakContainer = document.getElementById('modalWeakWordsContainer');
+            const weakList = document.getElementById('modalWeakWordsList');
+            if (sessionResults.weakWords.length > 0) {
+                weakContainer.classList.remove('hidden');
+                weakList.innerHTML = sessionResults.weakWords.map(w => `
+                    <span class="px-2 py-1 rounded-lg bg-white border border-amber-300/70 text-amber-900 font-thai font-semibold shadow-2xs">
+                        ${w.word}
+                    </span>
+                `).join('');
+            } else {
+                weakContainer.classList.add('hidden');
+            }
+        }
+
+        function closeCompleteModal(restart = false) {
+            document.getElementById('sessionCompleteModal').classList.add('hidden');
+            if (restart) {
+                startBatchStudySession(sessionResults.weakWords.length > 0);
+            } else {
+                goBackToSelection();
+            }
+        }
+
+        // ==========================================
+        // Keyboard Shortcuts
+        // ==========================================
+        function initKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                const viewExercise = document.getElementById('viewExercise');
+                if (!viewExercise || viewExercise.classList.contains('hidden')) return;
+
+                const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+                if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') return;
+
+                // Numbers 1-4 for Option choices
+                if (['1', '2', '3', '4'].includes(e.key) && !isQuestionAnswered) {
+                    e.preventDefault();
+                    const optIdx = parseInt(e.key) - 1;
+                    handleOptionSelect(optIdx);
+                }
+                // Arrow right / Enter for Next Card
+                else if (e.key === 'ArrowRight' || e.key === ']' || (e.key === 'Enter' && !e.shiftKey)) {
+                    e.preventDefault();
+                    if (isQuestionAnswered) {
+                        navigateWordCard(1);
+                    }
+                }
+                // Arrow left for Prev Card
+                else if (e.key === 'ArrowLeft' || e.key === '[') {
+                    e.preventDefault();
+                    navigateWordCard(-1);
+                }
+                // Space for audio TTS
+                else if (e.key === ' ' || e.code === 'Space') {
+                    e.preventDefault();
+                    if (currentWord) {
+                        playAudioDirect(currentWord.word || '');
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // Audio Playback (TTS)
+        // ==========================================
+        window.playAudioDirect = (text) => {
+            if (!text) return;
+            const cleanText = text.replace(/“|”/g, '').trim();
+            const url = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(cleanText || text)}`;
+            new Audio(url).play().catch(err => {
+                console.warn("Direct Audio playback failed, falling back to Web Speech API:", err);
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utter = new SpeechSynthesisUtterance(cleanText || text);
+                    utter.lang = 'th-TH';
+                    utter.rate = 0.9;
+                    window.speechSynthesis.speak(utter);
+                }
+            });
+        };
+
+        // ==========================================
+        // Sidebar Toggle & Responsive Navigation
+        // ==========================================
+        function toggleLeftNav(open) {
+            const sidebar = document.getElementById('leftSidebar');
+            const edgeBtn = document.getElementById('leftNavEdgeToggleBtn');
+            const headerBtn = document.getElementById('leftNavHeaderBtn');
+            const isOpen = open !== undefined ? open : sidebar.classList.contains('w-0');
+
+            if (isOpen) {
+                sidebar.classList.remove('w-0', 'border-transparent');
+                sidebar.classList.add('w-80', 'md:w-88', 'border-slate-200');
+                if (edgeBtn) edgeBtn.classList.add('hidden');
+                if (headerBtn) {
+                    headerBtn.classList.add('text-indigo-600', 'bg-indigo-50', 'border-indigo-200');
+                    headerBtn.classList.remove('text-slate-600', 'border-slate-200');
+                }
+            } else {
+                sidebar.classList.remove('w-80', 'md:w-88', 'border-slate-200');
+                sidebar.classList.add('w-0', 'border-transparent');
+                if (edgeBtn) edgeBtn.classList.remove('hidden');
+                if (headerBtn) {
+                    headerBtn.classList.remove('text-indigo-600', 'bg-indigo-50', 'border-indigo-200');
+                    headerBtn.classList.add('text-slate-600', 'border-slate-200');
+                }
+            }
+        }
+
+        // ==========================================
+        // Selection Toolbar & Dict Drawer (划词查词)
+        // ==========================================
+        function initSelectionToolbar() {
+            const toolbar = document.getElementById('selectionToolbar');
+
+            document.addEventListener('selectionchange', () => {
+                if (!toolbar) return;
+                const selection = window.getSelection();
+                if (selection.isCollapsed) {
+                    toolbar.classList.add('hidden');
+                    return;
+                }
+
+                const text = selection.toString().trim();
+                if (!text) {
+                    toolbar.classList.add('hidden');
+                    return;
+                }
+
+                // Check Thai characters
+                const hasThai = /[\u0e00-\u0e7f]/.test(text);
+                if (hasThai) {
+                    selectedWordText = text;
+                    toolbar.classList.remove('hidden');
+
+                    const range = selection.getRangeAt(0);
+                    const rect = range.getBoundingClientRect();
+                    const toolbarWidth = 90;
+                    const toolbarHeight = 34;
+
+                    const left = rect.left + rect.width / 2 - toolbarWidth / 2;
+                    const top = rect.top - toolbarHeight - 8;
+
+                    toolbar.style.left = `${Math.max(10, Math.min(left, window.innerWidth - toolbarWidth - 10))}px`;
+                    toolbar.style.top = `${Math.max(10, Math.min(top, window.innerHeight - toolbarHeight - 10))}px`;
+                } else {
+                    toolbar.classList.add('hidden');
+                }
+            });
+
+            toolbar.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+            });
+        }
+
+        async function onQueryBtnClick() {
+            const toolbar = document.getElementById('selectionToolbar');
+            const word = selectedWordText.trim();
+            if (!word) return;
+
+            if (toolbar) toolbar.classList.add('hidden');
+            window.getSelection().removeAllRanges();
+
+            await queryDictWord(word);
+        }
+
+        function toggleDictDrawer(open) {
+            const drawer = document.getElementById('dictDrawer');
+            const toggleBtn = document.getElementById('dictToggleBtn');
+            const toggleIcon = document.getElementById('dictToggleIcon');
+            const isOpen = open !== undefined ? open : drawer.classList.contains('w-0');
+
+            if (isOpen) {
+                drawer.classList.remove('w-0', 'border-transparent');
+                drawer.classList.add('w-80', 'md:w-96', 'border-slate-200');
+                if (toggleBtn) {
+                    toggleBtn.classList.remove('right-0');
+                    toggleBtn.classList.add('right-80', 'md:right-96');
+                }
+                if (toggleIcon) {
+                    toggleIcon.className = "ph-bold ph-caret-right transition-transform duration-300 text-xs";
+                }
+                updateDictDrawerView();
+            } else {
+                drawer.classList.remove('w-80', 'md:w-96', 'border-slate-200');
+                drawer.classList.add('w-0', 'border-transparent');
+                if (toggleBtn) {
+                    toggleBtn.classList.remove('right-80', 'md:right-96');
+                    toggleBtn.classList.add('right-0');
+                }
+                if (toggleIcon) {
+                    toggleIcon.className = "ph-bold ph-caret-left transition-transform duration-300 text-xs";
+                }
+            }
+        }
+
+        async function triggerManualQuery() {
+            const input = document.getElementById('manualQueryInput');
+            const word = input.value.trim();
+            if (!word) return;
+            input.value = '';
+            await queryDictWord(word);
+        }
+
+        async function queryDictWord(word) {
+            if (!word) return;
+            toggleDictDrawer(true);
+
+            const listContainer = document.getElementById('dictListContainer');
+            const emptyState = document.getElementById('dictEmptyState');
+            emptyState.classList.add('hidden');
+            listContainer.classList.remove('hidden');
+
+            const loaderId = 'loader-' + Date.now();
+            listContainer.insertAdjacentHTML('afterbegin', `
+                <div id="${loaderId}" class="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 animate-pulse">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-thai font-bold text-indigo-900">${word}</span>
+                        <span class="text-[11px] text-indigo-500 font-semibold flex items-center gap-1">
+                            <i class="ph-bold ph-spinner animate-spin"></i>
+                            <span>查询中...</span>
+                        </span>
+                    </div>
+                    <div class="h-3 bg-indigo-100 rounded w-3/4"></div>
+                </div>
+            `);
+
+            try {
+                // Find matching word locally first
+                let matched = null;
+                if (activeWordsetWords) {
+                    matched = activeWordsetWords.find(w => w.word === word);
+                }
+
+                let explanations = [];
+                if (matched) {
+                    explanations = [{
+                        meanCh: matched.meaning || matched.meanings?.[0]?.meaning || '',
+                        meanEn: matched.ipa || '',
+                        pos: '词汇集单词'
+                    }];
+                } else {
+                    // Try semantic worker
+                    try {
+                        const resp = await fetch("https://thai-semantic-match-worker.alexszhang.workers.dev/explain", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ word })
+                        });
+                        if (resp.ok) {
+                            explanations = await resp.json();
+                        }
+                    } catch (e) {}
+                }
+
+                if (!explanations || explanations.length === 0) {
+                    explanations = [{ meanCh: '已记录该词，暂未获取到在线释义', meanEn: '', pos: '查词记录' }];
+                }
+
+                await saveDictQueryRecord(word, explanations);
+                await updateDictDrawerView();
+            } catch (err) {
+                console.error("Dict query failed", err);
+                const loader = document.getElementById(loaderId);
+                if (loader) loader.remove();
+            }
+        }
+
+        async function updateDictDrawerView() {
+            const records = await loadDictRecords();
+            const listContainer = document.getElementById('dictListContainer');
+            const emptyState = document.getElementById('dictEmptyState');
+            const badge = document.getElementById('dict-history-badge');
+
+            if (badge) badge.textContent = records.length;
+
+            if (records.length === 0) {
+                listContainer.innerHTML = '';
+                listContainer.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            listContainer.classList.remove('hidden');
+
+            const sorted = [...records].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+            listContainer.innerHTML = sorted.map(item => `
+                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 hover:border-indigo-200 transition space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <span class="font-thai font-bold text-slate-800 text-sm">${item.word}</span>
+                        <button onclick="playAudioDirect('${(item.word || '').replace(/'/g, "\\'")}')" class="p-1 text-slate-400 hover:text-indigo-600 rounded">
+                            <i class="ph-bold ph-speaker-high text-xs"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-1">
+                        ${(item.explanations || []).map(exp => `
+                            <div class="text-xs text-slate-600">
+                                ${exp.pos ? `<span class="font-mono text-[10px] text-indigo-600 bg-indigo-50 px-1 py-0.2 rounded border border-indigo-100">${exp.pos}</span>` : ''}
+                                <span class="font-medium">${exp.meanCh || exp.meaning || ''}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

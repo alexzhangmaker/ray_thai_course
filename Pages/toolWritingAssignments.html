@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生手写作业OCR识别浏览器 - ThaiNotes</title>
+    <!-- Tailwind CSS & FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Google Fonts for premium handwriting feel -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Charm:wght@400;700&family=Maitree:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+        
+        :root {
+            --font-sans: 'Outfit', 'Noto Sans SC', sans-serif;
+            --font-handwriting: 'Charm', 'Maitree', 'Sarabun', cursive, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: #f8fafc;
+            color: #334155;
+        }
+
+        .font-thai-hand {
+            font-family: var(--font-handwriting);
+        }
+
+        /* Handwritten ruled paper styling */
+        .paper-ruled {
+            background-color: #fdfdf9;
+            background-image: linear-gradient(#e2e2d8 1px, transparent 1px);
+            background-size: 100% 2.25rem;
+            line-height: 2.25rem;
+            padding: 0.75rem 1.5rem;
+            border-left: 3px double #ff8b8b;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        /* Glassmorphism sidebar active state */
+        .sidebar-item-active {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-color: #3b82f6;
+            color: #1e40af;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="h-screen overflow-hidden flex flex-col">
+
+    <!-- Header bar -->
+    <header class="bg-white shadow-sm border-b border-gray-200 z-10 shrink-0">
+        <div class="px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="./appPortal.html" class="text-blue-600 hover:text-blue-800 transition active:scale-95 flex items-center justify-center w-10 h-10 rounded-full bg-blue-50">
+                    <i class="ph-bold ph-arrow-left text-lg"></i>
+                </a>
+                <div>
+                    <h1 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                        <i class="ph-bold ph-note-pencil text-blue-600 text-xl"></i>
+                        学生手写作业 OCR 浏览器
+                    </h1>
+                    <p class="text-xs text-gray-500 font-medium">查看、校对与编辑学生手写泰语作业的数字识别记录</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button id="importOcrBtn" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-sm px-4 py-2.5 rounded-xl hover:shadow-lg hover:shadow-blue-500/10 transition active:scale-95 flex items-center gap-1.5 shadow-md">
+                    <i class="ph-bold ph-plus-circle text-base"></i>
+                    导入新OCR作业
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- Left Sidebar (Assignment List) -->
+        <aside class="w-80 md:w-96 bg-white border-r border-gray-200 flex flex-col shrink-0 overflow-hidden">
+            <!-- Search & Filters -->
+            <div class="p-4 border-b border-gray-100 flex flex-col gap-3">
+                <div class="relative">
+                    <i class="ph ph-magnifying-glass absolute left-3 top-3.5 text-gray-400 text-sm"></i>
+                    <input type="text" id="searchBar" placeholder="搜索作业标题或日期..." class="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                </div>
+            </div>
+
+            <!-- List container -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-3" id="assignmentList">
+                <!-- Loading State -->
+                <div class="text-center py-12 text-gray-400 italic">
+                    <i class="fas fa-spinner animate-spin text-xl text-blue-500 mb-2 block"></i>
+                    正在载入作业记录...
+                </div>
+            </div>
+        </aside>
+
+        <!-- Right Content Panel -->
+        <main class="flex-1 bg-slate-50 flex flex-col overflow-hidden relative">
+            <!-- Empty State -->
+            <div id="emptyDetailState" class="absolute inset-0 flex flex-col items-center justify-center p-8 bg-slate-50">
+                <div class="w-20 h-20 rounded-3xl bg-blue-50/50 border border-blue-100 flex items-center justify-center text-blue-500 text-4xl mb-4 shadow-sm animate-bounce">
+                    <i class="ph ph-notebook"></i>
+                </div>
+                <h3 class="text-gray-800 font-bold text-base">请在左侧选择一份作业</h3>
+                <p class="text-gray-400 text-xs mt-1 max-w-sm text-center">选择作业以查看详细的题目内容、学生手写答案的 OCR 识别文本，并进行人工核对修正。</p>
+            </div>
+
+            <!-- Detail Workspace -->
+            <div id="detailWorkspace" class="hidden flex-1 flex flex-col overflow-hidden">
+                <!-- Workspace Header -->
+                <div class="bg-white px-8 py-5 border-b border-gray-200 shadow-sm shrink-0 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                            <span class="bg-blue-100 text-blue-700 font-bold text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wider" id="lblWorksheet">WS-01</span>
+                            <span class="text-gray-400 text-xs flex items-center gap-1 font-medium">
+                                <i class="ph ph-calendar-blank"></i>
+                                <span id="lblDate">2026-07-21</span>
+                            </span>
+                        </div>
+                        <h2 class="text-lg font-bold text-gray-800" id="lblTitle">作业标题加载中...</h2>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0 self-end md:self-auto">
+                        <button id="deleteAssignmentBtn" class="text-red-500 hover:text-red-700 border border-red-200 hover:bg-red-50 font-bold text-xs px-3.5 py-2.5 rounded-xl transition active:scale-95 flex items-center gap-1">
+                            <i class="ph-bold ph-trash"></i>
+                            删除作业
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Exercise List -->
+                <div class="flex-1 overflow-y-auto p-8 space-y-6" id="exerciseGrid">
+                    <!-- Exercise cards rendered here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Import / Create Assignment Modal -->
+    <div id="ocrModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl border border-gray-200 m-4 overflow-hidden transform scale-95 transition-all duration-300">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                    <i class="ph-bold ph-scan text-blue-600 text-lg"></i>
+                    导入手写作业 OCR 记录
+                </h3>
+                <button onclick="closeOcrModal()" class="text-gray-400 hover:text-gray-600 text-lg transition active:scale-90">
+                    <i class="ph-bold ph-x"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content (Scrollable) -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-6" id="modalInputForm">
+                <!-- Meta Info -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="flex flex-col gap-1.5 md:col-span-2">
+                        <label class="text-xs font-bold text-gray-500">作业标题</label>
+                        <input type="text" id="newTitle" placeholder="例如：第三单元泰语基础会话手写作业" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-bold text-gray-500">日期</label>
+                        <input type="date" id="newDate" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-100 pt-4">
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-bold text-gray-500">工作单编号 (Worksheet No.)</label>
+                        <input type="text" id="newWorksheet" placeholder="例如：WS-03" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                    </div>
+                </div>
+
+                <!-- Exercise List -->
+                <div class="space-y-4 border-t border-gray-100 pt-4">
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-sm font-bold text-gray-700">题目与手写回答记录</h4>
+                        <button type="button" onclick="addExerciseField()" class="text-blue-600 hover:text-blue-800 font-bold text-xs flex items-center gap-1">
+                            <i class="ph-bold ph-plus"></i> 添加题目
+                        </button>
+                    </div>
+
+                    <div class="space-y-4" id="modalExercisesContainer">
+                        <!-- Dynamic rows inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- OCR Progress Log Panel (hidden by default) -->
+            <div class="flex-1 overflow-y-auto p-6 bg-slate-900 text-slate-200 font-mono hidden flex flex-col gap-2" id="ocrProgressPanel">
+                <div class="text-emerald-400 font-bold mb-4 flex items-center gap-2">
+                    <i class="fas fa-circle-notch animate-spin text-sm"></i>
+                    [OCR Engine] 开始识别手写作业扫描件...
+                </div>
+                <div id="ocrLogArea" class="flex-1 space-y-1.5 text-xs text-slate-300">
+                    <!-- Logs go here -->
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3 shrink-0">
+                <button type="button" onclick="closeOcrModal()" class="px-4 py-2.5 border border-gray-200 hover:bg-gray-100 text-gray-700 font-bold text-sm rounded-xl transition active:scale-95" id="btnCancelModal">
+                    取消
+                </button>
+                <button type="button" onclick="startOcrSimulation()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl transition active:scale-95 flex items-center gap-1" id="btnRunOcr">
+                    <i class="ph ph-cpu"></i>
+                    模拟OCR识别并导入
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert / Toast Toast Message -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-slate-800 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2 text-sm z-50 transform translate-y-20 opacity-0 transition-all duration-300">
+        <i class="ph-bold ph-info text-blue-400 text-base" id="toastIcon"></i>
+        <span id="toastMsg">提示消息</span>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE = '/api/assignments';
+
+        // Active State variables
+        let assignments = [];
+        let activeAssignment = null;
+        let selectedThaiId = null;
+
+        // On Load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set date input to today
+            document.getElementById('newDate').valueAsDate = new Date();
+            
+            // Fetch assignments list
+            fetchAssignments();
+
+            // Bind create button
+            document.getElementById('importOcrBtn').addEventListener('click', () => {
+                openOcrModal();
+            });
+
+            // Bind delete button
+            document.getElementById('deleteAssignmentBtn').addEventListener('click', () => {
+                if (activeAssignment) {
+                    confirmDelete(activeAssignment.uuid);
+                }
+            });
+
+            // Bind Search input
+            document.getElementById('searchBar').addEventListener('input', (e) => {
+                filterAssignments(e.target.value);
+            });
+        });
+
+        // Show Toast Feedback
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMsg.textContent = msg;
+            if (type === 'success') {
+                toastIcon.className = "ph-bold ph-check-circle text-emerald-400 text-lg";
+            } else if (type === 'error') {
+                toastIcon.className = "ph-bold ph-x-circle text-red-400 text-lg";
+            } else {
+                toastIcon.className = "ph-bold ph-info text-blue-400 text-lg";
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // Fetch Assignments from API
+        async function fetchAssignments() {
+            try {
+                const res = await fetch(API_BASE);
+                if (!res.ok) throw new Error("获取作业列表失败");
+                assignments = await res.json();
+                renderAssignmentList(assignments);
+            } catch (err) {
+                console.error(err);
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Render Sidebar List
+        function renderAssignmentList(list) {
+            const container = document.getElementById('assignmentList');
+            container.innerHTML = '';
+
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-gray-400 text-xs">
+                        <i class="ph ph-folder-open text-3xl text-gray-300 mb-2 block"></i>
+                        没有找到任何作业记录
+                    </div>
+                `;
+                return;
+            }
+
+            list.forEach(item => {
+                const card = document.createElement('div');
+                card.className = `p-4 border border-gray-100 bg-white hover:border-blue-300 rounded-2xl cursor-pointer transition shadow-sm hover:shadow-md flex flex-col gap-2 relative group`;
+                card.id = `sidebar-card-${item.uuid}`;
+                
+                // Add active styling if current
+                if (activeAssignment && activeAssignment.uuid === item.uuid) {
+                    card.className += ' sidebar-item-active';
+                }
+
+                card.onclick = () => selectAssignment(item.uuid);
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start gap-2">
+                        <span class="text-xs text-gray-400 group-hover:text-blue-500 font-medium font-mono">${item.date}</span>
+                        <span class="text-[10px] bg-slate-100 text-slate-500 group-[.sidebar-item-active]:bg-blue-200 group-[.sidebar-item-active]:text-blue-800 font-bold px-2 py-0.5 rounded-md">OCR识别</span>
+                    </div>
+                    <h4 class="text-sm font-bold text-gray-700 leading-snug group-[.sidebar-item-active]:text-blue-900 truncate">${item.title}</h4>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Filter assignments based on search
+        function filterAssignments(query) {
+            const filtered = assignments.filter(a => 
+                a.title.toLowerCase().includes(query.toLowerCase()) || 
+                a.date.includes(query)
+            );
+            renderAssignmentList(filtered);
+        }
+
+        // Select Assignment and view details
+        async function selectAssignment(uuid) {
+            try {
+                // Highlight item in sidebar
+                document.querySelectorAll('#assignmentList > div').forEach(div => {
+                    div.className = div.className.replace('sidebar-item-active', '').trim();
+                    // Recover normal border classes
+                    if (!div.classList.contains('border-gray-100')) {
+                        div.classList.add('border-gray-100');
+                    }
+                });
+                
+                const activeCard = document.getElementById(`sidebar-card-${uuid}`);
+                if (activeCard) {
+                    activeCard.className += ' sidebar-item-active';
+                }
+
+                // Show details
+                const res = await fetch(`${API_BASE}/${uuid}`);
+                if (!res.ok) throw new Error("加载作业详情失败");
+                activeAssignment = await res.json();
+
+                document.getElementById('emptyDetailState').classList.add('hidden');
+                document.getElementById('detailWorkspace').classList.remove('hidden');
+
+                // Render Header Details
+                document.getElementById('lblTitle').textContent = activeAssignment.title;
+                document.getElementById('lblDate').textContent = activeAssignment.date;
+                document.getElementById('lblWorksheet').textContent = activeAssignment.assignment.worksheet_number || "WS-01";
+
+                renderExercises(activeAssignment.assignment.exercises);
+            } catch (err) {
+                console.error(err);
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Render Exercises List
+        function renderExercises(exercises) {
+            const grid = document.getElementById('exerciseGrid');
+            grid.innerHTML = '';
+
+            if (!exercises || exercises.length === 0) {
+                grid.innerHTML = `
+                    <div class="text-center py-16 text-gray-400">
+                        <i class="ph ph-smiley-blank text-4xl text-gray-300 mb-2 block"></i>
+                        此作业中没有题目记录
+                    </div>
+                `;
+                return;
+            }
+
+            exercises.forEach((ex, idx) => {
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4";
+                
+                const qNum = ex.question_number || (idx + 1);
+                
+                card.innerHTML = `
+                    <!-- Row 1: Header / Number -->
+                    <div class="flex justify-between items-center border-b border-gray-100 pb-3 flex-wrap gap-2">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-xl bg-blue-600 text-white font-bold flex items-center justify-center text-sm shadow-md shadow-blue-500/10">
+                                ${qNum}
+                            </span>
+                            <span class="text-sm font-bold text-gray-700">题目内容</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="bg-emerald-50 border border-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                                OCR置信度: 97%
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Question Text -->
+                    <div class="p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-semibold text-gray-600 leading-relaxed">
+                        ${ex.question_text}
+                    </div>
+
+                    <!-- Row 3: Handwritten notebook display -->
+                    <div class="space-y-1.5">
+                        <span class="text-xs font-bold text-gray-400 flex items-center gap-1 uppercase tracking-wider">
+                            <i class="ph ph-hand-writing"></i>
+                            学生手写回答 (模拟纸面预览)
+                        </span>
+                        <div class="paper-ruled">
+                            <div class="font-thai-hand text-xl text-blue-700 font-bold" id="handwritten-view-${idx}">
+                                ${ex.student_answer || '<span class="italic text-gray-400 text-sm">（空）</span>'}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: OCR Text Edit Form (Manual Correction) -->
+                    <div class="space-y-2 pt-2 border-t border-gray-50">
+                        <label class="text-xs font-bold text-gray-400 flex justify-between items-center uppercase tracking-wider">
+                            <span>手写OCR识别文字 (可直接修改进行人工校对)</span>
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="text" id="answer-input-${idx}" value="${ex.student_answer || ''}" class="flex-grow px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition" placeholder="识别的答案文本">
+                            <button onclick="saveSingleCorrection(${idx})" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white font-bold text-xs px-4 py-2.5 rounded-xl transition active:scale-95 flex items-center justify-center gap-1 select-none">
+                                <i class="ph ph-floppy-disk text-base"></i>
+                                保存校对
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        // Save Single Exercise Correction back to Server
+        async function saveSingleCorrection(index) {
+            if (!activeAssignment) return;
+
+            const inputEl = document.getElementById(`answer-input-${index}`);
+            const newVal = inputEl.value.trim();
+
+            // Update local memory object
+            activeAssignment.assignment.exercises[index].student_answer = newVal;
+
+            // Update handwriting view immediately
+            const viewEl = document.getElementById(`handwritten-view-${index}`);
+            if (viewEl) {
+                viewEl.innerHTML = newVal || '<span class="italic text-gray-400 text-sm">（空）</span>';
+            }
+
+            try {
+                // Send update request (POST handles both insert and update based on uuid match)
+                const res = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        uuid: activeAssignment.uuid,
+                        title: activeAssignment.title,
+                        date: activeAssignment.date,
+                        assignment: activeAssignment.assignment
+                    })
+                });
+
+                if (!res.ok) throw new Error("同步校对数据到后台失败");
+                showToast("作业校对结果已成功保存", "success");
+            } catch (err) {
+                console.error(err);
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Confirm assignment delete
+        function confirmDelete(uuid) {
+            if (confirm("确定要彻底删除该手写作业记录吗？删除后将不可恢复。")) {
+                runDelete(uuid);
+            }
+        }
+
+        // Run Delete Request
+        async function runDelete(uuid) {
+            try {
+                const res = await fetch(`${API_BASE}/${uuid}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error("删除作业失败");
+                
+                showToast("作业记录已成功删除", "success");
+                
+                // Reset Detail View
+                activeAssignment = null;
+                document.getElementById('emptyDetailState').classList.remove('hidden');
+                document.getElementById('detailWorkspace').classList.add('hidden');
+
+                // Refresh List
+                fetchAssignments();
+            } catch (err) {
+                console.error(err);
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Open Import Dialog
+        function openOcrModal() {
+            document.getElementById('ocrModal').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('ocrModal').querySelector('> div').classList.remove('scale-95');
+            }, 10);
+            
+            // Clear input fields
+            document.getElementById('newTitle').value = '';
+            document.getElementById('newWorksheet').value = '';
+            document.getElementById('newDate').valueAsDate = new Date();
+            
+            // Reset log panel
+            document.getElementById('modalInputForm').classList.remove('hidden');
+            document.getElementById('ocrProgressPanel').classList.add('hidden');
+            document.getElementById('btnCancelModal').classList.remove('hidden');
+            document.getElementById('btnRunOcr').classList.remove('hidden');
+            document.getElementById('ocrLogArea').innerHTML = '';
+
+            // Setup default 3 exercises
+            const container = document.getElementById('modalExercisesContainer');
+            container.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                addExerciseField();
+            }
+        }
+
+        // Close Import Dialog
+        function closeOcrModal() {
+            document.getElementById('ocrModal').classList.add('hidden');
+        }
+
+        // Add dynamically a row of question into the import modal
+        let questionCounter = 0;
+        function addExerciseField() {
+            questionCounter++;
+            const container = document.getElementById('modalExercisesContainer');
+            const row = document.createElement('div');
+            row.className = "p-4 bg-gray-50/70 border border-gray-200 rounded-2xl flex flex-col gap-3 relative";
+            row.id = `modal-exercise-row-${questionCounter}`;
+
+            row.innerHTML = `
+                <button type="button" onclick="removeExerciseField(${questionCounter})" class="absolute right-3 top-3 text-gray-400 hover:text-red-500 transition active:scale-90 text-sm">
+                    <i class="ph-bold ph-trash"></i>
+                </button>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[10px] font-bold text-gray-400">题号</label>
+                        <input type="text" placeholder="1" class="ex-q-num px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-blue-500 focus:bg-white transition" value="${container.children.length + 1}">
+                    </div>
+                    <div class="flex flex-col gap-1 md:col-span-3">
+                        <label class="text-[10px] font-bold text-gray-400">题目要求 (中/泰)</label>
+                        <input type="text" placeholder="例如：写出泰语单词 'สวัสดี' 的含义" class="ex-q-text px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                    </div>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-bold text-gray-400">OCR模拟手写体答案内容 (可输入泰语文字)</label>
+                    <input type="text" placeholder="学生手写的泰语回答..." class="ex-std-ans px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-blue-500 focus:bg-white transition font-thai-hand">
+                </div>
+            `;
+            container.appendChild(row);
+        }
+
+        // Remove row of question from import modal
+        function removeExerciseField(id) {
+            const row = document.getElementById(`modal-exercise-row-${id}`);
+            if (row) {
+                row.remove();
+                // Re-number
+                const container = document.getElementById('modalExercisesContainer');
+                Array.from(container.children).forEach((child, index) => {
+                    child.querySelector('.ex-q-num').value = index + 1;
+                });
+            }
+        }
+
+        // Simulate multi-step OCR Scan loading logging, then submit to API
+        async function startOcrSimulation() {
+            const title = document.getElementById('newTitle').value.trim();
+            const date = document.getElementById('newDate').value;
+            const worksheet = document.getElementById('newWorksheet').value.trim() || 'WS-01';
+
+            if (!title) {
+                alert("请输入作业名称！");
+                return;
+            }
+
+            // Gather exercises
+            const exercises = [];
+            const container = document.getElementById('modalExercisesContainer');
+            const rows = container.querySelectorAll(':scope > div');
+            
+            rows.forEach(row => {
+                const qNum = row.querySelector('.ex-q-num').value.trim();
+                const qText = row.querySelector('.ex-q-text').value.trim();
+                const stdAns = row.querySelector('.ex-std-ans').value.trim();
+
+                if (qText) {
+                    exercises.push({
+                        question_number: qNum || (exercises.length + 1).toString(),
+                        question_text: qText,
+                        student_answer: stdAns
+                    });
+                }
+            });
+
+            if (exercises.length === 0) {
+                alert("请至少添加并填写一个作业题目！");
+                return;
+            }
+
+            // Switch to log panel
+            document.getElementById('modalInputForm').classList.add('hidden');
+            document.getElementById('ocrProgressPanel').classList.remove('hidden');
+            document.getElementById('btnCancelModal').classList.add('hidden');
+            document.getElementById('btnRunOcr').classList.add('hidden');
+
+            const logArea = document.getElementById('ocrLogArea');
+            const logs = [
+                "[SYSTEM] 连接手写作业拍照扫描仪及云服务端口...",
+                "[IMAGE_SCAN] 上传手写纸张扫描图像文件...",
+                "[IMAGE_SCAN] 分区检测：分辨率 300 DPI, 自动裁剪倾斜度 1.2°",
+                "[LAYOUT] 进行页面排版分析：定位包含 5 条水平线和 3 个题目框...",
+                "[LAYOUT] 成功检测到单元工作单：" + worksheet + "...",
+                "[SEGMENT] 分割图像区域，并匹配每个题目的输入框坐标...",
+                "[OCR_ENGINE] 执行泰国拼读字符和中文释义手写模型预测...",
+                "[OCR_ENGINE] 预测题型 1-3 匹配深度学习网络...",
+                "[OCR_ENGINE] 转换模型输出为结构化文本编码...",
+                "[SYSTEM] 校验置信率及敏感词匹配结束...",
+                "[SYSTEM] 自动配对成功！开始保存到 tblAssignments 表..."
+            ];
+
+            let logIndex = 0;
+            const logInterval = setInterval(async () => {
+                if (logIndex < logs.length) {
+                    const logDiv = document.createElement('div');
+                    logDiv.textContent = logs[logIndex];
+                    if (logs[logIndex].includes('[SYSTEM]') || logs[logIndex].includes('成功')) {
+                        logDiv.className = "text-emerald-400 font-bold";
+                    }
+                    logArea.appendChild(logDiv);
+                    // scroll to bottom
+                    document.getElementById('ocrProgressPanel').scrollTop = document.getElementById('ocrProgressPanel').scrollHeight;
+                    logIndex++;
+                } else {
+                    clearInterval(logInterval);
+                    
+                    // Call backend API to save
+                    try {
+                        const targetUuid = "a_" + Date.now();
+                        const res = await fetch(API_BASE, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                uuid: targetUuid,
+                                title: title,
+                                date: date,
+                                assignment: {
+                                    worksheet_number: worksheet,
+                                    exercises: exercises
+                                }
+                            })
+                        });
+
+                        if (!res.ok) throw new Error("将OCR作业保存到数据库失败");
+                        
+                        showToast("OCR 作业已成功保存并导入", "success");
+                        closeOcrModal();
+                        
+                        // Refresh sidebar and automatically load the newly created assignment
+                        await fetchAssignments();
+                        selectAssignment(targetUuid);
+                    } catch (err) {
+                        console.error(err);
+                        showToast(err.message, 'error');
+                        // Close modal anyway
+                        closeOcrModal();
+                    }
+                }
+            }, 550);
+        }
+    </script>
+</body>
+</html>

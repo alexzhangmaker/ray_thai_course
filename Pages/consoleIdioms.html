@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语成语与熟语管理后台 - vCourse.ThaiNotes</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Serif+Thai:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Noto Sans SC', 'sans-serif'],
+                        thai: ['Noto Serif Thai', 'Outfit', 'serif'],
+                    },
+                    colors: {
+                        slate: {
+                            750: '#232d42',
+                            850: '#151c2c',
+                            950: '#080c16',
+                        },
+                        emerald: {
+                            450: '#10b981',
+                            550: '#059669',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #070d13 0%, #0d1a1b 50%, #0a211e 100%);
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: rgba(0, 0, 0, 0.5);
+            --primary: #10b981; /* Emerald accent for Idioms */
+            --primary-glow: rgba(16, 185, 129, 0.18);
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px var(--glass-shadow);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.015);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(16, 185, 129, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .glass-card.active {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(16, 185, 129, 0.25);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(16, 185, 129, 0.45);
+        }
+
+        .tab-btn {
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- Top Header -->
+    <header class="glass-panel border-b border-slate-800/80 px-6 py-3.5 flex items-center justify-between shrink-0 z-10 font-sans">
+        <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                <i class="ph-bold ph-translate text-xl text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold leading-none tracking-tight flex items-center gap-2">
+                    <span>vCourse.ThaiNotes</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">成语熟语后台</span>
+                </h1>
+                <span class="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mt-1">SQLite tblIdioms 中泰成语对照表配置与管理</span>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <!-- Connection Status -->
+            <div id="connection-status" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>服务已连接</span>
+            </div>
+            
+            <!-- Quick links -->
+            <nav class="flex items-center gap-2">
+                <a href="/Pages/appIdioms.html" target="_blank" class="px-3.5 py-1.5 text-xs text-emerald-400 hover:text-white rounded-lg bg-emerald-500/10 hover:bg-emerald-500/30 transition duration-150 flex items-center gap-1.5 border border-emerald-500/30 font-semibold">
+                    <i class="ph-bold ph-arrow-square-out"></i>
+                    <span>打开学习App</span>
+                </a>
+                <a href="/Pages/appPortal.html" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition flex items-center gap-1 border border-slate-800">
+                    <i class="ph ph-squares-four"></i>
+                    <span>系统导航</span>
+                </a>
+                <a href="/Pages/consoleCoreWords.html" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition flex items-center gap-1 border border-slate-800">
+                    <i class="ph ph-book-open"></i>
+                    <span>核心词后台</span>
+                </a>
+                <a href="/Pages/consoleImportantWords.html" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition flex items-center gap-1 border border-slate-800">
+                    <i class="ph ph-star"></i>
+                    <span>重点词后台</span>
+                </a>
+                <a href="/Pages/consoleWordset.html" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition flex items-center gap-1 border border-slate-800">
+                    <i class="ph ph-cards"></i>
+                    <span>词汇集后台</span>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- Left Sidebar: Idiom List & Filter -->
+        <aside class="w-80 lg:w-96 border-r border-slate-800/80 bg-slate-950/40 flex flex-col shrink-0">
+            
+            <!-- List Header & Search -->
+            <div class="p-4 border-b border-slate-800/80 space-y-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">熟语列表</span>
+                        <span id="listTotalBadge" class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-800 text-emerald-400">0 条</span>
+                    </div>
+                    <button onclick="prepareCreateNew()" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm transition flex items-center gap-1">
+                        <i class="ph-bold ph-plus"></i>
+                        <span>新增熟语</span>
+                    </button>
+                </div>
+
+                <div class="relative">
+                    <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                    <input 
+                        type="text" 
+                        id="sidebarSearchInput" 
+                        oninput="filterSidebarList(this.value)" 
+                        placeholder="搜索熟语 / 中文 / 标签..." 
+                        class="w-full pl-8 pr-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition"
+                    >
+                </div>
+            </div>
+
+            <!-- Scrollable Idioms List -->
+            <div id="sidebarListContainer" class="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                <!-- Items populated dynamically -->
+            </div>
+        </aside>
+
+        <!-- Right Content: Form Editor / Markdown Batch Import / Table Grid / Maintenance -->
+        <main class="flex-1 flex flex-col bg-slate-950/20 overflow-hidden">
+            
+            <!-- Tab Navigation Header -->
+            <div class="glass-panel border-b border-slate-800/80 px-6 pt-3 pb-0 flex items-center gap-6 shrink-0 text-xs font-bold text-slate-400">
+                <button id="tabBtnForm" onclick="switchConsoleTab('form')" class="tab-btn active pb-3 flex items-center gap-1.5">
+                    <i class="ph-bold ph-pencil-simple text-sm"></i>
+                    <span>单条编辑 / 创建</span>
+                </button>
+                <button id="tabBtnMarkdown" onclick="switchConsoleTab('markdown')" class="tab-btn pb-3 flex items-center gap-1.5">
+                    <i class="ph-bold ph-file-text text-sm"></i>
+                    <span>Markdown 表格导入 / 导出</span>
+                </button>
+                <button id="tabBtnTable" onclick="switchConsoleTab('table')" class="tab-btn pb-3 flex items-center gap-1.5">
+                    <i class="ph-bold ph-table text-sm"></i>
+                    <span>全量表格大视图</span>
+                </button>
+                <button id="tabBtnMaintenance" onclick="switchConsoleTab('maintenance')" class="tab-btn pb-3 flex items-center gap-1.5">
+                    <i class="ph-bold ph-wrench text-sm"></i>
+                    <span>数据维护 / 预设重置</span>
+                </button>
+            </div>
+
+            <!-- Tab Content Container -->
+            <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                
+                <!-- TAB 1: FORM EDITOR -->
+                <div id="tabContentForm" class="max-w-4xl mx-auto space-y-6">
+                    <div class="glass-card rounded-2xl p-6 border border-slate-800/80 space-y-5">
+                        
+                        <div class="flex items-center justify-between border-b border-slate-800/80 pb-4">
+                            <div>
+                                <h2 id="formHeaderTitle" class="text-base font-bold text-slate-100 flex items-center gap-2">
+                                    <i class="ph-bold ph-pencil text-emerald-400"></i>
+                                    <span>编辑成语 / 熟语条目</span>
+                                </h2>
+                                <p class="text-xs text-slate-400 mt-1">配置核心熟语、中文释义、双语例句与标签</p>
+                            </div>
+                            <span id="formModeBadge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                正在编辑
+                            </span>
+                        </div>
+
+                        <!-- Row 1: ID, Order, Tags -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 mb-1.5">熟语 ID (唯一标识)</label>
+                                <input 
+                                    type="text" 
+                                    id="inputFormId" 
+                                    placeholder="idm_001" 
+                                    class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition font-mono"
+                                >
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 mb-1.5">排序序号 (Sort Order)</label>
+                                <input 
+                                    type="number" 
+                                    id="inputFormOrder" 
+                                    placeholder="1" 
+                                    class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition"
+                                >
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 mb-1.5">分类标签 (逗号分隔)</label>
+                                <input 
+                                    type="text" 
+                                    id="inputFormTags" 
+                                    placeholder="比喻,日常,经济" 
+                                    class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition"
+                                >
+                            </div>
+                        </div>
+
+                        <!-- Row 2: Thai Phrase & Chinese Meaning -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <label class="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                                        <span>泰语核心熟语 / 短语 *</span>
+                                    </label>
+                                    <button type="button" onclick="playAudioDirect(document.getElementById('inputFormThaiPhrase').value)" class="text-[11px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition">
+                                        <i class="ph-bold ph-speaker-high"></i>
+                                        <span>试听发音</span>
+                                    </button>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    id="inputFormThaiPhrase" 
+                                    placeholder="例如: รัดเข็มขัด" 
+                                    class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-base font-thai font-bold text-emerald-300 focus:outline-none focus:border-emerald-500 transition"
+                                >
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1.5">中文成语 / 熟语释义 *</label>
+                                <input 
+                                    type="text" 
+                                    id="inputFormChineseMeaning" 
+                                    placeholder="例如: 勒紧裤腰带（比喻节约开支）" 
+                                    class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm font-bold text-slate-100 focus:outline-none focus:border-emerald-500 transition"
+                                >
+                            </div>
+                        </div>
+
+                        <!-- Row 3: Literal Meaning & Culture Notes -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 mb-1.5">字面直译 (Literal Meaning)</label>
+                                <input 
+                                    type="text" 
+                                    id="inputFormLiteralMeaning" 
+                                    placeholder="例如: 系紧皮带 / 勒紧腰带" 
+                                    class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition"
+                                >
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 mb-1.5">文化背景 / 使用要点 (Notes)</label>
+                                <input 
+                                    type="text" 
+                                    id="inputFormNotes" 
+                                    placeholder="例如: 常用于经济萧条或财政紧张时，表示缩减开支" 
+                                    class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition"
+                                >
+                            </div>
+                        </div>
+
+                        <!-- Row 4: Thai Example Sentence -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="text-xs font-bold text-slate-300">泰语完整例句 (原句)</label>
+                                <button type="button" onclick="playAudioDirect(document.getElementById('inputFormThaiExample').value)" class="text-[11px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition">
+                                    <i class="ph-bold ph-speaker-high"></i>
+                                    <span>试听例句</span>
+                                </button>
+                            </div>
+                            <textarea 
+                                id="inputFormThaiExample" 
+                                rows="2" 
+                                placeholder="例如: เศรษฐกิจย่ำแย่แบบนี้ ทุกคนต้องช่วยกันรัดเข็มขัด" 
+                                class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-sm font-thai text-slate-200 focus:outline-none focus:border-emerald-500 transition"
+                            ></textarea>
+                        </div>
+
+                        <!-- Row 5: Example Translation -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-1.5">例句中文翻译 (Example Translation)</label>
+                            <textarea 
+                                id="inputFormExampleTrans" 
+                                rows="2" 
+                                placeholder="例如: 经济如此低迷，大家都必须一起勒紧裤腰带过日子。" 
+                                class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 focus:outline-none focus:border-emerald-500 transition"
+                            ></textarea>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="flex items-center justify-between pt-4 border-t border-slate-800/80">
+                            <button type="button" onclick="deleteCurrentFormItem()" id="formDeleteBtn" class="px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-bold border border-rose-500/30 transition flex items-center gap-1.5">
+                                <i class="ph-bold ph-trash"></i>
+                                <span>删除当前条目</span>
+                            </button>
+                            <div class="flex items-center gap-3">
+                                <button type="button" onclick="prepareCreateNew()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
+                                    清空表单
+                                </button>
+                                <button type="button" onclick="submitFormItem()" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/30 transition flex items-center gap-1.5">
+                                    <i class="ph-bold ph-check"></i>
+                                    <span>保存熟语数据</span>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- TAB 2: MARKDOWN & JSON BATCH IMPORT / EXPORT -->
+                <div id="tabContentMarkdown" class="hidden max-w-5xl mx-auto space-y-6">
+                    <div class="glass-card rounded-2xl p-6 border border-slate-800/80 space-y-4">
+                        
+                        <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                            <div>
+                                <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                                    <i class="ph-bold ph-table text-emerald-400"></i>
+                                    <span>Markdown 表格批量导入 / 导出</span>
+                                </h2>
+                                <p class="text-xs text-slate-400 mt-1">直接粘贴包含【编号、泰语核心熟语/短语、中文成语/熟语、泰语例句】的 Markdown 表格</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="fillSampleMarkdown()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">
+                                    填入格式示例
+                                </button>
+                                <button onclick="exportCurrentToMarkdown()" class="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold transition">
+                                    导出当前数据为 Markdown
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Markdown input textarea -->
+                        <div>
+                            <textarea 
+                                id="markdownInputArea" 
+                                rows="10" 
+                                placeholder="| 编号 | 泰语核心熟语 / 短语 | 中文成语 / 熟语 | 泰语例句 (原句) |&#10;| --- | --- | --- | --- |&#10;| 1 | รัดเข็มขัด | 勒紧裤腰带（比喻节约开支） | เศรษฐกิจย่ำแย่แบบนี้ ทุกคนต้องช่วยกันรัดเข็มขัด |" 
+                                class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-500 custom-scrollbar"
+                            ></textarea>
+                        </div>
+
+                        <!-- Controls & Parse Button -->
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                            <div class="flex items-center gap-4 text-xs">
+                                <label class="flex items-center gap-2 text-slate-300 cursor-pointer">
+                                    <input type="checkbox" id="importReplaceAllCheck" class="rounded bg-slate-900 border-slate-700 text-emerald-600 focus:ring-emerald-500">
+                                    <span>全量覆盖清空现有数据 (Replace All)</span>
+                                </label>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button onclick="parseMarkdownTable()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition flex items-center gap-1.5">
+                                    <i class="ph-bold ph-eye"></i>
+                                    <span>解析表格预览</span>
+                                </button>
+                                <button onclick="executeBatchImport()" id="btnExecuteImport" disabled class="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md">
+                                    <i class="ph-bold ph-upload-simple"></i>
+                                    <span>确认批量导入至数据库</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Parse Preview Container -->
+                        <div id="parsePreviewBox" class="hidden mt-4 pt-4 border-t border-slate-800/80">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-bold text-emerald-400">解析预览结果 (<span id="parsedCountBadge">0</span> 条)</span>
+                                <span class="text-[11px] text-slate-400">请核对解析内容无误后点击上方导入按钮</span>
+                            </div>
+                            <div class="max-h-60 overflow-y-auto rounded-xl border border-slate-800 bg-slate-900/60 custom-scrollbar">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-800/80 text-slate-400 sticky top-0">
+                                        <tr>
+                                            <th class="py-2 px-3">序号</th>
+                                            <th class="py-2 px-3">泰语核心熟语</th>
+                                            <th class="py-2 px-3">中文释义</th>
+                                            <th class="py-2 px-3">泰语原示例句</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="parsePreviewTbody" class="divide-y divide-slate-800 text-slate-200"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- TAB 3: FULL DATA TABLE -->
+                <div id="tabContentTable" class="hidden space-y-4">
+                    <div class="glass-card rounded-2xl p-4 border border-slate-800/80">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-bold text-slate-200">数据库当前熟语对照全表</h3>
+                                <span class="text-xs text-slate-500">点击任意行可快速载入到表单编辑</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="exportJSON()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">
+                                    导出 JSON
+                                </button>
+                                <button onclick="exportCSV()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">
+                                    导出 CSV
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto rounded-xl border border-slate-800 custom-scrollbar">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-900 text-slate-400 border-b border-slate-800">
+                                    <tr>
+                                        <th class="py-3 px-3 w-14 text-center">#</th>
+                                        <th class="py-3 px-4">泰语核心熟语</th>
+                                        <th class="py-3 px-4">中文成语 / 释义</th>
+                                        <th class="py-3 px-4">泰语原句</th>
+                                        <th class="py-3 px-3">标签</th>
+                                        <th class="py-3 px-3 text-center">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fullDataTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: MAINTENANCE & RESET -->
+                <div id="tabContentMaintenance" class="hidden max-w-2xl mx-auto space-y-6">
+                    <div class="glass-card rounded-2xl p-6 border border-slate-800/80 space-y-6">
+                        
+                        <div>
+                            <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                                <i class="ph-bold ph-shield-check text-emerald-400"></i>
+                                <span>数据重置与系统维护</span>
+                            </h2>
+                            <p class="text-xs text-slate-400 mt-1">管理默认预设熟语种子数据与数据库维护操作</p>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-start gap-3">
+                            <i class="ph-bold ph-arrow-counter-clockwise text-xl text-emerald-400 shrink-0 mt-0.5"></i>
+                            <div>
+                                <h4 class="text-xs font-bold text-emerald-300">恢复出厂预设 29 条成语对照表</h4>
+                                <p class="text-xs text-slate-400 mt-1">
+                                    将数据库内容重置为标准整理的 29 条中泰熟语对照与例句。
+                                </p>
+                                <button onclick="resetFactorySeeds()" class="mt-3 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm">
+                                    立即重置为 29 条预设熟语
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-start gap-3">
+                            <i class="ph-bold ph-warning text-xl text-rose-400 shrink-0 mt-0.5"></i>
+                            <div>
+                                <h4 class="text-xs font-bold text-rose-300">清空熟语数据表 (危险区)</h4>
+                                <p class="text-xs text-slate-400 mt-1">
+                                    清空 tblIdioms 中的所有记录。请谨慎操作！
+                                </p>
+                                <button onclick="clearAllData()" class="mt-3 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition shadow-sm">
+                                    清空全部数据
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toastNotification" class="hidden fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-2.5 text-xs font-semibold animate-slide-up">
+        <i id="toastIcon" class="ph-bold ph-check-circle text-emerald-400 text-base"></i>
+        <span id="toastMessage">操作成功</span>
+    </div>
+
+    <script>
+        // ==========================================
+        // STATE & VARIABLES
+        // ==========================================
+        let idiomsList = [];
+        let selectedIdiomId = null;
+        let parsedBatchItems = [];
+
+        // TTS Engine
+        window.playAudioDirect = (text) => {
+            if (!text) return;
+            const cleanText = text.replace(/“|”/g, '').trim();
+            if (!cleanText) return;
+
+            const url = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(cleanText)}`;
+            new Audio(url).play().catch(err => {
+                console.warn("Direct audio playback failed, fallback to Web Speech API:", err);
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utter = new SpeechSynthesisUtterance(cleanText);
+                    utter.lang = 'th-TH';
+                    utter.rate = 0.9;
+                    window.speechSynthesis.speak(utter);
+                }
+            });
+        };
+
+        // ==========================================
+        // INITIALIZATION & API FETCH
+        // ==========================================
+        async function loadIdioms() {
+            try {
+                const res = await fetch('/api/idioms');
+                if (!res.ok) throw new Error('API request failed');
+                idiomsList = await res.json();
+                idiomsList.sort((a, b) => (a.sortOrder || a.order || 0) - (b.sortOrder || b.order || 0));
+
+                document.getElementById('listTotalBadge').textContent = `${idiomsList.length} 条`;
+                renderSidebarList();
+                renderFullTable();
+
+                if (idiomsList.length > 0 && !selectedIdiomId) {
+                    selectIdiom(idiomsList[0].id);
+                }
+            } catch (err) {
+                console.error('Failed to load idioms:', err);
+                showToast('无法连接后台 API，请确认服务器已启动', 'error');
+                document.getElementById('connection-status').innerHTML = `
+                    <span class="h-2 w-2 rounded-full bg-rose-500 animate-pulse"></span>
+                    <span class="text-rose-400">连接异常</span>
+                `;
+            }
+        }
+
+        // ==========================================
+        // SIDEBAR LIST RENDERING
+        // ==========================================
+        function renderSidebarList(filterText = '') {
+            const container = document.getElementById('sidebarListContainer');
+            container.innerHTML = '';
+
+            const filtered = idiomsList.filter(item => {
+                if (!filterText) return true;
+                const q = filterText.toLowerCase();
+                return (item.thaiPhrase || '').toLowerCase().includes(q) ||
+                       (item.chineseMeaning || '').toLowerCase().includes(q) ||
+                       (item.tags || '').toLowerCase().includes(q);
+            });
+
+            filtered.forEach(item => {
+                const isSelected = item.id === selectedIdiomId;
+                const card = document.createElement('div');
+                card.className = `glass-card p-3 rounded-xl cursor-pointer flex items-center justify-between gap-2 ${isSelected ? 'active' : ''}`;
+                card.onclick = () => selectIdiom(item.id);
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-2.5 overflow-hidden">
+                        <span class="w-6 h-6 rounded-lg bg-slate-800 text-[11px] font-bold text-slate-400 flex items-center justify-center shrink-0">
+                            ${item.sortOrder || item.order || ''}
+                        </span>
+                        <div class="truncate">
+                            <div class="font-thai text-sm font-bold text-slate-100 truncate">${escapeHtml(item.thaiPhrase)}</div>
+                            <div class="text-[11px] text-slate-400 truncate">${escapeHtml(item.chineseMeaning)}</div>
+                        </div>
+                    </div>
+                    <button onclick="event.stopPropagation(); playAudioDirect('${escapeSingleQuotes(item.thaiPhrase)}')" class="p-1.5 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-slate-800 shrink-0 transition" title="播音">
+                        <i class="ph-bold ph-speaker-high text-xs"></i>
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterSidebarList(val) {
+            renderSidebarList(val.trim());
+        }
+
+        // ==========================================
+        // SELECT IDIOM & POPULATE FORM
+        // ==========================================
+        function selectIdiom(id) {
+            selectedIdiomId = id;
+            const item = idiomsList.find(it => it.id === id);
+            if (!item) return;
+
+            renderSidebarList(document.getElementById('sidebarSearchInput').value);
+
+            document.getElementById('formHeaderTitle').innerHTML = `
+                <i class="ph-bold ph-pencil text-emerald-400"></i>
+                <span>编辑: ${escapeHtml(item.thaiPhrase)}</span>
+            `;
+            document.getElementById('formModeBadge').textContent = '编辑中';
+            document.getElementById('formDeleteBtn').classList.remove('hidden');
+
+            document.getElementById('inputFormId').value = item.id || '';
+            document.getElementById('inputFormOrder').value = item.sortOrder || item.order || '';
+            document.getElementById('inputFormTags').value = item.tags || '';
+            document.getElementById('inputFormThaiPhrase').value = item.thaiPhrase || '';
+            document.getElementById('inputFormChineseMeaning').value = item.chineseMeaning || '';
+            document.getElementById('inputFormLiteralMeaning').value = item.literalMeaning || '';
+            document.getElementById('inputFormNotes').value = item.notes || '';
+            document.getElementById('inputFormThaiExample').value = item.thaiExample || '';
+            document.getElementById('inputFormExampleTrans').value = item.exampleTranslation || '';
+
+            switchConsoleTab('form');
+        }
+
+        function prepareCreateNew() {
+            selectedIdiomId = null;
+            renderSidebarList(document.getElementById('sidebarSearchInput').value);
+
+            document.getElementById('formHeaderTitle').innerHTML = `
+                <i class="ph-bold ph-plus text-emerald-400"></i>
+                <span>新建成语 / 熟语条目</span>
+            `;
+            document.getElementById('formModeBadge').textContent = '新建条目';
+            document.getElementById('formDeleteBtn').classList.add('hidden');
+
+            const nextOrder = idiomsList.length + 1;
+            document.getElementById('inputFormId').value = `idm_${String(nextOrder).padStart(3, '0')}`;
+            document.getElementById('inputFormOrder').value = nextOrder;
+            document.getElementById('inputFormTags').value = '成语,熟语';
+            document.getElementById('inputFormThaiPhrase').value = '';
+            document.getElementById('inputFormChineseMeaning').value = '';
+            document.getElementById('inputFormLiteralMeaning').value = '';
+            document.getElementById('inputFormNotes').value = '';
+            document.getElementById('inputFormThaiExample').value = '';
+            document.getElementById('inputFormExampleTrans').value = '';
+
+            switchConsoleTab('form');
+        }
+
+        // ==========================================
+        // SUBMIT & DELETE FORM
+        // ==========================================
+        async function submitFormItem() {
+            const id = document.getElementById('inputFormId').value.trim();
+            const order = parseInt(document.getElementById('inputFormOrder').value, 10) || 0;
+            const tags = document.getElementById('inputFormTags').value.trim();
+            const thaiPhrase = document.getElementById('inputFormThaiPhrase').value.trim();
+            const chineseMeaning = document.getElementById('inputFormChineseMeaning').value.trim();
+            const literalMeaning = document.getElementById('inputFormLiteralMeaning').value.trim();
+            const notes = document.getElementById('inputFormNotes').value.trim();
+            const thaiExample = document.getElementById('inputFormThaiExample').value.trim();
+            const exampleTranslation = document.getElementById('inputFormExampleTrans').value.trim();
+
+            if (!thaiPhrase || !chineseMeaning) {
+                alert('请填写泰语核心熟语与中文释义！');
+                return;
+            }
+
+            const payload = {
+                id: id || undefined,
+                sortOrder: order,
+                order,
+                tags,
+                thaiPhrase,
+                chineseMeaning,
+                literalMeaning,
+                notes,
+                thaiExample,
+                exampleTranslation
+            };
+
+            try {
+                let res;
+                if (selectedIdiomId) {
+                    res = await fetch(`/api/idioms/${selectedIdiomId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    res = await fetch('/api/idioms', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                if (!res.ok) throw new Error('保存失败');
+                const saved = await res.json();
+                showToast(selectedIdiomId ? '熟语修改成功' : '新增熟语成功', 'success');
+                await loadIdioms();
+                selectIdiom(saved.id);
+            } catch (err) {
+                console.error(err);
+                showToast('保存失败，请检查网络或格式', 'error');
+            }
+        }
+
+        async function deleteCurrentFormItem() {
+            if (!selectedIdiomId) return;
+            if (!confirm(`确定要删除熟语 "${document.getElementById('inputFormThaiPhrase').value}" 吗？`)) return;
+
+            try {
+                const res = await fetch(`/api/idioms/${selectedIdiomId}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('删除失败');
+                showToast('熟语条目已删除', 'success');
+                selectedIdiomId = null;
+                await loadIdioms();
+            } catch (err) {
+                console.error(err);
+                showToast('删除失败', 'error');
+            }
+        }
+
+        // ==========================================
+        // MARKDOWN TABLE PARSER & BATCH IMPORT
+        // ==========================================
+        function parseMarkdownTable() {
+            const raw = document.getElementById('markdownInputArea').value.trim();
+            if (!raw) {
+                alert('请在文本框中粘贴 Markdown 表格代码！');
+                return;
+            }
+
+            const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+            const tableLines = lines.filter(l => l.startsWith('|') && l.endsWith('|'));
+
+            if (tableLines.length < 2) {
+                alert('未检测到有效的 Markdown 表格格式（需要包含表头与数据行）！');
+                return;
+            }
+
+            // Header line
+            const headerCols = tableLines[0].split('|').map(c => c.trim().replace(/\*\*/g, '')).filter(Boolean);
+            
+            // Data lines (skip separator like |---|---|)
+            const dataLines = tableLines.slice(1).filter(l => !l.includes('---'));
+
+            parsedBatchItems = [];
+            dataLines.forEach((line, idx) => {
+                const cells = line.split('|').map(c => c.trim().replace(/\*\*/g, '')).filter((c, i, arr) => i > 0 && i < arr.length - 1);
+                if (cells.length >= 3) {
+                    const orderNum = parseInt(cells[0], 10) || (idx + 1);
+                    const thaiPhrase = cells[1] || '';
+                    const chineseMeaning = cells[2] || '';
+                    const thaiExample = cells[3] || '';
+
+                    if (thaiPhrase && chineseMeaning) {
+                        parsedBatchItems.push({
+                            id: `idm_${String(orderNum).padStart(3, '0')}`,
+                            sortOrder: orderNum,
+                            order: orderNum,
+                            thaiPhrase,
+                            chineseMeaning,
+                            thaiExample,
+                            exampleTranslation: '',
+                            literalMeaning: '',
+                            notes: '',
+                            tags: '成语,熟语'
+                        });
+                    }
+                }
+            });
+
+            if (parsedBatchItems.length === 0) {
+                alert('未能解析出有效的数据行，请检查表格列格式是否包含【编号、泰语核心熟语、中文成语、泰语例句】！');
+                return;
+            }
+
+            // Render preview
+            const previewBox = document.getElementById('parsePreviewBox');
+            const tbody = document.getElementById('parsePreviewTbody');
+            document.getElementById('parsedCountBadge').textContent = parsedBatchItems.length;
+
+            tbody.innerHTML = '';
+            parsedBatchItems.forEach(it => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-1.5 px-3 font-mono text-slate-400">#${it.sortOrder}</td>
+                    <td class="py-1.5 px-3 font-thai font-bold text-emerald-300">${escapeHtml(it.thaiPhrase)}</td>
+                    <td class="py-1.5 px-3 font-bold text-slate-100">${escapeHtml(it.chineseMeaning)}</td>
+                    <td class="py-1.5 px-3 font-thai text-slate-300">${escapeHtml(it.thaiExample)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            previewBox.classList.remove('hidden');
+            document.getElementById('btnExecuteImport').removeAttribute('disabled');
+            showToast(`成功解析 ${parsedBatchItems.length} 条熟语`, 'success');
+        }
+
+        async function executeBatchImport() {
+            if (parsedBatchItems.length === 0) return;
+            const replaceAll = document.getElementById('importReplaceAllCheck').checked;
+
+            if (replaceAll) {
+                if (!confirm(`【警告】：您勾选了“全量覆盖清空”！\n现有数据将被全部清除，并替换为解析出的 ${parsedBatchItems.length} 条数据，是否继续？`)) {
+                    return;
+                }
+            }
+
+            try {
+                const res = await fetch('/api/idioms/import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        items: parsedBatchItems,
+                        replaceAll
+                    })
+                });
+
+                if (!res.ok) throw new Error('导入失败');
+                const result = await res.json();
+                showToast(result.message || '批量导入成功！', 'success');
+                await loadIdioms();
+                switchConsoleTab('table');
+            } catch (err) {
+                console.error(err);
+                showToast('批量导入失败', 'error');
+            }
+        }
+
+        function fillSampleMarkdown() {
+            document.getElementById('markdownInputArea').value = `| 编号 | 泰语核心熟语 / 短语 | 中文成语 / 熟语 | 泰语例句 (原句) |
+| --- | --- | --- | --- |
+| **1** | รัดเข็มขัด | 勒紧裤腰带（比喻节约开支） | เศรษฐกิจย่ำแย่แบบนี้ ทุกคนต้องช่วยกันรัดเข็มขัด |
+| **2** | ดั่งไข่ในหิน | 掌上明珠 / 极力爱护、珍视 | พ่อแม่รักลูกและถนอมลูกดั่งไข่ในหิน |
+| **3** | แขวนนวม | 挂靴 / 挂牌退役 | นักมวยคนนี้มีอายุมากแล้ว เขาจึงแขวนนวม |
+| **4** | ฟาดแข้ง | 激烈交锋 / 上场比赛拼抢 | เดวิด เบ็คแฮม นักเตะลูกหนังลงฟาดแข้งในนัดนี้ด้วย |
+| **5** | หมกเม็ด | 暗藏玄机 / 耍花招 / 隐瞒内情 | คุณต้องดูสัญญาให้ดีระวังมีการหมกเม็ด |`;
+            showToast('已填入 Markdown 表格示例', 'info');
+        }
+
+        function exportCurrentToMarkdown() {
+            if (idiomsList.length === 0) {
+                alert('当前暂无数据可导出');
+                return;
+            }
+
+            let md = `| 编号 | 泰语核心熟语 / 短语 | 中文成语 / 熟语 | 泰语例句 (原句) |\n| --- | --- | --- | --- |\n`;
+            idiomsList.forEach(it => {
+                md += `| **${it.sortOrder || it.order || ''}** | ${it.thaiPhrase || ''} | ${it.chineseMeaning || ''} | ${it.thaiExample || ''} |\n`;
+            });
+
+            document.getElementById('markdownInputArea').value = md;
+            showToast('已导出到上方文本框，可直接复制', 'success');
+        }
+
+        // ==========================================
+        // RENDER FULL TABLE VIEW
+        // ==========================================
+        function renderFullTable() {
+            const tbody = document.getElementById('fullDataTableBody');
+            tbody.innerHTML = '';
+
+            idiomsList.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-800/40 cursor-pointer transition';
+                tr.onclick = () => selectIdiom(item.id);
+
+                tr.innerHTML = `
+                    <td class="py-3 px-3 text-center font-mono text-slate-500 font-bold">
+                        ${item.sortOrder || item.order || ''}
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="flex items-center gap-2">
+                            <span class="font-thai text-sm font-bold text-emerald-300">${escapeHtml(item.thaiPhrase)}</span>
+                            <button onclick="event.stopPropagation(); playAudioDirect('${escapeSingleQuotes(item.thaiPhrase)}')" class="text-slate-400 hover:text-emerald-400 transition" title="朗读熟语">
+                                <i class="ph-bold ph-speaker-high text-xs"></i>
+                            </button>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 font-bold text-slate-100">
+                        ${escapeHtml(item.chineseMeaning)}
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="flex items-center gap-1.5 font-thai text-slate-300">
+                            <span class="truncate max-w-xs">${escapeHtml(item.thaiExample || '—')}</span>
+                            ${item.thaiExample ? `
+                                <button onclick="event.stopPropagation(); playAudioDirect('${escapeSingleQuotes(item.thaiExample)}')" class="text-slate-400 hover:text-emerald-400 shrink-0 transition" title="朗读例句">
+                                    <i class="ph-bold ph-speaker-high text-xs"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                    <td class="py-3 px-3 text-slate-400">
+                        ${escapeHtml(item.tags || '—')}
+                    </td>
+                    <td class="py-3 px-3 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="event.stopPropagation(); selectIdiom('${item.id}')" class="text-slate-400 hover:text-white transition" title="编辑">
+                                <i class="ph-bold ph-pencil"></i>
+                            </button>
+                            <button onclick="event.stopPropagation(); deleteIdiomDirect('${item.id}', '${escapeSingleQuotes(item.thaiPhrase)}')" class="text-slate-500 hover:text-rose-400 transition" title="删除">
+                                <i class="ph-bold ph-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function deleteIdiomDirect(id, phrase) {
+            if (!confirm(`确定要删除 "${phrase}" 吗？`)) return;
+            try {
+                const res = await fetch(`/api/idioms/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('删除失败');
+                showToast('已删除', 'success');
+                if (selectedIdiomId === id) selectedIdiomId = null;
+                await loadIdioms();
+            } catch (err) {
+                showToast('删除失败', 'error');
+            }
+        }
+
+        // ==========================================
+        // EXPORT JSON & CSV
+        // ==========================================
+        function exportJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(idiomsList, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `thai_idioms_${Date.now()}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function exportCSV() {
+            let csv = "\uFEFF编号,泰语核心熟语,中文成语释义,泰语例句,字面直译,标签\n";
+            idiomsList.forEach(it => {
+                const row = [
+                    it.sortOrder || it.order || '',
+                    `"${(it.thaiPhrase || '').replace(/"/g, '""')}"`,
+                    `"${(it.chineseMeaning || '').replace(/"/g, '""')}"`,
+                    `"${(it.thaiExample || '').replace(/"/g, '""')}"`,
+                    `"${(it.literalMeaning || '').replace(/"/g, '""')}"`,
+                    `"${(it.tags || '').replace(/"/g, '""')}"`
+                ];
+                csv += row.join(',') + "\n";
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `thai_idioms_${Date.now()}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+
+        // ==========================================
+        // MAINTENANCE & FACTORY RESETS
+        // ==========================================
+        async function resetFactorySeeds() {
+            if (!confirm("确定要恢复出厂预设的 29 条中泰熟语对照表吗？\n当前的数据将被重置。")) return;
+
+            const defaultSeedIdioms = [
+              { id: "idm_001", sortOrder: 1, thaiPhrase: "รัดเข็มขัด", chineseMeaning: "勒紧裤腰带（比喻节约开支）", thaiExample: "เศรษฐกิจย่ำแย่แบบนี้ ทุกคนต้องช่วยกันรัดเข็มขัด", exampleTranslation: "经济如此低迷，大家都必须一起勒紧裤腰带过日子。", literalMeaning: "系紧皮带 / 勒紧腰带", notes: "常用于经济萧条或财政紧张时，表示缩减开支、省吃俭用。", tags: "比喻,日常,经济" },
+              { id: "idm_002", sortOrder: 2, thaiPhrase: "ดั่งไข่ในหิน", chineseMeaning: "掌上明珠 / 极力爱护、珍视", thaiExample: "พ่อแม่รักลูกและถนอมลูกดั่งไข่ในหิน", exampleTranslation: "父母深爱孩子，把孩子像掌上明珠一样悉心呵护。", literalMeaning: "如石头中的蛋（受到极其严密的保护）", notes: "用于形容对子女或心爱之人极为珍视、呵护备至。", tags: "修辞,家庭,比喻" },
+              { id: "idm_003", sortOrder: 3, thaiPhrase: "แขวนนวม", chineseMeaning: "挂靴 / 挂牌退役", thaiExample: "นักมวยคนนี้มีอายุมากแล้ว เขาจึงแขวนนวม", exampleTranslation: "这位拳击手年纪大了，因此选择挂拳套退役。", literalMeaning: "挂起拳套", notes: "原指拳击手退役，现引申指退出竞技体育界或从本行退休。", tags: "运动,比喻,职场" },
+              { id: "idm_004", sortOrder: 4, thaiPhrase: "ฟาดแข้ง", chineseMeaning: "激烈交锋 / 上场比赛拼抢", thaiExample: "เดวิด เบ็คแฮม นักเตะลูกหนังลงฟาดแข้งในนัดนี้ด้วย", exampleTranslation: "足球名将大卫·贝克汉姆也在本场比赛中披挂上阵激烈拼抢。", literalMeaning: "踢腿 / 摆腿拼抢", notes: "常用在足球等体育赛事的生动报道中，比喻在赛场上火热角逐。", tags: "运动,竞争,比喻" },
+              { id: "idm_005", sortOrder: 5, thaiPhrase: "หมกเม็ด", chineseMeaning: "暗藏玄机 / 耍花招 / 隐瞒内情", thaiExample: "คุณต้องดูสัญญาให้ดีระวังมีการหมกเม็ด", exampleTranslation: "你必须仔细审查合同，小心里面暗藏玄机、耍花招。", literalMeaning: "掩藏种子/隐匿细节", notes: "指在合同、条款或言谈中刻意隐瞒关键信息或暗设陷阱。", tags: "处事,警示,商业" },
+              { id: "idm_006", sortOrder: 6, thaiPhrase: "ตัดสินคนแค่เปลือกนอก", chineseMeaning: "以貌取人 / 表里不一", thaiExample: "อย่าตัดสินคนแค่เปลือกนอก", exampleTranslation: "不要单凭外表就妄下断语（不要以貌取人）。", literalMeaning: "仅凭外壳判定一个人", notes: "เปลือกนอก 意为外皮/外壳，劝诫人们看人不能只看表面光鲜。", tags: "哲理,待人,警示" },
+              { id: "idm_007", sortOrder: 7, thaiPhrase: "แทงใจดำ", chineseMeaning: "戳中痛处 / 说中要害", thaiExample: "เธอพูดแทงใจดำฉันเต็ม ๆ", exampleTranslation: "她的话完完全全戳中了我的痛处。", literalMeaning: "刺中内心的黑点（要害）", notes: "比喻一语中的，说到了他人最不愿触及或最痛切的隐藏心思。", tags: "情感,言语,日常" },
+              { id: "idm_008", sortOrder: 8, thaiPhrase: "มือสะอาด", chineseMeaning: "两袖清风 / 廉洁奉公", thaiExample: "เขาเป็นคนมือสะอาด", exampleTranslation: "他是一个廉洁奉公、两袖清风的人。", literalMeaning: "双手清白洁净", notes: "形容公职人员或办事人员为人正直清廉、绝不贪污受贿。", tags: "品质,廉洁,褒义" },
+              { id: "idm_009", sortOrder: 9, thaiPhrase: "ลอยแพ", chineseMeaning: "放任不管 / 任其自生自灭", thaiExample: "งานนี้เขาโดนลอยแพ", exampleTranslation: "在这项任务中他被彻底放任不管、抛弃了。", literalMeaning: "任由竹筏漂流", notes: "源自古代将犯人置于竹筏上随波逐流放逐，现比喻抛弃、置之不理或解雇扔下不管。", tags: "处境,工作,比喻" },
+              { id: "idm_010", sortOrder: 10, thaiPhrase: "จับปลาสองมือ", chineseMeaning: "脚踩两条船（三心二意）", thaiExample: "ตอนนี้เธอจับปลาสองมืออยู่", exampleTranslation: "她现在脚踩两条船（三心二意想两头兼得）。", literalMeaning: "两只手同时抓两条鱼", notes: "两手抓鱼往往两条都抓不住，比喻贪多或感情上三心二意、企图兼得。", tags: "警示,谚语,情感" },
+              { id: "idm_011", sortOrder: 11, thaiPhrase: "หามรุ่งหามค่ำ", chineseMeaning: "日夜兼程 / 连轴转", thaiExample: "เขาทำงานหามรุ่งหามค่ำ", exampleTranslation: "他日夜兼程、连轴转地工作。", literalMeaning: "从拂晓一直忙到深夜", notes: "形容极其辛劳、加班加点、通宵达旦地赶工。", tags: "工作,勤奋,日常" },
+              { id: "idm_012", sortOrder: 12, thaiPhrase: "เอาหูไปนาเอาตาไปไร่", chineseMeaning: "视而不见，听而不闻 / 装聋作哑", thaiExample: "อย่าเอาหูไปนาเอาตาไปไร่", exampleTranslation: "不要在那装聋作哑、视而不见听而不闻。", literalMeaning: "把耳朵搁在水田，把眼睛搁在旱地", notes: "比喻故意装作没看见、没听见，不闻不问。", tags: "谚语,态度,处事" },
+              { id: "idm_013", sortOrder: 13, thaiPhrase: "พูดไม่เข้าหู", chineseMeaning: "不中听 / 逆耳", thaiExample: "เขาพูดไม่เข้าหูผู้ใหญ่ เลยถูกมองไม่ดี", exampleTranslation: "他说话不中长辈的听，因此给长辈留下了不好的印象。", literalMeaning: "话进不了耳朵", notes: "形容说话不得体、不合长辈或听者心意、令人反感。", tags: "言语,交际,日常" },
+              { id: "idm_014", sortOrder: 14, thaiPhrase: "ขุดคุ้ย", chineseMeaning: "翻旧账 / 刨根问底", thaiExample: "เรื่องนี้อย่าไปขุดคุ้ยเลย มันจบไปนานแล้ว", exampleTranslation: "这件事就别再去翻旧账、刨根问底了，已经过去很久了。", literalMeaning: "挖掘搜刮", notes: "指反复去翻检、深挖他人过去的隐秘或陈年旧事。", tags: "处事,言语,日常" },
+              { id: "idm_015", sortOrder: 15, thaiPhrase: "เข้าเมืองตาหลิ่ว ต้องหลิ่วตาตาม", chineseMeaning: "入乡随俗", thaiExample: "เมื่อไปอยู่ต่างประเทศ เราควรเคารพวัฒนธรรมและวิถีชีวิตของคนที่นั่น เพราะเข้าเมืองตาหลิ่ว ต้องหลิ่วตาตาม", exampleTranslation: "去到国外生活时，我们应当尊重当地人的文化与生活方式，因为入乡随俗。", literalMeaning: "进到独眼人的城池，就得跟着眯起一只眼", notes: "泰国极其经典的谚语，比喻到了新环境要顺应当地风俗习惯。", tags: "谚语,文化,处事" },
+              { id: "idm_016", sortOrder: 16, thaiPhrase: "ได้คืบจะเอาศอก", chineseMeaning: "得寸进尺", thaiExample: "ตอนแรกเขาขอความช่วยเหลือเพียงเล็กน้อย แต่หลังจากนั้นก็เรียกร้องมากขึ้นเรื่อย ๆ จนคนรอบตัวรู้สึกว่าเขาได้คืบจะเอาศอก", exampleTranslation: "起初他只要一点点帮助，但之后要求越来越多，让身边的人都觉得他得寸进尺。", literalMeaning: "得到一拃（คืบ）还想要一肘长（ศอก）", notes: "比喻贪得无厌、得寸进尺，不知满足。", tags: "谚语,警示,性格" },
+              { id: "idm_017", sortOrder: 17, thaiPhrase: "ความลับไม่มีในโลก", chineseMeaning: "世上没有不透风的墙", thaiExample: "ถึงจะพยายามปิดบังเรื่องนี้แค่ไหน สุดท้ายก็ต้องมีคนรู้ เพราะความลับไม่มีในโลก", exampleTranslation: "不管多努力去隐瞒这件事，最后终究会有人知道，因为世上没有不透风的墙。", literalMeaning: "世界上没有真正的秘密", notes: "告诫世事终将败露，真理与真相无法永久掩盖。", tags: "俗语,哲理,生活" },
+              { id: "idm_018", sortOrder: 18, thaiPhrase: "ปากว่าตาขยิบ", chineseMeaning: "口是心非 / 阳奉阴违", thaiExample: "เขาพูดว่าจะไม่ช่วยเรื่องนี้แล้ว แต่สุดท้ายก็กลับแอบช่วยอยู่ดี เรียกได้ว่าปากว่าตาขยิบจริง ๆ", exampleTranslation: "他嘴上说着再也不帮这件事了，可最后还是悄悄帮了，真可谓是口是心非。", literalMeaning: "嘴上在说，眼睛却在眨眼示意", notes: "形容嘴上说的与实际做的或内心的真实意图完全相反。", tags: "俗语,性格,行为" },
+              { id: "idm_019", sortOrder: 19, thaiPhrase: "ตีเหล็กต้องตีตอนร้อน", chineseMeaning: "趁热打铁", thaiExample: "ลูกค้าแสดงความสนใจในสินค้าของเราแล้ว ควรรีบติดต่อกลับทันที เพราะตีเหล็กต้องตีตอนร้อน", exampleTranslation: "客户已经对我们的产品表现出兴趣了，应该立即联系跟进，因为趁热打铁。", literalMeaning: "打铁必须在铁还热的时候打", notes: "比喻抓紧有利时机迅速行动，以免错失良机。", tags: "谚语,时机,行动" },
+              { id: "idm_020", sortOrder: 20, thaiPhrase: "ขี่ช้างจับตั๊กแตน", chineseMeaning: "大材小用 / 杀鸡用牛刀", thaiExample: "งานเล็กนิดเดียว แต่กลับส่งคนไปทำตั้งหลายสิบคน แบบนี้ก็เหมือนขี่ช้างจับตั๊กแตน", exampleTranslation: "就这么一点小事，却派了几十个人去做，这简直就像骑着大象去抓蚂蚱（大材小用、得不偿失）。", literalMeaning: "骑着大象去抓蚂蚱", notes: "比喻投入巨大成本或兴师动众去办一件极小的事，得不偿失。", tags: "成语,效率,比喻" },
+              { id: "idm_021", sortOrder: 21, thaiPhrase: "เอาไม้ซีกไปงัดไม้ซุง", chineseMeaning: "以卵击石 / 不自量力", thaiExample: "เขาเพิ่งเริ่มทำธุรกิจ แต่กลับคิดจะแข่งกับบริษัทใหญ่ที่มีประสบการณ์มานาน แบบนี้ก็เหมือนเอาไม้ซีกไปงัดไม้ซุง", exampleTranslation: "他刚开始创业，就妄图与经验丰富的大公司正面竞争，这就像拿小木片去撬大原木（以卵击石）。", literalMeaning: "拿小木片（木屑）去撬大原木", notes: "比喻以极弱小的力量去抗衡悬殊的庞大力量，自取灭亡或徒劳无功。", tags: "谚语,力量,警示" },
+              { id: "idm_022", sortOrder: 22, thaiPhrase: "ร้อนตัว", chineseMeaning: "做做心虚 / 不打自招", thaiExample: "ฉันยังไม่ได้เอ่ยชื่อใครเลย แต่เกลับรีบออกมาแก้ตัวเอง เห็นได้ชัดว่าร้อนตัว", exampleTranslation: "我还没点谁的名呢，他就急着跳出来辩解，显然是做贼心虚、不打自招。", literalMeaning: "身体发热/坐立难安", notes: "比喻做了亏心事的人在受到风吹草动时神色慌张、急于辩解。", tags: "心理,行为,日常" },
+              { id: "idm_023", sortOrder: 23, thaiPhrase: "กินบนเรือนขี้รดบนหลังคา", chineseMeaning: "忘恩负义 / 端起碗吃饭放下筷子骂娘", thaiExample: "บริษัทตูลูแเชแขเป็นอย่างดี แต่สุดท้ายก็กลับเปิดเผยความลับของบริษัทให้คู่แข่ง แบบนี้เรียกว่ากินบนเรือนขี้รดบนหลังคา", exampleTranslation: "公司对他悉心栽培照料，但他最后却将公司商业机密泄露给竞争对手，这简直就是忘恩负义、恩将仇报。", literalMeaning: "在人家屋里吃饭，却在人家的屋顶上拉屎", notes: "极度生动地谴责受人恩惠却背叛甚至加害恩人的忘恩负义之徒。", tags: "谚语,道德,警示" },
+              { id: "idm_024", sortOrder: 24, thaiPhrase: "หมาเห่าใบตองแห้ง", chineseMeaning: "虚张声势 / 纸老虎", thaiExample: "เขาชอบพูดข่มคนอื่นว่าจะฟ้อง จะเอาเรื่อง แต่สุดท้ายก็ไม่เคยทำจริง เป็นแค่หมาเห่าใบตองแห้ง", exampleTranslation: "他总爱恐吓别人说要起诉、要追究到底，但最后从不付诸行动，纯粹是只纸老虎、虚张声势。", literalMeaning: "狗对着干芭蕉叶狂吠（风吹枯叶沙沙响就把狗吓得狂叫）", notes: "形容只会虚张声势叫嚣威胁、实际毫无胆量与本领的人。", tags: "成语,讽刺,比喻" },
+              { id: "idm_025", sortOrder: 25, thaiPhrase: "ปิดทองหลังพระ", chineseMeaning: "默默无闻 / 做好事不留名", thaiExample: "เขาทำงานเบื้องหลังมาหลายปี ไม่เคยเรียกร้องชื่อเสียงหรือคำชม เป็นการปิดทองหลังพระอย่างแท้จริง", exampleTranslation: "他在幕后默默奉献多年，从不索求名声与赞赏，真正做到了默默无闻、做好事不留名。", literalMeaning: "在佛像的背后贴金箔", notes: "泰国传统文化名句：人们拜佛多往佛前贴金，而往佛像背后贴金虽然无人得见，却是纯粹的奉献与功德。", tags: "成语,美德,奉献" },
+              { id: "idm_026", sortOrder: 26, thaiPhrase: "เห็นช้างขี้ ขี้ตามช้าง", chineseMeaning: "盲目攀比 / 东施效颦", thaiExample: "เห็นเพื่อนซื้อของแพงก็รีบซื้อบ้าง ทั้งที่รายได้ตัวเองไม่พอ แบบนี้คือเห็นช้างขี้ ขี้ตามช้าง", exampleTranslation: "看到朋友买昂贵物品就急着跟着买，哪怕自己收入根本不够，这就是盲目攀比。", literalMeaning: "看见大象拉屎，自己也跟着像大象那样拉大坨", notes: "形象比喻见别人富有奢华便盲目跟风攀比，最终招致经济窘迫。", tags: "谚语,攀比,警示" },
+              { id: "idm_027", sortOrder: 27, thaiPhrase: "ขี่หลังเสือ", chineseMeaning: "骑虎难下", thaiExample: "เขาลงทุนไปมากแล้ว แม้จะรู้ว่ามีความเสี่ยง ก็หยุดไม่ได้ เพราะตอนนี้เหมือนขี่หลังเสือ จะลงก็ยาก", exampleTranslation: "他已经投入了太多资金，即使明知有很大风险也停不下来了，因为现在就像骑在虎背上，想下也难了。", literalMeaning: "骑在老虎背上", notes: "比喻事情进行到危险或困难境地，已无法中途停手或脱身。", tags: "成语,困境,比喻" },
+              { id: "idm_028", sortOrder: 28, thaiPhrase: "กบในกะลาครอบ", chineseMeaning: "井底之蛙（见识短浅）", thaiExample: "ถ้าเอาแต่คิดว่าความรู้ของตัวเองเพียงพอ และไม่ยอมเปิดใจเรียนรู้สิ่งใหม่ ๆ สุดท้ายก็จะกลายเป็นกบในกะลาครอบ", exampleTranslation: "如果总自以为学识已经足够、不愿敞开心扉学习新事物，最终就会变成井底之蛙。", literalMeaning: "扣在椰子壳下的青蛙", notes: "泰国对应中文“井底之蛙”的成语，比喻眼界狭隘、孤陋寡闻还自高自大。", tags: "成语,见识,警示" },
+              { id: "idm_029", sortOrder: 29, thaiPhrase: "จับแพะชนแกะ", chineseMeaning: "生搬硬套 / 凑合应对 / 滥竽充数", thaiExample: "ตำรวจยังหาหลักฐานไม่ได้ แต่กลับรีบจับคนมารับผิด แบบนี้ก็เหมือนจับแพะชนแกะ", exampleTranslation: "警方还没找到确凿证据，就急着抓人来顶罪，这简直就是生拉硬拽、胡乱拼凑。", literalMeaning: "抓来山羊去与绵羊相撞拼凑", notes: "比喻在没有合适办法或资源时，把不搭界的东西生硬拼凑在一起敷衍了事。", tags: "成语,比喻,处事" }
+            ];
+
+            try {
+                const res = await fetch('/api/idioms/import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        items: defaultSeedIdioms,
+                        replaceAll: true
+                    })
+                });
+
+                if (!res.ok) throw new Error('重置失败');
+                showToast('已成功恢复出厂 29 条预设熟语', 'success');
+                await loadIdioms();
+            } catch (err) {
+                console.error(err);
+                showToast('重置失败', 'error');
+            }
+        }
+
+        async function clearAllData() {
+            if (!confirm("【警告】：确定要清空全部熟语数据吗？此操作不可逆！")) return;
+            if (!confirm("请再次确认是否要清空所有数据？")) return;
+
+            try {
+                for (const it of idiomsList) {
+                    await fetch(`/api/idioms/${it.id}`, { method: 'DELETE' });
+                }
+                showToast('所有数据已清空', 'info');
+                selectedIdiomId = null;
+                await loadIdioms();
+            } catch (err) {
+                console.error(err);
+                showToast('清空失败', 'error');
+            }
+        }
+
+        // ==========================================
+        // TAB SWITCHING
+        // ==========================================
+        function switchConsoleTab(tab) {
+            ['form', 'markdown', 'table', 'maintenance'].forEach(t => {
+                const btn = document.getElementById(`tabBtn${capitalize(t)}`);
+                const content = document.getElementById(`tabContent${capitalize(t)}`);
+                if (t === tab) {
+                    btn.classList.add('active');
+                    content.classList.remove('hidden');
+                } else {
+                    btn.classList.remove('active');
+                    content.classList.add('hidden');
+                }
+            });
+        }
+
+        function capitalize(s) {
+            return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+
+        // ==========================================
+        // TOAST NOTIFICATION
+        // ==========================================
+        let toastTimer = null;
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toastNotification');
+            const txt = document.getElementById('toastMessage');
+            const icon = document.getElementById('toastIcon');
+
+            txt.textContent = msg;
+            if (type === 'error') {
+                icon.className = 'ph-bold ph-warning-circle text-rose-400 text-base';
+            } else if (type === 'info') {
+                icon.className = 'ph-bold ph-info text-sky-400 text-base';
+            } else {
+                icon.className = 'ph-bold ph-check-circle text-emerald-400 text-base';
+            }
+
+            toast.classList.remove('hidden');
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3500);
+        }
+
+        // ==========================================
+        // HELPERS
+        // ==========================================
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function escapeSingleQuotes(str) {
+            if (!str) return '';
+            return str.replace(/'/g, "\\'").replace(/\n/g, ' ');
+        }
+
+        // Start
+        window.addEventListener('DOMContentLoaded', () => {
+            loadIdioms();
+        });
+    </script>
+</body>
+</html>

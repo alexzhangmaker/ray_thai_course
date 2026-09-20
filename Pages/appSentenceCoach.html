@@ -1,0 +1,3593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语句型教练 - vCourse.ThaiNotes</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+Thai:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        thaiBlue: '#2563EB',      // Primary (#2563EB)
+                        thaiGreen: '#16A34A',     // Success (#16A34A)
+                        thaiRed: '#DC2626',       // Danger/Warning (#DC2626)
+                        bgMain: '#F1F5F9',        // Main bg (#F1F5F9)
+                        bgCard: '#FFFFFF',        // Card bg (#FFFFFF)
+                        borderGrey: '#E2E8F0',    // Separator (#E2E8F0)
+                        textMain: '#1E293B',      // Main text (#1E293B)
+                        textSec: '#64748B',       // Secondary (#64748B)
+                        textMuted: '#94A3B8'      // Muted (#94A3B8)
+                    },
+                    fontFamily: {
+                        sans: ['"Outfit"', '"Noto Serif Thai"', '"Noto Sans SC"', 'sans-serif'],
+                        thai: ['"Noto Serif Thai"', '"Noto Sans Thai"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Outfit', 'Noto Serif Thai', 'Noto Sans SC', sans-serif;
+            background-color: #F1F5F9;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #selectionToolbar {
+            position: absolute;
+            z-index: 50;
+            background-color: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(51, 65, 85, 0.8);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+        }
+
+        #querySidebar {
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .writing-mode-vertical {
+            writing-mode: vertical-rl;
+            text-combine-upright: all;
+        }
+
+        .font-thai {
+            font-family: 'Noto Serif Thai', 'Noto Sans Thai', sans-serif;
+        }
+
+        .font-thai-clickable {
+            cursor: pointer;
+            transition: color 0.15s ease-in-out;
+        }
+        .font-thai-clickable:hover {
+            color: #2563EB;
+        }
+        .font-thai-clickable:hover .fa-volume-up {
+            color: #2563EB;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Custom scrollbars */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.02);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(37, 99, 235, 0.15);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(37, 99, 235, 0.3);
+        }
+
+        /* Desktop Layout Spacing & Card System */
+        .card {
+            background: #FFFFFF;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+            border: 1px solid #E2E8F0;
+        }
+        .card-title-helper {
+            font-size: 14px;
+            color: #64748B;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        
+        /* Thai Text formatting */
+        .thai-text {
+            font-size: 1.6rem;
+            line-height: 2.2;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+        /* Question body styling matching 17px, line height 1.7, dark grey */
+        .question-body {
+            font-size: 17px;
+            color: #2C3E50;
+            line-height: 1.7;
+            font-weight: 500;
+        }
+        .token-subject {
+            background: linear-gradient(120deg, #e0f2fe 0%, #fee2e2 100%);
+            border-bottom: 2px solid #38bdf8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .token-verb, .token-action {
+            background: linear-gradient(120deg, #fee2e2 0%, #fce7f3 100%);
+            border-bottom: 2px solid #f43f5e;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+        .token-purpose, .token-prepositional_phrase {
+            background: linear-gradient(120deg, #dbeafe 0%, #e0f2fe 100%);
+            border-bottom: 2px solid #3b82f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .token-subject:hover, .token-verb:hover, .token-action:hover, .token-purpose:hover, .token-prepositional_phrase:hover {
+            transform: scale(1.02);
+        }
+        
+        /* Exercise Core Layout Inputs */
+        .exercise-input, .exercise-textarea {
+            width: 100%;
+            height: 48px; /* input height 48px */
+            padding: 12px;
+            border: 2px solid #E2E8F0;
+            border-radius: 8px;
+            font-size: 16px; /* input font 16px */
+            margin: 12px 0 16px 0;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .exercise-textarea { min-height: 80px; height: auto; }
+        .exercise-input:focus, .exercise-textarea:focus {
+            outline: none;
+            border-color: #2563EB;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .exercise-btn {
+            background: #2563EB;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            height: 40px;
+        }
+        .exercise-btn:hover { background: #1D4ED8; }
+        .exercise-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .exercise-btn.secondary { 
+            background: transparent; 
+            border: 1.5px solid #64748B; 
+            color: #1E293B; 
+        }
+        .exercise-btn.secondary:hover { background: #F1F5F9; }
+        
+        .feedback {
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        .feedback.success { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
+        .feedback.error { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+        .feedback.partial { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+        
+        .hint-box {
+            background: #FFFBEB;
+            border-left: 4px solid #F59E0B;
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #78350F;
+        }
+
+        /* Red Wavy Underline for Error Correction */
+        .wavy-underline {
+            text-decoration: underline wavy #DC2626;
+            text-decoration-thickness: 1.5px;
+            text-underline-offset: 6px;
+        }
+
+        /* Chips styling */
+        .word-builder-zone {
+            min-height: 60px;
+            background: #F8FAFC;
+            border: 2px dashed #CBD5E1;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .word-block {
+            background: white;
+            border: 1px solid #CBD5E1;
+            color: #1E293B;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.15s;
+            user-select: none;
+        }
+        .word-block:hover {
+            border-color: #2563EB;
+            color: #2563EB;
+        }
+        .word-block.in-selected {
+            background: #2563EB;
+            border-color: #2563EB;
+            color: white;
+        }
+
+        /* Multiple Choice items */
+        .mc-option {
+            background: #F8FAFC;
+            border: 2px solid #E2E8F0;
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.15s;
+            text-align: left;
+            width: 100%;
+            display: flex;
+            align-items: center;
+        }
+        .mc-option:hover:not(:disabled) {
+            border-color: #2563EB;
+            background: #eff6ff;
+            color: #2563EB;
+        }
+        .mc-option.selected {
+            border-color: #2563EB;
+            background: #eff6ff;
+            color: #2563EB;
+        }
+        .mc-option.correct {
+            border-color: #16A34A;
+            background: #D1FAE5;
+            color: #065F46;
+        }
+        .mc-option.wrong {
+            border-color: #DC2626;
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        #leftSidebar {
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+        }
+        #leftSidebar.collapsed {
+            margin-left: -280px;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .pattern-nav-btn {
+            transition: all 0.15s ease-out;
+        }
+        .pattern-nav-btn .pattern-title-wrap {
+            min-width: 0;
+        }
+        .pattern-nav-btn:hover .pattern-name-text {
+            white-space: normal;
+            word-break: break-word;
+            overflow: visible;
+            text-overflow: clip;
+        }
+    </style>
+</head>
+<body class="text-slate-800 bg-[#F1F5F9] flex overflow-hidden">
+
+    <!-- Floating Word Query Bubble -->
+    <div id="selectionToolbar" class="rounded-full px-4 py-2 text-white items-center select-none hidden">
+        <button id="floatingQueryBtn" class="flex items-center gap-1.5 hover:text-blue-300 transition text-xs font-semibold">
+            <i class="fas fa-search text-[10px]"></i> 查询单词
+        </button>
+    </div>
+
+    <!-- Left Column: Fixed Navigation Sidebar (280px) -->
+    <aside id="leftSidebar" class="w-[280px] bg-white border-r border-[#E2E8F0] p-6 flex flex-col h-full shrink-0 overflow-y-auto custom-scrollbar">
+        <!-- Logo & Title -->
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-xs shrink-0">
+                <i class="ph ph-tree-structure text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-[28px] font-bold text-[#1A1A1A] leading-tight font-sans">句型教练</h1>
+                <p class="text-[10px] text-slate-500 font-medium tracking-wide uppercase">SentenceCoach</p>
+            </div>
+        </div>
+
+        <!-- Progress Overview -->
+        <div class="bg-[#F8FAFC] border border-[#E2E8F0] p-4 rounded-xl mb-6">
+            <div class="flex justify-between items-center text-xs font-bold text-slate-500 mb-1.5">
+                <span>总课程学习进度</span>
+                <span id="globalProgressPercent">0%</span>
+            </div>
+            <div class="w-full bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
+                <div id="globalProgressBar" class="bg-[#2563EB] h-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Action Buttons: History & Settings -->
+        <div class="grid grid-cols-2 gap-2 mb-6">
+            <button id="openHistoryBtn" class="flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-slate-200 py-2.5 rounded-xl text-xs font-semibold text-slate-700 transition cursor-pointer">
+                <i class="ph ph-clock-counter-clockwise text-base text-slate-500"></i>
+                <span>查词历史</span>
+            </button>
+            <button id="openSettingsSidebarBtn" onclick="openSettingsModal()" class="flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-slate-200 py-2.5 rounded-xl text-xs font-semibold text-slate-700 transition cursor-pointer">
+                <i class="ph ph-gear text-base text-slate-500"></i>
+                <span>设置</span>
+            </button>
+        </div>
+
+        <!-- Folding Course Accordion Container -->
+        <div id="courseAccordionContainer" class="flex-grow space-y-4">
+            <!-- Rendered dynamically -->
+        </div>
+    </aside>
+
+    <!-- Right Column: Main content display panel -->
+    <main class="flex-grow flex flex-col h-full overflow-hidden bg-[#F1F5F9] p-8 relative">
+        
+        <!-- Header / Breadcrumbs Bar -->
+        <div class="flex items-center justify-between mb-4 shrink-0 select-none font-sans">
+            <div class="flex items-center gap-2">
+                <!-- Left Navigation Toggle Button (Placed to the left of "首页") -->
+                <button 
+                    id="toggleLeftSidebarBtn" 
+                    onclick="toggleLeftSidebar()"
+                    class="p-1.5 -ml-1 text-slate-500 hover:text-slate-800 hover:bg-slate-200/70 rounded-lg transition duration-150 flex items-center justify-center cursor-pointer"
+                    title="展开/收起左侧导航"
+                >
+                    <i class="ph-bold ph-sidebar-simple text-base" id="leftSidebarToggleIcon"></i>
+                </button>
+
+                <!-- Breadcrumbs Navigation Trail -->
+                <div id="breadcrumbTrail" class="text-xs text-[#64748B] flex items-center gap-1.5 font-medium">
+                    <span class="cursor-pointer hover:underline" onclick="resetToHome()">首页</span>
+                </div>
+            </div>
+
+            <!-- Global Action Buttons (Settings, etc.) -->
+            <div class="flex items-center gap-2">
+                <button 
+                    id="openSettingsBtn"
+                    onclick="openSettingsModal()"
+                    class="flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-xl border border-slate-200 shadow-2xs transition active:scale-95 cursor-pointer"
+                    title="应用设置"
+                >
+                    <i class="ph-bold ph-gear text-sm text-[#2563EB]"></i>
+                    <span>设置</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Lower Panel: Workspace Learning Area (Scrollable) -->
+        <div id="workspaceArea" class="flex-grow overflow-y-auto custom-scrollbar space-y-6 pr-2">
+            <!-- Empty state layout -->
+            <div class="text-center py-20 flex flex-col items-center card">
+                <div class="h-16 w-16 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center mb-4 text-[#2563EB] text-3xl shadow-inner">
+                    🏫
+                </div>
+                <h2 class="text-xl font-bold text-slate-800">欢迎进入泰语句型教练</h2>
+                <p class="text-xs text-slate-500 mt-2 leading-relaxed max-w-md mx-auto">
+                    请在左侧导航栏展开科目，并选择一个课时。我们将为你加载该章节下所有关联的泰语句型，进入交互式公式理解与练习。
+                </p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Sidebar: Right query dictionary toggler -->
+    <aside 
+        id="querySidebar" 
+        class="h-full bg-white border-l border-[#E2E8F0] flex flex-col transition-all duration-300 shrink-0 relative overflow-visible w-0"
+    >
+        <!-- Toggle button: floats at the left edge of the sidebar -->
+        <button 
+            id="toggleQuerySidebarBtn"
+            class="absolute left-0 top-1/3 -translate-x-full bg-[#2563EB] text-white py-4 px-2.5 rounded-l-xl shadow-xl hover:bg-blue-700 transition flex flex-col items-center gap-1.5 border border-r-0 border-blue-400 select-none cursor-pointer z-50"
+        >
+            <i class="fas fa-chevron-left transition-transform duration-300" id="querySidebarToggleIcon"></i>
+            <span class="text-[10px] font-black tracking-widest writing-mode-vertical mt-0.5">生词释义</span>
+        </button>
+
+        <!-- Inner contents -->
+        <div class="w-80 md:w-96 flex flex-col h-full overflow-hidden opacity-0 pointer-events-none transition-opacity duration-200" id="querySidebarInner">
+            <div class="p-5 border-b border-[#E2E8F0] flex justify-between items-center bg-gray-50 flex-shrink-0">
+                <h3 class="text-sm font-bold text-gray-800 flex items-center font-sans">
+                    <i class="ph-fill ph-book-open text-[#2563EB] mr-2 text-lg"></i>
+                    <span>生词查询</span>
+                </h3>
+                <button id="closeQuerySidebarBtn" class="text-gray-400 hover:text-gray-600 p-1 cursor-pointer">
+                    <i class="ph ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Manual query -->
+            <div class="p-4 border-b border-gray-100 bg-white flex-shrink-0 font-sans space-y-2.5">
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5 text-[11px] text-slate-500 font-semibold shrink-0">
+                        <i class="ph ph-key text-blue-600"></i>
+                        <span>Auth Token:</span>
+                    </div>
+                    <input 
+                        type="password" 
+                        id="workerAuthToken" 
+                        placeholder="Worker AI 访问密钥 (Bearer Token)" 
+                        autocomplete="off"
+                        class="w-full text-[11px] bg-slate-50 border border-gray-200 rounded-lg px-2.5 py-1 focus:outline-none focus:border-blue-500 font-mono text-slate-700 placeholder-slate-400"
+                    />
+                </div>
+                <div class="flex gap-2">
+                    <div class="relative flex-grow">
+                        <input 
+                            type="text" 
+                            id="manualQueryInput"
+                            placeholder="手动查询泰语生词..." 
+                            class="w-full text-xs bg-slate-50 border border-gray-200 rounded-xl pl-8 pr-3 py-2.5 focus:outline-none focus:border-[#2563EB]"
+                        />
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400 text-xs"></i>
+                    </div>
+                    <button 
+                        id="manualQueryBtn"
+                        class="bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-xl transition active:scale-95 flex items-center justify-center shrink-0"
+                    >
+                        查询
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search logs list -->
+            <div id="sidebarListContainer" class="flex-grow overflow-y-auto p-4 space-y-4 custom-scrollbar"></div>
+
+            <!-- Empty state -->
+            <div id="sidebarEmptyState" class="flex-grow flex flex-col items-center justify-center p-6 text-slate-455 text-center select-none font-sans bg-white">
+                <i class="fas fa-search text-3xl mb-3 text-slate-300"></i>
+                <p class="text-xs">在句型中双击或选中任何泰语词汇</p>
+                <p class="text-xs mt-1">并在弹出的气泡中点击</p>
+                <p class="text-xs font-bold text-[#2563EB] mt-1">“查询单词”</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Query Dialog dialog modal -->
+    <dialog id="historyDialog" class="rounded-2xl shadow-2xl p-0 border border-slate-100 max-w-lg w-full backdrop:bg-black/50 overflow-hidden">
+        <div class="flex flex-col h-[500px] bg-white font-sans">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                    <i class="ph ph-clock text-blue-650 text-xl"></i>
+                    <span>生词查询历史记录</span>
+                </h3>
+                <button id="closeHistoryDialogBtn" class="text-slate-455 hover:text-slate-750 p-1 cursor-pointer">
+                    <i class="ph ph-x text-xl"></i>
+                </button>
+            </div>
+
+            <div class="p-6 flex-grow overflow-y-auto space-y-4 bg-slate-50/50 custom-scrollbar" id="dialogHistoryList">
+                <!-- Loaded dynamically -->
+            </div>
+
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center shrink-0">
+                <button id="clearHistoryBtn" class="text-[#DC2626] hover:text-red-800 text-xs font-semibold flex items-center gap-1">
+                    <i class="ph ph-trash"></i>
+                    <span>清空历史记录</span>
+                </button>
+                <button id="closeHistoryFooterBtn" class="bg-[#2563EB] text-white px-5 py-2 rounded-xl hover:bg-blue-700 text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- App Settings Dialog modal -->
+    <dialog id="settingsDialog" class="rounded-2xl shadow-2xl p-0 border border-slate-100 max-w-lg w-full backdrop:bg-black/50 overflow-hidden font-sans">
+        <div class="flex flex-col bg-white">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2 text-base">
+                    <i class="ph-bold ph-gear text-[#2563EB] text-xl"></i>
+                    <span>句型教练偏好设置</span>
+                </h3>
+                <button id="closeSettingsDialogBtn" onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+                    <i class="ph ph-x text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="p-6 space-y-4">
+                <!-- Toggle: Review Step 3 Practice -->
+                <div class="flex items-center justify-between p-4 bg-slate-50 border border-slate-200/80 rounded-2xl hover:border-blue-200 transition">
+                    <div class="space-y-1 pr-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-bold text-slate-800">复习句型时包含第3步（交互练习）</span>
+                        </div>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            默认关闭。关闭时，复习已完成句型将跳过交互练习，完成例句学习后可直接进入下一个句型。
+                        </p>
+                    </div>
+                    <!-- Switch Toggle -->
+                    <label class="relative inline-flex items-center cursor-pointer select-none shrink-0">
+                        <input type="checkbox" id="settingShowReviewStep3" class="sr-only peer" onchange="handleSettingChange('showReviewStep3', this.checked)">
+                        <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2563EB]"></div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center shrink-0">
+                <span class="text-[11px] text-slate-400 flex items-center gap-1">
+                    <i class="ph ph-database text-xs"></i>
+                    <span>配置已存储至本地 IndexedDB</span>
+                </span>
+                <button onclick="closeSettingsModal()" class="bg-[#2563EB] text-white px-5 py-2 rounded-xl hover:bg-blue-700 text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition cursor-pointer">
+                    完成
+                </button>
+            </div>
+        </div>
+    </dialog>
+
+
+    <!-- Pure Javascript App Logic -->
+    <script>
+        // Global Application State
+        const state = {
+            courses: [],
+            lessons: [],
+            allPatterns: [],        // All sentence pattern records
+            coursePatterns: [],     // All course-sentence-pattern associations
+            selectedCourseId: null,
+            selectedLessonId: null,
+            selectedPattern: null,  // Active pattern object (CEFR patternContent)
+            currentExampleIndex: 0, // Active example card index in Step 2
+            expandedCourses: {},    // Tracks expanded course accordions in sidebar
+            expandedLessons: {},    // Tracks expanded lesson accordions in sidebar
+            activeTab: 'examples',   // examples, practice, json
+            queryHistory: [],
+            querySidebarOpen: false,
+            selectedText: ''
+        };
+
+        // Cache user answer state dynamically
+        const userProgress = {};
+
+        // App Settings Configuration
+        const defaultSettings = {
+            showReviewStep3: false // 控制复习句型时的第三步是否显示的开关，默认状态是关闭
+        };
+        let appSettings = { ...defaultSettings };
+
+        // DOM references
+        const courseAccordionContainer = document.getElementById('courseAccordionContainer');
+        const breadcrumbTrail = document.getElementById('breadcrumbTrail');
+        const workspaceArea = document.getElementById('workspaceArea');
+
+        const querySidebar = document.getElementById('querySidebar');
+        const querySidebarInner = document.getElementById('querySidebarInner');
+        const toggleQuerySidebarBtn = document.getElementById('toggleQuerySidebarBtn');
+        const querySidebarToggleIcon = document.getElementById('querySidebarToggleIcon');
+        const closeQuerySidebarBtn = document.getElementById('closeQuerySidebarBtn');
+        const sidebarListContainer = document.getElementById('sidebarListContainer');
+        const sidebarEmptyState = document.getElementById('sidebarEmptyState');
+        const manualQueryInput = document.getElementById('manualQueryInput');
+        const manualQueryBtn = document.getElementById('manualQueryBtn');
+
+        const selectionToolbar = document.getElementById('selectionToolbar');
+        const floatingQueryBtn = document.getElementById('floatingQueryBtn');
+
+        const historyDialog = document.getElementById('historyDialog');
+        const closeHistoryDialogBtn = document.getElementById('closeHistoryDialogBtn');
+        const closeHistoryFooterBtn = document.getElementById('closeHistoryFooterBtn');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const dialogHistoryList = document.getElementById('dialogHistoryList');
+
+        const settingsDialog = document.getElementById('settingsDialog');
+
+        // ==========================================
+        // IndexedDB 存储逻辑 (查词历史 & 句型学习进度与自评 & 应用配置)
+        // ==========================================
+        const DB_NAME = 'ThaiReadingCoachDB';
+        const DB_VERSION = 2;
+        const STORE_NAME = 'wordQueries';
+
+        const SENTENCE_DB_NAME = 'SentenceCoachDB';
+        const SENTENCE_DB_VERSION = 2;
+        const SENTENCE_STORE_NAME = 'patternProgress';
+        const SETTINGS_STORE_NAME = 'appSettings';
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                    }
+                    if (!db.objectStoreNames.contains('sentenceTags')) {
+                        const store = db.createObjectStore('sentenceTags', { keyPath: 'id' });
+                        store.createIndex('articleId', 'articleId', { unique: false });
+                        store.createIndex('article_paragraph_sentence', ['articleId', 'paragraphId', 'sentenceId'], { unique: false });
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        function initSentenceDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(SENTENCE_DB_NAME, SENTENCE_DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(SENTENCE_STORE_NAME)) {
+                        db.createObjectStore(SENTENCE_STORE_NAME, { keyPath: 'patternId' });
+                    }
+                    if (!db.objectStoreNames.contains(SETTINGS_STORE_NAME)) {
+                        db.createObjectStore(SETTINGS_STORE_NAME, { keyPath: 'key' });
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function loadAppSettingsFromDB() {
+            try {
+                const db = await initSentenceDB();
+                return new Promise((resolve) => {
+                    if (!db.objectStoreNames.contains(SETTINGS_STORE_NAME)) {
+                        resolve(appSettings);
+                        return;
+                    }
+                    const transaction = db.transaction([SETTINGS_STORE_NAME], 'readonly');
+                    const store = transaction.objectStore(SETTINGS_STORE_NAME);
+                    const request = store.getAll();
+                    request.onsuccess = (e) => {
+                        const records = e.target.result || [];
+                        records.forEach(rec => {
+                            if (rec && rec.key !== undefined) {
+                                appSettings[rec.key] = rec.value;
+                            }
+                        });
+                        syncSettingsUI();
+                        resolve(appSettings);
+                    };
+                    request.onerror = () => resolve(appSettings);
+                });
+            } catch (err) {
+                console.error('Failed to load settings from IndexedDB:', err);
+                return appSettings;
+            }
+        }
+
+        async function saveAppSettingToDB(key, value) {
+            appSettings[key] = value;
+            try {
+                const db = await initSentenceDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([SETTINGS_STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(SETTINGS_STORE_NAME);
+                    const putReq = store.put({ key, value, updatedAt: Date.now() });
+                    putReq.onsuccess = () => resolve(true);
+                    putReq.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to save setting to IndexedDB:', err);
+            }
+        }
+
+        function syncSettingsUI() {
+            const toggleShowReviewStep3 = document.getElementById('settingShowReviewStep3');
+            if (toggleShowReviewStep3) {
+                toggleShowReviewStep3.checked = !!appSettings.showReviewStep3;
+            }
+        }
+
+        window.openSettingsModal = () => {
+            syncSettingsUI();
+            if (settingsDialog) settingsDialog.showModal();
+        };
+
+        window.closeSettingsModal = () => {
+            if (settingsDialog) settingsDialog.close();
+        };
+
+        window.handleSettingChange = async (key, value) => {
+            await saveAppSettingToDB(key, value);
+            if (state.selectedPattern) {
+                renderSidebar();
+                renderWorkspace();
+            }
+        };
+
+        async function loadAllPatternProgressFromDB() {
+            try {
+                const db = await initSentenceDB();
+                return new Promise((resolve) => {
+                    const transaction = db.transaction([SENTENCE_STORE_NAME], 'readonly');
+                    const store = transaction.objectStore(SENTENCE_STORE_NAME);
+                    const request = store.getAll();
+                    request.onsuccess = (e) => {
+                        const records = e.target.result || [];
+                        records.forEach(rec => {
+                            if (rec && rec.patternId) {
+                                const pId = rec.patternId;
+                                if (rec.exampleScore !== undefined && rec.exampleScore !== null) {
+                                    userProgress[`${pId}-example-score`] = rec.exampleScore;
+                                }
+                                if (rec.practiceScore !== undefined && rec.practiceScore !== null) {
+                                    userProgress[`${pId}-practice-score`] = rec.practiceScore;
+                                }
+                                if (rec.step1Done) userProgress[`${pId}-step1-done`] = true;
+                                if (rec.step2Done) userProgress[`${pId}-step2-done`] = true;
+                                if (rec.step3Done) userProgress[`${pId}-step3-done`] = true;
+                                if (rec.isCompleted) userProgress[`${pId}-pattern-completed`] = true;
+                            }
+                        });
+                        resolve(records);
+                    };
+                    request.onerror = () => resolve([]);
+                });
+            } catch (err) {
+                console.error('Failed to load pattern progress from IndexedDB:', err);
+                return [];
+            }
+        }
+
+        async function savePatternProgressToDB(patternId, partialData) {
+            try {
+                const db = await initSentenceDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([SENTENCE_STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(SENTENCE_STORE_NAME);
+                    const getReq = store.get(patternId);
+                    getReq.onsuccess = () => {
+                        const existing = getReq.result || { patternId };
+                        const merged = { ...existing, ...partialData, updatedAt: Date.now() };
+                        const putReq = store.put(merged);
+                        putReq.onsuccess = () => resolve(true);
+                        putReq.onerror = (e) => reject(e.target.error);
+                    };
+                    getReq.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to save pattern progress to IndexedDB:', err);
+            }
+        }
+
+        async function savePatternScoreToDB(patternId, type, score) {
+            const data = {};
+            if (type === 'example') {
+                data.exampleScore = score;
+            } else if (type === 'practice') {
+                data.practiceScore = score;
+            }
+            return savePatternProgressToDB(patternId, data);
+        }
+
+        async function savePatternStepToDB(patternId, step, isCompleted = false) {
+            const data = {};
+            if (step >= 1) data.step1Done = true;
+            if (step >= 2) data.step2Done = true;
+            if (step >= 3) data.step3Done = true;
+            if (isCompleted) data.isCompleted = true;
+            return savePatternProgressToDB(patternId, data);
+        }
+
+        async function saveQueryRecord(word, explanations) {
+            try {
+                const db = await initDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const record = { word, explanations, timestamp: Date.now() };
+                    const request = store.add(record);
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to save query log:', err);
+            }
+        }
+
+        async function getQueryHistory() {
+            try {
+                const db = await initDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_NAME], 'readonly');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.getAll();
+                    request.onsuccess = (e) => {
+                        const records = e.target.result || [];
+                        records.sort((a, b) => b.timestamp - a.timestamp);
+                        resolve(records);
+                    };
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to load query log:', err);
+                return [];
+            }
+        }
+
+        async function deleteQueryRecord(id) {
+            try {
+                const db = await initDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.delete(id);
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to delete query log:', err);
+            }
+        }
+
+        async function clearQueryHistory() {
+            try {
+                const db = await initDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.clear();
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to clear query log:', err);
+            }
+        }
+
+        // Helper: get patterns associated with a lesson
+        function getPatternsForLesson(lessonId) {
+            return state.allPatterns.filter(p => p.courses && p.courses.some(c => c.lessonId === lessonId));
+        }
+
+        // --- Fetch initial course directories & patterns ---
+        async function initFetch() {
+            try {
+                // First load all saved settings, scores & progress from IndexedDB
+                await Promise.all([
+                    loadAppSettingsFromDB(),
+                    loadAllPatternProgressFromDB()
+                ]);
+
+                const [resC, resL, resCSP, resP] = await Promise.all([
+                    fetch('/api/courses'),
+                    fetch('/api/lessons'),
+                    fetch('/api/course_sentence_patterns'),
+                    fetch('/api/sentence_patterns')
+                ]);
+                if (resC.ok && resL.ok) {
+                    state.courses = await resC.json();
+                    state.lessons = await resL.json();
+                    if (resCSP && resCSP.ok) {
+                        state.coursePatterns = await resCSP.json();
+                    }
+                    if (resP && resP.ok) {
+                        state.allPatterns = await resP.json();
+                    }
+
+                    // Get lessons that have sentence patterns
+                    const validLessonIds = new Set();
+                    state.allPatterns.forEach(pat => {
+                        if (pat.courses) {
+                            pat.courses.forEach(c => validLessonIds.add(c.lessonId));
+                        }
+                    });
+                    if (validLessonIds.size === 0 && state.coursePatterns) {
+                        state.coursePatterns.forEach(cp => validLessonIds.add(cp.lesson_id));
+                    }
+
+                    const validCourses = state.courses.filter(c => 
+                        state.lessons.some(l => l.course_id === c.id && validLessonIds.has(l.id))
+                    );
+
+                    // Check URL params
+                    const params = new URLSearchParams(window.location.search);
+                    const uuidParam = params.get('uuid') || params.get('patternID') || params.get('patternId');
+                    const lessonIdParam = params.get('lessonID') || params.get('lessonId');
+                    const courseIdParam = params.get('courseID') || params.get('courseId');
+
+                    if (uuidParam) {
+                        await loadPatternByUuid(uuidParam);
+                    } else if (lessonIdParam) {
+                        const lesson = state.lessons.find(l => l.id === lessonIdParam);
+                        if (lesson) {
+                            state.selectedCourseId = lesson.course_id;
+                            state.selectedLessonId = lessonIdParam;
+                            state.expandedCourses[lesson.course_id] = true;
+                            state.selectedPattern = null;
+                        }
+                    } else if (courseIdParam) {
+                        const course = state.courses.find(c => c.id === courseIdParam);
+                        if (course) {
+                            state.selectedCourseId = course.id;
+                            state.expandedCourses[course.id] = true;
+                            const firstLesson = state.lessons.find(l => l.course_id === course.id && validLessonIds.has(l.id)) || state.lessons.find(l => l.course_id === course.id);
+                            if (firstLesson) {
+                                state.selectedLessonId = firstLesson.id;
+                                state.selectedPattern = null;
+                            }
+                        }
+                    } else if (validCourses.length > 0) {
+                        // Default expand first valid course & lesson in grid mode
+                        const firstCourse = validCourses[0];
+                        state.expandedCourses[firstCourse.id] = true;
+                        const firstLesson = state.lessons.find(l => l.course_id === firstCourse.id && validLessonIds.has(l.id));
+                        if (firstLesson) {
+                            state.selectedCourseId = firstCourse.id;
+                            state.selectedLessonId = firstLesson.id;
+                            state.selectedPattern = null;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Backend fetch error:", e);
+            }
+            renderSidebar();
+            renderBreadcrumbs();
+            renderWorkspace();
+            calculateGlobalProgress();
+        }
+
+        // --- Calculate Sidebar & Global Course Progress ---
+        function calculateGlobalProgress() {
+            // Count completed exercises
+            const totalSolved = Object.keys(userProgress).filter(k => k.endsWith('-submitted') || k.endsWith('-correct') || k.endsWith('-score') || k.endsWith('-pattern-completed')).length;
+            const targetScore = totalSolved * 10; // Mock progress factor
+            const progressPercent = Math.min(100, Math.round(targetScore > 0 ? (totalSolved / 25) * 100 : 0));
+            
+            const percentEl = document.getElementById('globalProgressPercent');
+            const barEl = document.getElementById('globalProgressBar');
+            if (percentEl) percentEl.innerText = `${progressPercent}%`;
+            if (barEl) barEl.style.width = `${progressPercent}%`;
+        }
+
+        // --- Exercise & Progress Helpers ---
+        function getPatternExerciseCount(p) {
+            if (!p || !p.exercises) return 0;
+            let count = 0;
+            const ex = p.exercises;
+            if (ex.recognition && ex.recognition.items) count += ex.recognition.items.length;
+            if (ex.fillInBlank && ex.fillInBlank.items) count += ex.fillInBlank.items.length;
+            if (ex.dragAndDrop && ex.dragAndDrop.items) count += ex.dragAndDrop.items.length;
+            if (ex.multipleChoice && ex.multipleChoice.items) count += ex.multipleChoice.items.length;
+            if (ex.translation && ex.translation.items) count += ex.translation.items.length;
+            if (ex.sentenceConstruction && ex.sentenceConstruction.items) count += ex.sentenceConstruction.items.length;
+            if (ex.errorCorrection && ex.errorCorrection.items) count += ex.errorCorrection.items.length;
+            return count;
+        }
+
+        function getLessonStats(lessonId) {
+            const lPats = getPatternsForLesson(lessonId);
+            const total = lPats.length;
+            let completed = 0;
+            let inProgress = 0;
+            lPats.forEach(pat => {
+                const pId = pat.patternContent.id;
+                if (userProgress[`${pId}-pattern-completed`]) {
+                    completed++;
+                } else if (userProgress[`${pId}-step1-done`] || userProgress[`${pId}-step2-done`]) {
+                    inProgress++;
+                }
+            });
+            const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+            return {
+                total,
+                completed,
+                inProgress,
+                notStarted: Math.max(0, total - completed - inProgress),
+                percent
+            };
+        }
+
+        function getPatternStatus(patternId) {
+            const isCompleted = !!userProgress[`${patternId}-pattern-completed`];
+            const exampleScore = userProgress[`${patternId}-example-score`] !== undefined ? userProgress[`${patternId}-example-score`] : null;
+            const practiceScore = userProgress[`${patternId}-practice-score`] !== undefined ? userProgress[`${patternId}-practice-score`] : null;
+
+            if (isCompleted) {
+                return { status: 'completed', label: '已完成', step: 3, exampleScore, practiceScore };
+            }
+            if (userProgress[`${patternId}-step2-done`]) {
+                return { status: 'in_progress', label: '学习中 (第3步)', step: 3, exampleScore, practiceScore };
+            }
+            if (userProgress[`${patternId}-step1-done`]) {
+                return { status: 'in_progress', label: '学习中 (第2步)', step: 2, exampleScore, practiceScore };
+            }
+            return { status: 'not_started', label: '未学习', step: 1, exampleScore, practiceScore };
+        }
+
+        function getScoreDescription(score) {
+            switch(score) {
+                case 0: return '完全未掌握，需重新学习';
+                case 1: return '勉强看懂，需查阅词汇与结构';
+                case 2: return '掌握基本结构，但需要提示';
+                case 3: return '理解大部分内容，表达较熟练';
+                case 4: return '掌握良好，能快速准确理解与运用';
+                case 5: return '完全精通，地道流利无任何障碍';
+                default: return '';
+            }
+        }
+
+        function renderPatternSelfRatingCard(patternId, type) {
+            const isExample = type === 'example';
+            const currentScore = userProgress[`${patternId}-${type}-score`];
+            const hasRated = currentScore !== undefined && currentScore !== null;
+            const title = isExample ? '例句学习掌握度自评' : '交互练习测评表现自评';
+            const subtitle = isExample 
+                ? '请根据对本句型例句的理解程度和跟读熟练度进行自评打分（0-5分）' 
+                : '请根据对本句型练习题的完成质量与掌握信心进行自评打分（0-5分）';
+            const iconClass = isExample ? 'ph-chat-circle-dots text-amber-500' : 'ph-pencil-line text-blue-500';
+            const badgeColor = isExample ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-blue-50 border-blue-200 text-blue-800';
+
+            return `
+                <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs my-6 font-sans">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div class="flex items-start gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-xl shrink-0">
+                                <i class="ph ${iconClass}"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h4 class="font-bold text-slate-800 text-base">${title}</h4>
+                                    ${hasRated ? `
+                                        <span class="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border ${badgeColor}">
+                                            当前自评: ${currentScore} / 5 分 ⭐
+                                        </span>
+                                    ` : `
+                                        <span class="text-[11px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full font-medium">
+                                            未自评
+                                        </span>
+                                    `}
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1 leading-relaxed">${subtitle}</p>
+                            </div>
+                        </div>
+
+                        <!-- 0-5 Rating Buttons -->
+                        <div class="flex items-center gap-1.5 bg-slate-50 p-1.5 rounded-xl border border-slate-200 shrink-0 self-start md:self-auto flex-wrap">
+                            ${[0, 1, 2, 3, 4, 5].map(score => {
+                                const isSelected = hasRated && currentScore === score;
+                                return `
+                                    <button 
+                                        onclick="setPatternScore('${patternId}', '${type}', ${score})"
+                                        title="${score === 0 ? '0分 - 完全未掌握' : `${score}分 - ${getScoreDescription(score)}`}"
+                                        class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer active:scale-95 ${
+                                            isSelected 
+                                                ? (isExample ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/30' : 'bg-[#2563EB] text-white shadow-sm shadow-blue-500/30')
+                                                : 'text-slate-600 hover:bg-white hover:text-slate-900 border border-transparent hover:border-slate-200'
+                                        }"
+                                    >
+                                        <span>${score === 0 ? '0分' : `${score}分`}</span>
+                                        ${score > 0 ? `<i class="ph-fill ph-star text-[11px] ${isSelected ? 'text-white' : 'text-amber-400'}"></i>` : ''}
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+
+                    ${hasRated ? `
+                        <div class="mt-3.5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                            <span class="font-medium text-slate-700">评语参考：${getScoreDescription(currentScore)}</span>
+                            <span class="text-[11px] text-emerald-600 flex items-center gap-1 font-semibold">
+                                <i class="ph-fill ph-check-circle"></i>
+                                <span>已保存至本地 IndexedDB</span>
+                            </span>
+                        </div>
+                    ` : `
+                        <div class="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-400">
+                            💡 点击上方 0-5 分完成打分，评分数据将自动存储在本地并同步呈现在卡片列表中。
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        window.setPatternScore = async (patternId, type, score) => {
+            if (type === 'example') {
+                userProgress[`${patternId}-example-score`] = score;
+            } else if (type === 'practice') {
+                userProgress[`${patternId}-practice-score`] = score;
+            }
+            await savePatternScoreToDB(patternId, type, score);
+            renderWorkspace();
+            renderSidebar();
+        };
+
+        // --- Render left sidebar (Course -> Lesson only) ---
+        function renderSidebar() {
+            const validLessonIds = new Set();
+            state.allPatterns.forEach(pat => {
+                if (pat.courses) {
+                    pat.courses.forEach(c => validLessonIds.add(c.lessonId));
+                }
+            });
+            if (validLessonIds.size === 0 && state.coursePatterns) {
+                state.coursePatterns.forEach(cp => validLessonIds.add(cp.lesson_id));
+            }
+
+            const displayCourses = state.courses.filter(c => 
+                state.lessons.some(l => l.course_id === c.id && validLessonIds.has(l.id))
+            );
+
+            if (displayCourses.length === 0) {
+                courseAccordionContainer.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">暂无包含句型的课程</p>';
+                return;
+            }
+
+            courseAccordionContainer.innerHTML = displayCourses.map(course => {
+                const cLessons = state.lessons.filter(l => l.course_id === course.id && validLessonIds.has(l.id));
+                const isCourseExpanded = state.expandedCourses[course.id];
+                
+                // Calculate solved count in course
+                const solvedInCourse = Object.keys(userProgress).filter(k => k.includes(course.id) && k.endsWith('-submitted')).length;
+                const progressWidth = Math.min(100, Math.round((solvedInCourse / Math.max(1, cLessons.length * 3)) * 100));
+
+                const lessonsListHtml = cLessons.map(lesson => {
+                    const isLessonActive = state.selectedLessonId === lesson.id;
+                    const lessonPatterns = getPatternsForLesson(lesson.id);
+                    const stats = getLessonStats(lesson.id);
+                    const isAllCompleted = stats.total > 0 && stats.completed === stats.total;
+
+                    return `
+                        <button 
+                            onclick="selectLesson('${lesson.id}', '${course.id}')"
+                            title="${(lesson.title || '').replace(/"/g, '&quot;')}"
+                            class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition flex items-center justify-between font-sans cursor-pointer group ${
+                                isLessonActive 
+                                    ? 'bg-blue-50 text-[#2563EB] font-bold border border-blue-200/80 shadow-2xs' 
+                                    : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-transparent'
+                            }"
+                        >
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <i class="ph ${isAllCompleted ? 'ph-check-circle-fill text-emerald-500' : 'ph-file-text'} text-base shrink-0 ${isLessonActive && !isAllCompleted ? 'text-[#2563EB]' : (isAllCompleted ? 'text-emerald-500' : 'text-slate-400 group-hover:text-slate-600')}"></i>
+                                <span class="truncate">${lesson.title}</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <span class="text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                                    isLessonActive 
+                                        ? 'bg-blue-200/60 text-[#2563EB] font-bold' 
+                                        : (isAllCompleted ? 'bg-emerald-100 text-emerald-700 font-bold' : 'bg-slate-200/70 text-slate-500')
+                                }">
+                                    ${lessonPatterns.length} 句型
+                                </span>
+                                <i class="ph ph-caret-right text-xs shrink-0 ${isLessonActive ? 'text-[#2563EB]' : 'text-slate-300 group-hover:text-slate-400'}"></i>
+                            </div>
+                        </button>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="border border-[#E2E8F0] rounded-xl overflow-hidden bg-white shadow-xs">
+                        <button 
+                            onclick="toggleCourseAccordion('${course.id}')" 
+                            class="w-full flex flex-col p-4 bg-slate-50/50 hover:bg-slate-50 transition border-b border-[#E2E8F0] cursor-pointer"
+                        >
+                            <div class="w-full flex items-center justify-between">
+                                <div class="flex items-center gap-2.5 text-left">
+                                    <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-[#2563EB]">
+                                        <i class="ph ph-folder-open text-base"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-[#2C3E50] text-[15px]">${course.name}</h3>
+                                        <span class="text-[12px] text-[#7F8C8D] font-medium">${cLessons.length} 个课时</span>
+                                    </div>
+                                </div>
+                                <i class="ph ph-caret-down transition-transform duration-300 text-slate-450 text-xs ${isCourseExpanded ? 'transform rotate-180' : ''}"></i>
+                            </div>
+                            <!-- Course card bottom progress bar -->
+                            <div class="w-full bg-[#E2E8F0] h-1 rounded-full overflow-hidden mt-3.5">
+                                <div class="bg-[#2563EB] h-full transition-all duration-300" style="width: ${progressWidth}%"></div>
+                            </div>
+                        </button>
+                        
+                        ${isCourseExpanded ? `
+                            <div class="p-2 space-y-1 bg-white">
+                                ${lessonsListHtml.length > 0 ? lessonsListHtml : '<p class="text-[10px] text-slate-400 text-center py-3">暂无课时</p>'}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.toggleCourseAccordion = (courseId) => {
+            state.expandedCourses[courseId] = !state.expandedCourses[courseId];
+            renderSidebar();
+        };
+
+        // --- Step-by-Step Workflow Helpers ---
+        function getPatternMaxUnlockedStep(patternId) {
+            const hideStep3 = !appSettings.showReviewStep3;
+            if (hideStep3) {
+                if (userProgress[`${patternId}-step1-done`] || userProgress[`${patternId}-pattern-completed`]) {
+                    return 2;
+                }
+                return 1;
+            }
+            if (userProgress[`${patternId}-pattern-completed`] || userProgress[`${patternId}-step2-done`]) {
+                return 3;
+            }
+            if (userProgress[`${patternId}-step1-done`]) {
+                return 2;
+            }
+            return 1;
+        }
+
+        window.goToPatternStep = (stepNum) => {
+            if (!state.selectedPattern) return;
+            const pId = state.selectedPattern.id;
+            const hideStep3 = !appSettings.showReviewStep3;
+            if (stepNum === 3 && hideStep3) {
+                return;
+            }
+            const maxStep = getPatternMaxUnlockedStep(pId);
+            const isCompleted = !!userProgress[`${pId}-pattern-completed`];
+            if (stepNum <= maxStep || isCompleted) {
+                state.currentStep = stepNum;
+                renderWorkspace();
+            }
+        };
+
+        window.completeStep1 = async () => {
+            if (!state.selectedPattern) return;
+            const pId = state.selectedPattern.id;
+            userProgress[`${pId}-step1-done`] = true;
+            state.currentStep = 2;
+            state.currentExampleIndex = 0;
+            await savePatternStepToDB(pId, 1);
+            renderSidebar();
+            renderWorkspace();
+        };
+
+        window.completeStep2 = async () => {
+            if (!state.selectedPattern) return;
+            const pId = state.selectedPattern.id;
+            userProgress[`${pId}-step1-done`] = true;
+            userProgress[`${pId}-step2-done`] = true;
+
+            const hideStep3 = !appSettings.showReviewStep3;
+            if (hideStep3) {
+                userProgress[`${pId}-pattern-completed`] = true;
+                await savePatternStepToDB(pId, 2, true);
+                renderSidebar();
+                goToNextPattern();
+                return;
+            }
+
+            await savePatternStepToDB(pId, 2, false);
+            state.currentStep = 3;
+            renderSidebar();
+            renderWorkspace();
+        };
+
+        window.completeStep3 = async () => {
+            if (!state.selectedPattern) return;
+            const pId = state.selectedPattern.id;
+            userProgress[`${pId}-step1-done`] = true;
+            userProgress[`${pId}-step2-done`] = true;
+            userProgress[`${pId}-step3-done`] = true;
+            userProgress[`${pId}-pattern-completed`] = true;
+            state.currentStep = 3;
+            await savePatternStepToDB(pId, 3, true);
+            renderSidebar();
+            renderWorkspace();
+        };
+
+        window.goToPrevPattern = () => {
+            if (!state.selectedPattern || !state.selectedLessonId) return;
+            state.currentExampleIndex = 0;
+            const currentLessonPatterns = getPatternsForLesson(state.selectedLessonId);
+            const currentIdx = currentLessonPatterns.findIndex(p => p.patternContent.id === state.selectedPattern.id);
+            if (currentIdx > 0) {
+                const prevPat = currentLessonPatterns[currentIdx - 1];
+                selectPattern(prevPat.uuid, state.selectedLessonId, state.selectedCourseId);
+            }
+        };
+
+        window.goToNextPattern = () => {
+            if (!state.selectedPattern || !state.selectedLessonId) return;
+            state.currentExampleIndex = 0;
+            const currentLessonPatterns = getPatternsForLesson(state.selectedLessonId);
+            const currentIdx = currentLessonPatterns.findIndex(p => p.patternContent.id === state.selectedPattern.id);
+            if (currentIdx !== -1 && currentIdx + 1 < currentLessonPatterns.length) {
+                const nextPat = currentLessonPatterns[currentIdx + 1];
+                selectPattern(nextPat.uuid, state.selectedLessonId, state.selectedCourseId);
+            } else {
+                backToLessonGrid();
+            }
+        };
+
+        window.backToLessonGrid = () => {
+            state.selectedPattern = null;
+            renderSidebar();
+            renderBreadcrumbs();
+            renderWorkspace();
+        };
+
+        function renderStepHeaderHtml() {
+            if (!state.selectedPattern) return '';
+            const pId = state.selectedPattern.id;
+            const isCompleted = !!userProgress[`${pId}-pattern-completed`];
+            const maxUnlocked = getPatternMaxUnlockedStep(pId);
+            const hideStep3 = !appSettings.showReviewStep3;
+            const current = state.currentStep || 1;
+
+            const step1Done = !!userProgress[`${pId}-step1-done`] || isCompleted;
+            const step2Done = !!userProgress[`${pId}-step2-done`] || isCompleted;
+            const step3Done = !!userProgress[`${pId}-step3-done`] || isCompleted;
+
+            return `
+                <div class="bg-white border border-[#E2E8F0] p-4 rounded-2xl shadow-xs mb-6 font-sans">
+                    <div class="flex items-center justify-between gap-2 max-w-3xl mx-auto">
+                        <!-- Step 1: Explanation -->
+                        <button 
+                            onclick="goToPatternStep(1)"
+                            class="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl transition text-xs md:text-sm cursor-pointer ${
+                                current === 1 
+                                    ? 'bg-[#2563EB] text-white font-bold shadow-md shadow-blue-500/20' 
+                                    : step1Done 
+                                        ? 'bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 hover:bg-emerald-100' 
+                                        : 'bg-slate-100 text-slate-700 font-medium'
+                            }"
+                        >
+                            <i class="ph ${step1Done ? 'ph-check-circle text-emerald-600' : 'ph-book-open-text'} text-base"></i>
+                            <span class="truncate">1. 句型讲解</span>
+                        </button>
+
+                        <i class="ph ph-caret-right text-slate-300 text-xs shrink-0"></i>
+
+                        <!-- Step 2: Examples -->
+                        <button 
+                            onclick="goToPatternStep(2)"
+                            ${maxUnlocked < 2 && !isCompleted ? 'disabled' : ''}
+                            class="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl transition text-xs md:text-sm ${
+                                current === 2 
+                                    ? 'bg-[#2563EB] text-white font-bold shadow-md shadow-blue-500/20 cursor-pointer' 
+                                    : step2Done 
+                                        ? 'bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 hover:bg-emerald-100 cursor-pointer' 
+                                        : maxUnlocked >= 2 
+                                            ? 'bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 cursor-pointer' 
+                                            : 'bg-slate-100 text-slate-400 font-medium cursor-not-allowed opacity-60'
+                            }"
+                        >
+                            <i class="ph ${step2Done ? 'ph-check-circle text-emerald-600' : maxUnlocked < 2 ? 'ph-lock' : 'ph-chat-circle-dots'} text-base"></i>
+                            <span class="truncate">2. 例句学习</span>
+                        </button>
+
+                        ${!hideStep3 ? `
+                            <i class="ph ph-caret-right text-slate-300 text-xs shrink-0"></i>
+
+                            <!-- Step 3: Practice -->
+                            <button 
+                                onclick="goToPatternStep(3)"
+                                ${maxUnlocked < 3 && !isCompleted ? 'disabled' : ''}
+                                class="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl transition text-xs md:text-sm ${
+                                    current === 3 
+                                        ? 'bg-[#2563EB] text-white font-bold shadow-md shadow-blue-500/20 cursor-pointer' 
+                                        : step3Done 
+                                            ? 'bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 hover:bg-emerald-100 cursor-pointer' 
+                                            : maxUnlocked >= 3 
+                                                ? 'bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 cursor-pointer' 
+                                                : 'bg-slate-100 text-slate-400 font-medium cursor-not-allowed opacity-60'
+                                }"
+                            >
+                                <i class="ph ${step3Done ? 'ph-check-circle text-emerald-600' : maxUnlocked < 3 ? 'ph-lock' : 'ph-pencil-line'} text-base"></i>
+                                <span class="truncate">3. 交互练习</span>
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- Load Specific Pattern via UUID ---
+        async function loadPatternByUuid(uuid) {
+            let pat = state.allPatterns.find(p => p.uuid === uuid);
+            if (!pat) {
+                try {
+                    const res = await fetch(`/api/sentence_patterns/${uuid}`);
+                    if (res.ok) {
+                        pat = await res.json();
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+            if (pat) {
+                state.selectedPattern = pat.patternContent;
+                state.currentExampleIndex = 0;
+                const pId = pat.patternContent.id;
+                const isCompleted = !!userProgress[`${pId}-pattern-completed`];
+                const hideStep3 = !appSettings.showReviewStep3;
+                if (isCompleted) {
+                    state.currentStep = 1;
+                } else {
+                    const maxStep = getPatternMaxUnlockedStep(pId);
+                    state.currentStep = hideStep3 ? Math.min(maxStep, 2) : maxStep;
+                }
+                if (pat.courses && pat.courses.length > 0) {
+                    const mapping = pat.courses[0];
+                    state.selectedCourseId = mapping.courseId;
+                    state.selectedLessonId = mapping.lessonId;
+                    state.expandedCourses[mapping.courseId] = true;
+                }
+                renderSidebar();
+                renderWorkspace();
+                renderBreadcrumbs();
+            }
+        }
+
+        window.selectLesson = (lessonId, courseId) => {
+            state.selectedLessonId = lessonId;
+            if (courseId) {
+                state.selectedCourseId = courseId;
+                state.expandedCourses[courseId] = true;
+            } else {
+                const lesson = state.lessons.find(l => l.id === lessonId);
+                if (lesson) {
+                    state.selectedCourseId = lesson.course_id;
+                    state.expandedCourses[lesson.course_id] = true;
+                }
+            }
+            state.selectedPattern = null; // Show Lesson Pattern Cards Grid!
+            
+            renderSidebar();
+            renderBreadcrumbs();
+            renderWorkspace();
+        };
+
+        window.selectPattern = (uuid, lessonId, courseId) => {
+            const pat = state.allPatterns.find(p => p.uuid === uuid);
+            if (pat) {
+                state.selectedPattern = pat.patternContent;
+                state.currentExampleIndex = 0;
+                if (lessonId) {
+                    state.selectedLessonId = lessonId;
+                }
+                if (courseId) {
+                    state.selectedCourseId = courseId;
+                    state.expandedCourses[courseId] = true;
+                }
+                const pId = pat.patternContent.id;
+                const isCompleted = !!userProgress[`${pId}-pattern-completed`];
+                const hideStep3 = !appSettings.showReviewStep3;
+                if (isCompleted) {
+                    state.currentStep = 1;
+                } else {
+                    const maxStep = getPatternMaxUnlockedStep(pId);
+                    state.currentStep = hideStep3 ? Math.min(maxStep, 2) : maxStep;
+                }
+                renderSidebar();
+                renderWorkspace();
+                renderBreadcrumbs();
+            }
+        };
+
+        // --- Render Breadcrumbs Navigation Trail ---
+        function renderBreadcrumbs() {
+            const activeCourse = state.courses.find(c => c.id === state.selectedCourseId);
+            const activeLesson = state.lessons.find(l => l.id === state.selectedLessonId);
+            
+            let html = `
+                <span class="cursor-pointer hover:underline text-slate-500 hover:text-slate-800" onclick="resetToHome()">首页</span>
+            `;
+            if (activeCourse) {
+                html += `
+                    <i class="ph ph-caret-right text-[9px] text-[#94A3B8]"></i>
+                    <span class="text-slate-600">${activeCourse.name}</span>
+                `;
+            }
+            if (activeLesson) {
+                html += `
+                    <i class="ph ph-caret-right text-[9px] text-[#94A3B8]"></i>
+                    <span class="cursor-pointer hover:underline ${!state.selectedPattern ? 'font-bold text-[#2563EB]' : 'text-slate-600 hover:text-[#2563EB]'}" onclick="backToLessonGrid()">${activeLesson.title}</span>
+                `;
+            }
+            if (state.selectedPattern) {
+                html += `
+                    <i class="ph ph-caret-right text-[9px] text-[#94A3B8]"></i>
+                    <span class="text-[#2563EB] font-bold">${state.selectedPattern.patternName}</span>
+                `;
+            }
+            breadcrumbTrail.innerHTML = html;
+        }
+
+        window.resetToHome = () => {
+            state.selectedCourseId = null;
+            state.selectedLessonId = null;
+            state.selectedPattern = null;
+            renderSidebar();
+            renderBreadcrumbs();
+            renderWorkspace();
+        };
+
+        function renderHomeView() {
+            return `
+                <div class="text-center py-20 flex flex-col items-center card">
+                    <div class="h-16 w-16 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center mb-4 text-[#2563EB] text-3xl shadow-inner">
+                        🏫
+                    </div>
+                    <h2 class="text-xl font-bold text-slate-800">欢迎进入泰语句型教练</h2>
+                    <p class="text-xs text-slate-500 mt-2 leading-relaxed max-w-md mx-auto">
+                        请在左侧导航栏选择科目与课时。系统将在右侧以卡片形式展示该课时下的所有句型，点击卡片即可开启针对性句型学习与交互测评！
+                    </p>
+                </div>
+            `;
+        }
+
+        function renderLessonGridView() {
+            const activeCourse = state.courses.find(c => c.id === state.selectedCourseId);
+            const activeLesson = state.lessons.find(l => l.id === state.selectedLessonId);
+            if (!activeLesson) {
+                return renderHomeView();
+            }
+
+            const lessonPatterns = getPatternsForLesson(activeLesson.id);
+            const stats = getLessonStats(activeLesson.id);
+            const nextUncompleted = lessonPatterns.find(p => !userProgress[`${p.patternContent.id}-pattern-completed`]) || lessonPatterns[0];
+
+            const cardsHtml = lessonPatterns.length > 0 ? lessonPatterns.map((pat, idx) => {
+                const p = pat.patternContent;
+                const pId = p.id;
+                const statusInfo = getPatternStatus(pId);
+                const exCount = (p.examples || []).length;
+                const practiceCount = getPatternExerciseCount(p);
+
+                let statusBadge = '';
+                let actionBtn = '';
+
+                if (statusInfo.status === 'completed') {
+                    statusBadge = `
+                        <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+                            <i class="ph-fill ph-check-circle text-emerald-600"></i>
+                            <span>已完成</span>
+                        </span>
+                    `;
+                    actionBtn = `
+                        <button 
+                            onclick="event.stopPropagation(); selectPattern('${pat.uuid}', '${activeLesson.id}', '${activeCourse ? activeCourse.id : ''}')"
+                            class="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-100 hover:bg-[#2563EB] text-slate-700 hover:text-white border border-slate-200 hover:border-transparent transition flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
+                        >
+                            <i class="ph ph-arrow-counter-clockwise text-sm"></i>
+                            <span>复习句型</span>
+                        </button>
+                    `;
+                } else if (statusInfo.status === 'in_progress') {
+                    statusBadge = `
+                        <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 shadow-2xs">
+                            <i class="ph-fill ph-clock text-amber-600"></i>
+                            <span>学习中 · 第 ${statusInfo.step} 步</span>
+                        </span>
+                    `;
+                    actionBtn = `
+                        <button 
+                            onclick="event.stopPropagation(); selectPattern('${pat.uuid}', '${activeLesson.id}', '${activeCourse ? activeCourse.id : ''}')"
+                            class="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white transition flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20 active:scale-98 cursor-pointer"
+                        >
+                            <i class="ph-bold ph-play text-sm"></i>
+                            <span>继续学习</span>
+                        </button>
+                    `;
+                } else {
+                    statusBadge = `
+                        <span class="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
+                            <i class="ph ph-circle text-slate-400"></i>
+                            <span>未学习</span>
+                        </span>
+                    `;
+                    actionBtn = `
+                        <button 
+                            onclick="event.stopPropagation(); selectPattern('${pat.uuid}', '${activeLesson.id}', '${activeCourse ? activeCourse.id : ''}')"
+                            class="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-[#2563EB] hover:bg-blue-700 text-white transition flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/20 active:scale-98 cursor-pointer"
+                        >
+                            <i class="ph-bold ph-play text-sm"></i>
+                            <span>开始学习</span>
+                        </button>
+                    `;
+                }
+
+                return `
+                    <div 
+                        onclick="selectPattern('${pat.uuid}', '${activeLesson.id}', '${activeCourse ? activeCourse.id : ''}')"
+                        class="bg-white rounded-2xl p-5 border border-[#E2E8F0] shadow-xs hover:shadow-md hover:border-blue-400 hover:-translate-y-1 transition duration-200 flex flex-col justify-between cursor-pointer group font-sans relative"
+                    >
+                        <div>
+                            <!-- Top Header Row -->
+                            <div class="flex items-center justify-between gap-2 mb-3">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="text-[10px] px-2 py-0.5 rounded-md bg-blue-50 text-[#2563EB] font-black border border-blue-100 uppercase tracking-wider">
+                                        ${p.level || 'A1'}
+                                    </span>
+                                    ${p.topic ? `
+                                        <span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-medium truncate max-w-[120px]">
+                                            ${p.topic}
+                                        </span>
+                                    ` : ''}
+                                </div>
+                                ${statusBadge}
+                            </div>
+
+                            <!-- Index & Pattern Name -->
+                            <div class="text-[11px] text-slate-400 font-semibold mb-1">
+                                句型 ${idx + 1}
+                            </div>
+                            <h3 class="text-base font-bold text-[#1E293B] group-hover:text-[#2563EB] transition leading-snug line-clamp-2 min-h-[44px]">
+                                ${p.patternName}
+                            </h3>
+
+                            <!-- Formula Preview Box -->
+                            <div class="bg-slate-900 text-slate-100 rounded-xl p-3 text-center text-xs font-thai font-medium tracking-wide my-3 truncate shadow-inner select-none border border-slate-950">
+                                ${p.formula && p.formula.display ? p.formula.display : p.patternName}
+                            </div>
+
+                            <!-- Usage summary -->
+                            <p class="text-xs text-slate-500 line-clamp-2 leading-relaxed min-h-[36px]">
+                                ${p.usage ? (p.usage.summary || p.usage.detail || '') : '掌握该句型的核心语法构造与应用场景。'}
+                            </p>
+
+                            <!-- Self Ratings Display Box (例句自评 & 练习自评) -->
+                            <div class="grid grid-cols-2 gap-2 my-3 p-2.5 bg-slate-50/90 rounded-xl border border-slate-200/70 font-sans">
+                                <div class="flex flex-col gap-0.5">
+                                    <span class="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                                        <i class="ph ph-chat-circle-dots text-amber-500"></i> 例句自评
+                                    </span>
+                                    <div class="text-xs font-bold flex items-center gap-1 ${statusInfo.exampleScore !== null ? 'text-amber-700' : 'text-slate-400 font-normal'}">
+                                        ${statusInfo.exampleScore !== null ? `<i class="ph-fill ph-star text-amber-500 text-xs"></i><span>${statusInfo.exampleScore} / 5 分</span>` : '<span class="text-[11px]">未评分</span>'}
+                                    </div>
+                                </div>
+                                <div class="flex flex-col gap-0.5 border-l border-slate-200 pl-2.5">
+                                    <span class="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                                        <i class="ph ph-pencil-line text-blue-500"></i> 练习自评
+                                    </span>
+                                    <div class="text-xs font-bold flex items-center gap-1 ${statusInfo.practiceScore !== null ? 'text-blue-700' : 'text-slate-400 font-normal'}">
+                                        ${statusInfo.practiceScore !== null ? `<i class="ph-fill ph-star text-blue-500 text-xs"></i><span>${statusInfo.practiceScore} / 5 分</span>` : '<span class="text-[11px]">未评分</span>'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer Stats & Action -->
+                        <div class="mt-2 pt-3 border-t border-slate-100">
+                            <div class="flex items-center justify-between text-[11px] text-slate-400 font-medium mb-3">
+                                <span class="flex items-center gap-1">
+                                    <i class="ph ph-chat-circle-text text-[#2563EB]"></i>
+                                    <span>${exCount} 个例句</span>
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <i class="ph ph-pencil-simple-line text-indigo-500"></i>
+                                    <span>${practiceCount} 道练习</span>
+                                </span>
+                            </div>
+                            ${actionBtn}
+                        </div>
+                    </div>
+                `;
+            }).join('') : `
+                <div class="col-span-full py-16 text-center card">
+                    <i class="ph ph-folder-dashed text-4xl text-slate-300 mb-2"></i>
+                    <p class="text-sm font-semibold text-slate-600">该课时暂无关联的泰语句型</p>
+                    <p class="text-xs text-slate-400 mt-1">可在课程管理控制台中为该课时配置句型内容</p>
+                </div>
+            `;
+
+            return `
+                <!-- Lesson Banner & Stats Card -->
+                <div class="bg-white border border-[#E2E8F0] p-6 rounded-2xl shadow-xs mb-6 font-sans">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1.5">
+                                <span class="text-xs font-bold text-[#2563EB] bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-100">
+                                    ${activeCourse ? activeCourse.name : '课程'}
+                                </span>
+                                <span class="text-xs text-slate-400 font-medium">• 课时句型列表</span>
+                            </div>
+                            <h2 class="text-xl md:text-2xl font-bold text-[#1E293B] tracking-tight flex items-center gap-2.5">
+                                <i class="ph ph-chalkboard-teacher text-[#2563EB]"></i>
+                                <span>${activeLesson.title}</span>
+                            </h2>
+                            <p class="text-xs text-slate-500 mt-1.5">
+                                本课时共包含 <strong class="text-slate-700 font-bold">${lessonPatterns.length}</strong> 个重点句型。点击卡片即可进入「讲解 ➔ 例句 ➔ 交互练习」完整学习流程。
+                            </p>
+                        </div>
+
+                        ${nextUncompleted ? `
+                            <div class="shrink-0">
+                                <button 
+                                    onclick="selectPattern('${nextUncompleted.uuid}', '${activeLesson.id}', '${activeCourse ? activeCourse.id : ''}')"
+                                    class="bg-[#2563EB] hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold shadow-md shadow-blue-500/20 active:scale-95 transition flex items-center gap-2 cursor-pointer"
+                                >
+                                    <i class="ph-bold ph-play"></i>
+                                    <span>${stats.completed > 0 ? '继续学习' : '开始学习本课'}</span>
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <!-- Stats Bar -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-5 border-t border-slate-100">
+                        <div class="bg-slate-50 border border-slate-100 p-3 rounded-xl flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-blue-100 text-[#2563EB] flex items-center justify-center font-bold text-sm shrink-0">
+                                <i class="ph ph-tree-structure"></i>
+                            </div>
+                            <div>
+                                <div class="text-[11px] text-slate-400 font-medium">总句型</div>
+                                <div class="text-base font-bold text-slate-800">${stats.total} 个</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-emerald-50/50 border border-emerald-100 p-3 rounded-xl flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
+                                <i class="ph-fill ph-check-circle"></i>
+                            </div>
+                            <div>
+                                <div class="text-[11px] text-emerald-600 font-medium">已完成</div>
+                                <div class="text-base font-bold text-emerald-800">${stats.completed} 个</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-amber-50/50 border border-amber-100 p-3 rounded-xl flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-sm shrink-0">
+                                <i class="ph-fill ph-clock"></i>
+                            </div>
+                            <div>
+                                <div class="text-[11px] text-amber-600 font-medium">学习中</div>
+                                <div class="text-base font-bold text-amber-800">${stats.inProgress} 个</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 border border-slate-100 p-3 rounded-xl flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-slate-200/70 text-slate-600 flex items-center justify-center font-bold text-sm shrink-0">
+                                <i class="ph ph-percent"></i>
+                            </div>
+                            <div>
+                                <div class="text-[11px] text-slate-400 font-medium">完成进度</div>
+                                <div class="text-base font-bold text-slate-800">${stats.percent}%</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-4">
+                        <div class="bg-[#2563EB] h-full transition-all duration-300" style="width: ${stats.percent}%"></div>
+                    </div>
+                </div>
+
+                <!-- Sentence Pattern Cards Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                    ${cardsHtml}
+                </div>
+            `;
+        }
+
+        // --- Render Workspace Details Panel ---
+        function renderWorkspace() {
+            if (!state.selectedPattern) {
+                if (state.selectedLessonId) {
+                    workspaceArea.innerHTML = renderLessonGridView();
+                } else {
+                    workspaceArea.innerHTML = renderHomeView();
+                }
+                return;
+            }
+
+            const p = state.selectedPattern;
+            const pId = p.id;
+            const isCompleted = !!userProgress[`${pId}-pattern-completed`];
+            const hideStep3 = !appSettings.showReviewStep3;
+            const maxUnlocked = getPatternMaxUnlockedStep(pId);
+            
+            if (hideStep3 && state.currentStep > 2) {
+                state.currentStep = 1;
+            }
+            if (!state.currentStep || state.currentStep < 1 || state.currentStep > (hideStep3 ? 2 : 3)) {
+                state.currentStep = Math.min(maxUnlocked, hideStep3 ? 2 : 3);
+            }
+            const currentStep = state.currentStep;
+
+            const currentLessonPatterns = state.selectedLessonId ? getPatternsForLesson(state.selectedLessonId) : [];
+            const currentPatIndex = currentLessonPatterns.findIndex(pat => pat.patternContent.id === pId);
+
+            const topNavHeaderHtml = `
+                <div class="flex items-center justify-between gap-3 mb-4 font-sans">
+                    <button 
+                        onclick="backToLessonGrid()" 
+                        class="flex items-center gap-2 text-xs text-slate-700 hover:text-[#2563EB] bg-white border border-slate-200 hover:border-blue-300 px-3.5 py-2 rounded-xl transition shadow-2xs cursor-pointer font-semibold"
+                    >
+                        <i class="ph-bold ph-arrow-left"></i>
+                        <span>返回课时句型列表</span>
+                    </button>
+
+                    ${currentLessonPatterns.length > 0 ? `
+                        <div class="flex items-center gap-2">
+                            <button 
+                                onclick="goToPrevPattern()" 
+                                ${currentPatIndex <= 0 ? 'disabled' : ''}
+                                class="p-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-[#2563EB] hover:border-blue-300 transition text-xs flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+                                title="上一个句型"
+                            >
+                                <i class="ph-bold ph-caret-left"></i>
+                            </button>
+                            <span class="text-xs font-bold text-slate-600 px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl shadow-2xs">
+                                句型 ${currentPatIndex + 1} / ${currentLessonPatterns.length}
+                            </span>
+                            <button 
+                                onclick="goToNextPattern()" 
+                                ${currentPatIndex >= currentLessonPatterns.length - 1 ? 'disabled' : ''}
+                                class="p-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-[#2563EB] hover:border-blue-300 transition text-xs flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+                                title="下一个句型"
+                            >
+                                <i class="ph-bold ph-caret-right"></i>
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            let notesHtml = '';
+            if (p.usage && p.usage.notes && p.usage.notes.length > 0) {
+                notesHtml = `
+                    <div class="bg-amber-500/5 border border-amber-500/10 p-4 rounded-lg mt-4 text-xs">
+                        <strong class="text-amber-800 block mb-1">注意事项:</strong>
+                        <ul class="list-disc pl-4 text-amber-900/80 space-y-1">
+                            ${p.usage.notes.map(n => `<li>${n}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            const stepHeaderHtml = renderStepHeaderHtml();
+            
+            const patternTitleBannerHtml = `
+                <div class="bg-white p-5 px-6 rounded-2xl border border-slate-200 shadow-xs font-sans mb-6 flex justify-between items-center">
+                    <div class="flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 text-[#2563EB] flex items-center justify-center text-xl shrink-0 font-bold shadow-2xs">
+                            <i class="ph ph-tree-structure"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl md:text-2xl font-black text-[#1E293B] tracking-tight">
+                                ${p.patternName}
+                            </h2>
+                            ${p.topic ? `<p class="text-xs text-slate-500 font-medium mt-0.5">${p.topic}</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span class="text-xs px-3 py-1 rounded-lg bg-blue-50 text-[#2563EB] font-extrabold border border-blue-100 uppercase tracking-wider">${p.level || 'A1'}</span>
+                    </div>
+                </div>
+            `;
+
+            let sectionContentHtml = '';
+
+            if (currentStep === 1) {
+                // Section 1: 句型讲解 (Formula & Usage)
+                sectionContentHtml = patternTitleBannerHtml + `
+                    <!-- Side-by-Side Formula and Usage Cards -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+                        <!-- Formula Card -->
+                        <div class="card h-full flex flex-col justify-between mb-0">
+                            <div>
+                                <div class="card-title-helper font-sans">句型公式 (Formula)</div>
+                                <div class="bg-slate-900 border border-slate-950 p-4 rounded-lg text-center text-[16px] font-bold text-white font-thai leading-relaxed mb-4">
+                                    ${p.formula && p.formula.display ? p.formula.display : p.patternName}
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 gap-3 font-sans">
+                                ${p.formula && p.formula.components ? p.formula.components.map(comp => `
+                                    <div class="p-3.5 rounded-lg border border-slate-200 flex flex-col gap-1 shadow-inner bg-slate-50/50">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-[10px] uppercase font-black px-2 py-0.5 rounded border" style="background: ${getSlotColor(comp.slot)}; border-color: rgba(0,0,0,0.1)">
+                                                ${comp.slot}
+                                            </span>
+                                            <span class="text-xs font-bold text-slate-700">${comp.label}</span>
+                                        </div>
+                                        <p class="text-xs text-slate-550 mt-1 leading-relaxed">${comp.description}</p>
+                                        ${comp.glossary ? `
+                                            <div class="text-[10px] text-[#2563EB] block mt-2 border-t pt-1 font-thai font-semibold">
+                                                核心语法词: ${comp.glossary} ${comp.ipa ? `(${comp.ipa})` : ''}
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `).join('') : ''}
+                            </div>
+                        </div>
+
+                        <!-- Usage Card -->
+                        <div class="card font-sans h-full mb-0 flex flex-col justify-between">
+                            <div>
+                                <div class="card-title-helper">用法概要 (Usage)</div>
+                                <div class="space-y-3.5">
+                                    <div class="bg-slate-50 border border-slate-250 p-4 rounded-xl leading-relaxed text-sm text-[#2C3E50]">
+                                        <strong>核心释义:</strong> <span class="font-thai">${p.usage ? (p.usage.summary || '') : ''}</span>
+                                    </div>
+                                    <p class="text-xs text-[#64748B] leading-relaxed pl-1">
+                                        <strong>详细说明:</strong> ${p.usage ? (p.usage.detail || '') : ''}
+                                    </p>
+                                </div>
+                            </div>
+                            ${notesHtml}
+                        </div>
+                    </div>
+
+                    <!-- Action Footer -->
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 flex justify-end font-sans shadow-xs mt-6">
+                        <button 
+                            onclick="completeStep1()" 
+                            class="bg-[#2563EB] text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition flex items-center gap-2 shadow-md shadow-blue-500/20 active:scale-95 cursor-pointer"
+                        >
+                            <span>理解讲解，进入例句学习</span>
+                            <i class="ph ph-arrow-right text-base"></i>
+                        </button>
+                    </div>
+                `;
+            } else if (currentStep === 2) {
+                // Section 2: 例句学习 (Examples) - Sliding Single Card Mode
+                const hideStep3 = !appSettings.showReviewStep3;
+                const examples = p.examples || [];
+                const totalExamples = examples.length;
+                let currentExampleIdx = state.currentExampleIndex || 0;
+                if (currentExampleIdx >= totalExamples) currentExampleIdx = Math.max(0, totalExamples - 1);
+                if (currentExampleIdx < 0) currentExampleIdx = 0;
+                state.currentExampleIndex = currentExampleIdx;
+
+                const currentEx = examples[currentExampleIdx];
+
+                sectionContentHtml = patternTitleBannerHtml + `
+                    <div class="w-full">
+                        ${totalExamples > 0 ? renderExampleCardHtml(currentEx, currentExampleIdx, totalExamples, examples) : '<p class="text-xs text-slate-400 p-8 text-center bg-white rounded-2xl border border-slate-200">暂无例句</p>'}
+                    </div>
+
+                    <!-- Step 2 User Self Rating Widget -->
+                    ${renderPatternSelfRatingCard(pId, 'example')}
+
+                    <!-- Action Footer -->
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 flex justify-between items-center font-sans shadow-xs mt-6">
+                        <button 
+                            onclick="goToPatternStep(1)" 
+                            class="text-slate-600 hover:text-slate-900 px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 hover:bg-slate-50 transition flex items-center gap-1.5 cursor-pointer"
+                        >
+                            <i class="ph ph-arrow-left"></i>
+                            <span>返回句型讲解</span>
+                        </button>
+                        <button 
+                            onclick="completeStep2()" 
+                            class="bg-[#2563EB] text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition flex items-center gap-2 shadow-md shadow-blue-500/20 active:scale-95 cursor-pointer"
+                        >
+                            <span>${hideStep3 ? '完成例句，进入下一个句型' : '完成例句，进入交互练习'}</span>
+                            <i class="ph ph-arrow-right text-base"></i>
+                        </button>
+                    </div>
+                `;
+            } else if (currentStep === 3) {
+                // Section 3: 交互练习 (Interactive Practice)
+                const isCompleted = !!userProgress[`${pId}-pattern-completed`];
+
+                sectionContentHtml = patternTitleBannerHtml + `
+                    <div class="space-y-6">
+                        ${renderPracticePanelHtml()}
+                    </div>
+
+                    <!-- Step 3 User Self Rating Widget -->
+                    ${renderPatternSelfRatingCard(pId, 'practice')}
+
+                    ${isCompleted ? `
+                        <div class="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 mt-6 font-sans">
+                            <div class="flex items-center gap-3.5">
+                                <div class="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/30">🏆</div>
+                                <div>
+                                    <h4 class="font-bold text-emerald-900 text-lg">恭喜完成该句型的全流程学习！</h4>
+                                    <p class="text-xs text-emerald-700 mt-0.5">你已成功完成讲解拆解、例句学习、交互测评与自评打分。</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <button onclick="backToLessonGrid()" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition shadow-2xs flex items-center gap-1.5 cursor-pointer">
+                                    <i class="ph ph-grid-four"></i>
+                                    <span>返回课时列表</span>
+                                </button>
+                                <button onclick="completeStep3()" class="px-4 py-2.5 rounded-xl text-xs font-bold text-emerald-800 bg-white border border-emerald-200 hover:bg-emerald-50 transition cursor-pointer">重新练习</button>
+                                <button onclick="goToNextPattern()" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-md shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer">
+                                    <span>学习下一个句型</span>
+                                    <i class="ph ph-arrow-right font-bold"></i>
+                                </button>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 flex justify-between items-center font-sans shadow-xs mt-6">
+                            <button 
+                                onclick="goToPatternStep(2)" 
+                                class="text-slate-600 hover:text-slate-900 px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 hover:bg-slate-50 transition flex items-center gap-1.5 cursor-pointer"
+                            >
+                                <i class="ph ph-arrow-left"></i>
+                                <span>返回例句学习</span>
+                            </button>
+                            <button 
+                                onclick="completeStep3()" 
+                                class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-emerald-700 transition flex items-center gap-2 shadow-md shadow-emerald-600/20 active:scale-95 cursor-pointer"
+                            >
+                                <i class="ph ph-check-circle text-base"></i>
+                                <span>完成本句型学习 🏁</span>
+                            </button>
+                        </div>
+                    `}
+                `;
+            }
+
+            workspaceArea.innerHTML = topNavHeaderHtml + stepHeaderHtml + sectionContentHtml;
+
+            if (currentStep === 3) {
+                initPracticeEvents();
+            }
+        }
+
+        window.switchTab = (tabId) => {
+            state.activeTab = tabId;
+            renderWorkspace();
+        };
+
+        function renderTabContents() {
+            renderWorkspace();
+        }
+
+        // ==========================================
+        // Example Card Renderer & Highlighter (Sliding Single Card Mode)
+        // ==========================================
+        function renderExampleCardHtml(ex, index, total = 1, examples = []) {
+            const highlighterHtml = renderThaiHighlighter(ex.thai, ex.parsed);
+            const showTransKey = `${state.selectedPattern.id}-ex-trans-${index}`;
+            const showTranslation = !!userProgress[showTransKey];
+
+            return `
+                <div class="card h-full flex flex-col justify-between mb-0 p-6 md:p-8 rounded-2xl shadow-xs border border-slate-200 bg-white font-sans">
+                    <div>
+                        <!-- Header Bar with Pagination Badge, Dots, and Prev/Next Icon Buttons -->
+                        <div class="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <span class="text-xs font-bold px-3 py-1.5 bg-blue-50 text-[#2563EB] rounded-xl border border-blue-100 shadow-2xs">
+                                    例句 ${index + 1} / ${total}
+                                </span>
+                                ${total > 1 ? `
+                                    <div class="flex items-center gap-1.5">
+                                        ${examples.map((_, i) => `
+                                            <button 
+                                                onclick="goToExampleIndex(${i})"
+                                                class="transition-all duration-200 cursor-pointer ${i === index ? 'w-6 h-2.5 bg-[#2563EB] rounded-full' : 'w-2.5 h-2.5 bg-slate-200 hover:bg-slate-300 rounded-full'}"
+                                                title="切换到第 ${i + 1} 条例句"
+                                            ></button>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+
+                            ${total > 1 ? `
+                                <!-- Prev / Next Navigation Icon Buttons -->
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <button 
+                                        onclick="goToPrevExample()" 
+                                        ${index <= 0 ? 'disabled' : ''} 
+                                        class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-[#2563EB] hover:border-blue-300 transition text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed shadow-2xs cursor-pointer active:scale-95"
+                                        title="上一句 (快捷键 ←)"
+                                    >
+                                        <i class="ph-bold ph-caret-left text-sm"></i>
+                                        <span>上一句</span>
+                                    </button>
+                                    <button 
+                                        onclick="goToNextExample()" 
+                                        ${index >= total - 1 ? 'disabled' : ''} 
+                                        class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-[#2563EB] hover:border-blue-300 transition text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed shadow-2xs cursor-pointer active:scale-95"
+                                        title="下一句 (快捷键 →)"
+                                    >
+                                        <span>下一句</span>
+                                        <i class="ph-bold ph-caret-right text-sm"></i>
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Thai Sentence Highlight Body -->
+                        <div class="my-4">
+                            ${highlighterHtml}
+                        </div>
+                        
+                        <!-- Translation Container -->
+                        <div id="ex-translation-${index}" class="translation space-y-2 mt-4 p-4 bg-slate-50 rounded-xl border border-slate-100 ${showTranslation ? '' : 'hidden'}">
+                            <div class="translation-en text-sm italic text-slate-600 flex items-baseline gap-2">
+                                <span class="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-bold shrink-0">EN</span>
+                                <span>${ex.english}</span>
+                            </div>
+                            <div class="translation-zh text-[15px] font-semibold text-[#1E293B] flex items-baseline gap-2">
+                                <span class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold shrink-0">中</span>
+                                <span>${ex.chinese}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <!-- Audio Playback & Translation Controls -->
+                        <div class="flex gap-3 flex-wrap items-center justify-between mt-6 pt-4 border-t border-slate-100">
+                            <div class="flex gap-3 flex-wrap">
+                                <button class="exercise-btn cursor-pointer" onclick="playSentenceVoice('${ex.thai.replace(/'/g, "\\'")}', '${ex.audioThai || ''}')">
+                                    <i class="ph ph-speaker-high text-lg"></i>
+                                    <span>播放发音</span>
+                                </button>
+                                <button 
+                                    class="exercise-btn secondary cursor-pointer" 
+                                    onclick="toggleExTranslation(${index})"
+                                >
+                                    <i class="ph ${showTranslation ? 'ph-eye-slash' : 'ph-eye'} text-base"></i>
+                                    <span>${showTranslation ? '隐藏翻译' : '显示翻译'}</span>
+                                </button>
+                            </div>
+
+                            ${total > 1 ? `
+                                <div class="text-xs text-slate-400 font-medium hidden sm:block">
+                                    支持使用键盘 ← / → 快速切换例句
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Grammatical Components Legend -->
+                        <div class="legend mt-4 pt-3 border-t border-slate-100 flex flex-wrap gap-3">
+                            ${Object.keys(ex.parsed).map(slot => `
+                                <div class="legend-item flex items-center gap-1.5 text-xs text-slate-600 font-medium">
+                                    <div class="w-3.5 h-3.5 rounded" style="background: ${getSlotColor(slot)}; border: 1px solid #CBD5E1"></div>
+                                    <span>${getSlotLabel(slot)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.goToPrevExample = () => {
+            if (!state.selectedPattern || !state.selectedPattern.examples) return;
+            if (state.currentExampleIndex > 0) {
+                state.currentExampleIndex--;
+                renderWorkspace();
+            }
+        };
+
+        window.goToNextExample = () => {
+            if (!state.selectedPattern || !state.selectedPattern.examples) return;
+            const total = state.selectedPattern.examples.length;
+            if (state.currentExampleIndex < total - 1) {
+                state.currentExampleIndex++;
+                renderWorkspace();
+            }
+        };
+
+        window.goToExampleIndex = (idx) => {
+            if (!state.selectedPattern || !state.selectedPattern.examples) return;
+            const total = state.selectedPattern.examples.length;
+            if (idx >= 0 && idx < total) {
+                state.currentExampleIndex = idx;
+                renderWorkspace();
+            }
+        };
+
+        window.toggleExTranslation = (index) => {
+            const key = `${state.selectedPattern.id}-ex-trans-${index}`;
+            userProgress[key] = !userProgress[key];
+            renderWorkspace();
+        };
+
+        window.playAudioDirect = (text) => {
+            if (!text) return;
+            const url = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(text)}`;
+            new Audio(url).play().catch(err => console.error("Audio playback error:", err));
+        };
+
+        window.playSentenceVoice = (text, audioUrl) => {
+            if (audioUrl) {
+                new Audio(audioUrl).play().catch(err => {
+                    console.warn("Direct audio playback failed, falling back to TTS:", err);
+                    window.playAudioDirect(text);
+                });
+            } else {
+                window.playAudioDirect(text);
+            }
+        };
+
+        function renderThaiHighlighter(text, parsed) {
+            const normalizedText = text.normalize('NFC');
+            const ranges = [];
+            for (const [slot, value] of Object.entries(parsed)) {
+                if (!value) continue;
+                const normalizedValue = value.normalize('NFC');
+                const idx = normalizedText.indexOf(normalizedValue);
+                if (idx !== -1) {
+                    ranges.push({ slot, start: idx, end: idx + normalizedValue.length, value: normalizedValue });
+                }
+            }
+            ranges.sort((a, b) => a.start - b.start);
+            
+            let html = '<div class="thai-text font-thai select-text">';
+            let cursor = 0;
+            for (const range of ranges) {
+                if (range.start > cursor) {
+                    html += `<span>${normalizedText.slice(cursor, range.start)}</span>`;
+                }
+                html += `<span class="token-${range.slot} font-bold rounded px-1" style="background: ${getSlotColor(range.slot)}; border-bottom: 2px solid ${getSlotBorderColor(range.slot)}" title="${getSlotLabel(range.slot)}">${range.value}</span>`;
+                cursor = range.end;
+            }
+            if (cursor < normalizedText.length) {
+                html += `<span>${normalizedText.slice(cursor)}</span>`;
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function getSlotBorderColor(slot) {
+            const borders = {
+                subject: '#38bdf8',
+                verb: '#f43f5e',
+                action: '#f43f5e',
+                purpose: '#3b82f6',
+                prepositional_phrase: '#3b82f6'
+            };
+            return borders[slot] || '#cbd5e1';
+        }
+
+        // ==========================================
+        // Practice/Exercises Panel HTML Renderers
+        // ==========================================
+        function renderPracticePanelHtml() {
+            const p = state.selectedPattern;
+            let html = '';
+            let exerciseIndex = 0;
+
+            // 1. Recognition exercises
+            if (p.exercises.recognition && p.exercises.recognition.items) {
+                p.exercises.recognition.items.forEach((item, idx) => {
+                    html += renderRecognitionCard(item, exerciseIndex++);
+                });
+            }
+
+            // 2. Fill in Blank exercises
+            if (p.exercises.fillInBlank && p.exercises.fillInBlank.items) {
+                p.exercises.fillInBlank.items.forEach((item, idx) => {
+                    html += renderFillInBlankCard(item, exerciseIndex++);
+                });
+            }
+
+            // 3. Drag and drop exercises
+            if (p.exercises.dragAndDrop && p.exercises.dragAndDrop.items) {
+                p.exercises.dragAndDrop.items.forEach((item, idx) => {
+                    html += renderDragAndDropCard(item, exerciseIndex++);
+                });
+            }
+
+            // 4. Multiple Choice exercises
+            if (p.exercises.multipleChoice && p.exercises.multipleChoice.items) {
+                p.exercises.multipleChoice.items.forEach((item, idx) => {
+                    html += renderMultipleChoiceCard(item, exerciseIndex++);
+                });
+            }
+
+            // 5. Translation exercises (th2zh / zh2th)
+            if (p.exercises.translation && p.exercises.translation.items) {
+                p.exercises.translation.items.forEach((item, idx) => {
+                    if (item.direction === 'th2zh') {
+                        html += renderTh2ZhCard(item, exerciseIndex++);
+                    } else {
+                        html += renderZh2ThCard(item, exerciseIndex++);
+                    }
+                });
+            }
+
+            // 6. Sentence Construction exercises
+            if (p.exercises.sentenceConstruction && p.exercises.sentenceConstruction.items) {
+                p.exercises.sentenceConstruction.items.forEach((item, idx) => {
+                    html += renderSentenceConstructionCard(item, exerciseIndex++);
+                });
+            }
+
+            // 7. Error Correction exercises
+            if (p.exercises.errorCorrection && p.exercises.errorCorrection.items) {
+                p.exercises.errorCorrection.items.forEach((item, idx) => {
+                    html += renderErrorCorrectionCard(item, exerciseIndex++);
+                });
+            }
+
+            return html;
+        }
+
+        // Template Wrapper for Exercises (Left/Right Layout)
+        function renderExerciseCardWrapper(index, title, leftContent, rightContent) {
+            return `
+                <div class="card bg-white p-6 rounded-xl border border-[#E2E8F0] shadow-sm mb-6 w-full">
+                    <h4 class="text-[20px] font-bold text-[#1A1A1A] mb-4 flex items-center gap-2 font-sans">
+                        <span class="w-7 h-7 rounded bg-[#2563EB] text-white flex items-center justify-center text-sm font-bold">${index + 1}</span>
+                        <span>${title}</span>
+                    </h4>
+                    
+                    <div class="flex flex-col lg:flex-row gap-6">
+                        <!-- Left pane: Question area -->
+                        <div class="flex-grow space-y-4">
+                            ${leftContent}
+                        </div>
+                        
+                        <!-- Right pane: Feedback area -->
+                        <div class="w-full lg:w-72 shrink-0 border-t lg:border-t-0 lg:border-l border-[#E2E8F0] pt-4 lg:pt-0 lg:pl-6 flex flex-col gap-3 font-sans justify-start">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">测评反馈</span>
+                            ${rightContent}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Card 1: Recognition (True/False)
+        function renderRecognitionCard(item, idx) {
+            const key = `${state.selectedPattern.id}-recognition-${idx}`;
+            const answer = userProgress[key];
+            const submitted = !!userProgress[`${key}-submitted`];
+            const isCorrect = answer === item.answer;
+
+            const left = `
+                <div class="question-body font-thai text-xl mb-2">${item.sentence}</div>
+                <p class="text-[14px] text-[#64748B] italic">请判断该泰语句子是否正确使用了本句型的语法成分：</p>
+                <div class="flex gap-4 mt-4 font-sans">
+                    <button 
+                        onclick="selectRecognitionAnswer(${idx}, true)"
+                        class="px-5 py-2.5 text-[15px] font-bold rounded-lg border transition ${
+                            answer === true 
+                                ? 'bg-[#16A34A] text-white border-[#16A34A]' 
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-55'
+                        }"
+                        ${submitted ? 'disabled' : ''}
+                    >
+                        正确 (True)
+                    </button>
+                    <button 
+                        onclick="selectRecognitionAnswer(${idx}, false)"
+                        class="px-5 py-2.5 text-[15px] font-bold rounded-lg border transition ${
+                            answer === false 
+                                ? 'bg-[#DC2626] text-white border-[#DC2626]' 
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-55'
+                        }"
+                        ${submitted ? 'disabled' : ''}
+                    >
+                        错误 (False)
+                    </button>
+                </div>
+                <div class="flex gap-3 mt-4">
+                    ${!submitted ? `
+                        <button class="exercise-btn" onclick="submitRecognition(${idx})" ${answer === undefined ? 'disabled' : ''}>
+                            检查答案
+                        </button>
+                    ` : `
+                        <button class="exercise-btn secondary" onclick="resetRecognition(${idx})">重做</button>
+                    `}
+                </div>
+            `;
+
+            let right = '';
+            if (submitted) {
+                right = `
+                    <div class="feedback ${isCorrect ? 'success' : 'error'}">
+                        <span class="font-bold">${isCorrect ? '判断正确！' : '判断错误！'}</span>
+                        <p class="text-xs opacity-90 mt-1 leading-relaxed">正确答案是: ${item.answer ? '正确' : '错误'}</p>
+                    </div>
+                    <div class="hint-box text-xs">
+                        💡 ${item.explanation}
+                    </div>
+                `;
+            } else {
+                right = `
+                    <div class="text-xs text-slate-450 italic py-10 text-center">
+                        选择答案并点击“检查答案”提交
+                    </div>
+                `;
+            }
+
+            return renderExerciseCardWrapper(idx, "句型识别", left, right);
+        }
+
+        window.selectRecognitionAnswer = (idx, val) => {
+            const key = `${state.selectedPattern.id}-recognition-${idx}`;
+            userProgress[key] = val;
+            renderTabContents();
+        };
+
+        window.submitRecognition = (idx) => {
+            const key = `${state.selectedPattern.id}-recognition-${idx}`;
+            userProgress[`${key}-submitted`] = true;
+            calculateGlobalProgress();
+            renderSidebar();
+            renderTabContents();
+        };
+
+        window.resetRecognition = (idx) => {
+            const key = `${state.selectedPattern.id}-recognition-${idx}`;
+            delete userProgress[key];
+            delete userProgress[`${key}-submitted`];
+            renderTabContents();
+        };
+
+        // Card 2: Fill In Blank
+        function renderFillInBlankCard(item, idx) {
+            const key = `${state.selectedPattern.id}-fill-${idx}`;
+            const userInput = userProgress[key] || '';
+            const submitted = !!userProgress[`${key}-submitted`];
+            const isCorrect = item.acceptableAnswers.some(ans => ans.normalize('NFC') === userInput.trim().normalize('NFC'));
+            const showHint = !!userProgress[`${key}-showhint`];
+
+            const parts = item.sentence.split('______');
+            const left = `
+                <div class="question-body font-thai select-text">
+                    ${parts[0]}
+                    <span class="border-b-2 border-dashed border-[#2563EB] px-3 py-1 text-[#2563EB] bg-blue-50/50 rounded font-bold mx-1.5 min-w-[80px] inline-block text-center">
+                        ${submitted ? item.answer : '______'}
+                    </span>
+                    ${parts[1]}
+                </div>
+                <input 
+                    type="text" 
+                    id="input-fill-${idx}"
+                    placeholder="请输入${getSlotLabel(item.slot)}..." 
+                    class="exercise-input"
+                    value="${userInput}"
+                    oninput="updateFillInput(${idx}, this.value)"
+                    ${submitted ? 'disabled' : ''}
+                />
+                <div class="flex gap-3">
+                    ${!submitted ? `
+                        <button class="exercise-btn" onclick="submitFill(${idx})" ${!userInput.trim() ? 'disabled' : ''}>检查答案</button>
+                    ` : `
+                        <button class="exercise-btn secondary" onclick="resetFill(${idx})">重做</button>
+                    `}
+                    <button class="exercise-btn secondary" onclick="toggleFillHint(${idx})">${showHint ? '隐藏提示' : '显示提示'}</button>
+                </div>
+            `;
+
+            let right = '';
+            if (submitted) {
+                right = `
+                    <div class="feedback ${isCorrect ? 'success' : 'error'}">
+                        <span class="font-bold">${isCorrect ? '回答正确！' : '回答错误！'}</span>
+                        <p class="text-xs opacity-90 mt-1">标准答案: ${item.answer}</p>
+                    </div>
+                `;
+            }
+            if (showHint) {
+                right += `
+                    <div class="hint-box text-xs">
+                        💡 <strong>提示:</strong> ${item.hints.join(' / ')}
+                    </div>
+                `;
+            }
+            if (!submitted && !showHint) {
+                right = `<div class="text-xs text-slate-450 italic py-10 text-center">请输入缺少的词汇</div>`;
+            }
+
+            return renderExerciseCardWrapper(idx, `填空 - 补全${getSlotLabel(item.slot)}`, left, right);
+        }
+
+        window.updateFillInput = (idx, val) => {
+            const key = `${state.selectedPattern.id}-fill-${idx}`;
+            userProgress[key] = val;
+            // Update button disabled state dynamically
+            const btn = document.querySelector(`[onclick="submitFill(${idx})"]`);
+            if (btn) btn.disabled = !val.trim();
+        };
+
+        window.submitFill = (idx) => {
+            const key = `${state.selectedPattern.id}-fill-${idx}`;
+            const inputVal = document.getElementById(`input-fill-${idx}`).value;
+            userProgress[key] = inputVal;
+            userProgress[`${key}-submitted`] = true;
+            calculateGlobalProgress();
+            renderSidebar();
+            renderTabContents();
+        };
+
+        window.resetFill = (idx) => {
+            const key = `${state.selectedPattern.id}-fill-${idx}`;
+            delete userProgress[key];
+            delete userProgress[`${key}-submitted`];
+            renderTabContents();
+        };
+
+        window.toggleFillHint = (idx) => {
+            const key = `${state.selectedPattern.id}-fill-${idx}`;
+            userProgress[`${key}-showhint`] = !userProgress[`${key}-showhint`];
+            renderTabContents();
+        };
+
+        // Card 3: Drag & Drop (Chips)
+        function renderDragAndDropCard(item, idx) {
+            const key = `${state.selectedPattern.id}-drag-${idx}`;
+            const submitted = !!userProgress[`${key}-submitted`];
+            
+            // Fetch state arrays or initialize
+            if (!userProgress[key]) {
+                userProgress[key] = []; // Selected blocks
+                userProgress[`${key}-available`] = [...item.blocks].sort(() => Math.random() - 0.5);
+            }
+
+            const selected = userProgress[key];
+            const available = userProgress[`${key}-available`];
+            const composed = selected.map(b => b.text).join('').normalize('NFC');
+            const target = item.targetSentence.normalize('NFC');
+            const isCorrect = composed === target;
+
+            const left = `
+                <div class="question-body mb-3">🇬🇧 ${item.targetEnglish}</div>
+                
+                <span class="text-[14px] text-[#64748B] italic block mb-1 font-sans">我的拼装句：</span>
+                <div class="word-builder-zone active">
+                    ${selected.map((b, bIdx) => `
+                        <span 
+                            class="bg-[#2563EB] text-white px-3.5 py-1.5 rounded-full font-thai cursor-pointer shadow-xs hover:bg-[#DC2626]"
+                            onclick="handleDragBlockClick(${idx}, ${bIdx}, true)"
+                        >
+                            ${b.text}
+                        </span>
+                    `).join('')}
+                </div>
+
+                <span class="text-[14px] text-[#64748B] italic block mb-1 font-sans">备选词块：</span>
+                <div class="word-builder-zone">
+                    ${available.map((b, bIdx) => `
+                        <span 
+                            class="bg-white border border-slate-200 text-slate-800 px-3.5 py-1.5 rounded-full font-thai cursor-pointer hover:border-[#2563EB] shadow-xs"
+                            onclick="handleDragBlockClick(${idx}, ${bIdx}, false)"
+                        >
+                            ${b.text}
+                        </span>
+                    `).join('')}
+                    ${available.length === 0 ? '<span class="text-xs text-slate-400">（词块已全部选完）</span>' : ''}
+                </div>
+
+                <div class="flex gap-3 mt-4">
+                    ${!submitted ? `
+                        <button class="exercise-btn" onclick="submitDrag(${idx})" ${selected.length === 0 ? 'disabled' : ''}>检查答案</button>
+                    ` : `
+                        <button class="exercise-btn secondary" onclick="resetDrag(${idx})">重做</button>
+                    `}
+                </div>
+            `;
+
+            let right = '';
+            if (submitted) {
+                right = `
+                    <div class="feedback ${isCorrect ? 'success' : 'error'}">
+                        <span class="font-bold">${isCorrect ? '组合拼装正确！' : '拼装不正确！'}</span>
+                        <p class="text-xs opacity-90 mt-1">标准句子: ${item.targetSentence}</p>
+                    </div>
+                `;
+            } else {
+                right = `<div class="text-xs text-slate-450 italic py-10 text-center font-sans">点击词块拼装完整泰语句子</div>`;
+            }
+
+            return renderExerciseCardWrapper(idx, "词块组句 (Chips)", left, right);
+        }
+
+        window.handleDragBlockClick = (idx, blockIdx, fromSelected) => {
+            const key = `${state.selectedPattern.id}-drag-${idx}`;
+            if (userProgress[`${key}-submitted`]) return;
+
+            const selected = userProgress[key];
+            const available = userProgress[`${key}-available`];
+
+            if (fromSelected) {
+                const removed = selected.splice(blockIdx, 1)[0];
+                available.push(removed);
+            } else {
+                const removed = available.splice(blockIdx, 1)[0];
+                selected.push(removed);
+            }
+            renderTabContents();
+        };
+
+        window.submitDrag = (idx) => {
+            const key = `${state.selectedPattern.id}-drag-${idx}`;
+            userProgress[`${key}-submitted`] = true;
+            calculateGlobalProgress();
+            renderSidebar();
+            renderTabContents();
+        };
+
+        window.resetDrag = (idx) => {
+            const key = `${state.selectedPattern.id}-drag-${idx}`;
+            delete userProgress[key];
+            delete userProgress[`${key}-available`];
+            delete userProgress[`${key}-submitted`];
+            renderTabContents();
+        };
+
+        // Card 4: Multiple Choice
+        function renderMultipleChoiceCard(item, idx) {
+            const key = `${state.selectedPattern.id}-mc-${idx}`;
+            const selectedIdx = userProgress[key];
+            const submitted = !!userProgress[`${key}-submitted`];
+            const isCorrect = selectedIdx === item.correctIndex;
+
+            const left = `
+                <div class="question-body mb-4">${item.question}</div>
+                <div class="mc-options space-y-2">
+                    ${item.options.map((opt, oIdx) => {
+                        let btnClass = '';
+                        let labelBg = 'bg-white border-slate-200 text-slate-500';
+                        
+                        if (submitted) {
+                            if (oIdx === item.correctIndex) {
+                                btnClass = 'correct';
+                                labelBg = 'bg-[#16A34A] border-[#16A34A] text-white';
+                            } else if (oIdx === selectedIdx) {
+                                btnClass = 'wrong';
+                                labelBg = 'bg-[#DC2626] border-[#DC2626] text-white';
+                            }
+                        } else {
+                            if (oIdx === selectedIdx) {
+                                btnClass = 'selected';
+                                labelBg = 'bg-[#2563EB] border-[#2563EB] text-white';
+                            }
+                        }
+
+                        return `
+                            <button 
+                                onclick="selectMcOption(${idx}, ${oIdx})"
+                                class="mc-option ${btnClass}"
+                                ${submitted ? 'disabled' : ''}
+                            >
+                                <span class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition mr-3 border shrink-0 ${labelBg}">
+                                    ${String.fromCharCode(65 + oIdx)}
+                                </span>
+                                <span>${opt}</span>
+                            </button>
+                        `;
+                    }).join('')}
+                </div>
+                <div class="flex gap-3 mt-4">
+                    ${!submitted ? `
+                        <button class="exercise-btn" onclick="submitMc(${idx})" ${selectedIdx === undefined ? 'disabled' : ''}>提交答案</button>
+                    ` : `
+                        <button class="exercise-btn secondary" onclick="resetMc(${idx})">重做</button>
+                    `}
+                </div>
+            `;
+
+            let right = '';
+            if (submitted) {
+                right = `
+                    <div class="feedback ${isCorrect ? 'success' : 'error'}">
+                        <span class="font-bold">${isCorrect ? '答案正确！' : '答案错误！'}</span>
+                        <p class="text-xs opacity-90 mt-1">正确答案是: ${String.fromCharCode(65 + item.correctIndex)}</p>
+                    </div>
+                    <div class="hint-box text-xs">
+                        💡 ${item.explanation}
+                    </div>
+                `;
+            } else {
+                right = `<div class="text-xs text-slate-450 italic py-10 text-center font-sans">点击选择合适选项</div>`;
+            }
+
+            return renderExerciseCardWrapper(idx, "单项选择题", left, right);
+        }
+
+        window.selectMcOption = (idx, oIdx) => {
+            const key = `${state.selectedPattern.id}-mc-${idx}`;
+            userProgress[key] = oIdx;
+            renderTabContents();
+        };
+
+        window.submitMc = (idx) => {
+            const key = `${state.selectedPattern.id}-mc-${idx}`;
+            userProgress[`${key}-submitted`] = true;
+            calculateGlobalProgress();
+            renderSidebar();
+            renderTabContents();
+        };
+
+        window.resetMc = (idx) => {
+            const key = `${state.selectedPattern.id}-mc-${idx}`;
+            delete userProgress[key];
+            delete userProgress[`${key}-submitted`];
+            renderTabContents();
+        };
+
+        // Card 5: Th2Zh Card (Thai to Chinese text translation)
+        function renderTh2ZhCard(item, idx) {
+            const key = `${state.selectedPattern.id}-th2zh-${idx}`;
+            const userInput = userProgress[key] || '';
+            const submitted = !!userProgress[`${key}-submitted`];
+            const score = userProgress[`${key}-score`] || 0;
+            const showAnswer = !!userProgress[`${key}-showanswer`];
+
+            // evaluate score based on keyword match
+            let matchedKeywords = [];
+            if (userInput.trim()) {
+                matchedKeywords = item.keywords.filter(kw => userInput.includes(kw));
+            }
+            const calculatedScore = item.keywords.length > 0 ? Math.round((matchedKeywords.length / item.keywords.length) * 100) : 0;
+
+            const left = `
+                <div class="question-body font-thai select-text">${item.prompt}</div>
+                <textarea 
+                    id="textarea-th2zh-${idx}"
+                    placeholder="请在此输入您的中文翻译答案..." 
+                    class="exercise-textarea h-24"
+                    oninput="updateTh2ZhInput(${idx}, this.value)"
+                    ${submitted && score >= 80 ? 'disabled' : ''}
+                >${userInput}</textarea>
+                <div class="flex gap-3">
+                    ${!(submitted && score >= 80) ? `
+                        <button class="exercise-btn" onclick="submitTh2Zh(${idx})" ${!userInput.trim() ? 'disabled' : ''}>提交翻译</button>
+                    ` : `
+                        <button class="exercise-btn secondary" onclick="resetTh2Zh(${idx})">重做</button>
+                    `}
+                    <button class="exercise-btn secondary" onclick="toggleTh2ZhAnswer(${idx})">${showAnswer ? '隐藏参考' : '显示参考'}</button>
+                </div>
+            `;
+
+            let right = '';
+            if (submitted) {
+                const isPass = score >= 80;
+                const isPartial = score >= 50 && score < 80;
+                const statusClass = isPass ? 'success' : (isPartial ? 'partial' : 'error');
+                
+                right = `
+                    <div class="feedback ${statusClass}">
+                        <span class="font-bold">${isPass ? '翻译完全吻合！' : (isPartial ? '核心点部分吻合' : '核心词存在遗漏')}</span>
+                        <p class="text-xs opacity-90 mt-1">系统打分契合度: ${score}分 / 100分</p>
+                    </div>
+                    <div class="text-xs text-slate-500 space-y-1">
+                        <strong>已中核心点:</strong> ${matchedKeywords.length > 0 ? matchedKeywords.join('、') : '无'}<br/>
+                        <strong>未中核心点:</strong> ${item.keywords.filter(k => !userInput.includes(k)).join('、') || '无'}
+                    </div>
+                `;
+            }
+            if (showAnswer) {
+                right += `
+                    <div class="hint-box text-xs">
+                        <strong>📖 标准翻译:</strong> ${item.referenceAnswer}<br/>
+                        <span class="block mt-1">💡 <strong>解析:</strong> ${item.explanation}</span>
+                    </div>
+                `;
+            }
+            if (!submitted && !showAnswer) {
+                right = `<div class="text-xs text-slate-450 italic py-10 text-center font-sans">请在输入框中提交中文直译内容</div>`;
+            }
+
+            return renderExerciseCardWrapper(idx, "泰翻中 🇹🇭 → 🇨🇳", left, right);
+        }
+
+        window.updateTh2ZhInput = (idx, val) => {
+            const key = `${state.selectedPattern.id}-th2zh-${idx}`;
+            userProgress[key] = val;
+            const btn = document.querySelector(`[onclick="submitTh2Zh(${idx})"]`);
+            if (btn) btn.disabled = !val.trim();
+        };
+
+        window.submitTh2Zh = (idx) => {
+            const key = `${state.selectedPattern.id}-th2zh-${idx}`;
+            const inputVal = document.getElementById(`textarea-th2zh-${idx}`).value.trim();
+            
+            const item = state.selectedPattern.exercises.translation.items.find((_, i) => i === idx || (state.selectedPattern.exercises.translation.items[i].prompt === state.selectedPattern.exercises.translation.items[idx].prompt));
+            
+            const matched = item.keywords.filter(kw => inputVal.includes(kw));
+            const calculatedScore = item.keywords.length > 0 ? Math.round((matched.length / item.keywords.length) * 100) : 0;
+
+            userProgress[key] = inputVal;
+            userProgress[`${key}-submitted`] = true;
+            userProgress[`${key}-score`] = calculatedScore;
+            
+            calculateGlobalProgress();
+            renderSidebar();
+            renderTabContents();
+        };
+
+        window.resetTh2Zh = (idx) => {
+            const key = `${state.selectedPattern.id}-th2zh-${idx}`;
+            delete userProgress[key];
+            delete userProgress[`${key}-submitted`];
+            delete userProgress[`${key}-score`];
+            renderTabContents();
+        };
+
+        window.toggleTh2ZhAnswer = (idx) => {
+            const key = `${state.selectedPattern.id}-th2zh-${idx}`;
+            userProgress[`${key}-showanswer`] = !userProgress[`${key}-showanswer`];
+            renderTabContents();
+        };
+
+        // Card 6: Zh2Th Card (Chinese to Thai clickable chips builder)
+        function renderZh2ThCard(item, idx) {
+            const key = `${state.selectedPattern.id}-zh2th-${idx}`;
+            const submitted = !!userProgress[`${key}-submitted`];
+
+            if (!userProgress[key]) {
+                userProgress[key] = [];
+                userProgress[`${key}-available`] = [...item.wordBlocks].sort(() => Math.random() - 0.5);
+            }
+
+            const selected = userProgress[key];
+            const available = userProgress[`${key}-available`];
+            const composed = selected.map(w => w.word).join('').normalize('NFC');
+            const target = item.targetSentence.normalize('NFC');
+            const isCorrect = composed === target;
+            const showAnswer = !!userProgress[`${key}-showanswer`];
+
+            const left = `
+                <div class="question-body mb-3">${item.prompt}</div>
+                
+                <span class="text-[14px] text-[#64748B] italic block mb-1 font-sans">我的组句：</span>
+                <div class="word-builder-zone active">
+                    ${selected.map((w, wIdx) => `
+                        <span 
+                            class="word-block in-selected"
+                            onclick="handleZh2ThWordClick(${idx}, ${wIdx}, true)"
+                        >
+                            ${w.word}
+                        </span>
+                    `).join('')}
+                </div>
+
+                <span class="text-[14px] text-[#64748B] italic block mb-1 font-sans">备选单词（点击选中）：</span>
+                <div class="word-builder-zone">
+                    ${available.map((w, wIdx) => `
+                        <span 
+                            class="word-block"
+                            onclick="handleZh2ThWordClick(${idx}, ${wIdx}, false)"
+                        >
+                            ${w}
+                        </span>
+                    `).join('')}
+                </div>
+
+                <div class="flex gap-3 mt-4">
+                    ${!submitted ? `
+                        <button class="exercise-btn" onclick="submitZh2Th(${idx})" ${selected.length === 0 ? 'disabled' : ''}>检查答案</button>
+                    ` : `
+                        <button class="exercise-btn secondary" onclick="resetZh2Th(${idx})">重做</button>
+                    `}
+                    <button class="exercise-btn secondary" onclick="toggleZh2ThAnswer(${idx})">${showAnswer ? '隐藏解析' : '显示解析'}</button>
+                </div>
+            `;
+
+            let right = '';
+            if (submitted) {
+                right = `
+                    <div class="feedback ${isCorrect ? 'success' : 'error'}">
+                        <span class="font-bold">${isCorrect ? '翻译正确！完美拼写！' : '翻译组句错误！'}</span>
+                        <p class="text-xs opacity-90 mt-1">标准泰语: ${item.targetSentence}</p>
+                    </div>
+                `;
+            }
+            if (showAnswer) {
+                right += `
+                    <div class="hint-box text-xs">
+                        📖 <strong>词汇拆解解析:</strong><br/>
+                        <span class="block mt-1">${item.explanation}</span>
+                    </div>
+                `;
+            }
+            if (!submitted && !showAnswer) {
+                right = `<div class="text-xs text-slate-455 italic py-10 text-center font-sans">点击下方泰语单词拼装出正确的翻译</div>`;
+            }
+
+            return renderExerciseCardWrapper(idx, "中译泰 🇨🇳 → 🇹🇭（拼装）", left, right);
+        }
+
+        window.handleZh2ThWordClick = (idx, wIdx, fromSelected) => {
+            const key = `${state.selectedPattern.id}-zh2th-${idx}`;
+            if (userProgress[`${key}-submitted`]) return;
+
+            const selected = userProgress[key];
+            const available = userProgress[`${key}-available`];
+
+            if (fromSelected) {
+                const removed = selected.splice(wIdx, 1)[0];
+                available.push(removed.word);
+            } else {
+                const wordVal = available.splice(wIdx, 1)[0];
+                selected.push({ word: wordVal, id: Date.now() + Math.random() });
+            }
+            renderTabContents();
+        };
+
+        window.submitZh2Th = (idx) => {
+            const key = `${state.selectedPattern.id}-zh2th-${idx}`;
+            userProgress[`${key}-submitted`] = true;
+            calculateGlobalProgress();
+            renderSidebar();
+            renderTabContents();
+        };
+
+        window.resetZh2Th = (idx) => {
+            const key = `${state.selectedPattern.id}-zh2th-${idx}`;
+            delete userProgress[key];
+            delete userProgress[`${key}-available`];
+            delete userProgress[`${key}-submitted`];
+            renderTabContents();
+        };
+
+        window.toggleZh2ThAnswer = (idx) => {
+            const key = `${state.selectedPattern.id}-zh2th-${idx}`;
+            userProgress[`${key}-showanswer`] = !userProgress[`${key}-showanswer`];
+            renderTabContents();
+        };
+
+        // Card 7: Sentence Construction Card (自由造句，含左/右布局评分)
+        function renderSentenceConstructionCard(item, idx) {
+            const key = `${state.selectedPattern.id}-construction-${idx}`;
+            const userInput = userProgress[key] || '';
+            const submitted = !!userProgress[`${key}-submitted`];
+            const score = userProgress[`${key}-score`] || 0;
+            const results = userProgress[`${key}-results`] || null;
+            const showAnswer = !!userProgress[`${key}-showanswer`];
+
+            const left = `
+                <div class="sc-prompt">
+                    <div class="sc-prompt-item"><span class="sc-prompt-label">🏷️ 主语提示:</span> ${item.prompt.subjectZh} (${item.prompt.subject})</div>
+                    <div class="sc-prompt-item"><span class="sc-prompt-label">📍 方位/目的:</span> ${item.prompt.prepositionalHintZh} (${item.prompt.prepositionalHint})</div>
+                    <div class="sc-prompt-item"><span class="sc-prompt-label">🇬🇧 英语提示:</span> ${item.prompt.englishHint}</div>
+                </div>
+                <textarea 
+                    id="textarea-construction-${idx}"
+                    placeholder="请在此输入您的泰语造句答案..." 
+                    class="exercise-textarea h-24"
+                    oninput="updateConstructionInput(${idx}, this.value)"
+                    ${submitted && score === 100 ? 'disabled' : ''}
+                >${userInput}</textarea>
+                <div class="flex gap-3">
+                    ${!(submitted && score === 100) ? `
+                        <button class="exercise-btn" onclick="submitConstruction(${idx})" ${!userInput.trim() ? 'disabled' : ''}>提交造句</button>
+                    ` : `
+                        <button class="exercise-btn secondary" onclick="resetConstruction(${idx})">重做</button>
+                    `}
+                    <button class="exercise-btn secondary" onclick="toggleConstructionAnswer(${idx})">${showAnswer ? '隐藏参考' : '显示参考'}</button>
+                </div>
+            `;
+
+            let right = '';
+            if (submitted) {
+                right = `
+                    <div class="feedback ${score >= 80 ? 'success' : (score >= 50 ? 'partial' : 'error')}">
+                        <span class="font-bold">造句评分: ${score} / 100</span>
+                    </div>
+                    <div class="space-y-1.5 mt-2">
+                        ${Object.entries(results).map(([k, r]) => `
+                            <div class="flex justify-between items-center text-xs p-1.5 border rounded bg-slate-50 border-slate-100 font-sans">
+                                <span>${r.pass ? '✅' : '❌'} ${r.label}</span>
+                                <span class="font-bold text-[#2563EB]">${r.pass ? `+${r.weight}` : '0'}/${r.weight}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            if (showAnswer) {
+                right += `
+                    <div class="hint-box text-xs font-sans">
+                        📖 <strong>参考造句:</strong> <span class="font-thai block text-sm mt-1">${item.referenceAnswer}</span>
+                    </div>
+                `;
+            }
+            if (!submitted && !showAnswer) {
+                right = `<div class="text-xs text-slate-455 italic py-10 text-center font-sans">请根据提示词汇拼写出完整泰语句子</div>`;
+            }
+
+            return renderExerciseCardWrapper(idx, "自由句型造句", left, right);
+        }
+
+        window.updateConstructionInput = (idx, val) => {
+            const key = `${state.selectedPattern.id}-construction-${idx}`;
+            userProgress[key] = val;
+            const btn = document.querySelector(`[onclick="submitConstruction(${idx})"]`);
+            if (btn) btn.disabled = !val.trim();
+        };
+
+        window.submitConstruction = (idx) => {
+            const key = `${state.selectedPattern.id}-construction-${idx}`;
+            const inputVal = document.getElementById(`textarea-construction-${idx}`).value.trim().normalize('NFC');
+            
+            const item = state.selectedPattern.exercises.sentenceConstruction.items[idx];
+            const rubric = item.scoringRubric;
+            const results = {};
+            let totalScore = 0;
+
+            results.hasSubject = {
+                pass: inputVal.includes(rubric.hasSubject.keyword.normalize('NFC')),
+                weight: rubric.hasSubject.weight,
+                label: `包含主语 (${rubric.hasSubject.keyword})`
+            };
+            if (results.hasSubject.pass) totalScore += rubric.hasSubject.weight;
+
+            results.hasVerb = {
+                pass: inputVal.includes(rubric.hasVerb.keyword.normalize('NFC')),
+                weight: rubric.hasVerb.weight,
+                label: `包含核心词 (${rubric.hasVerb.keyword})`
+            };
+            if (results.hasVerb.pass) totalScore += rubric.hasVerb.weight;
+
+            results.hasPrepPhrase = {
+                pass: inputVal.includes(rubric.hasPrepPhrase.keyword.normalize('NFC')),
+                weight: rubric.hasPrepPhrase.weight,
+                label: `包含修饰词 (${rubric.hasPrepPhrase.keyword})`
+            };
+            if (results.hasPrepPhrase.pass) totalScore += rubric.hasPrepPhrase.weight;
+
+            results.spellingCorrect = {
+                pass: inputVal === item.referenceAnswer.normalize('NFC'),
+                weight: rubric.spellingCorrect.weight,
+                label: '与标准答案拼写完全一致'
+            };
+            if (results.spellingCorrect.pass) totalScore += rubric.spellingCorrect.weight;
+
+            userProgress[key] = inputVal;
+            userProgress[`${key}-submitted`] = true;
+            userProgress[`${key}-score`] = totalScore;
+            userProgress[`${key}-results`] = results;
+
+            calculateGlobalProgress();
+            renderSidebar();
+            renderTabContents();
+        };
+
+        window.resetConstruction = (idx) => {
+            const key = `${state.selectedPattern.id}-construction-${idx}`;
+            delete userProgress[key];
+            delete userProgress[`${key}-submitted`];
+            delete userProgress[`${key}-score`];
+            delete userProgress[`${key}-results`];
+            renderTabContents();
+        };
+
+        window.toggleConstructionAnswer = (idx) => {
+            const key = `${state.selectedPattern.id}-construction-${idx}`;
+            userProgress[`${key}-showanswer`] = !userProgress[`${key}-showanswer`];
+            renderTabContents();
+        };
+
+        // Card 8: Error Correction (找出并改正句子错误，含红波浪线)
+        function renderErrorCorrectionCard(item, idx) {
+            const key = `${state.selectedPattern.id}-correction-${idx}`;
+            const userInput = userProgress[key] || '';
+            const submitted = !!userProgress[`${key}-submitted`];
+            const isCorrect = userInput.trim().normalize('NFC') === item.correctedSentence.normalize('NFC');
+            const showAnswer = !!userProgress[`${key}-showanswer`];
+
+            const left = `
+                <div class="bg-rose-50 border border-rose-100 text-rose-800 p-4 rounded-lg font-thai text-xl mb-3 leading-relaxed">
+                    <span class="wavy-underline">${item.wrongSentence}</span>
+                </div>
+                <div class="text-[14px] text-[#64748B] italic font-sans mb-3">
+                    错误位置: <span class="font-bold text-[#DC2626]">${item.errorPosition}</span> | 类别: <span class="font-semibold text-blue-650">${item.errorType}</span>
+                </div>
+                <textarea 
+                    id="textarea-correction-${idx}"
+                    placeholder="在此输入修改纠正后的正确泰语句子..." 
+                    class="exercise-textarea h-24"
+                    oninput="updateCorrectionInput(${idx}, this.value)"
+                    ${submitted && isCorrect ? 'disabled' : ''}
+                >${userInput}</textarea>
+                
+                <div class="flex gap-3">
+                    ${!(submitted && isCorrect) ? `
+                        <button class="exercise-btn" onclick="submitCorrection(${idx})" ${!userInput.trim() ? 'disabled' : ''}>提交改正</button>
+                    ` : `
+                        <button class="exercise-btn secondary" onclick="resetCorrection(${idx})">重做</button>
+                    `}
+                    <button class="exercise-btn secondary" onclick="toggleCorrectionAnswer(${idx})">${showAnswer ? '隐藏解析' : '修改原因'}</button>
+                </div>
+            `;
+
+            let right = '';
+            if (submitted) {
+                right = `
+                    <div class="feedback ${isCorrect ? 'success' : 'error'}">
+                        <span class="font-bold">${isCorrect ? '改正完全正确！' : '改正依然存在偏差'}</span>
+                    </div>
+                `;
+            }
+            if (showAnswer) {
+                right += `
+                    <div class="hint-box text-xs">
+                        <strong>📖 标准句子:</strong> <span class="font-thai text-sm block mt-1">${item.correctedSentence}</span>
+                        <span class="block mt-2">💡 <strong>修改原因:</strong> ${item.explanation}</span>
+                    </div>
+                `;
+            }
+            if (!submitted && !showAnswer) {
+                right = `<div class="text-xs text-slate-455 italic py-10 text-center font-sans">找出红色波浪线部分的错误并完成修正拼写</div>`;
+            }
+
+            return renderExerciseCardWrapper(idx, "改错练习 (Wavy Markings)", left, right);
+        }
+
+        window.updateCorrectionInput = (idx, val) => {
+            const key = `${state.selectedPattern.id}-correction-${idx}`;
+            userProgress[key] = val;
+            const btn = document.querySelector(`[onclick="submitCorrection(${idx})"]`);
+            if (btn) btn.disabled = !val.trim();
+        };
+
+        window.submitCorrection = (idx) => {
+            const key = `${state.selectedPattern.id}-correction-${idx}`;
+            const inputVal = document.getElementById(`textarea-correction-${idx}`).value.trim().normalize('NFC');
+            userProgress[key] = inputVal;
+            userProgress[`${key}-submitted`] = true;
+            calculateGlobalProgress();
+            renderSidebar();
+            renderTabContents();
+        };
+
+        window.resetCorrection = (idx) => {
+            const key = `${state.selectedPattern.id}-correction-${idx}`;
+            delete userProgress[key];
+            delete userProgress[`${key}-submitted`];
+            renderTabContents();
+        };
+
+        window.toggleCorrectionAnswer = (idx) => {
+            const key = `${state.selectedPattern.id}-correction-${idx}`;
+            userProgress[`${key}-showanswer`] = !userProgress[`${key}-showanswer`];
+            renderTabContents();
+        };
+
+
+        // ==========================================
+        // Event Listeners for Dictionary Query Sidebar
+        // ==========================================
+        toggleQuerySidebarBtn.addEventListener('click', () => {
+            toggleSidebarState(!state.querySidebarOpen);
+        });
+
+        closeQuerySidebarBtn.addEventListener('click', () => {
+            toggleSidebarState(false);
+        });
+
+        function toggleSidebarState(open) {
+            state.querySidebarOpen = open;
+            if (open) {
+                querySidebar.classList.remove('w-0');
+                querySidebar.classList.add('w-80', 'md:w-96');
+                querySidebarInner.classList.remove('opacity-0', 'pointer-events-none');
+                querySidebarInner.classList.add('opacity-100');
+                querySidebarToggleIcon.className = "fas fa-chevron-right transition-transform duration-300";
+            } else {
+                querySidebar.classList.add('w-0');
+                querySidebar.classList.remove('w-80', 'md:w-96');
+                querySidebarInner.classList.add('opacity-0', 'pointer-events-none');
+                querySidebarInner.classList.remove('opacity-100');
+                querySidebarToggleIcon.className = "fas fa-chevron-left transition-transform duration-300";
+            }
+        }
+
+        // Selection event listener for floating query dialog bubble
+        document.addEventListener('selectionchange', () => {
+            const selection = window.getSelection();
+            if (selection.isCollapsed) {
+                selectionToolbar.classList.add('hidden');
+                return;
+            }
+            const text = selection.toString().trim();
+            if (!text) {
+                selectionToolbar.classList.add('hidden');
+                return;
+            }
+
+            const range = selection.getRangeAt(0);
+            const ancestorNode = range.commonAncestorContainer;
+            const ancestorEl = ancestorNode.nodeType === Node.ELEMENT_NODE ? ancestorNode : ancestorNode.parentElement;
+
+            const workspaceArea = document.getElementById('workspaceArea');
+            const sidebarArea = document.getElementById('querySidebar');
+            
+            const inWorkspace = workspaceArea && workspaceArea.contains(ancestorEl);
+            const inSidebar = sidebarArea && sidebarArea.contains(ancestorEl);
+            const hasThai = /[\u0e00-\u0e7f]/.test(text);
+
+            if (inWorkspace && !inSidebar && hasThai) {
+                state.selectedText = text;
+                const rect = range.getBoundingClientRect();
+                const toolbarW = 100;
+                const toolbarH = 34;
+                const left = rect.left + rect.width / 2 - toolbarW / 2;
+                const top = rect.top - toolbarH - 8;
+                
+                selectionToolbar.style.left = `${Math.max(10, Math.min(left, window.innerWidth - toolbarW - 10))}px`;
+                selectionToolbar.style.top = `${Math.max(10, Math.min(top, window.innerHeight - toolbarH - 10)) + window.scrollY}px`;
+                selectionToolbar.classList.remove('hidden');
+            } else {
+                selectionToolbar.classList.add('hidden');
+            }
+        });
+
+        // Prevention on bubble clicking
+        selectionToolbar.addEventListener('mousedown', (e) => e.preventDefault());
+
+        floatingQueryBtn.addEventListener('click', async () => {
+            const txt = state.selectedText;
+            selectionToolbar.classList.add('hidden');
+            window.getSelection().removeAllRanges();
+            await handleQuery(txt);
+        });
+
+        // Manual search trigger
+        manualQueryBtn.addEventListener('click', async () => {
+            const word = manualQueryInput.value.trim();
+            if (!word) return;
+            manualQueryInput.value = '';
+            await handleQuery(word);
+        });
+
+        manualQueryInput.addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                const word = manualQueryInput.value.trim();
+                if (!word) return;
+                manualQueryInput.value = '';
+                await handleQuery(word);
+            }
+        });
+
+        async function handleQuery(word) {
+            if (!word) return;
+            
+            toggleSidebarState(true);
+            sidebarEmptyState.classList.add('hidden');
+            sidebarListContainer.classList.remove('hidden');
+
+            const loaderId = 'loader-' + Date.now();
+            const loaderHtml = `
+                <div id="${loaderId}" class="bg-slate-50 border border-slate-100 rounded-xl p-4 shadow-sm relative animate-pulse flex flex-col gap-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-bold text-slate-800 font-thai">${word}</span>
+                        <span class="text-[10px] text-slate-400 font-sans">正在查询...</span>
+                    </div>
+                    <div class="h-3 bg-slate-200 rounded w-3/4 mt-2"></div>
+                    <div class="h-3 bg-slate-200 rounded w-1/2 mt-1"></div>
+                </div>
+            `;
+            sidebarListContainer.insertAdjacentHTML('afterbegin', loaderHtml);
+            sidebarListContainer.scrollTop = 0;
+
+            try {
+                const res = await fetch("https://thai-semantic-match-worker.alexszhang.workers.dev/explain", {
+                    method: "POST",
+                    headers: getWorkerAuthHeaders(),
+                    body: JSON.stringify({ word })
+                });
+                if (res.status === 401) {
+                    throw new Error("401 未授权访问：请检查 API Auth Token 是否正确！");
+                }
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const resText = await res.text();
+                const explanations = resText ? JSON.parse(resText) : [];
+                
+                await saveQueryRecord(word, explanations);
+                
+                const loader = document.getElementById(loaderId);
+                if (loader) loader.remove();
+                
+                await loadHistoryLogs();
+            } catch (e) {
+                console.error(e);
+                const loader = document.getElementById(loaderId);
+                if (loader) {
+                    loader.classList.remove('animate-pulse');
+                    loader.className = "bg-red-50 border border-red-100 rounded-xl p-4 shadow-sm relative";
+                    let errorMsg = e.message || '网络请求失败';
+                    if (errorMsg.includes('Failed to fetch') || errorMsg.includes('CORS')) {
+                        errorMsg = "CORS 预检失败：可能是 Worker 端响应头未允许 Authorization 请求头。若后端未开启鉴权，请清空 Token 框重试。";
+                    }
+                    loader.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-bold text-[#DC2626] font-thai">${word}</span>
+                            <span class="text-[10px] text-red-550">查询失败</span>
+                        </div>
+                        <p class="text-[10px] text-red-650 mt-1 border-t pt-1 border-red-100">${errorMsg}</p>
+                    `;
+                }
+            }
+        }
+
+        const TOKEN_STORAGE_KEY = 'workerai_auth_token';
+
+        function getWorkerAuthHeaders(extraHeaders = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                ...extraHeaders
+            };
+            const inputEl = document.getElementById('workerAuthToken');
+            const token = (inputEl ? inputEl.value : (localStorage.getItem(TOKEN_STORAGE_KEY) || '')).trim();
+            if (token && token.length > 0) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            return headers;
+        }
+
+        function clearWorkerAuthToken() {
+            const inputEl = document.getElementById('workerAuthToken');
+            if (inputEl) inputEl.value = '';
+            localStorage.removeItem(TOKEN_STORAGE_KEY);
+        }
+
+        function initWorkerAuthTokenSync() {
+            const inputEl = document.getElementById('workerAuthToken');
+            if (!inputEl) return;
+            inputEl.value = localStorage.getItem(TOKEN_STORAGE_KEY) || '';
+            inputEl.addEventListener('input', () => {
+                localStorage.setItem(TOKEN_STORAGE_KEY, inputEl.value.trim());
+            });
+        }
+        document.addEventListener('DOMContentLoaded', initWorkerAuthTokenSync);
+
+        async function loadHistoryLogs() {
+            const history = await getQueryHistory();
+            state.queryHistory = history || [];
+            
+            if (history && history.length > 0) {
+                sidebarEmptyState.classList.add('hidden');
+                sidebarListContainer.classList.remove('hidden');
+                sidebarListContainer.innerHTML = history.map(item => {
+                    const timeStr = new Date(item.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                    
+                    return `
+                        <div class="bg-slate-50 border border-slate-100 rounded-xl p-4 shadow-xs relative transition hover:shadow-sm">
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 
+                                    class="text-base font-bold text-slate-800 font-thai font-thai-clickable flex items-center gap-1.5" 
+                                    onclick="playAudioDirect('${item.word.replace(/'/g, "\\'")}')"
+                                    title="点击播放"
+                                >
+                                    ${item.word}
+                                    <i class="fas fa-volume-up text-xs text-slate-400"></i>
+                                </h4>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[9px] text-slate-400 bg-slate-200/60 px-1.5 py-0.5 rounded-full font-sans">${timeStr}</span>
+                                    <button onclick="handleDeleteHistoryItem(event, ${item.id})" class="text-slate-450 hover:text-red-500 transition">
+                                        <i class="ph-bold ph-trash text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="space-y-1.5 mt-2 border-t pt-2 border-slate-200/50">
+                                ${item.explanations && item.explanations.length > 0 ? item.explanations.map(exp => `
+                                    <div class="flex items-baseline gap-2 py-0.5">
+                                        <span class="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-black flex-shrink-0 font-sans">译</span>
+                                        <span class="text-slate-755 font-medium text-xs font-sans">${exp.meanCh}</span>
+                                        <span class="text-[10px] text-slate-400 font-sans font-normal">(${exp.meanEn})</span>
+                                    </div>
+                                `).join('') : `<p class="text-xs text-slate-400 italic">暂无翻译说明</p>`}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                sidebarEmptyState.classList.remove('hidden');
+                sidebarListContainer.classList.add('hidden');
+                sidebarListContainer.innerHTML = '';
+            }
+        }
+
+        window.handleDeleteHistoryItem = async (e, id) => {
+            e.stopPropagation();
+            if (confirm("确定要删除这条查询词吗？")) {
+                await deleteQueryRecord(id);
+                await loadHistoryLogs();
+            }
+        };
+
+        // ==========================================
+        // Modal dialog logs window triggers
+        // ==========================================
+        document.getElementById('openHistoryBtn').addEventListener('click', async () => {
+            await renderHistoryInDialog();
+            historyDialog.showModal();
+        });
+
+        closeHistoryDialogBtn.addEventListener('click', () => historyDialog.close());
+        closeHistoryFooterBtn.addEventListener('click', () => historyDialog.close());
+
+        historyDialog.addEventListener('click', (e) => {
+            const rect = historyDialog.getBoundingClientRect();
+            const isInDialog = (rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
+                rect.left <= e.clientX && e.clientX <= rect.left + rect.width);
+            if (!isInDialog) {
+                historyDialog.close();
+            }
+        });
+
+        if (settingsDialog) {
+            settingsDialog.addEventListener('click', (e) => {
+                const rect = settingsDialog.getBoundingClientRect();
+                const isInDialog = (rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
+                    rect.left <= e.clientX && e.clientX <= rect.left + rect.width);
+                if (!isInDialog) {
+                    settingsDialog.close();
+                }
+            });
+        }
+        
+        clearHistoryBtn.addEventListener('click', async () => {
+            if (confirm("确定要清空所有的历史记录吗？")) {
+                await clearQueryHistory();
+                await renderHistoryInDialog();
+                await loadHistoryLogs();
+            }
+        });
+
+        async function renderHistoryInDialog() {
+            const history = await getQueryHistory();
+            if (!history || history.length === 0) {
+                dialogHistoryList.innerHTML = `
+                    <div class="text-center py-20 text-slate-400">
+                        <i class="ph ph-clock-counter-clockwise text-4xl mb-2 text-slate-355"></i>
+                        <p class="text-xs">暂无单词查询历史记录</p>
+                    </div>
+                `;
+                return;
+            }
+
+            dialogHistoryList.innerHTML = history.map(item => `
+                <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-inner flex justify-between items-start gap-4">
+                    <div class="space-y-1">
+                        <h4 class="text-sm font-bold text-slate-800 font-thai flex items-center gap-2 cursor-pointer hover:text-[#2563EB]" onclick="playAudioDirect('${item.word.replace(/'/g, "\\'")}')">
+                            ${item.word}
+                            <i class="fas fa-volume-up text-xs text-slate-400"></i>
+                        </h4>
+                        <div class="space-y-1 pt-1.5">
+                            ${item.explanations && item.explanations.map(exp => `
+                                <div class="text-xs text-slate-600 flex items-baseline gap-1.5 leading-relaxed">
+                                    <span class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.5 rounded font-black shrink-0">译</span>
+                                    <span>${exp.meanCh} (${exp.meanEn})</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end gap-2 shrink-0 font-sans">
+                        <span class="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">${new Date(item.timestamp).toLocaleDateString()}</span>
+                        <button onclick="deleteDialogHistoryItem(event, ${item.id})" class="text-xs text-[#DC2626] hover:text-[#DC2626] font-semibold flex items-center gap-1">
+                            <i class="ph ph-trash"></i>
+                            <span>删除</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.deleteDialogHistoryItem = async (e, id) => {
+            e.stopPropagation();
+            if (confirm("确定要删除此查询历史记录吗？")) {
+                await deleteQueryRecord(id);
+                await renderHistoryInDialog();
+                await loadHistoryLogs();
+            }
+        };
+
+        // --- Helper Components color maps ---
+        function initPracticeEvents() {
+            // Drag and drop inputs event bindings could go here if needed,
+            // however inline onclick handlers handle most dynamic triggers.
+        }
+
+        // Standard lookup helpers
+        function getSlotLabel(slot) {
+            const labels = {
+                subject: "主语",
+                verb: "核心动词",
+                action: "主要动作",
+                purpose: "目的动作",
+                prepositional_phrase: "方位/介词短语"
+            };
+            return labels[slot] || slot;
+        }
+
+        function getSlotColor(slot) {
+            const colors = {
+                subject: '#e0f2fe',
+                verb: '#fee2e2',
+                action: '#fee2e2',
+                purpose: '#dbeafe',
+                prepositional_phrase: '#dbeafe'
+            };
+            return colors[slot] || '#f1f5f9';
+        }
+
+        // --- Left Sidebar Collapse / Expand Toggle ---
+        window.toggleLeftSidebar = () => {
+            const sidebar = document.getElementById('leftSidebar');
+            const icon = document.getElementById('leftSidebarToggleIcon');
+            const btn = document.getElementById('toggleLeftSidebarBtn');
+            if (!sidebar) return;
+            const isCollapsed = sidebar.classList.toggle('collapsed');
+            if (icon) {
+                if (isCollapsed) {
+                    icon.className = "ph-bold ph-sidebar-simple text-base text-blue-600";
+                    if (btn) btn.classList.add('bg-blue-50', 'text-blue-600');
+                } else {
+                    icon.className = "ph-bold ph-sidebar-simple text-base text-slate-500";
+                    if (btn) btn.classList.remove('bg-blue-50', 'text-blue-600');
+                }
+            }
+            try {
+                localStorage.setItem('sentence_coach_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+            } catch (e) {}
+        };
+
+        function initLeftSidebarState() {
+            try {
+                if (localStorage.getItem('sentence_coach_sidebar_collapsed') === 'true') {
+                    const sidebar = document.getElementById('leftSidebar');
+                    const icon = document.getElementById('leftSidebarToggleIcon');
+                    const btn = document.getElementById('toggleLeftSidebarBtn');
+                    if (sidebar) sidebar.classList.add('collapsed');
+                    if (icon) icon.className = "ph-bold ph-sidebar-simple text-base text-blue-600";
+                    if (btn) btn.classList.add('bg-blue-50', 'text-blue-600');
+                }
+            } catch (e) {}
+        }
+
+        // Global Keyboard Shortcut: ArrowLeft / ArrowRight for navigating examples in Step 2
+        document.addEventListener('keydown', (e) => {
+            if (state.currentStep === 2 && state.selectedPattern && state.selectedPattern.examples && state.selectedPattern.examples.length > 1) {
+                if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+                if (e.key === 'ArrowLeft') {
+                    goToPrevExample();
+                } else if (e.key === 'ArrowRight') {
+                    goToNextExample();
+                }
+            }
+        });
+
+        // Initialize App
+        initLeftSidebarState();
+        initFetch();
+        loadHistoryLogs();
+    </script>
+</body>
+</html>

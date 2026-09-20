@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThaiVocab Master - 泰语词汇互动学习</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        body {
+            font-family: 'Noto Serif Thai', 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .draggable {
+            cursor: grab;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .draggable:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+        }
+        
+        .draggable.dragging {
+            opacity: 0.5;
+            transform: scale(1.1);
+        }
+        
+        .drop-zone {
+            transition: all 0.3s ease;
+            border: 2px dashed #cbd5e1;
+        }
+        
+        .drop-zone.drag-over {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            transform: scale(1.02);
+        }
+        
+        .drop-zone.correct {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .drop-zone.wrong {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .word-chunk {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .word-chunk:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .word-chunk.selected {
+            background: #667eea;
+            color: white;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.5s ease;
+        }
+        
+        .streak-fire {
+            animation: firePulse 1s infinite;
+        }
+        
+        @keyframes firePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .celebration {
+            animation: celebrate 0.6s ease;
+        }
+        
+        @keyframes celebrate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2) rotate(5deg); }
+            100% { transform: scale(1); }
+        }
+        
+        .hint-bubble {
+            position: relative;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="glass-panel shadow-lg sticky top-0 z-50">
+            <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                        <i class="ph ph-book-open-text"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                            ThaiVocab Master
+                        </h1>
+                        <p class="text-xs text-slate-500">泰语词汇互动学习</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <!-- Streak Counter -->
+                    <div class="flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-full border border-orange-200">
+                        <i class="ph ph-fire text-orange-500 text-xl streak-fire"></i>
+                        <span class="font-bold text-orange-600" id="streakCount">0</span>
+                    </div>
+                    
+                    <!-- XP Points -->
+                    <div class="flex items-center gap-2 bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-200">
+                        <i class="ph ph-trophy text-indigo-500 text-xl"></i>
+                        <span class="font-bold text-indigo-600" id="xpPoints">0</span>
+                        <span class="text-xs text-indigo-400">XP</span>
+                    </div>
+                    
+                    <!-- Progress -->
+                    <div class="hidden sm:flex items-center gap-2">
+                        <div class="w-32 h-2 bg-slate-200 rounded-full overflow-hidden">
+                            <div id="dailyProgress" class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <span class="text-sm text-slate-600" id="progressText">0/10</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
+            <!-- Navigation Tabs -->
+            <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+                <button onclick="app.switchTab('learn')" id="tab-learn" class="tab-btn px-6 py-2.5 rounded-xl font-medium transition-all bg-white text-indigo-600 shadow-md border border-indigo-200">
+                    <i class="ph ph-book-open mr-2"></i>学习
+                </button>
+                <button onclick="app.switchTab('review')" id="tab-review" class="tab-btn px-6 py-2.5 rounded-xl font-medium transition-all bg-white/50 text-slate-600 hover:bg-white border border-transparent">
+                    <i class="ph ph-clock-counter-clockwise mr-2"></i>复习
+                    <span id="reviewBadge" class="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full hidden">0</span>
+                </button>
+                <button onclick="app.switchTab('stats')" id="tab-stats" class="tab-btn px-6 py-2.5 rounded-xl font-medium transition-all bg-white/50 text-slate-600 hover:bg-white border border-transparent">
+                    <i class="ph ph-chart-bar mr-2"></i>统计
+                </button>
+            </div>
+
+            <!-- Learn Tab Content -->
+            <div id="content-learn" class="tab-content fade-in">
+                <!-- Vocabulary List -->
+                <div id="vocabList" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <!-- Vocabulary cards will be rendered here -->
+                </div>
+
+                <!-- Learning Interface (Hidden by default) -->
+                <div id="learningInterface" class="hidden">
+                    <button onclick="app.backToList()" class="mb-4 flex items-center gap-2 text-slate-600 hover:text-indigo-600 transition-colors">
+                        <i class="ph ph-arrow-left"></i>
+                        返回列表
+                    </button>
+                    
+                    <div class="glass-panel rounded-2xl shadow-xl p-6 md:p-8">
+                        <!-- Progress Bar -->
+                        <div class="mb-6">
+                            <div class="flex justify-between text-sm text-slate-600 mb-2">
+                                <span>学习进度</span>
+                                <span id="interactionProgress">1/5</span>
+                            </div>
+                            <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
+                                <div id="interactionProgressBar" class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500" style="width: 20%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Word Header -->
+                        <div class="text-center mb-8">
+                            <h2 id="currentWord" class="text-4xl md:text-5xl font-bold text-indigo-600 mb-2">ประมาณ</h2>
+                            <p id="currentWordPOS" class="text-slate-500 mb-1">副词</p>
+                            <p id="currentWordMeaning" class="text-lg text-slate-700">大约、大概</p>
+                        </div>
+
+                        <!-- Usage Rule Card -->
+                        <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-r-xl mb-6">
+                            <h3 class="font-semibold text-indigo-900 mb-1">
+                                <i class="ph ph-info mr-2"></i>用法规则
+                            </h3>
+                            <p id="usageRule" class="text-indigo-800">用在数词前面，表示一个大概的数目</p>
+                        </div>
+
+                        <!-- Interaction Area -->
+                        <div id="interactionArea" class="min-h-[300px]">
+                            <!-- Dynamic content will be rendered here -->
+                        </div>
+
+                        <!-- Hint Button -->
+                        <div class="mt-6 text-center">
+                            <button onclick="app.showHint()" class="text-sm text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-2 mx-auto">
+                                <i class="ph ph-lightbulb"></i>
+                                需要提示？（剩余 <span id="hintCount">3</span> 次）
+                            </button>
+                        </div>
+
+                        <!-- Feedback Area -->
+                        <div id="feedbackArea" class="hidden mt-6 p-4 rounded-xl fade-in">
+                            <div class="flex items-center gap-3">
+                                <i id="feedbackIcon" class="ph ph-check-circle text-2xl"></i>
+                                <div>
+                                    <h4 id="feedbackTitle" class="font-semibold"></h4>
+                                    <p id="feedbackText" class="text-sm"></p>
+                                </div>
+                            </div>
+                            <button onclick="app.nextInteraction()" class="mt-3 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                                继续 <i class="ph ph-arrow-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Review Tab Content -->
+            <div id="content-review" class="tab-content hidden fade-in">
+                <div class="glass-panel rounded-2xl shadow-xl p-8 text-center">
+                    <i class="ph ph-clock-counter-clockwise text-6xl text-indigo-500 mb-4"></i>
+                    <h2 class="text-2xl font-bold text-slate-800 mb-2">复习队列</h2>
+                    <p class="text-slate-600 mb-6">根据遗忘曲线，你需要复习以下内容</p>
+                    
+                    <div id="reviewQueue" class="space-y-3">
+                        <!-- Review items will be rendered here -->
+                    </div>
+                    
+                    <button onclick="app.startReview()" class="mt-6 px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all">
+                        开始复习
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Tab Content -->
+            <div id="content-stats" class="tab-content hidden fade-in">
+                <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <div class="glass-panel rounded-2xl shadow-lg p-6">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
+                                <i class="ph ph-book-open text-2xl text-indigo-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-slate-500">已学词汇</p>
+                                <p class="text-2xl font-bold text-slate-800" id="statLearned">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-panel rounded-2xl shadow-lg p-6">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                <i class="ph ph-check-circle text-2xl text-green-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-slate-500">正确率</p>
+                                <p class="text-2xl font-bold text-slate-800" id="statAccuracy">0%</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-panel rounded-2xl shadow-lg p-6">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                                <i class="ph ph-fire text-2xl text-orange-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-slate-500">最长连击</p>
+                                <p class="text-2xl font-bold text-slate-800" id="statBestStreak">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Data Structure
+        const vocabularyData = [
+            {
+                id: "vp_008",
+                order: 8,
+                word: "ประมาณ",
+                partOfSpeech: "副词",
+                meaning: "大约、大概",
+                usageRule: {
+                    description: "用在数词前面，表示一个大概的数目",
+                    position: "数词前面",
+                    function: "表示大概数目",
+                    structure: "动词/名词 + ประมาณ + 数字 + 量词"
+                },
+                examples: [
+                    {
+                        thai: "สัปดาห์หนึ่งเราเรียนภาษาไทยประมาณ ๘ ชั่วโมง",
+                        chinese: "我们一周上大约八节泰语课",
+                        highlighted: "ประมาณ ๘",
+                        difficulty: 1
+                    },
+                    {
+                        thai: "ปีหนึ่งผมไปเมืองไทยประมาณ ๒-๓ เดือน",
+                        chinese: "我一年去泰国大约两至三个月",
+                        highlighted: "ประมาณ ๒-๓",
+                        difficulty: 2
+                    },
+                    {
+                        thai: "เขาอยู่กว่างโจวประมาณ ๒๐ ปีแล้ว",
+                        chinese: "他在广州住了大约二十年",
+                        highlighted: "ประมาณ ๒๐",
+                        difficulty: 2
+                    }
+                ],
+                commonMistakes: [
+                    {
+                        wrong: "เราเรียนประมาณภาษาไทย ๘ ชั่วโมง",
+                        correct: "เราเรียนภาษาไทยประมาณ ๘ ชั่วโมง",
+                        explanation: "ประมาณ必须放在数词前面，不能放在名词前面"
+                    }
+                ],
+                interactions: [
+                    {
+                        type: "position_drag",
+                        instruction: "将'ประมาณ'拖到句子中的正确位置",
+                        difficulty: 1,
+                        data: {
+                            sentenceParts: ["เราเรียนภาษาไทย", "๘ ชั่วโมง", "ต่อสัปดาห์"],
+                            targetWord: "ประมาณ",
+                            correctPosition: 1,
+                            fullCorrect: "เราเรียนภาษาไทย ประมาณ ๘ ชั่วโมง ต่อสัปดาห์"
+                        },
+                        hints: [
+                            "想想：ประมาณ应该放在什么词的前面？",
+                            "提示：数词是哪一个？"
+                        ],
+                        feedback: {
+                            correct: "正确！ประมาณ放在数词 ๘ 的前面",
+                            wrong: "不对哦，ประมาณ应该放在数词的前面，再试试"
+                        }
+                    },
+                    {
+                        type: "fill_blank",
+                        instruction: "选择正确的词填空",
+                        difficulty: 2,
+                        data: {
+                            sentence: "เขาอยู่กว่างโจว ______ ๒๐ ปีแล้ว",
+                            options: [
+                                { text: "ประมาณ", correct: true },
+                                { text: "มาก", correct: false },
+                                { text: "น้อย", correct: false },
+                                { text: "บาง", correct: false }
+                            ],
+                            context: "表达'大约20年'的意思"
+                        },
+                        hints: [
+                            "句子要表达'大约'的意思",
+                            "哪个词表示'大约、大概'？"
+                        ],
+                        feedback: {
+                            correct: "正确！ประมาณ表示大约",
+                            wrong: "不对，这里需要表示'大约'的词"
+                        }
+                    },
+                    {
+                        type: "sentence_build",
+                        instruction: "拖拽词块，组成正确的句子",
+                        difficulty: 2,
+                        data: {
+                            chunks: [
+                                { id: "c1", text: "ผม", order: 0 },
+                                { id: "c2", text: "ไปเมืองไทย", order: 1 },
+                                { id: "c3", text: "ประมาณ", order: 2 },
+                                { id: "c4", text: "๒-๓ เดือน", order: 3 },
+                                { id: "c5", text: "ปีหนึ่ง", order: 4 }
+                            ],
+                            // 支持多种正确的语序（时间状语在句首或句尾均可）
+                            acceptableOrders: [
+                                ["c1", "c2", "c3", "c4", "c5"], // ผม ไปเมืองไทย ประมาณ ๒-๓ เดือน ปีหนึ่ง
+                                ["c5", "c1", "c2", "c3", "c4"]  // ปีหนึ่ง ผม ไปเมืองไทย ประมาณ ๒-๓ เดือน
+                            ]
+                        },
+                        hints: [
+                            "时间状语'ปีหนึ่ง'通常放在句首或句尾",
+                            "ประมาณ要放在数词前面"
+                        ],
+                        feedback: {
+                            correct: "太棒了！句子结构完全正确",
+                            wrong: "检查一下：ประมาณ的位置对吗？"
+                        }
+                    },
+                    {
+                        type: "scenario_judge",
+                        instruction: "哪种情况应该使用'ประมาณ'？",
+                        difficulty: 2,
+                        data: {
+                            scenarios: [
+                                {
+                                    text: "你知道确切的价格是100泰铢",
+                                    shouldUse: false,
+                                    reason: "确切数字不需要用ประมาณ"
+                                },
+                                {
+                                    text: "你估计价格大概是100泰铢左右",
+                                    shouldUse: true,
+                                    reason: "不确定的估计需要用ประมาณ"
+                                }
+                            ]
+                        },
+                        hints: [
+                            "ประมาณ用于什么情况？",
+                            "确切的数字 vs 大概的数字"
+                        ],
+                        feedback: {
+                            correct: "正确！理解得很清楚",
+                            wrong: "记住：ประมาณ用于不确定的大概数量"
+                        }
+                    },
+                    {
+                        type: "error_detect",
+                        instruction: "找出句子中的错误并改正",
+                        difficulty: 3,
+                        data: {
+                            wrongSentence: "ฉันกินข้าวประมาณ ๓ จานทุกวัน",
+                            correctSentence: "ฉันกินข้าว ๓ จานทุกวัน (不需要ประมาณ)",
+                            explanation: "如果是确切的数量'3碗'，不需要用ประมาณ",
+                            choices: [
+                                "位置错误",
+                                "不应该用ประมาณ",
+                                "量词错误",
+                                "句子正确"
+                            ],
+                            correctChoice: 1
+                        },
+                        hints: [
+                            "想想：'3碗'是确切的数字还是大概的数字？",
+                            "如果每天确切吃3碗，需要用'大约'吗？"
+                        ],
+                        feedback: {
+                            correct: "对！确切的数量不需要用ประมาณ",
+                            wrong: "再想想：ประมาณ的使用场景是什么？"
+                        }
+                    }
+                ]
+            },
+            {
+                id: "vp_001",
+                order: 1,
+                word: "และ",
+                partOfSpeech: "连词",
+                meaning: "和、与、及",
+                usageRule: {
+                    description: "连接两个并列的词、短语或句子",
+                    position: "两个成分之间",
+                    function: "表示并列关系",
+                    structure: "A + และ + B"
+                },
+                examples: [
+                    {
+                        thai: "ฉันชอบกินข้าวและก๋วยเตี๋ยว",
+                        chinese: "我喜欢吃米饭和面条",
+                        highlighted: "ข้าวและก๋วยเตี๋ยว",
+                        difficulty: 1
+                    }
+                ],
+                interactions: [
+                    {
+                        type: "fill_blank",
+                        instruction: "填空：选择正确的连接词",
+                        difficulty: 1,
+                        data: {
+                            sentence: "ฉันชอบสีแดง ______ สีน้ำเงิน",
+                            options: [
+                                { text: "และ", correct: true },
+                                { text: "แต่", correct: false },
+                                { text: "หรือ", correct: false }
+                            ]
+                        },
+                        hints: ["这里表示'和'的意思"],
+                        feedback: {
+                            correct: "正确！",
+                            wrong: "再想想"
+                        }
+                    }
+                ]
+            },
+            {
+                id: "vp_002",
+                order: 2,
+                word: "แต่",
+                partOfSpeech: "连词",
+                meaning: "但是、可是",
+                usageRule: {
+                    description: "表示转折关系",
+                    position: "两个句子之间",
+                    function: "表示对比或转折",
+                    structure: "句子1 + แต่ + 句子2"
+                },
+                examples: [
+                    {
+                        thai: "เขาเรียนเก่งแต่ขี้เกียจ",
+                        chinese: "他学习好但是懒惰",
+                        highlighted: "เก่งแต่ขี้เกียจ",
+                        difficulty: 1
+                    }
+                ],
+                interactions: [
+                    {
+                        type: "fill_blank",
+                        instruction: "选择正确的转折词",
+                        difficulty: 1,
+                        data: {
+                            sentence: "อากาศร้อน ______ ฉันไม่ไปเที่ยว",
+                            options: [
+                                { text: "แต่", correct: true },
+                                { text: "และ", correct: false },
+                                { text: "เพราะ", correct: false }
+                            ]
+                        },
+                        hints: ["前后句子意思相反，用转折词"],
+                        feedback: {
+                            correct: "正确！",
+                            wrong: "这是转折关系"
+                        }
+                    }
+                ]
+            }
+        ];
+
+        // Application State
+        class ThaiVocabApp {
+            constructor() {
+                this.currentState = {
+                    currentTab: 'learn',
+                    currentWord: null,
+                    currentInteractionIndex: 0,
+                    hintCount: 3,
+                    streak: 0,
+                    xp: 0,
+                    dailyProgress: 0,
+                    learnedWords: new Set(),
+                    reviewQueue: [],
+                    stats: {
+                        totalAttempts: 0,
+                        correctAttempts: 0,
+                        bestStreak: 0
+                    }
+                };
+                
+                this.loadState();
+                this.init();
+            }
+
+            init() {
+                this.renderVocabList();
+                this.updateUI();
+                this.checkReviewQueue();
+            }
+
+            loadState() {
+                const saved = localStorage.getItem('thaiVocabState');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    this.currentState = {
+                        ...this.currentState,
+                        ...parsed,
+                        learnedWords: new Set(parsed.learnedWords || []),
+                        reviewQueue: parsed.reviewQueue || []
+                    };
+                }
+            }
+
+            saveState() {
+                const toSave = {
+                    ...this.currentState,
+                    learnedWords: Array.from(this.currentState.learnedWords)
+                };
+                localStorage.setItem('thaiVocabState', JSON.stringify(toSave));
+            }
+
+            switchTab(tabName) {
+                this.currentState.currentTab = tabName;
+                
+                // Update tab buttons
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('bg-white', 'text-indigo-600', 'shadow-md', 'border-indigo-200');
+                    btn.classList.add('bg-white/50', 'text-slate-600', 'border-transparent');
+                });
+                
+                const activeBtn = document.getElementById(`tab-${tabName}`);
+                activeBtn.classList.remove('bg-white/50', 'text-slate-600', 'border-transparent');
+                activeBtn.classList.add('bg-white', 'text-indigo-600', 'shadow-md', 'border-indigo-200');
+                
+                // Update content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                document.getElementById(`content-${tabName}`).classList.remove('hidden');
+                
+                if (tabName === 'review') {
+                    this.renderReviewQueue();
+                } else if (tabName === 'stats') {
+                    this.renderStats();
+                }
+            }
+
+            renderVocabList() {
+                const container = document.getElementById('vocabList');
+                container.innerHTML = vocabularyData.map(word => {
+                    const isLearned = this.currentState.learnedWords.has(word.id);
+                    return `
+                        <div onclick="app.startLearning('${word.id}')" 
+                             class="glass-panel rounded-2xl p-6 cursor-pointer hover:shadow-xl transition-all hover:-translate-y-1 border-2 ${isLearned ? 'border-green-400 bg-green-50/50' : 'border-transparent'}">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="text-2xl font-bold text-indigo-600 mb-1">${word.word}</h3>
+                                    <span class="text-sm text-slate-500">${word.partOfSpeech}</span>
+                                </div>
+                                ${isLearned ? '<i class="ph ph-check-circle text-green-500 text-2xl"></i>' : ''}
+                            </div>
+                            <p class="text-slate-700 mb-3">${word.meaning}</p>
+                            <div class="flex items-center gap-2 text-sm text-slate-500">
+                                <i class="ph ph-interaction"></i>
+                                <span>${word.interactions.length} 个练习</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            startLearning(wordId) {
+                const word = vocabularyData.find(w => w.id === wordId);
+                if (!word) return;
+                
+                this.currentState.currentWord = word;
+                this.currentState.currentInteractionIndex = 0;
+                this.currentState.hintCount = 3;
+                
+                document.getElementById('vocabList').classList.add('hidden');
+                document.getElementById('learningInterface').classList.remove('hidden');
+                
+                this.renderCurrentWord();
+                this.renderInteraction();
+                this.updateUI();
+            }
+
+            renderCurrentWord() {
+                const word = this.currentState.currentWord;
+                document.getElementById('currentWord').textContent = word.word;
+                document.getElementById('currentWordPOS').textContent = word.partOfSpeech;
+                document.getElementById('currentWordMeaning').textContent = word.meaning;
+                document.getElementById('usageRule').textContent = word.usageRule.description;
+            }
+
+            renderInteraction() {
+                const word = this.currentState.currentWord;
+                const interaction = word.interactions[this.currentState.currentInteractionIndex];
+                const container = document.getElementById('interactionArea');
+                const feedbackArea = document.getElementById('feedbackArea');
+                
+                feedbackArea.classList.add('hidden');
+                document.getElementById('interactionProgress').textContent = 
+                    `${this.currentState.currentInteractionIndex + 1}/${word.interactions.length}`;
+                document.getElementById('interactionProgressBar').style.width = 
+                    `${((this.currentState.currentInteractionIndex + 1) / word.interactions.length) * 100}%`;
+                
+                let html = `
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-slate-800 mb-4">
+                            <i class="ph ph-target mr-2 text-indigo-600"></i>
+                            ${interaction.instruction}
+                        </h3>
+                    </div>
+                `;
+                
+                switch(interaction.type) {
+                    case 'position_drag':
+                        html += this.renderPositionDrag(interaction);
+                        break;
+                    case 'fill_blank':
+                        html += this.renderFillBlank(interaction);
+                        break;
+                    case 'sentence_build':
+                        html += this.renderSentenceBuild(interaction);
+                        break;
+                    case 'scenario_judge':
+                        html += this.renderScenarioJudge(interaction);
+                        break;
+                    case 'error_detect':
+                        html += this.renderErrorDetect(interaction);
+                        break;
+                }
+                
+                container.innerHTML = html;
+                
+                // Initialize drag and drop if needed
+                if (interaction.type === 'position_drag') {
+                    this.initPositionDrag(interaction);
+                } else if (interaction.type === 'sentence_build') {
+                    this.initSentenceBuild(interaction);
+                }
+            }
+
+            // 1. 替换 renderPositionDrag：渲染明确的“插槽”UI
+            renderPositionDrag(interaction) {
+                const { sentenceParts, targetWord } = interaction.data;
+                let html = '<div class="flex flex-wrap items-center gap-3 p-6 bg-slate-50 rounded-xl justify-center">';
+                
+                // 渲染第一个插槽
+                html += `<div class="drop-zone w-28 h-12 flex items-center justify-center rounded-xl bg-white border-2 border-dashed border-slate-300 transition-all" data-slot="0"></div>`;
+                
+                // 交替渲染文本和插槽
+                for (let i = 0; i < sentenceParts.length; i++) {
+                    html += `<span class="px-3 py-2 text-lg font-medium text-slate-700">${sentenceParts[i]}</span>`;
+                    html += `<div class="drop-zone w-28 h-12 flex items-center justify-center rounded-xl bg-white border-2 border-dashed border-slate-300 transition-all" data-slot="${i + 1}"></div>`;
+                }
+                
+                html += '</div>';
+                
+                // 渲染可拖拽的词汇
+                html += `
+                    <div class="flex justify-center mt-6">
+                        <div class="draggable px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold shadow-lg cursor-grab active:cursor-grabbing select-none" 
+                            draggable="true" 
+                            data-word="${targetWord}">
+                            ${targetWord}
+                        </div>
+                    </div>
+                `;
+                return html;
+            }
+
+            // 2. 替换 initPositionDrag：绑定拖拽事件到新的插槽上
+            initPositionDrag(interaction) {
+                const draggable = document.querySelector('.draggable');
+                const dropZones = document.querySelectorAll('.drop-zone');
+                
+                draggable.addEventListener('dragstart', (e) => {
+                    draggable.classList.add('dragging');
+                    e.dataTransfer.setData('text/plain', draggable.dataset.word);
+                    // 增加一点透明度反馈
+                    setTimeout(() => draggable.style.opacity = '0.5', 0);
+                });
+                
+                draggable.addEventListener('dragend', () => {
+                    draggable.classList.remove('dragging');
+                    draggable.style.opacity = '1';
+                });
+                
+                dropZones.forEach(zone => {
+                    zone.addEventListener('dragover', (e) => {
+                        e.preventDefault(); // 必须阻止默认行为才能允许 drop
+                        zone.classList.add('drag-over');
+                        zone.style.borderColor = '#667eea';
+                        zone.style.background = 'rgba(102, 126, 234, 0.1)';
+                    });
+                    
+                    zone.addEventListener('dragleave', () => {
+                        zone.classList.remove('drag-over');
+                        zone.style.borderColor = '';
+                        zone.style.background = '';
+                    });
+                    
+                    zone.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        zone.classList.remove('drag-over');
+                        zone.style.borderColor = '';
+                        zone.style.background = '';
+                        this.handlePositionDrop(zone, interaction);
+                    });
+                });
+            }
+
+            
+            // 3. 替换 handlePositionDrop：使用 slot 索引进行判断
+            handlePositionDrop(zone, interaction) {
+                // 使用 data-slot 而不是 data-index
+                const slotIndex = parseInt(zone.dataset.slot);
+                const isCorrect = slotIndex === interaction.data.correctPosition;
+                
+                if (isCorrect) {
+                    zone.classList.add('correct');
+                    // 将词汇放入插槽中
+                    zone.innerHTML = `<span class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold shadow-md">${interaction.data.targetWord}</span>`;
+                    this.handleCorrect(interaction);
+                } else {
+                    zone.classList.add('wrong');
+                    setTimeout(() => zone.classList.remove('wrong'), 500);
+                    this.handleWrong(interaction);
+                }
+            }
+
+            
+            renderFillBlank(interaction) {
+                const { sentence, options } = interaction.data;
+                
+                // 将下划线替换为一个具有特定样式的 span，作为动态填充的插槽
+                const sentenceHtml = sentence.replace('______', 
+                    '<span id="blank-slot" class="inline-block min-w-[80px] border-b-2 border-indigo-400 text-indigo-600 font-bold text-center mx-1 px-2 transition-all duration-300"></span>'
+                );
+
+                return `
+                    <div class="space-y-6">
+                        <div class="p-6 bg-slate-50 rounded-xl text-center">
+                            <p class="text-2xl font-medium text-slate-800 leading-relaxed">${sentenceHtml}</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4" id="options-container">
+                            ${options.map((opt, idx) => `
+                                <button onclick="app.handleFillBlank(${idx}, ${opt.correct}, '${opt.text}')" 
+                                        id="option-btn-${idx}"
+                                        class="p-4 rounded-xl border-2 border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all text-lg font-medium">
+                                    ${opt.text}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            handleFillBlank(optionIndex, isCorrect, selectedText) {
+                // 步骤 1：将选中的词填入空白处，并添加轻微放大动画
+                const blankSlot = document.getElementById('blank-slot');
+                if (blankSlot) {
+                    blankSlot.textContent = selectedText;
+                    blankSlot.classList.add('scale-125', 'text-indigo-700');
+                    setTimeout(() => blankSlot.classList.remove('scale-125'), 300);
+                }
+
+                // 步骤 2：锁定所有选项按钮，防止重复点击，并高亮当前选择
+                const buttons = document.querySelectorAll('#options-container button');
+                buttons.forEach((btn, idx) => {
+                    btn.disabled = true; // 禁用按钮
+                    btn.classList.add('opacity-60', 'cursor-not-allowed');
+                    
+                    // 高亮用户刚刚点击的按钮
+                    if (idx === optionIndex) {
+                        btn.classList.remove('opacity-60', 'border-slate-200', 'hover:border-indigo-500', 'hover:bg-indigo-50');
+                        if (isCorrect) {
+                            btn.classList.add('border-green-500', 'bg-green-100', 'text-green-700', 'font-bold');
+                        } else {
+                            btn.classList.add('border-red-500', 'bg-red-100', 'text-red-700', 'font-bold');
+                        }
+                    }
+                });
+
+                // 步骤 3：延迟 600ms 显示底部反馈。
+                // 这 600ms 是黄金时间，让学生的大脑先处理“完整句子”的视觉信息。
+                setTimeout(() => {
+                    const interaction = this.currentState.currentWord.interactions[this.currentState.currentInteractionIndex];
+                    if (isCorrect) {
+                        this.handleCorrect(interaction);
+                    } else {
+                        this.handleWrong(interaction);
+                    }
+                }, 600);
+            }
+
+            renderSentenceBuild(interaction) {
+                const { chunks } = interaction.data;
+                return `
+                    <div class="space-y-6">
+                        <div class="min-h-[100px] p-6 bg-slate-50 rounded-xl border-2 border-dashed border-slate-300" id="sentenceContainer">
+                            <p class="text-slate-400 text-center">拖拽词块到这里组成句子</p>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-3 justify-center" id="chunkContainer">
+                            ${chunks.map(chunk => `
+                                <div class="word-chunk px-4 py-2 bg-white border-2 border-slate-200 rounded-xl shadow-sm" 
+                                     draggable="true" 
+                                     data-id="${chunk.id}">
+                                    ${chunk.text}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            initSentenceBuild(interaction) {
+                const chunks = document.querySelectorAll('#chunkContainer .word-chunk');
+                const container = document.getElementById('sentenceContainer');
+                let selectedChunks = [];
+                
+                chunks.forEach(chunk => {
+                    chunk.addEventListener('click', () => {
+                        if (chunk.classList.contains('selected')) {
+                            chunk.classList.remove('selected');
+                            selectedChunks = selectedChunks.filter(id => id !== chunk.dataset.id);
+                        } else {
+                            chunk.classList.add('selected');
+                            selectedChunks.push(chunk.dataset.id);
+                        }
+                        this.updateSentenceContainer(selectedChunks, interaction.data.chunks);
+                    });
+                });
+                
+                // Add check button
+                setTimeout(() => {
+                    const checkBtn = document.createElement('button');
+                    checkBtn.className = 'mt-4 w-full py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors';
+                    checkBtn.textContent = '检查答案';
+                    checkBtn.onclick = () => this.checkSentenceBuild(selectedChunks, interaction);
+                    container.parentElement.appendChild(checkBtn);
+                }, 0);
+            }
+
+            updateSentenceContainer(selectedIds, allChunks) {
+                const container = document.getElementById('sentenceContainer');
+                if (selectedIds.length === 0) {
+                    container.innerHTML = '<p class="text-slate-400 text-center">拖拽词块到这里组成句子</p>';
+                } else {
+                    const selected = allChunks.filter(c => selectedIds.includes(c.id));
+                    container.innerHTML = `
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            ${selected.map(c => `
+                                <span class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-lg">${c.text}</span>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+            }
+
+            checkSentenceBuild(selectedIds, interaction) {
+                // 检查 selectedIds 是否在 acceptableOrders 的任意一个选项中
+                const isCorrect = interaction.data.acceptableOrders.some(order => 
+                    JSON.stringify(selectedIds) === JSON.stringify(order)
+                );
+                
+                if (isCorrect) {
+                    this.handleCorrect(interaction);
+                } else {
+                    this.handleWrong(interaction);
+                }
+            }
+
+            renderScenarioJudge(interaction) {
+    const { scenarios } = interaction.data;
+    return `
+        <div class="space-y-4" id="scenario-container">
+            ${scenarios.map((scenario, idx) => `
+                <button onclick="app.handleScenarioJudge(${idx}, ${scenario.shouldUse})" 
+                        id="scenario-btn-${idx}"
+                        class="w-full p-4 text-left rounded-xl border-2 border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all">
+                    <span class="text-lg font-medium text-slate-700">${scenario.text}</span>
+                </button>
+            `).join('')}
+        </div>
+    `;
+}
+
+            handleScenarioJudge(scenarioIndex, shouldUse) {
+    const interaction = this.currentState.currentWord.interactions[this.currentState.currentInteractionIndex];
+    
+    // 锁定并高亮按钮
+    const buttons = document.querySelectorAll('#scenario-container button');
+    buttons.forEach((btn, idx) => {
+        btn.disabled = true;
+        btn.classList.add('opacity-60', 'cursor-not-allowed');
+        btn.classList.remove('hover:border-indigo-500', 'hover:bg-indigo-50');
+        
+        if (idx === scenarioIndex) {
+            btn.classList.remove('opacity-60', 'border-slate-200');
+            // 如果该场景确实应该使用(shouldUse=true)，则显示绿色；否则显示红色
+            if (shouldUse) {
+                btn.classList.add('border-green-500', 'bg-green-100', 'text-green-700', 'font-bold');
+            } else {
+                btn.classList.add('border-red-500', 'bg-red-100', 'text-red-700', 'font-bold');
+            }
+        }
+    });
+
+    // 延迟 600ms 显示反馈，让学生看清高亮结果
+    setTimeout(() => {
+        if (shouldUse) {
+            this.handleCorrect(interaction);
+        } else {
+            this.handleWrong(interaction);
+        }
+    }, 600);
+}
+
+            renderErrorDetect(interaction) {
+    const { wrongSentence, choices } = interaction.data;
+    return `
+        <div class="space-y-6">
+            <div class="p-6 bg-red-50 rounded-xl border-l-4 border-red-500">
+                <p class="text-lg text-red-800 line-through mb-2">${wrongSentence}</p>
+                <p class="text-sm text-red-600">这个句子有问题吗？请选择错误原因：</p>
+            </div>
+            
+            <div class="space-y-3" id="error-container">
+                ${choices.map((choice, idx) => `
+                    <button onclick="app.handleErrorDetect(${idx}, ${idx === interaction.data.correctChoice})" 
+                            id="error-btn-${idx}"
+                            class="w-full p-4 text-left rounded-xl border-2 border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all">
+                        ${choice}
+                    </button>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+
+            handleErrorDetect(choiceIndex, isCorrect) {
+    const interaction = this.currentState.currentWord.interactions[this.currentState.currentInteractionIndex];
+    
+    // 锁定并高亮按钮
+    const buttons = document.querySelectorAll('#error-container button');
+    buttons.forEach((btn, idx) => {
+        btn.disabled = true;
+        btn.classList.add('opacity-60', 'cursor-not-allowed');
+        btn.classList.remove('hover:border-indigo-500', 'hover:bg-indigo-50');
+        
+        if (idx === choiceIndex) {
+            btn.classList.remove('opacity-60', 'border-slate-200');
+            if (isCorrect) {
+                btn.classList.add('border-green-500', 'bg-green-100', 'text-green-700', 'font-bold');
+            } else {
+                btn.classList.add('border-red-500', 'bg-red-100', 'text-red-700', 'font-bold');
+            }
+        }
+    });
+
+    // 延迟 600ms 显示反馈
+    setTimeout(() => {
+        if (isCorrect) {
+            this.handleCorrect(interaction);
+        } else {
+            this.handleWrong(interaction);
+        }
+    }, 600);
+}
+
+            handleCorrect(interaction) {
+                this.currentState.streak++;
+                this.currentState.xp += 10 * interaction.difficulty;
+                this.currentState.stats.totalAttempts++;
+                this.currentState.stats.correctAttempts++;
+                this.currentState.stats.bestStreak = Math.max(this.currentState.stats.bestStreak, this.currentState.streak);
+                
+                const feedbackArea = document.getElementById('feedbackArea');
+                document.getElementById('feedbackIcon').className = 'ph ph-check-circle text-2xl text-green-500';
+                document.getElementById('feedbackTitle').textContent = '太棒了！🎉';
+                document.getElementById('feedbackTitle').className = 'font-semibold text-green-700';
+                document.getElementById('feedbackText').textContent = interaction.feedback.correct;
+                feedbackArea.className = 'mt-6 p-4 rounded-xl fade-in bg-green-50 border border-green-200';
+                feedbackArea.classList.remove('hidden');
+                
+                this.saveState();
+                this.updateUI();
+            }
+
+            handleWrong(interaction) {
+                this.currentState.streak = 0;
+                this.currentState.stats.totalAttempts++;
+                
+                const feedbackArea = document.getElementById('feedbackArea');
+                document.getElementById('feedbackIcon').className = 'ph ph-x-circle text-2xl text-red-500';
+                document.getElementById('feedbackTitle').textContent = '再试一次';
+                document.getElementById('feedbackTitle').className = 'font-semibold text-red-700';
+                document.getElementById('feedbackText').textContent = interaction.feedback.wrong;
+                feedbackArea.className = 'mt-6 p-4 rounded-xl fade-in bg-red-50 border border-red-200';
+                feedbackArea.classList.remove('hidden');
+                
+                this.saveState();
+                this.updateUI();
+            }
+
+            showHint() {
+                if (this.currentState.hintCount <= 0) return;
+                
+                this.currentState.hintCount--;
+                const interaction = this.currentState.currentWord.interactions[this.currentState.currentInteractionIndex];
+                const hint = interaction.hints[0] || '再仔细看看题目';
+                
+                const feedbackArea = document.getElementById('feedbackArea');
+                document.getElementById('feedbackIcon').className = 'ph ph-lightbulb text-2xl text-yellow-500';
+                document.getElementById('feedbackTitle').textContent = '💡 提示';
+                document.getElementById('feedbackTitle').className = 'font-semibold text-yellow-700';
+                document.getElementById('feedbackText').textContent = hint;
+                feedbackArea.className = 'mt-6 p-4 rounded-xl fade-in bg-yellow-50 border border-yellow-200';
+                feedbackArea.classList.remove('hidden');
+                
+                this.updateUI();
+            }
+
+            nextInteraction() {
+                const word = this.currentState.currentWord;
+                this.currentState.currentInteractionIndex++;
+                
+                if (this.currentState.currentInteractionIndex >= word.interactions.length) {
+                    // Completed all interactions
+                    this.currentState.learnedWords.add(word.id);
+                    this.currentState.dailyProgress++;
+                    this.currentState.xp += 50; // Bonus for completion
+                    
+                    // Add to review queue
+                    this.currentState.reviewQueue.push({
+                        wordId: word.id,
+                        nextReview: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
+                        difficulty: 1
+                    });
+                    
+                    this.saveState();
+                    this.backToList();
+                    alert(`🎉 恭喜！你完成了"${word.word}"的学习！\n获得 ${50} XP`);
+                } else {
+                    this.renderInteraction();
+                }
+                this.updateUI();
+            }
+
+            backToList() {
+                document.getElementById('learningInterface').classList.add('hidden');
+                document.getElementById('vocabList').classList.remove('hidden');
+                this.renderVocabList();
+            }
+
+            renderReviewQueue() {
+                const container = document.getElementById('reviewQueue');
+                if (this.currentState.reviewQueue.length === 0) {
+                    container.innerHTML = '<p class="text-slate-500">暂无需要复习的内容</p>';
+                    return;
+                }
+                
+                container.innerHTML = this.currentState.reviewQueue.map(item => {
+                    const word = vocabularyData.find(w => w.id === item.wordId);
+                    return `
+                        <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                            <div>
+                                <h4 class="font-semibold text-lg">${word.word}</h4>
+                                <p class="text-sm text-slate-500">${word.meaning}</p>
+                            </div>
+                            <span class="text-sm text-slate-400">
+                                ${new Date(item.nextReview).toLocaleDateString()}
+                            </span>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            checkReviewQueue() {
+                const now = new Date();
+                const dueCount = this.currentState.reviewQueue.filter(item => 
+                    new Date(item.nextReview) <= now
+                ).length;
+                
+                const badge = document.getElementById('reviewBadge');
+                if (dueCount > 0) {
+                    badge.textContent = dueCount;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+
+            startReview() {
+                const now = new Date();
+                const dueItems = this.currentState.reviewQueue.filter(item => 
+                    new Date(item.nextReview) <= now
+                );
+                
+                if (dueItems.length === 0) {
+                    alert('暂无需要复习的内容');
+                    return;
+                }
+                
+                // Start with first due item
+                this.startLearning(dueItems[0].wordId);
+            }
+
+            renderStats() {
+                const { stats, learnedWords, streak } = this.currentState;
+                const accuracy = stats.totalAttempts > 0 
+                    ? Math.round((stats.correctAttempts / stats.totalAttempts) * 100) 
+                    : 0;
+                
+                document.getElementById('statLearned').textContent = learnedWords.size;
+                document.getElementById('statAccuracy').textContent = accuracy + '%';
+                document.getElementById('statBestStreak').textContent = stats.bestStreak;
+            }
+
+            updateUI() {
+                document.getElementById('streakCount').textContent = this.currentState.streak;
+                document.getElementById('xpPoints').textContent = this.currentState.xp;
+                document.getElementById('dailyProgress').style.width = 
+                    `${Math.min((this.currentState.dailyProgress / 10) * 100, 100)}%`;
+                document.getElementById('progressText').textContent = 
+                    `${this.currentState.dailyProgress}/10`;
+                document.getElementById('hintCount').textContent = this.currentState.hintCount;
+                
+                this.checkReviewQueue();
+            }
+        }
+
+        // Initialize app
+        const app = new ThaiVocabApp();
+    </script>
+</body>
+</html>

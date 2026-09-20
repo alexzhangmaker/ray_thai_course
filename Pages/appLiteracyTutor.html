@@ -1,0 +1,2789 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语文学分析练习导师 (Thai Literature Analysis Tutor)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4f46e5',
+                        brand: {
+                            fiction: '#6366f1',
+                            poetry: '#059669',
+                            essay: '#d97706',
+                            drama: '#e11d48',
+                            multi: '#0284c7'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icon CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter & Thai Serif -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Serif+Thai:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .font-thai {
+            font-family: 'Noto Serif Thai', 'Sarabun', serif;
+            line-height: 2.1;
+            letter-spacing: 0.02em;
+        }
+        .font-thai-sans {
+            font-family: 'Sarabun', sans-serif;
+        }
+        .font-thai-clickable {
+            cursor: pointer;
+            transition: color 0.15s ease-in-out;
+        }
+        .font-thai-clickable:hover {
+            color: #4f46e5;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        /* Mode transitions */
+        .mode-review input, .mode-review textarea {
+            background-color: #f8fafc;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.25s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Selection toolbar & sidebar shadows */
+        #selectionToolbar {
+            position: absolute;
+            z-index: 50;
+            background-color: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(51, 65, 85, 0.8);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+        }
+        #querySidebar {
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased relative">
+
+    <!-- Top Global Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-4">
+            
+            <!-- Left Branding -->
+            <div class="flex items-center gap-3.5 cursor-pointer" onclick="switchNavTab('dashboard')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white flex items-center justify-center shadow-md shadow-indigo-100">
+                    <i class="fas fa-book-open-reader text-lg"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-base font-extrabold text-slate-900 tracking-tight">
+                            泰语文学分析导师
+                        </h1>
+                        <span class="text-[10px] bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded-full border border-indigo-100">
+                            Literacy Tutor
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400">多体裁文学分析 • 5W1H 语法细读 • 智能批改辅导 • 划词释义</p>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <nav class="flex items-center bg-slate-100/80 p-1 rounded-xl text-xs font-semibold select-none">
+                <button id="navDashboardBtn" onclick="switchNavTab('dashboard')" class="px-3.5 py-1.5 rounded-lg transition text-indigo-700 bg-white shadow-xs font-bold flex items-center gap-1.5">
+                    <i class="fas fa-grip text-indigo-600"></i> 作品广场
+                </button>
+                <button id="navWorkspaceBtn" onclick="switchNavTab('workspace')" class="px-3.5 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+                    <i class="fas fa-pen-nib text-slate-400"></i> 分析工作区
+                </button>
+                <button id="navProgressBtn" onclick="switchNavTab('progress')" class="px-3.5 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+                    <i class="fas fa-clock-rotate-left text-slate-400"></i> 我的练习记录
+                </button>
+                <button id="navTutorBtn" onclick="switchNavTab('tutor')" class="px-3.5 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+                    <i class="fas fa-chalkboard-user text-slate-400"></i> 辅导员批阅
+                </button>
+            </nav>
+
+            <!-- User and Role Controls -->
+            <div class="flex items-center gap-3">
+                <!-- User Selector -->
+                <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1 rounded-lg text-xs border border-slate-200">
+                    <i class="fas fa-user-circle text-slate-400"></i>
+                    <span class="text-slate-500 font-medium">当前学员:</span>
+                    <select id="currentUserSelect" onchange="changeCurrentUser(this.value)" class="bg-transparent font-bold text-slate-800 outline-hidden cursor-pointer">
+                        <option value="student_001">student_001 (张同学)</option>
+                        <option value="student_002">student_002 (李同学)</option>
+                        <option value="student_003">student_003 (王同学)</option>
+                        <option value="custom_user">自定义ID...</option>
+                    </select>
+                </div>
+
+                <!-- Manage Works Button -->
+                <button onclick="openManageWorksModal()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1.5 rounded-lg transition flex items-center gap-1" title="作品库管理 (CRUD)">
+                    <i class="fas fa-database text-slate-500"></i> 作品管理
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 flex-grow flex flex-col">
+
+        <!-- ======================================================== -->
+        <!-- VIEW 1: DASHBOARD / WORKS LIBRARY (作品广场与筛选面板) -->
+        <!-- ======================================================== -->
+        <section id="viewDashboard" class="space-y-6">
+            
+            <!-- Hero & Filter Header -->
+            <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-8 shadow-xl relative overflow-hidden">
+                <div class="absolute -right-12 -bottom-12 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -left-12 -top-12 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div class="space-y-2 max-w-2xl">
+                        <span class="text-xs font-bold tracking-widest text-indigo-400 uppercase bg-indigo-500/20 px-3 py-1 rounded-full border border-indigo-400/30">
+                            Thai Literature Practice & Analysis
+                        </span>
+                        <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white">
+                            文学作品分析广场
+                        </h2>
+                        <p class="text-sm text-slate-300 leading-relaxed">
+                            支持小说 (Fiction)、诗歌 (Poetry)、散文 (Essay)、戏剧 (Drama) 多体裁结构化细读。通过动态要素拆解、深度思考题讨论与 5W1H 语法还原，配备点击即时泰语播音与划词字典释义。
+                        </p>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="flex gap-4 self-start md:self-auto bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-center">
+                        <div class="px-3">
+                            <div class="text-2xl font-black text-white" id="statTotalWorks">0</div>
+                            <div class="text-[11px] text-slate-300">收录作品</div>
+                        </div>
+                        <div class="w-[1px] bg-white/15"></div>
+                        <div class="px-3">
+                            <div class="text-2xl font-black text-emerald-400" id="statUserDone">0</div>
+                            <div class="text-[11px] text-slate-300">我的已练</div>
+                        </div>
+                        <div class="w-[1px] bg-white/15"></div>
+                        <div class="px-3">
+                            <div class="text-2xl font-black text-amber-400" id="statAvgScore">0%</div>
+                            <div class="text-[11px] text-slate-300">平均得分</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Controls & Search Bar -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row justify-between items-center gap-4">
+                <!-- Genre Filter Pills -->
+                <div class="flex flex-wrap items-center gap-2 select-none w-full sm:w-auto">
+                    <button class="genre-filter-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-xs" data-genre="all" onclick="filterWorksByGenre('all', this)">
+                        <i class="fas fa-layer-group mr-1"></i> 全部体裁
+                    </button>
+                    <button class="genre-filter-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-600 hover:bg-slate-200" data-genre="fiction" onclick="filterWorksByGenre('fiction', this)">
+                        <i class="fas fa-book mr-1 text-indigo-500"></i> 小说 (Fiction)
+                    </button>
+                    <button class="genre-filter-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-600 hover:bg-slate-200" data-genre="poetry" onclick="filterWorksByGenre('poetry', this)">
+                        <i class="fas fa-feather mr-1 text-emerald-500"></i> 诗歌 (Poetry)
+                    </button>
+                    <button class="genre-filter-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-600 hover:bg-slate-200" data-genre="essay" onclick="filterWorksByGenre('essay', this)">
+                        <i class="fas fa-newspaper mr-1 text-amber-500"></i> 散文 (Essay)
+                    </button>
+                    <button class="genre-filter-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-600 hover:bg-slate-200" data-genre="drama" onclick="filterWorksByGenre('drama', this)">
+                        <i class="fas fa-masks-theater mr-1 text-rose-500"></i> 戏剧 (Drama)
+                    </button>
+                </div>
+
+                <!-- Search Input -->
+                <div class="relative w-full sm:w-72">
+                    <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" id="workSearchInput" oninput="searchWorks(this.value)" placeholder="搜索作品名、作者或关键词..." class="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
+                </div>
+            </div>
+
+            <!-- Works Grid -->
+            <div id="worksCardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamically rendered cards -->
+            </div>
+
+            <!-- Empty Works State -->
+            <div id="emptyWorksState" class="hidden text-center py-16 bg-white border border-slate-200 rounded-3xl p-8">
+                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-2xl text-slate-400 mb-3">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-800">未找到匹配的文学作品</h3>
+                <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">请尝试更换搜索条件或体裁筛选，或者点击右上角“作品管理”重置内置数据。</p>
+            </div>
+        </section>
+
+
+        <!-- ======================================================== -->
+        <!-- VIEW 2: DYNAMIC EXERCISE WORKSPACE (动态渲染工作区) -->
+        <!-- ======================================================== -->
+        <section id="viewWorkspace" class="hidden space-y-6">
+            
+            <!-- Workspace Top Bar -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-wrap justify-between items-center gap-4">
+                
+                <!-- Left Title & Metadata -->
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <button onclick="switchNavTab('dashboard')" class="text-xs text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1 transition">
+                            <i class="fas fa-arrow-left"></i> 返回作品广场
+                        </button>
+                        <span class="text-slate-300">•</span>
+                        <span id="wsGenreBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase border">
+                            Fiction
+                        </span>
+                        <span id="wsStatusBadge" class="text-[10px] bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full">
+                            未提交
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h2 class="text-xl font-extrabold text-slate-900 font-thai" id="wsTitle">
+                            ข้างหลังภาพ (Behind the Painting)
+                        </h2>
+                        <button class="play-speech-btn text-indigo-600 hover:text-indigo-800 p-1.5 rounded-lg hover:bg-indigo-50 transition text-sm" id="wsTitleSpeechBtn" title="播放作品标题发音">
+                            <i class="fas fa-volume-up"></i>
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-500" id="wsAuthor">ศรีบูรพา (Kulap Saipradit)</p>
+                </div>
+
+                <!-- Right Action Bar & Mode Switcher -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Mode Switch Toggle: Practice vs Reference Compare -->
+                    <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold select-none">
+                        <button id="modePracticeBtn" onclick="setWorkspaceMode('practice')" class="px-3 py-1.5 rounded-lg transition font-bold bg-white text-indigo-700 shadow-xs flex items-center gap-1.5">
+                            <i class="fas fa-pen text-indigo-600"></i> 练习模式
+                        </button>
+                        <button id="modeReviewBtn" onclick="setWorkspaceMode('review')" class="px-3 py-1.5 rounded-lg transition font-medium text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+                            <i class="fas fa-clipboard-check text-emerald-600"></i> 参考答案对照
+                        </button>
+                    </div>
+
+                    <!-- Hints Toggle -->
+                    <button id="toggleHintsBtn" onclick="toggleHints()" class="text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition flex items-center gap-1.5 shadow-2xs">
+                        <i class="fas fa-lightbulb text-amber-500"></i> <span>思路提示</span>
+                    </button>
+
+                    <!-- Save Draft Button -->
+                    <button onclick="saveDraftLocally()" class="text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center gap-1.5 shadow-2xs" title="保存草稿至本地">
+                        <i class="fas fa-floppy-disk text-slate-400"></i> 暂存草稿
+                    </button>
+
+                    <!-- Submit Button -->
+                    <button onclick="submitAnswers()" class="text-xs font-bold px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition flex items-center gap-1.5 shadow-md shadow-indigo-100 active:scale-95">
+                        <i class="fas fa-paper-plane"></i> 提交并评测
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dynamic Workspace Content Render Area -->
+            <div id="dynamicExerciseWorkspace" class="space-y-6">
+                <!-- Generated by renderExercise(data) -->
+            </div>
+
+        </section>
+
+
+        <!-- ======================================================== -->
+        <!-- VIEW 3: MY PROGRESS & MISTAKES (练习记录与错题本) -->
+        <!-- ======================================================== -->
+        <section id="viewProgress" class="hidden space-y-6">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                        <i class="fas fa-clock-rotate-left text-indigo-600"></i> 个人练习历史与错题档案
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-1">记录您的文学分析作答、智能评测得分与辅导员批注，支持错题重练。</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="loadUserProgress()" class="text-xs font-semibold px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5">
+                        <i class="fas fa-sync-alt text-slate-500"></i> 刷新数据
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Cards List -->
+            <div id="userProgressList" class="space-y-4">
+                <!-- Dynamically rendered progress rows -->
+            </div>
+
+            <!-- Empty Progress State -->
+            <div id="emptyProgressState" class="hidden text-center py-16 bg-white border border-slate-200 rounded-3xl p-8">
+                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-2xl text-slate-400 mb-3">
+                    <i class="fas fa-inbox"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-800">暂无练习记录</h3>
+                <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">您尚未提交过任何文学作品分析。请前往“作品广场”挑选作品开启第一次训练！</p>
+                <button onclick="switchNavTab('dashboard')" class="mt-4 text-xs font-bold px-4 py-2 rounded-xl bg-indigo-600 text-white shadow-xs">
+                    挑选文学作品
+                </button>
+            </div>
+        </section>
+
+
+        <!-- ======================================================== -->
+        <!-- VIEW 4: TUTOR ADMIN VIEW (辅导员批阅中心) -->
+        <!-- ======================================================== -->
+        <section id="viewTutor" class="hidden space-y-6">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                        <i class="fas fa-chalkboard-user text-indigo-600"></i> 辅导员批阅管理中心
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-1">查看全体学生的提交记录，进行人工复核、打分调整并撰写指导反馈建议。</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="loadTutorAllProgress()" class="text-xs font-semibold px-3 py-2 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold transition flex items-center gap-1.5">
+                        <i class="fas fa-sync-alt"></i> 刷新全员提交
+                    </button>
+                </div>
+            </div>
+
+            <!-- Submissions Table -->
+            <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
+                            <tr>
+                                <th class="px-5 py-3.5">学员 ID</th>
+                                <th class="px-5 py-3.5">练习作品</th>
+                                <th class="px-5 py-3.5">体裁</th>
+                                <th class="px-5 py-3.5">提交时间</th>
+                                <th class="px-5 py-3.5">系统得分</th>
+                                <th class="px-5 py-3.5">辅导员反馈</th>
+                                <th class="px-5 py-3.5 text-right">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tutorSubmissionsTbody" class="divide-y divide-slate-100">
+                            <!-- Dynamically loaded rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Empty Tutor Submissions State -->
+            <div id="emptyTutorState" class="hidden text-center py-16 bg-white border border-slate-200 rounded-3xl p-8">
+                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-2xl text-slate-400 mb-3">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-800">暂无学生提交数据</h3>
+                <p class="text-xs text-slate-500 mt-1">当学员完成作品练习并提交后，记录将实时同步至此处以供批阅。</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ======================================================== -->
+    <!-- FLOATING SELECTION TOOLBAR (划词弹出微型工具栏) -->
+    <!-- ======================================================== -->
+    <div id="selectionToolbar" class="fixed hidden text-white rounded-full px-4 py-2 shadow-2xl items-center gap-3 z-50 transition-all duration-150 text-xs font-semibold select-none">
+        <button id="queryBtn" class="flex items-center gap-1.5 hover:text-indigo-300 active:scale-95 transition">
+            <i class="fas fa-search text-[10px]"></i> 查询单词
+        </button>
+        <div class="w-[1px] h-3 bg-slate-700"></div>
+        <button id="speakSelectionBtn" class="flex items-center gap-1.5 hover:text-indigo-300 active:scale-95 transition">
+            <i class="fas fa-volume-up text-[10px]"></i> 朗读
+        </button>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- SIDEBAR DRAWER: WORD QUERY & DICTIONARY (生词查询侧边栏) -->
+    <!-- ======================================================== -->
+    <!-- 侧边栏悬浮开关按钮 -->
+    <button id="sidebarToggleBtn" class="fixed right-0 top-1/3 bg-indigo-600 text-white py-4 px-2.5 rounded-l-xl shadow-xl hover:bg-indigo-700 transition-all duration-300 flex flex-col items-center gap-1.5 border border-r-0 border-indigo-400 select-none z-40">
+        <i class="fas fa-chevron-left transition-transform duration-300" id="sidebarToggleIcon"></i>
+        <span class="text-xs font-bold tracking-widest [writing-mode:vertical-rl] mt-0.5">生词释义</span>
+    </button>
+
+    <!-- 单词查询侧边栏 -->
+    <aside id="querySidebar" class="fixed top-0 right-0 h-full w-0 overflow-hidden bg-white border-l border-transparent transition-all duration-300 z-50 flex flex-col">
+        <!-- 侧边栏标题栏 -->
+        <div class="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50 flex-shrink-0">
+            <h3 class="text-sm font-bold text-slate-800 flex items-center">
+                <i class="fas fa-book-bookmark text-indigo-600 mr-2"></i> 查询生词与释义列表
+            </h3>
+            <button id="closeSidebarBtn" class="text-slate-400 hover:text-slate-600 transition p-1 text-base">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- 手动查询输入框与Token设置 -->
+        <div class="p-4 border-b border-slate-100 bg-white flex-shrink-0 space-y-2.5">
+            <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1 text-[10px] text-slate-400 font-semibold shrink-0">
+                    <i class="fas fa-key text-indigo-500"></i>
+                    <span>Auth Token:</span>
+                </div>
+                <input 
+                    type="password" 
+                    id="workerAuthToken" 
+                    placeholder="Worker AI Bearer Token (选填)" 
+                    autocomplete="off"
+                    class="w-full text-[10px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 focus:outline-hidden focus:border-indigo-500 font-mono text-slate-700 placeholder-slate-400"
+                />
+            </div>
+            <div class="flex gap-2">
+                <div class="relative flex-grow">
+                    <input type="text" id="manualQueryInput" placeholder="输入泰语单词查询..." class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2 focus:outline-hidden focus:border-indigo-500">
+                    <i class="fas fa-search absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
+                </div>
+                <button id="manualQueryBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition active:scale-95 flex items-center justify-center shrink-0">
+                    查询
+                </button>
+            </div>
+        </div>
+        
+        <!-- 侧边栏查词记录滚动区域 -->
+        <div class="flex-grow overflow-y-auto p-4 space-y-3 hidden" id="sidebarListContainer"></div>
+        
+        <!-- 空状态提示 -->
+        <div class="flex-grow flex flex-col items-center justify-center p-6 text-slate-400 text-center select-none" id="sidebarEmptyState">
+            <i class="fas fa-search text-3xl mb-3 block text-slate-300"></i>
+            <p class="text-xs">在页面中选中泰语单词并点击</p>
+            <p class="text-xs font-semibold text-indigo-600 mt-1">“查询单词”</p>
+        </div>
+
+        <!-- 底部操作栏 -->
+        <div class="p-3.5 border-t border-slate-100 bg-slate-50 flex justify-between items-center flex-shrink-0">
+            <button id="clearHistoryBtn" class="text-rose-500 hover:text-rose-700 text-xs font-semibold flex items-center gap-1 transition">
+                <i class="fas fa-trash-alt text-[10px]"></i> 清空记录
+            </button>
+            <span class="text-[10px] text-slate-400 font-mono">ThaiReadingCoachDB</span>
+        </div>
+    </aside>
+
+
+    <!-- ======================================================== -->
+    <!-- MODALS & DIALOGS -->
+    <!-- ======================================================== -->
+
+    <!-- Global Score Feedback Modal -->
+    <div id="scoreFeedbackModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-100 animate-fade-in">
+            <div class="bg-gradient-to-r from-indigo-600 to-violet-700 p-6 text-white text-center relative">
+                <button onclick="closeScoreModal()" class="absolute right-4 top-4 text-white/70 hover:text-white text-base">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="w-14 h-14 bg-white/15 rounded-2xl flex items-center justify-center mx-auto text-2xl mb-2">
+                    <i class="fas fa-award text-yellow-300"></i>
+                </div>
+                <h3 class="text-lg font-bold">评测完成与提交成功</h3>
+                <p class="text-xs text-indigo-100">系统已对比标准答案并记录您的练习成果</p>
+            </div>
+
+            <div class="p-6 space-y-5">
+                <div class="bg-slate-50 rounded-2xl p-4 text-center border border-slate-100">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">综合掌握得分</span>
+                    <div class="text-4xl font-black text-indigo-600 my-1" id="modalScoreDisplay">90%</div>
+                    <p class="text-xs text-slate-600" id="modalScoreComment">表现优秀！对小说文学要素与核心冲突把握准确。</p>
+                </div>
+
+                <div class="space-y-2 text-xs" id="modalScoreBreakdown">
+                    <!-- Breakdown rows -->
+                </div>
+
+                <div class="flex justify-between items-center pt-2">
+                    <button onclick="setWorkspaceMode('review'); closeScoreModal();" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                        <i class="fas fa-eye"></i> 进入参考答案对照模式
+                    </button>
+                    <button onclick="closeScoreModal()" class="text-xs font-bold px-5 py-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 shadow-md">
+                        确定
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tutor Review Detail Modal -->
+    <div id="tutorReviewModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden border border-slate-100 animate-fade-in max-h-[90vh] flex flex-col">
+            <div class="bg-slate-900 text-white p-5 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-graduation-cap text-indigo-400 text-lg"></i>
+                    <div>
+                        <h3 class="text-sm font-bold" id="tutorModalTitle">批阅学生作答</h3>
+                        <p class="text-[11px] text-slate-400" id="tutorModalSubtitle">student_001 • 2026-08-27</p>
+                    </div>
+                </div>
+                <button onclick="closeTutorModal()" class="text-slate-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="p-6 overflow-y-auto space-y-5 flex-grow text-xs">
+                <!-- Score Adjustment -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <label class="font-bold text-slate-700">评定得分 (0 - 100):</label>
+                        <p class="text-[11px] text-slate-400">结合学生作答深度人工核准分数</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="tutorScoreInput" min="0" max="100" class="w-20 px-3 py-1.5 rounded-lg border border-slate-300 font-bold text-base text-right">
+                        <span class="font-bold text-slate-600">分</span>
+                    </div>
+                </div>
+
+                <!-- Tutor Feedback Textarea -->
+                <div class="space-y-1.5">
+                    <label class="font-bold text-slate-700 flex items-center gap-1.5">
+                        <i class="fas fa-comment-dots text-indigo-500"></i> 辅导员批语与修改建议 (Tutor Comments):
+                    </label>
+                    <textarea id="tutorFeedbackTextarea" rows="4" placeholder="在此输入给该学生的具体文学分析改进建议..." class="w-full p-3 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 text-xs leading-relaxed"></textarea>
+                </div>
+
+                <!-- View Student's Submitted Answers Raw -->
+                <div class="space-y-1.5">
+                    <label class="font-bold text-slate-700">学生填写的完整答案明细:</label>
+                    <div id="tutorAnswersPreview" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 max-h-60 overflow-y-auto space-y-2">
+                        <!-- Rendered key-values -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="border-t border-slate-100 p-4 flex justify-between items-center bg-slate-50">
+                <button onclick="closeTutorModal()" class="text-xs font-semibold px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-200">
+                    取消
+                </button>
+                <button onclick="saveTutorFeedback()" class="text-xs font-bold px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
+                    保存批阅并通知学生
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Works Modal (CRUD) -->
+    <div id="manageWorksModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden border border-slate-100 animate-fade-in max-h-[90vh] flex flex-col">
+            <div class="bg-slate-900 text-white p-5 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-database text-indigo-400 text-lg"></i>
+                    <div>
+                        <h3 class="text-sm font-bold">文学作品库管理 (CRUD)</h3>
+                        <p class="text-[11px] text-slate-400">新增、编辑或管理系统内存储的文学作品与练习数据</p>
+                    </div>
+                </div>
+                <button onclick="closeManageWorksModal()" class="text-slate-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-5 flex-grow text-xs">
+                <div class="flex justify-between items-center">
+                    <h4 class="font-bold text-slate-800">已收录文学作品列表</h4>
+                    <button onclick="openAddWorkForm()" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-1 shadow-xs">
+                        <i class="fas fa-plus"></i> 新增作品
+                    </button>
+                </div>
+
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
+                            <tr>
+                                <th class="px-4 py-2.5">ID</th>
+                                <th class="px-4 py-2.5">体裁</th>
+                                <th class="px-4 py-2.5">标题</th>
+                                <th class="px-4 py-2.5">作者</th>
+                                <th class="px-4 py-2.5 text-right">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="manageWorksTbody" class="divide-y divide-slate-100">
+                            <!-- Loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Add/Edit Form Block (Hidden by default) -->
+                <div id="workEditFormBlock" class="hidden bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
+                    <h4 class="font-bold text-slate-900 border-b pb-2" id="workFormTitle">新增文学作品</h4>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="font-semibold text-slate-600 block mb-1">Exercise ID (唯一标识):</label>
+                            <input type="text" id="formExerciseId" placeholder="lit_custom_01" class="w-full p-2 rounded-lg border border-slate-200 text-xs">
+                        </div>
+                        <div>
+                            <label class="font-semibold text-slate-600 block mb-1">体裁 (Genre):</label>
+                            <select id="formGenre" class="w-full p-2 rounded-lg border border-slate-200 text-xs font-semibold">
+                                <option value="fiction">小说 (Fiction)</option>
+                                <option value="poetry">诗歌 (Poetry)</option>
+                                <option value="essay">散文 (Essay)</option>
+                                <option value="drama">戏剧 (Drama)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="font-semibold text-slate-600 block mb-1">作品标题 (Title):</label>
+                            <input type="text" id="formTitle" placeholder="作品泰语及中文名" class="w-full p-2 rounded-lg border border-slate-200 text-xs">
+                        </div>
+                        <div>
+                            <label class="font-semibold text-slate-600 block mb-1">作者 (Author):</label>
+                            <input type="text" id="formAuthor" placeholder="作者名" class="w-full p-2 rounded-lg border border-slate-200 text-xs">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">作品简介 (Description):</label>
+                        <input type="text" id="formDescription" placeholder="简要介绍作品背景及分析重点..." class="w-full p-2 rounded-lg border border-slate-200 text-xs">
+                    </div>
+
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">结构化 JSON 内容 (包含 sections, conflict, questions 等):</label>
+                        <textarea id="formContentJson" rows="6" placeholder='{"sections": [...]}' class="w-full p-2.5 rounded-lg border border-slate-200 font-mono text-[11px]"></textarea>
+                    </div>
+
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button onclick="cancelWorkEdit()" class="px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-200 font-semibold">取消</button>
+                        <button onclick="saveWorkRecord()" class="px-4 py-1.5 rounded-lg bg-indigo-600 text-white font-bold hover:bg-indigo-700 shadow-xs">保存作品</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-100 p-4 flex justify-end bg-slate-50">
+                <button onclick="closeManageWorksModal()" class="text-xs font-bold px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ======================================================== -->
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
+    <!-- ======================================================== -->
+    <script>
+        // ==========================================
+        // INDEXEDDB 存储逻辑 (与 appReadingCoach.html 共享同一数据库)
+        // ==========================================
+        const DB_NAME = 'ThaiReadingCoachDB';
+        const DB_VERSION = 2;
+        const STORE_NAME = 'wordQueries';
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                    }
+                    if (!db.objectStoreNames.contains('sentenceTags')) {
+                        const store = db.createObjectStore('sentenceTags', { keyPath: 'id' });
+                        store.createIndex('articleId', 'articleId', { unique: false });
+                        store.createIndex('article_paragraph_sentence', ['articleId', 'paragraphId', 'sentenceId'], { unique: false });
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function saveQueryRecord(word, explanations) {
+            try {
+                const db = await initDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const record = {
+                        word,
+                        explanations,
+                        timestamp: Date.now()
+                    };
+                    const request = store.add(record);
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to save to IndexedDB:', err);
+            }
+        }
+
+        async function getQueryHistory() {
+            try {
+                const db = await initDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_NAME], 'readonly');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.getAll();
+                    request.onsuccess = (e) => {
+                        const records = e.target.result || [];
+                        records.sort((a, b) => b.timestamp - a.timestamp);
+                        resolve(records);
+                    };
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to read from IndexedDB:', err);
+                return [];
+            }
+        }
+
+        async function deleteQueryRecord(id) {
+            try {
+                const db = await initDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.delete(id);
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to delete from IndexedDB:', err);
+            }
+        }
+
+        async function clearQueryHistory() {
+            try {
+                const db = await initDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.clear();
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to clear IndexedDB:', err);
+            }
+        }
+
+        // ==========================================
+        // 泰语语音播放功能 (长文本流式分段播放，确保全站音色100%一致)
+        // ==========================================
+        let currentAudioInstance = null;
+        let isAudioPlaying = false;
+
+        function stopAllAudio() {
+            isAudioPlaying = false;
+            if (currentAudioInstance) {
+                try {
+                    currentAudioInstance.pause();
+                    currentAudioInstance.currentTime = 0;
+                } catch (e) {}
+                currentAudioInstance = null;
+            }
+            if ('speechSynthesis' in window) {
+                try {
+                    window.speechSynthesis.cancel();
+                } catch (e) {}
+            }
+        }
+
+        function speakLocalTTS(cleanText) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.lang = 'th-TH';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // 分割长文本为适合云端 TTS 长度限制的片段 (<= 70 字符)
+        function splitTextIntoAudioChunks(text, maxLen = 70) {
+            if (!text || text.length <= maxLen) return [text];
+            
+            // 按泰语词间空格、句号、逗号、连接词分割
+            const rawParts = text.split(/([，,。！？!?\s\n]+)/);
+            const chunks = [];
+            let current = '';
+
+            for (const part of rawParts) {
+                if (!part) continue;
+                if ((current + part).length > maxLen) {
+                    if (current.trim()) chunks.push(current.trim());
+                    current = part;
+                } else {
+                    current += part;
+                }
+            }
+            if (current.trim()) chunks.push(current.trim());
+            return chunks.length > 0 ? chunks : [text.slice(0, maxLen)];
+        }
+
+        window.playAudioDirect = (text, forceLocal = false) => {
+            if (!text) return;
+            const clean = text.replace(/<[^>]*>/g, '').trim();
+            if (!clean) return;
+
+            // 停止先前的播放
+            stopAllAudio();
+
+            if (forceLocal) {
+                speakLocalTTS(clean);
+                return;
+            }
+
+            // 拆分为 <= 70 字符的音频分片，避免云端 TTS 单次限制返回 500
+            const chunks = splitTextIntoAudioChunks(clean, 70);
+            isAudioPlaying = true;
+
+            let chunkIndex = 0;
+
+            function playNextChunk() {
+                if (!isAudioPlaying || chunkIndex >= chunks.length) {
+                    isAudioPlaying = false;
+                    return;
+                }
+
+                const chunkText = chunks[chunkIndex].replace(/\s+/g, '');
+                chunkIndex++;
+
+                if (!chunkText) {
+                    playNextChunk();
+                    return;
+                }
+
+                const speechUrl = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(chunkText)}`;
+                const audio = new Audio(speechUrl);
+                currentAudioInstance = audio;
+
+                audio.onended = () => {
+                    if (isAudioPlaying) {
+                        playNextChunk();
+                    }
+                };
+
+                audio.onerror = (err) => {
+                    console.warn("Cloud Run audio chunk error:", err);
+                    if (isAudioPlaying) {
+                        // 降级为本地 TTS 播放剩余内容
+                        isAudioPlaying = false;
+                        speakLocalTTS(clean);
+                    }
+                };
+
+                audio.play().catch(err => {
+                    console.warn("Audio play() promise rejected:", err);
+                    if (isAudioPlaying) {
+                        isAudioPlaying = false;
+                        speakLocalTTS(clean);
+                    }
+                });
+            }
+
+            // 启动流式播放
+            playNextChunk();
+        };
+
+        // Helper to escape HTML characters
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Helper to get raw plain text from HTML string
+        function getCleanText(html) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            return tempDiv.textContent || tempDiv.innerText || "";
+        }
+
+        // ==========================================
+        // 全局事件委托：播放泰语发音
+        // ==========================================
+        document.addEventListener('click', (e) => {
+            const playBtn = e.target.closest('.play-speech-btn');
+            if (playBtn) {
+                const text = playBtn.dataset.text || playBtn.getAttribute('data-text');
+                if (text) {
+                    window.playAudioDirect(text);
+                }
+                return;
+            }
+
+            const clickableThai = e.target.closest('.font-thai-clickable');
+            if (clickableThai) {
+                const word = clickableThai.dataset.word || clickableThai.textContent;
+                if (word) {
+                    window.playAudioDirect(word);
+                }
+                return;
+            }
+        });
+
+        // ==========================================
+        // 划词选择与浮动工具栏 (Selection Toolbar)
+        // ==========================================
+        let selectedWordText = '';
+        const selectionToolbar = document.getElementById('selectionToolbar');
+        const queryBtn = document.getElementById('queryBtn');
+        const speakSelectionBtn = document.getElementById('speakSelectionBtn');
+
+        document.addEventListener('selectionchange', () => {
+            const selection = window.getSelection();
+            if (selection.isCollapsed) {
+                selectionToolbar.classList.add('hidden');
+                return;
+            }
+
+            const text = selection.toString().trim();
+            if (!text) {
+                selectionToolbar.classList.add('hidden');
+                return;
+            }
+
+            // 检查选中文本是否包含泰语字符
+            const hasThai = /[\u0e00-\u0e7f]/.test(text);
+            if (hasThai) {
+                selectedWordText = text;
+                selectionToolbar.classList.remove('hidden');
+
+                const range = selection.getRangeAt(0);
+                const rect = range.getBoundingClientRect();
+
+                const toolbarWidth = 160;
+                const toolbarHeight = 36;
+
+                const left = rect.left + rect.width / 2 - toolbarWidth / 2;
+                const top = rect.top - toolbarHeight - 8;
+
+                selectionToolbar.style.left = `${Math.max(10, Math.min(left, window.innerWidth - toolbarWidth - 10))}px`;
+                selectionToolbar.style.top = `${Math.max(10, Math.min(top, window.innerHeight - toolbarHeight - 10)) + window.scrollY}px`;
+            } else {
+                selectionToolbar.classList.add('hidden');
+            }
+        });
+
+        // 阻止 mousedown 默认行为，防止点击工具栏导致选中区域消失
+        selectionToolbar.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+        });
+
+        queryBtn.addEventListener('click', async () => {
+            const word = selectedWordText.trim();
+            if (!word) return;
+
+            selectionToolbar.classList.add('hidden');
+            window.getSelection().removeAllRanges();
+
+            await queryWord(word);
+        });
+
+        speakSelectionBtn.addEventListener('click', () => {
+            const word = selectedWordText.trim();
+            if (!word) return;
+            window.playAudioDirect(word);
+        });
+
+        // ==========================================
+        // 单词查询侧边栏控制与 API 调用逻辑
+        // ==========================================
+        const sidebar = document.getElementById('querySidebar');
+        const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+        const sidebarToggleIcon = document.getElementById('sidebarToggleIcon');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        const sidebarListContainer = document.getElementById('sidebarListContainer');
+        const sidebarEmptyState = document.getElementById('sidebarEmptyState');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const manualQueryInput = document.getElementById('manualQueryInput');
+        const manualQueryBtn = document.getElementById('manualQueryBtn');
+        const workerAuthTokenInput = document.getElementById('workerAuthToken');
+
+        const TOKEN_STORAGE_KEY = 'workerai_auth_token';
+
+        function getWorkerAuthHeaders(extraHeaders = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                ...extraHeaders
+            };
+            const token = (workerAuthTokenInput ? workerAuthTokenInput.value : (localStorage.getItem(TOKEN_STORAGE_KEY) || '')).trim();
+            if (token && token.length > 0) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            return headers;
+        }
+
+        function initWorkerAuthTokenSync() {
+            if (!workerAuthTokenInput) return;
+            workerAuthTokenInput.value = localStorage.getItem(TOKEN_STORAGE_KEY) || '';
+            workerAuthTokenInput.addEventListener('input', () => {
+                localStorage.setItem(TOKEN_STORAGE_KEY, workerAuthTokenInput.value.trim());
+            });
+        }
+
+        function toggleSidebar(open) {
+            const isOpen = open !== undefined ? open : sidebar.classList.contains('w-0');
+            if (isOpen) {
+                sidebar.classList.remove('w-0', 'border-transparent');
+                sidebar.classList.add('w-80', 'md:w-96', 'border-slate-200');
+                
+                sidebarToggleBtn.classList.remove('right-0');
+                sidebarToggleBtn.classList.add('right-80', 'md:right-96');
+                
+                sidebarToggleIcon.classList.remove('fa-chevron-left');
+                sidebarToggleIcon.classList.add('fa-chevron-right');
+            } else {
+                sidebar.classList.remove('w-80', 'md:w-96', 'border-slate-200');
+                sidebar.classList.add('w-0', 'border-transparent');
+                
+                sidebarToggleBtn.classList.remove('right-80', 'md:right-96');
+                sidebarToggleBtn.classList.add('right-0');
+                
+                sidebarToggleIcon.classList.remove('fa-chevron-right');
+                sidebarToggleIcon.classList.add('fa-chevron-left');
+            }
+        }
+
+        sidebarToggleBtn.addEventListener('click', () => toggleSidebar());
+        closeSidebarBtn.addEventListener('click', () => toggleSidebar(false));
+
+        clearHistoryBtn.addEventListener('click', async () => {
+            if (!confirm("确定要清空全部生词查询历史吗？")) return;
+            await clearQueryHistory();
+            await updateSidebarView();
+        });
+
+        // 侧边栏列表操作：删除生词 & 播放语音
+        sidebarListContainer.addEventListener('click', async (e) => {
+            const deleteBtn = e.target.closest('.delete-sidebar-item-btn');
+            if (deleteBtn) {
+                const id = parseInt(deleteBtn.dataset.id, 10);
+                if (!isNaN(id)) {
+                    await deleteQueryRecord(id);
+                    await updateSidebarView();
+                }
+                return;
+            }
+
+            const clickable = e.target.closest('.font-thai-clickable');
+            if (clickable) {
+                const word = clickable.dataset.word;
+                if (word) window.playAudioDirect(word);
+            }
+        });
+
+        async function updateSidebarView() {
+            const history = await getQueryHistory();
+            if (history && history.length > 0) {
+                sidebarEmptyState.classList.add('hidden');
+                sidebarListContainer.classList.remove('hidden');
+                sidebarListContainer.innerHTML = history.map(item => {
+                    const timeStr = new Date(item.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                    let expHtml = '';
+                    if (item.explanations && Array.isArray(item.explanations) && item.explanations.length > 0) {
+                        expHtml = item.explanations.map(exp => `
+                            <div class="flex items-baseline gap-2 py-0.5">
+                                <span class="text-[10px] bg-indigo-100 text-indigo-700 px-1 py-0.5 rounded font-black flex-shrink-0">释</span>
+                                <span class="text-slate-700 font-medium text-xs">${exp.meanCh || ''}</span>
+                                ${exp.meanEn ? `<span class="text-[10px] text-slate-400">(${exp.meanEn})</span>` : ''}
+                            </div>
+                        `).join('');
+                    } else if (typeof item.explanations === 'object' && item.explanations !== null) {
+                        const zh = item.explanations.zh || item.explanations.meanCh || JSON.stringify(item.explanations);
+                        expHtml = `<div class="text-xs text-slate-700">${zh}</div>`;
+                    } else {
+                        expHtml = `<p class="text-xs text-slate-400 italic mt-1 border-t pt-1">未找到该单词的详细解释</p>`;
+                    }
+
+                    return `
+                        <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 shadow-2xs hover:shadow-xs transition">
+                            <div class="flex justify-between items-start mb-1.5">
+                                <h4 class="text-base font-bold text-slate-800 font-thai font-thai-clickable flex items-center gap-1.5" data-word="${escapeHtml(item.word)}" title="点击播放发音">
+                                    ${item.word}
+                                    <i class="fas fa-volume-up text-xs text-indigo-500 hover:text-indigo-700 transition"></i>
+                                </h4>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[9px] text-slate-400 bg-white px-1.5 py-0.5 rounded-md border border-slate-200 font-mono">${timeStr}</span>
+                                    <button class="delete-sidebar-item-btn text-slate-400 hover:text-rose-600 transition p-1" data-id="${item.id}" title="删除记录">
+                                        <i class="fas fa-trash-alt text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="space-y-1 mt-1 border-t pt-1.5 border-slate-200/60">
+                                ${expHtml}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                sidebarEmptyState.classList.remove('hidden');
+                sidebarListContainer.classList.add('hidden');
+                sidebarListContainer.innerHTML = '';
+            }
+        }
+
+        async function queryWord(word) {
+            if (!word) return;
+
+            // 展开侧边栏
+            toggleSidebar(true);
+            
+            sidebarEmptyState.classList.add('hidden');
+            sidebarListContainer.classList.remove('hidden');
+
+            // 插入加载占位卡片
+            const loaderId = 'query-loader-' + Date.now();
+            const loaderHtml = `
+                <div id="${loaderId}" class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 shadow-2xs animate-pulse flex flex-col gap-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-base font-bold text-slate-800 font-thai">${word}</span>
+                        <span class="text-[11px] text-indigo-600 font-semibold">正在查询释义...</span>
+                    </div>
+                    <div class="h-3.5 bg-slate-200 rounded w-3/4 mt-1"></div>
+                    <div class="h-3 bg-slate-200 rounded w-1/2"></div>
+                </div>
+            `;
+            sidebarListContainer.insertAdjacentHTML('afterbegin', loaderHtml);
+            sidebarListContainer.scrollTop = 0;
+
+            try {
+                const response = await fetch("https://thai-semantic-match-worker.alexszhang.workers.dev/explain", {
+                    method: "POST",
+                    headers: getWorkerAuthHeaders(),
+                    body: JSON.stringify({ word: word })
+                });
+
+                if (response.status === 401) {
+                    throw new Error("401 未授权访问：请检查 API Auth Token 是否正确！");
+                }
+
+                if (!response.ok) {
+                    throw new Error(`请求失败 (${response.status})`);
+                }
+
+                const resText = await response.text();
+                const result = resText ? JSON.parse(resText) : [];
+
+                // 保存至 IndexedDB (与 appReadingCoach.html 相同数据库)
+                await saveQueryRecord(word, result);
+                
+                // 刷新侧边栏展示
+                await updateSidebarView();
+
+            } catch (error) {
+                console.error('API Query Error:', error);
+                const loader = document.getElementById(loaderId);
+                if (loader) {
+                    loader.classList.remove('animate-pulse');
+                    loader.className = "bg-rose-50 border border-rose-200 rounded-2xl p-3.5 shadow-2xs";
+                    loader.innerHTML = `
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-bold text-rose-800 font-thai">${word}</span>
+                            <span class="text-[10px] text-rose-500 font-bold">查询失败</span>
+                        </div>
+                        <p class="text-xs text-rose-600 mt-1.5 border-t border-rose-200 pt-1.5">
+                            ${error.message || '网络连接或释义服务异常'}
+                        </p>
+                    `;
+                }
+            }
+        }
+
+        async function triggerManualQuery() {
+            const word = manualQueryInput.value.trim();
+            if (!word) return;
+            manualQueryInput.value = '';
+            await queryWord(word);
+        }
+
+        manualQueryBtn.addEventListener('click', triggerManualQuery);
+        manualQueryInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') triggerManualQuery();
+        });
+
+
+        // ==========================================
+        // APP CORE STATE & VIEW MANAGEMENT
+        // ==========================================
+        const state = {
+            currentTab: 'dashboard', // dashboard | workspace | progress | tutor
+            currentUser: 'student_001',
+            currentGenreFilter: 'all',
+            searchKeyword: '',
+            allWorks: [],
+            activeWork: null,
+            workspaceMode: 'practice', // practice | review
+            showHints: false,
+            currentProgressRecord: null,
+            editingWorkId: null
+        };
+
+        // Cache for student answers in workspace: { [fieldKey]: value }
+        let currentAnswers = {};
+
+        // Genre color styling config
+        const genreConfig = {
+            fiction: {
+                label: '小说',
+                badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+                cardBorder: 'border-indigo-100 hover:border-indigo-300',
+                icon: 'fa-book',
+                color: '#6366f1'
+            },
+            poetry: {
+                label: '诗歌',
+                badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                cardBorder: 'border-emerald-100 hover:border-emerald-300',
+                icon: 'fa-feather',
+                color: '#059669'
+            },
+            essay: {
+                label: '散文',
+                badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+                cardBorder: 'border-amber-100 hover:border-amber-300',
+                icon: 'fa-newspaper',
+                color: '#d97706'
+            },
+            drama: {
+                label: '戏剧',
+                badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
+                cardBorder: 'border-rose-100 hover:border-rose-300',
+                icon: 'fa-masks-theater',
+                color: '#e11d48'
+            },
+            multigenre: {
+                label: '综合体裁',
+                badgeClass: 'bg-sky-50 text-sky-700 border-sky-200',
+                cardBorder: 'border-sky-100 hover:border-sky-300',
+                icon: 'fa-layer-group',
+                color: '#0284c7'
+            }
+        };
+
+        // Initialize application on DOM ready
+        document.addEventListener('DOMContentLoaded', async () => {
+            initWorkerAuthTokenSync();
+            initDB().catch(err => console.error("Could not init IndexedDB", err));
+            updateSidebarView();
+
+            await fetchAllWorks();
+            await loadUserStats();
+        });
+
+        // ----------------------------------------------------
+        // NAVIGATION & TAB SWITCHING
+        // ----------------------------------------------------
+        function switchNavTab(tabName) {
+            state.currentTab = tabName;
+            
+            // Hide all views
+            document.getElementById('viewDashboard').classList.add('hidden');
+            document.getElementById('viewWorkspace').classList.add('hidden');
+            document.getElementById('viewProgress').classList.add('hidden');
+            document.getElementById('viewTutor').classList.add('hidden');
+
+            // Reset tab styles
+            const tabBtns = {
+                dashboard: document.getElementById('navDashboardBtn'),
+                workspace: document.getElementById('navWorkspaceBtn'),
+                progress: document.getElementById('navProgressBtn'),
+                tutor: document.getElementById('navTutorBtn')
+            };
+
+            for (const [key, btn] of Object.entries(tabBtns)) {
+                if (key === tabName) {
+                    btn.className = "px-3.5 py-1.5 rounded-lg transition text-indigo-700 bg-white shadow-xs font-bold flex items-center gap-1.5";
+                } else {
+                    btn.className = "px-3.5 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5";
+                }
+            }
+
+            // Show selected view
+            if (tabName === 'dashboard') {
+                document.getElementById('viewDashboard').classList.remove('hidden');
+                renderWorksGrid();
+                loadUserStats();
+            } else if (tabName === 'workspace') {
+                document.getElementById('viewWorkspace').classList.remove('hidden');
+                if (!state.activeWork && state.allWorks.length > 0) {
+                    const firstWork = state.allWorks.find(w => w.genre !== 'multigenre') || state.allWorks[0];
+                    loadExerciseToWorkspace(firstWork.exercise_id);
+                }
+            } else if (tabName === 'progress') {
+                document.getElementById('viewProgress').classList.remove('hidden');
+                loadUserProgress();
+            } else if (tabName === 'tutor') {
+                document.getElementById('viewTutor').classList.remove('hidden');
+                loadTutorAllProgress();
+            }
+        }
+
+        function changeCurrentUser(newUserId) {
+            if (newUserId === 'custom_user') {
+                const customId = prompt("请输入您的学生或辅导员 ID:", "student_004");
+                if (customId) {
+                    state.currentUser = customId.trim();
+                    const opt = document.createElement('option');
+                    opt.value = state.currentUser;
+                    opt.textContent = `${state.currentUser} (自定义)`;
+                    opt.selected = true;
+                    document.getElementById('currentUserSelect').appendChild(opt);
+                } else {
+                    document.getElementById('currentUserSelect').value = state.currentUser;
+                    return;
+                }
+            } else {
+                state.currentUser = newUserId;
+            }
+            loadUserStats();
+            if (state.currentTab === 'progress') loadUserProgress();
+            if (state.activeWork) checkUserPreviousProgress(state.activeWork.exercise_id);
+        }
+
+        // ----------------------------------------------------
+        // API FETCH & DATA HANDLING
+        // ----------------------------------------------------
+        async function fetchAllWorks() {
+            try {
+                const res = await fetch('/api/exercises');
+                if (!res.ok) throw new Error("Failed to load exercises");
+                const data = await res.json();
+                state.allWorks = data;
+                document.getElementById('statTotalWorks').textContent = data.filter(w => w.genre !== 'multigenre').length;
+                renderWorksGrid();
+            } catch (err) {
+                console.error("Error fetching works:", err);
+            }
+        }
+
+        async function loadUserStats() {
+            try {
+                const res = await fetch(`/api/progress/${state.currentUser}`);
+                if (!res.ok) return;
+                const records = await res.json();
+                document.getElementById('statUserDone').textContent = records.length;
+                if (records.length > 0) {
+                    const avg = Math.round(records.reduce((acc, cur) => acc + (cur.score || 0), 0) / records.length);
+                    document.getElementById('statAvgScore').textContent = `${avg}%`;
+                } else {
+                    document.getElementById('statAvgScore').textContent = '0%';
+                }
+            } catch (err) {
+                console.error("Error loading user stats:", err);
+            }
+        }
+
+        // ----------------------------------------------------
+        // DASHBOARD WORKS FILTERING & RENDERING
+        // ----------------------------------------------------
+        function filterWorksByGenre(genre, btn) {
+            state.currentGenreFilter = genre;
+            document.querySelectorAll('.genre-filter-pill').forEach(el => {
+                el.className = "genre-filter-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-600 hover:bg-slate-200";
+            });
+            btn.className = "genre-filter-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-xs";
+            renderWorksGrid();
+        }
+
+        function searchWorks(keyword) {
+            state.searchKeyword = keyword.trim().toLowerCase();
+            renderWorksGrid();
+        }
+
+        function renderWorksGrid() {
+            const container = document.getElementById('worksCardsGrid');
+            const emptyState = document.getElementById('emptyWorksState');
+            container.innerHTML = '';
+
+            let filtered = state.allWorks.filter(w => w.genre !== 'multigenre');
+
+            if (state.currentGenreFilter !== 'all') {
+                filtered = filtered.filter(w => w.genre === state.currentGenreFilter);
+            }
+
+            if (state.searchKeyword) {
+                filtered = filtered.filter(w => 
+                    (w.title && w.title.toLowerCase().includes(state.searchKeyword)) ||
+                    (w.author && w.author.toLowerCase().includes(state.searchKeyword)) ||
+                    (w.description && w.description.toLowerCase().includes(state.searchKeyword))
+                );
+            }
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            filtered.forEach(work => {
+                const genreInfo = genreConfig[work.genre] || genreConfig.fiction;
+                const card = document.createElement('div');
+                card.className = `bg-white border ${genreInfo.cardBorder} rounded-3xl p-6 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between group`;
+                
+                card.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[11px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1.5 ${genreInfo.badgeClass}">
+                                <i class="fas ${genreInfo.icon}"></i> ${genreInfo.label} (${work.genre.toUpperCase()})
+                            </span>
+                            <span class="text-[10px] text-slate-400 font-mono">ID: ${work.exercise_id}</span>
+                        </div>
+
+                        <div>
+                            <h3 class="text-base font-extrabold text-slate-900 font-thai group-hover:text-indigo-600 transition leading-snug line-clamp-2">
+                                ${work.title}
+                            </h3>
+                            <p class="text-xs text-slate-500 font-medium flex items-center gap-1 mt-1">
+                                <i class="fas fa-feather-pointed text-slate-400"></i> ${work.author || '佚名'}
+                            </p>
+                        </div>
+
+                        <p class="text-xs text-slate-600 leading-relaxed line-clamp-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            ${work.description || '暂无详细描述'}
+                        </p>
+
+                        <!-- Module features tag -->
+                        <div class="flex flex-wrap gap-1.5 text-[10px] text-slate-500 font-medium">
+                            <span class="bg-slate-100 px-2 py-0.5 rounded-md"><i class="fas fa-diagram-project mr-1 text-slate-400"></i>要素分析</span>
+                            <span class="bg-slate-100 px-2 py-0.5 rounded-md"><i class="fas fa-comments mr-1 text-slate-400"></i>讨论问答</span>
+                            <span class="bg-slate-100 px-2 py-0.5 rounded-md"><i class="fas fa-magnifying-glass mr-1 text-slate-400"></i>5W1H细读</span>
+                            <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md"><i class="fas fa-volume-up mr-1"></i>点击播音</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-5 mt-4 border-t border-slate-100 flex justify-between items-center">
+                        <button onclick="loadExerciseToWorkspace('${work.exercise_id}')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl transition shadow-xs flex items-center justify-center gap-2 text-xs active:scale-95">
+                            <span>开始分析与练习</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // ----------------------------------------------------
+        // DYNAMIC EXERCISE RENDERING ENGINE
+        // renderExercise(data): Automatically adapts UI according to data.genre
+        // ----------------------------------------------------
+        async function loadExerciseToWorkspace(exerciseId) {
+            try {
+                const res = await fetch(`/api/exercises/${exerciseId}`);
+                if (!res.ok) throw new Error("Failed to load exercise details");
+                const work = await res.json();
+                state.activeWork = work;
+                
+                // Switch tab to workspace
+                switchNavTab('workspace');
+
+                // Render header info
+                const genreInfo = genreConfig[work.genre] || genreConfig.fiction;
+                document.getElementById('wsTitle').textContent = work.title;
+                document.getElementById('wsAuthor').textContent = work.author ? `作者：${work.author}` : '';
+                document.getElementById('wsTitleSpeechBtn').setAttribute('data-text', work.title);
+                
+                const wsBadge = document.getElementById('wsGenreBadge');
+                wsBadge.textContent = `${genreInfo.label} (${work.genre.toUpperCase()})`;
+                wsBadge.className = `text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase border ${genreInfo.badgeClass}`;
+
+                // Check previously saved answers for this user
+                await checkUserPreviousProgress(exerciseId);
+
+                // Call dynamic rendering engine
+                renderExercise(work);
+
+            } catch (err) {
+                console.error("Error loading exercise:", err);
+                alert("加载作品练习失败，请稍后再试。");
+            }
+        }
+
+        async function checkUserPreviousProgress(exerciseId) {
+            currentAnswers = {};
+            state.currentProgressRecord = null;
+            document.getElementById('wsStatusBadge').textContent = '未提交';
+            document.getElementById('wsStatusBadge').className = 'text-[10px] bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full';
+
+            try {
+                const res = await fetch(`/api/progress/${state.currentUser}`);
+                if (!res.ok) return;
+                const records = await res.json();
+                const matched = records.find(r => r.exercise_id === exerciseId);
+                if (matched) {
+                    state.currentProgressRecord = matched;
+                    currentAnswers = matched.answers || {};
+                    document.getElementById('wsStatusBadge').textContent = `已提交 • ${matched.score || 0}分`;
+                    document.getElementById('wsStatusBadge').className = 'text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200';
+                } else {
+                    // Try to load draft from localStorage
+                    const draftKey = `draft_${state.currentUser}_${exerciseId}`;
+                    const savedDraft = localStorage.getItem(draftKey);
+                    if (savedDraft) {
+                        try {
+                            currentAnswers = JSON.parse(savedDraft);
+                            document.getElementById('wsStatusBadge').textContent = '草稿已恢复';
+                            document.getElementById('wsStatusBadge').className = 'text-[10px] bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-full border border-amber-200';
+                        } catch (e) {}
+                    }
+                }
+            } catch (e) {
+                console.warn("Could not check prior progress", e);
+            }
+        }
+
+        /**
+         * Core dynamic rendering function
+         * Generates UI form elements according to data.genre
+         */
+        function renderExercise(data) {
+            const container = document.getElementById('dynamicExerciseWorkspace');
+            container.innerHTML = '';
+
+            const genre = (data.genre || '').toLowerCase();
+            const sections = data.sections || [];
+
+            // Extract section contents
+            const elemSection = sections.find(s => s.section_number === 1) || { content: {} };
+            const discSection = sections.find(s => s.section_number === 2) || { topics: [] };
+            const langSection = sections.find(s => s.section_number === 3) || { exercises: [] };
+
+            // 1. Render Genre-Specific Literary Elements Section
+            const elemCard = document.createElement('div');
+            elemCard.className = "bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-6";
+            
+            const genreInfo = genreConfig[genre] || genreConfig.fiction;
+            elemCard.innerHTML = `
+                <div class="flex justify-between items-center border-b border-slate-100 pb-4">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 font-bold text-sm flex items-center justify-center border border-indigo-100">1</span>
+                        <div>
+                            <h3 class="text-base font-extrabold text-slate-900">文学要素深度分析 (${elemSection.section_title || '要素分析'})</h3>
+                            <p class="text-xs text-slate-400">体裁自适应表单 • 针对${genreInfo.label}文本结构进行深度解构 • 支持泰语播音与划词</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-semibold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
+                        体裁模版：${genreInfo.label}
+                    </span>
+                </div>
+                <div id="genreFormContainer" class="space-y-6">
+                    <!-- Dynamic template injected below -->
+                </div>
+            `;
+            container.appendChild(elemCard);
+
+            const formContainer = elemCard.querySelector('#genreFormContainer');
+
+            // Switch by genre
+            if (genre === 'fiction') {
+                renderFictionTemplate(formContainer, elemSection.content);
+            } else if (genre === 'poetry') {
+                renderPoetryTemplate(formContainer, elemSection.content);
+            } else if (genre === 'essay') {
+                renderEssayTemplate(formContainer, elemSection.content);
+            } else if (genre === 'drama') {
+                renderDramaTemplate(formContainer, elemSection.content);
+            } else {
+                renderGenericTemplate(formContainer, elemSection.content);
+            }
+
+            // 2. Render Universal Discussion & Critical Thinking Questions
+            if (discSection && discSection.topics && discSection.topics.length > 0) {
+                renderDiscussionSection(container, discSection);
+            }
+
+            // 3. Render Universal 5W1H Grammar & Close Reading Module
+            if (langSection && langSection.exercises && langSection.exercises.length > 0) {
+                render5W1HSection(container, langSection);
+            }
+
+            // Restore previously typed answers into inputs
+            restoreAnswersToDOM();
+
+            // Refresh current mode display (practice or review)
+            setWorkspaceMode(state.workspaceMode);
+        }
+
+        // ----------------------------------------------------
+        // GENRE-SPECIFIC TEMPLATES (WITH TTS AUDIO BUTTONS)
+        // ----------------------------------------------------
+
+        // 1. Fiction Template
+        function renderFictionTemplate(container, content = {}) {
+            const conflict = content.conflict || {};
+            const characters = content.characters || {};
+            const setting = content.setting_and_atmosphere || {};
+            const keyConcept = content.key_concept || '';
+            const socialIssues = content.social_issues || [];
+
+            const conflictType = conflict['1.1_type'] || conflict.type || '人与自我、人与社会伦理冲突';
+            const conflictDetails = conflict['1.2_details'] || conflict.details || '';
+            const conflictEnding = conflict['1.3_ending'] || conflict.ending || 'โศกนาฏกรรม (Tragic ending)';
+
+            const mainChars = characters['2.1_main_characters'] || characters.main_characters || [];
+            const supportingChars = characters['2.2_supporting_characters'] || characters.supporting_characters || [];
+            const minorChars = characters['2.3_minor_characters'] || characters.minor_characters || [];
+
+            container.innerHTML = `
+                <!-- Conflict Block -->
+                <div class="space-y-3 bg-slate-50/60 p-5 rounded-2xl border border-slate-100">
+                    <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <i class="fas fa-bolt text-amber-500"></i> 冲突与情节点分析 (Conflict & Turning Points)
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="font-semibold text-slate-600 block text-xs mb-1">主要冲突类型 (Conflict Type):</label>
+                            <input type="text" data-field="fiction_conflict_type" placeholder="如：人与自身的心理道德冲突 / 人与封建家庭..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden bg-white">
+                            <div class="reference-box hidden mt-1.5 p-2.5 bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 rounded-xl space-y-1">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="font-bold flex items-center gap-1 text-[11px] text-emerald-700"><i class="fas fa-circle-check"></i> 参考答案：</span>
+                                    <button type="button" class="play-speech-btn text-emerald-700 hover:text-emerald-900 bg-emerald-100 hover:bg-emerald-200 px-2 py-0.5 rounded-md font-bold text-[11px] flex items-center gap-1 transition" data-text="${escapeHtml(conflictType)}">
+                                        <i class="fas fa-volume-up"></i> 播音
+                                    </button>
+                                </div>
+                                <p class="font-thai text-slate-800">${conflictType}</p>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="font-semibold text-slate-600 block text-xs mb-1">结局走向与命运归宿 (Ending):</label>
+                            <input type="text" data-field="fiction_conflict_ending" placeholder="如：悲剧结局 (Tragic ending) / 开放式结局..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden bg-white">
+                            <div class="reference-box hidden mt-1.5 p-2.5 bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 rounded-xl space-y-1">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="font-bold flex items-center gap-1 text-[11px] text-emerald-700"><i class="fas fa-circle-check"></i> 参考答案：</span>
+                                    <button type="button" class="play-speech-btn text-emerald-700 hover:text-emerald-900 bg-emerald-100 hover:bg-emerald-200 px-2 py-0.5 rounded-md font-bold text-[11px] flex items-center gap-1 transition" data-text="${escapeHtml(conflictEnding)}">
+                                        <i class="fas fa-volume-up"></i> 播音
+                                    </button>
+                                </div>
+                                <p class="font-thai text-slate-800">${conflictEnding}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-600 block text-xs mb-1">冲突发展过程与核心细节 (Conflict Details):</label>
+                        <textarea rows="2" data-field="fiction_conflict_details" placeholder="概括主人公在现实伦理与真爱之间的拉扯过程..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden bg-white"></textarea>
+                        <div class="reference-box hidden mt-1.5 p-2.5 bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 rounded-xl space-y-1">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="font-bold flex items-center gap-1 text-[11px] text-emerald-700"><i class="fas fa-circle-check"></i> 参考答案：</span>
+                                <button type="button" class="play-speech-btn text-emerald-700 hover:text-emerald-900 bg-emerald-100 hover:bg-emerald-200 px-2 py-0.5 rounded-md font-bold text-[11px] flex items-center gap-1 transition" data-text="${escapeHtml(conflictDetails)}">
+                                    <i class="fas fa-volume-up"></i> 播音
+                                </button>
+                            </div>
+                            <p class="font-thai text-slate-800 leading-relaxed">${conflictDetails}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Characters Block -->
+                <div class="space-y-3 bg-slate-50/60 p-5 rounded-2xl border border-slate-100">
+                    <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <i class="fas fa-users text-indigo-500"></i> 人物系统与性格弧光 (Characters & Roles)
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${mainChars.length > 0 ? mainChars.map((char, cIdx) => `
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-xs text-indigo-700">主要人物 ${cIdx + 1} (${char.name})</span>
+                                    <button type="button" class="play-speech-btn text-xs text-slate-400 hover:text-indigo-600 flex items-center gap-1 font-thai" data-text="${escapeHtml(char.name)}" title="播放人名发音">
+                                        <span>${char.name}</span>
+                                        <i class="fas fa-volume-up text-[10px]"></i>
+                                    </button>
+                                </div>
+                                <input type="text" data-field="char_main_${cIdx}" placeholder="输入该人物身份、性格特征与最终抉择..." class="w-full p-2 rounded-lg border border-slate-200 text-xs">
+                                <div class="reference-box hidden p-2.5 bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 rounded-xl space-y-1">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-bold text-[11px] text-emerald-700">参考解析：</span>
+                                        <button type="button" class="play-speech-btn text-emerald-700 hover:text-emerald-900 bg-emerald-100 hover:bg-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold" data-text="${escapeHtml(char.description || '')}">
+                                            <i class="fas fa-volume-up"></i> 播音
+                                        </button>
+                                    </div>
+                                    <p class="font-thai text-slate-800">${char.description || ''}</p>
+                                </div>
+                            </div>
+                        `).join('') : `
+                            <!-- Fallback default characters if not structured -->
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-xs text-indigo-700">主要人物 1 (女主角)</span>
+                                    <button type="button" class="play-speech-btn text-xs text-slate-400 hover:text-indigo-600 flex items-center gap-1 font-thai" data-text="หม่อมราชวงศ์กีรติ">
+                                        <span>ม.ร.ว.กีรติ</span>
+                                        <i class="fas fa-volume-up text-[10px]"></i>
+                                    </button>
+                                </div>
+                                <input type="text" data-field="char_1_analysis" placeholder="输入人物身份、性格特征..." class="w-full p-2 rounded-lg border border-slate-200 text-xs">
+                            </div>
+                        `}
+
+                        ${supportingChars.map((char, sIdx) => `
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-xs text-slate-700">次要人物 (${char.name})</span>
+                                    <button type="button" class="play-speech-btn text-xs text-slate-400 hover:text-indigo-600 flex items-center gap-1 font-thai" data-text="${escapeHtml(char.name)}" title="播放人名发音">
+                                        <span>${char.name}</span>
+                                        <i class="fas fa-volume-up text-[10px]"></i>
+                                    </button>
+                                </div>
+                                <input type="text" data-field="char_supp_${sIdx}" placeholder="分析该次要人物的社会身份与情节作用..." class="w-full p-2 rounded-lg border border-slate-200 text-xs">
+                                <div class="reference-box hidden p-2.5 bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 rounded-xl space-y-1">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-bold text-[11px] text-emerald-700">参考说明：</span>
+                                        <button type="button" class="play-speech-btn text-emerald-700 hover:text-emerald-900 bg-emerald-100 hover:bg-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold" data-text="${escapeHtml(char.description || '')}">
+                                            <i class="fas fa-volume-up"></i> 播音
+                                        </button>
+                                    </div>
+                                    <p class="font-thai text-slate-800">${char.description || ''}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    ${minorChars.length > 0 ? `
+                        <div class="bg-slate-100/70 p-3 rounded-xl text-[11px] text-slate-600 flex flex-wrap items-center gap-2">
+                            <span class="font-bold text-slate-500"><i class="fas fa-user-tag mr-1 text-slate-400"></i>群像/其他人物：</span>
+                            ${minorChars.map(m => `<span class="bg-white px-2 py-0.5 rounded-md border border-slate-200 font-thai">${m}</span>`).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Setting & Key Concept Block -->
+                <div class="space-y-3 bg-slate-50/60 p-5 rounded-2xl border border-slate-100">
+                    <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <i class="fas fa-map-location-dot text-emerald-500"></i> 场景氛围与核心立意 (Setting & Key Concept)
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="font-semibold text-slate-600 block text-xs mb-1">时空地点与时代背景 (Setting & Period):</label>
+                            <input type="text" data-field="fiction_setting" placeholder="如：暹罗与日本、佛历2480年前后..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-white">
+                            <div class="reference-box hidden mt-1.5 p-2 bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 rounded-lg">
+                                <strong>参考答案：</strong>${(setting.locations || []).join(' / ')} • ${setting.time_period || ''}
+                            </div>
+                        </div>
+                        <div>
+                            <label class="font-semibold text-slate-600 block text-xs mb-1">环境氛围与社会隐喻 (Atmosphere):</label>
+                            <input type="text" data-field="fiction_atmosphere" placeholder="如：自由浪漫与传统束缚的对比..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-white">
+                            <div class="reference-box hidden mt-1.5 p-2 bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 rounded-lg font-thai">
+                                <strong>参考答案：</strong>${setting.atmosphere || ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-600 block text-xs mb-1">小说核心主旨与思想立意 (Key Concept / Theme):</label>
+                        <textarea rows="2" data-field="fiction_key_concept" placeholder="归纳作者借该故事传递的文学哲思..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-white"></textarea>
+                        <div class="reference-box hidden mt-1.5 p-2.5 bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 rounded-xl space-y-1">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="font-bold text-[11px] text-emerald-700">参考立意：</span>
+                                <button type="button" class="play-speech-btn text-emerald-700 hover:text-emerald-900 bg-emerald-100 hover:bg-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold" data-text="${escapeHtml(keyConcept)}">
+                                    <i class="fas fa-volume-up"></i> 播音
+                                </button>
+                            </div>
+                            <p class="font-thai text-slate-800 leading-relaxed">${keyConcept || ''}</p>
+                        </div>
+                    </div>
+                </div>
+
+                ${socialIssues.length > 0 ? `
+                    <!-- Social Issues Reflection Block -->
+                    <div class="space-y-3 bg-slate-50/60 p-5 rounded-2xl border border-slate-100">
+                        <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                            <i class="fas fa-people-roof text-indigo-500"></i> 社会议题与时代背景深度反思 (Social Issues)
+                        </h4>
+                        <div class="space-y-2">
+                            ${socialIssues.map((issue, idx) => `
+                                <div class="bg-white p-3.5 rounded-xl border border-slate-200 text-xs space-y-1">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span class="font-bold text-slate-700 text-[11px]"><i class="fas fa-angle-right text-indigo-500 mr-1"></i>议题 ${idx + 1}：</span>
+                                        <button type="button" class="play-speech-btn text-slate-400 hover:text-indigo-600 p-1" data-text="${escapeHtml(issue)}" title="播音">
+                                            <i class="fas fa-volume-up"></i>
+                                        </button>
+                                    </div>
+                                    <p class="font-thai text-slate-800 leading-relaxed">${issue}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        // 2. Poetry Template
+        function renderPoetryTemplate(container, content = {}) {
+            const themeTone = content.theme_and_tone || {};
+            const imagery = content.imagery_and_symbolism || [];
+            const devices = content.poetic_devices || [];
+
+            container.innerHTML = `
+                <!-- Theme and Tone -->
+                <div class="space-y-3 bg-slate-50/60 p-5 rounded-2xl border border-slate-100">
+                    <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <i class="fas fa-music text-emerald-500"></i> 主题意蕴与诗歌基调 (Theme & Tone)
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="font-semibold text-slate-600 block text-xs mb-1">诗歌核心主旨 (Main Theme):</label>
+                            <input type="text" data-field="poetry_theme" placeholder="概括诗歌关注的社会或精神主题..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-white">
+                            <div class="reference-box hidden mt-1.5 p-2.5 bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 rounded-xl space-y-1">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="font-bold text-[11px] text-emerald-700">参考主旨：</span>
+                                    <button type="button" class="play-speech-btn text-emerald-700 hover:text-emerald-900 bg-emerald-100 hover:bg-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold" data-text="${escapeHtml(themeTone.main_theme || '')}">
+                                        <i class="fas fa-volume-up"></i> 播音
+                                    </button>
+                                </div>
+                                <p class="font-thai text-slate-800">${themeTone.main_theme || 'การแสวงหาความหมายของชีวิตและคุณค่าความเป็นมนุษย์'}</p>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="font-semibold text-slate-600 block text-xs mb-1">情感基调与语调 (Tone):</label>
+                            <input type="text" data-field="poetry_tone" placeholder="如：坚定、悲悯、深沉、批判..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-white">
+                            <div class="reference-box hidden mt-1.5 p-2.5 bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 rounded-xl space-y-1">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="font-bold text-[11px] text-emerald-700">参考语调：</span>
+                                    <button type="button" class="play-speech-btn text-emerald-700 hover:text-emerald-900 bg-emerald-100 hover:bg-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold" data-text="${escapeHtml(themeTone.tone || '')}">
+                                        <i class="fas fa-volume-up"></i> 播音
+                                    </button>
+                                </div>
+                                <p class="font-thai text-slate-800">${themeTone.tone || 'มุ่งมั่น, สิ้นหวังแต่ไม่ยอมแพ้, สะท้อนสังคม'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Imagery and Symbolism -->
+                <div class="space-y-3 bg-slate-50/60 p-5 rounded-2xl border border-slate-100">
+                    <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <i class="fas fa-sun text-amber-500"></i> 意象与象征手法 (Imagery & Symbolism)
+                    </h4>
+                    <p class="text-[11px] text-slate-500">分析诗中关键意象及其所象征的深层寓意：</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${imagery.map((item, idx) => `
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-xs text-emerald-700 font-thai">意象 ${idx + 1}：${item.element}</span>
+                                    <button type="button" class="play-speech-btn text-slate-400 hover:text-emerald-600 text-xs" data-text="${escapeHtml(item.element)}" title="播放意象单词发音">
+                                        <i class="fas fa-volume-up"></i>
+                                    </button>
+                                </div>
+                                <input type="text" data-field="poetry_imagery_${idx}" placeholder="阐释该意象在诗中的象征含义..." class="w-full p-2 rounded-lg border border-slate-200 text-xs">
+                                <div class="reference-box hidden p-2 bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 rounded-lg font-thai flex items-center justify-between">
+                                    <span><strong>象征释义：</strong>${item.meaning}</span>
+                                    <button type="button" class="play-speech-btn text-emerald-600 hover:text-emerald-800 ml-2" data-text="${escapeHtml(item.meaning)}" title="播放释义发音">
+                                        <i class="fas fa-volume-up text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Poetic Devices -->
+                <div class="space-y-3 bg-slate-50/60 p-5 rounded-2xl border border-slate-100">
+                    <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <i class="fas fa-pen-ruler text-indigo-500"></i> 修辞手法与韵律技巧 (Poetic Devices & Rhythm)
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${devices.map((dev, idx) => `
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-2">
+                                <span class="font-bold text-xs text-indigo-700">${dev.device}</span>
+                                <input type="text" data-field="poetry_device_${idx}" placeholder="分析该修辞手法的艺术表达效果..." class="w-full p-2 rounded-lg border border-slate-200 text-xs">
+                                <div class="reference-box hidden p-2 bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 rounded-lg font-thai flex items-center justify-between">
+                                    <span><strong>修辞作用：</strong>${dev.description}</span>
+                                    <button type="button" class="play-speech-btn text-emerald-600 hover:text-emerald-800 ml-2" data-text="${escapeHtml(dev.description)}" title="播放修辞说明发音">
+                                        <i class="fas fa-volume-up text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 3. Essay Template
+        function renderEssayTemplate(container, content = {}) {
+            const argument = content.central_argument || '';
+            const perspective = content.author_perspective || '';
+            const toneStyle = content.tone_and_style || '';
+            const motifs = content.key_motifs || [];
+
+            container.innerHTML = `
+                <div class="space-y-3 bg-slate-50/60 p-5 rounded-2xl border border-slate-100">
+                    <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <i class="fas fa-bullseye text-amber-500"></i> 中心论点与核心主张 (Central Argument)
+                    </h4>
+                    <div>
+                        <label class="font-semibold text-slate-600 block text-xs mb-1">作者的核心论点 (Central Thesis):</label>
+                        <textarea rows="2" data-field="essay_argument" placeholder="提取本文的中心思想与作者希望读者认可的主张..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-white"></textarea>
+                        <div class="reference-box hidden mt-1.5 p-2.5 bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 rounded-xl space-y-1">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="font-bold text-[11px] text-emerald-700">参考论点：</span>
+                                <button type="button" class="play-speech-btn text-emerald-700 hover:text-emerald-900 bg-emerald-100 hover:bg-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold" data-text="${escapeHtml(argument)}">
+                                    <i class="fas fa-volume-up"></i> 播音
+                                </button>
+                            </div>
+                            <p class="font-thai text-slate-800 leading-relaxed">${argument}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3 bg-slate-50/60 p-5 rounded-2xl border border-slate-100">
+                    <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <i class="fas fa-eye text-indigo-500"></i> 作者视角与立论立场 (Author's Perspective)
+                    </h4>
+                    <div>
+                        <label class="font-semibold text-slate-600 block text-xs mb-1">作者观察现实的角度与批判立场 (Perspective):</label>
+                        <textarea rows="2" data-field="essay_perspective" placeholder="分析作者如何看待当下社会现象或人际变迁..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-white"></textarea>
+                        <div class="reference-box hidden mt-1.5 p-2.5 bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 rounded-xl space-y-1">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="font-bold text-[11px] text-emerald-700">参考立场：</span>
+                                <button type="button" class="play-speech-btn text-emerald-700 hover:text-emerald-900 bg-emerald-100 hover:bg-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold" data-text="${escapeHtml(perspective)}">
+                                    <i class="fas fa-volume-up"></i> 播音
+                                </button>
+                            </div>
+                            <p class="font-thai text-slate-800 leading-relaxed">${perspective}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-slate-50/60 p-5 rounded-2xl border border-slate-100 space-y-2">
+                        <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                            <i class="fas fa-feather text-emerald-500"></i> 文风与语调风格 (Tone & Style)
+                        </h4>
+                        <input type="text" data-field="essay_tone_style" placeholder="如：温和而有说服力、反思性叙事..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-white">
+                        <div class="reference-box hidden p-2 bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 rounded-lg font-thai">
+                            <strong>参考答案：</strong>${toneStyle}
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50/60 p-5 rounded-2xl border border-slate-100 space-y-2">
+                        <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                            <i class="fas fa-tags text-rose-500"></i> 关键母题/关键词 (Key Motifs)
+                        </h4>
+                        <input type="text" data-field="essay_motifs" placeholder="如：自然、时间、静谧 (用逗号分隔)..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-white">
+                        <div class="reference-box hidden p-2 bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 rounded-lg font-thai">
+                            <strong>参考母题：</strong>${motifs.join(', ')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 4. Drama Template
+        function renderDramaTemplate(container, content = {}) {
+            const conflict = content.conflict || {};
+            const keyConcept = content.key_concept || '';
+
+            container.innerHTML = `
+                <div class="space-y-3 bg-slate-50/60 p-5 rounded-2xl border border-slate-100">
+                    <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <i class="fas fa-masks-theater text-rose-500"></i> 戏剧核心矛盾与幕次冲突 (Dramatic Conflict)
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="font-semibold text-slate-600 block text-xs mb-1">戏剧冲突性质 (Conflict Type):</label>
+                            <input type="text" data-field="drama_conflict_type" placeholder="如：权力与真爱的对抗、单相思的执念..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-white">
+                            <div class="reference-box hidden mt-1.5 p-2 bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 rounded-lg font-thai">
+                                <strong>参考冲突：</strong>${conflict.type || ''}
+                            </div>
+                        </div>
+                        <div>
+                            <label class="font-semibold text-slate-600 block text-xs mb-1">结局与悲剧性升华 (Ending):</label>
+                            <input type="text" data-field="drama_conflict_ending" placeholder="如：坚守真实内心而遭受永恒诅咒..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-white">
+                            <div class="reference-box hidden mt-1.5 p-2 bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 rounded-lg font-thai">
+                                <strong>参考结局：</strong>${conflict.ending || ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-600 block text-xs mb-1">情节发展关键转折 (Plot Turning Points):</label>
+                        <textarea rows="2" data-field="drama_conflict_details" placeholder="描述戏剧中的重要对话交锋与高潮转变..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-white"></textarea>
+                        <div class="reference-box hidden mt-1.5 p-2.5 bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 rounded-xl space-y-1">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="font-bold text-[11px] text-emerald-700">参考情节：</span>
+                                <button type="button" class="play-speech-btn text-emerald-700 hover:text-emerald-900 bg-emerald-100 hover:bg-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold" data-text="${escapeHtml(conflict.details || '')}">
+                                    <i class="fas fa-volume-up"></i> 播音
+                                </button>
+                            </div>
+                            <p class="font-thai text-slate-800 leading-relaxed">${conflict.details || ''}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3 bg-slate-50/60 p-5 rounded-2xl border border-slate-100">
+                    <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <i class="fas fa-quote-left text-indigo-500"></i> 台词潜台词与立意 (Subtext & Key Theme)
+                    </h4>
+                    <div>
+                        <label class="font-semibold text-slate-600 block text-xs mb-1">剧作的核心哲学命题 (Dramatic Philosophy / Key Theme):</label>
+                        <textarea rows="2" data-field="drama_key_concept" placeholder="如：爱若是占有与强迫，终将带来刺骨之痛..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-white"></textarea>
+                        <div class="reference-box hidden mt-1.5 p-2.5 bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 rounded-xl space-y-1">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="font-bold text-[11px] text-emerald-700">参考立意：</span>
+                                <button type="button" class="play-speech-btn text-emerald-700 hover:text-emerald-900 bg-emerald-100 hover:bg-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold" data-text="${escapeHtml(keyConcept)}">
+                                    <i class="fas fa-volume-up"></i> 播音
+                                </button>
+                            </div>
+                            <p class="font-thai text-slate-800 leading-relaxed">${keyConcept}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Generic fallback template
+        function renderGenericTemplate(container, content = {}) {
+            container.innerHTML = `
+                <div class="space-y-3 bg-slate-50/60 p-5 rounded-2xl border border-slate-100">
+                    <h4 class="text-xs font-bold text-slate-700">作品要素综合分析</h4>
+                    <textarea rows="4" data-field="generic_analysis" placeholder="请输入对该作品的主题、结构、人物及语言特色的综合分析..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-white"></textarea>
+                </div>
+            `;
+        }
+
+        // ----------------------------------------------------
+        // UNIVERSAL SECTION 2: DISCUSSION QUESTIONS (WITH TTS)
+        // ----------------------------------------------------
+        function renderDiscussionSection(container, discSection) {
+            const card = document.createElement('div');
+            card.className = "bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-6";
+
+            let questionsHTML = '';
+            (discSection.topics || []).forEach((topic, tIdx) => {
+                questionsHTML += `
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2 border-l-3 border-indigo-600 pl-3">
+                            <h4 class="font-bold text-xs text-slate-800">${topic.topic_name || '研读讨论与批判性思考'}</h4>
+                        </div>
+                        <div class="space-y-4">
+                            ${(topic.questions || []).map((q, qIdx) => `
+                                <div class="bg-slate-50/70 p-4.5 rounded-2xl border border-slate-200/80 space-y-2.5">
+                                    <div class="flex items-start gap-2.5">
+                                        <span class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 text-[11px] font-extrabold flex items-center justify-center flex-shrink-0 mt-0.5">${q.q_number || q.q_no || (qIdx + 1)}</span>
+                                        <div class="flex items-start justify-between gap-2 flex-grow">
+                                            <p class="font-bold text-slate-800 text-xs leading-relaxed font-thai">${q.question}</p>
+                                            <button type="button" class="play-speech-btn text-slate-400 hover:text-indigo-600 bg-white hover:bg-indigo-50 border border-slate-200 px-2 py-1 rounded-lg flex-shrink-0 transition flex items-center gap-1 text-[11px] font-semibold" data-text="${escapeHtml(q.question)}" title="播放问题泰语发音">
+                                                <i class="fas fa-volume-up text-indigo-500"></i> 问
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <textarea rows="3" data-field="disc_q_${tIdx}_${q.q_number || q.q_no || qIdx}" placeholder="在此写下您的分析观点与文本依据..." class="w-full p-3 rounded-xl border border-slate-200 text-xs bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-hidden leading-relaxed"></textarea>
+                                    
+                                    <!-- Reference Answer Box (Visible in review mode) -->
+                                    <div class="reference-box hidden p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 leading-relaxed space-y-1.5">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-emerald-700 font-bold text-[11px] flex items-center gap-1">
+                                                <i class="fas fa-circle-check"></i> 标准参考答案解析:
+                                            </span>
+                                            <button type="button" class="play-speech-btn text-emerald-700 hover:text-emerald-900 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1 rounded-lg font-bold text-[11px] flex items-center gap-1.5 transition" data-text="${escapeHtml(q.answer || '')}" title="播放参考答案泰语发音">
+                                                <i class="fas fa-volume-up"></i> 答语播音
+                                            </button>
+                                        </div>
+                                        <p class="font-thai text-slate-800 leading-relaxed">${q.answer || '暂无官方参考答案'}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            card.innerHTML = `
+                <div class="flex justify-between items-center border-b border-slate-100 pb-4">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 font-bold text-sm flex items-center justify-center border border-purple-100">2</span>
+                        <div>
+                            <h3 class="text-base font-extrabold text-slate-900">文本研读与深度讨论题 (${discSection.section_title || '讨论与思考题'})</h3>
+                            <p class="text-xs text-slate-400">引导批判性反思 • 支持题目与答案点击语音朗读</p>
+                        </div>
+                    </div>
+                </div>
+                ${questionsHTML}
+            `;
+            container.appendChild(card);
+        }
+
+        // ----------------------------------------------------
+        // UNIVERSAL SECTION 3: 5W1H GRAMMAR & CLOSE READING (WITH TTS)
+        // ----------------------------------------------------
+        function render5W1HSection(container, langSection) {
+            const card = document.createElement('div');
+            card.className = "bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-6";
+
+            let itemsHTML = '';
+            (langSection.exercises || []).forEach((ex, idx) => {
+                itemsHTML += `
+                    <div class="bg-slate-50/70 p-5 rounded-2xl border border-slate-200/80 space-y-4">
+                        <!-- Sentence display with TTS -->
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-1.5 shadow-2xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-600">细读原句 (Target Thai Sentence):</span>
+                                <button type="button" class="play-speech-btn text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-lg font-bold text-xs flex items-center gap-1.5 transition" data-text="${escapeHtml(ex.sentence)}" title="播放整句泰语朗读">
+                                    <i class="fas fa-volume-up"></i> 原句播音
+                                </button>
+                            </div>
+                            <div class="text-base font-bold text-slate-900 font-thai leading-relaxed">
+                                “${ex.sentence}”
+                            </div>
+                        </div>
+
+                        <!-- 5W1H Grid Form -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+                            <!-- WHO -->
+                            <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5">
+                                <label class="font-bold text-slate-700 flex items-center gap-1 text-[11px]">
+                                    <span class="w-4 h-4 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[9px]">👤</span>
+                                    <span>Who (ใคร)</span>
+                                </label>
+                                <input type="text" data-field="5w1h_who_${idx}" placeholder="谁/主语" class="w-full p-2 rounded-lg border border-slate-200 text-xs">
+                                <div class="reference-box hidden p-1.5 bg-emerald-50 border border-emerald-200 text-[10px] text-emerald-800 rounded font-thai flex items-center justify-between gap-1">
+                                    <span class="truncate" title="${escapeHtml(ex.who || '')}"><strong>标:</strong> ${ex.who || ''}</span>
+                                    <button type="button" class="play-speech-btn text-emerald-600 hover:text-emerald-800 p-0.5 flex-shrink-0" data-text="${escapeHtml(ex.who || '')}" title="播放">
+                                        <i class="fas fa-volume-up text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- WHAT -->
+                            <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5">
+                                <label class="font-bold text-slate-700 flex items-center gap-1 text-[11px]">
+                                    <span class="w-4 h-4 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[9px]">⚡</span>
+                                    <span>What (ทำอะไร)</span>
+                                </label>
+                                <input type="text" data-field="5w1h_what_${idx}" placeholder="核心动作/谓语" class="w-full p-2 rounded-lg border border-slate-200 text-xs">
+                                <div class="reference-box hidden p-1.5 bg-emerald-50 border border-emerald-200 text-[10px] text-emerald-800 rounded font-thai flex items-center justify-between gap-1">
+                                    <span class="truncate" title="${escapeHtml(ex.what || '')}"><strong>标:</strong> ${ex.what || ''}</span>
+                                    <button type="button" class="play-speech-btn text-emerald-600 hover:text-emerald-800 p-0.5 flex-shrink-0" data-text="${escapeHtml(ex.what || '')}" title="播放">
+                                        <i class="fas fa-volume-up text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- WHERE -->
+                            <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5">
+                                <label class="font-bold text-slate-700 flex items-center gap-1 text-[11px]">
+                                    <span class="w-4 h-4 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[9px]">📍</span>
+                                    <span>Where (ที่ไหน)</span>
+                                </label>
+                                <input type="text" data-field="5w1h_where_${idx}" placeholder="地点/介词短语" class="w-full p-2 rounded-lg border border-slate-200 text-xs">
+                                <div class="reference-box hidden p-1.5 bg-emerald-50 border border-emerald-200 text-[10px] text-emerald-800 rounded font-thai flex items-center justify-between gap-1">
+                                    <span class="truncate" title="${escapeHtml(ex.where || '')}"><strong>标:</strong> ${ex.where || ''}</span>
+                                    <button type="button" class="play-speech-btn text-emerald-600 hover:text-emerald-800 p-0.5 flex-shrink-0" data-text="${escapeHtml(ex.where || '')}" title="播放">
+                                        <i class="fas fa-volume-up text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- WHEN -->
+                            <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5">
+                                <label class="font-bold text-slate-700 flex items-center gap-1 text-[11px]">
+                                    <span class="w-4 h-4 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[9px]">⏰</span>
+                                    <span>When (เมื่อไหร่)</span>
+                                </label>
+                                <input type="text" data-field="5w1h_when_${idx}" placeholder="时间状语" class="w-full p-2 rounded-lg border border-slate-200 text-xs">
+                                <div class="reference-box hidden p-1.5 bg-emerald-50 border border-emerald-200 text-[10px] text-emerald-800 rounded font-thai flex items-center justify-between gap-1">
+                                    <span class="truncate" title="${escapeHtml(ex.when || '')}"><strong>标:</strong> ${ex.when || ''}</span>
+                                    <button type="button" class="play-speech-btn text-emerald-600 hover:text-emerald-800 p-0.5 flex-shrink-0" data-text="${escapeHtml(ex.when || '')}" title="播放">
+                                        <i class="fas fa-volume-up text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- HOW / WHY -->
+                            <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5">
+                                <label class="font-bold text-slate-700 flex items-center gap-1 text-[11px]">
+                                    <span class="w-4 h-4 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[9px]">🎯</span>
+                                    <span>Why/How (อย่างไร)</span>
+                                </label>
+                                <input type="text" data-field="5w1h_how_${idx}" placeholder="方式/目的/原因" class="w-full p-2 rounded-lg border border-slate-200 text-xs">
+                                <div class="reference-box hidden p-1.5 bg-emerald-50 border border-emerald-200 text-[10px] text-emerald-800 rounded font-thai flex items-center justify-between gap-1">
+                                    <span class="truncate" title="${escapeHtml(ex.how || '')}"><strong>标:</strong> ${ex.how || ''}</span>
+                                    <button type="button" class="play-speech-btn text-emerald-600 hover:text-emerald-800 p-0.5 flex-shrink-0" data-text="${escapeHtml(ex.how || '')}" title="播放">
+                                        <i class="fas fa-volume-up text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            card.innerHTML = `
+                <div class="flex justify-between items-center border-b border-slate-100 pb-4">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm flex items-center justify-center border border-emerald-100">3</span>
+                        <div>
+                            <h3 class="text-base font-extrabold text-slate-900">语法与文本细读填空 (${langSection.section_title || '5W1H 细读'})</h3>
+                            <p class="text-xs text-slate-400">句子层级拆解 • 支持点击原句及各成分发音朗读</p>
+                        </div>
+                    </div>
+                </div>
+                ${itemsHTML}
+            `;
+            container.appendChild(card);
+        }
+
+        // ----------------------------------------------------
+        // WORKSPACE MODE (PRACTICE VS REVIEW)
+        // ----------------------------------------------------
+        function setWorkspaceMode(mode) {
+            state.workspaceMode = mode;
+            const practiceBtn = document.getElementById('modePracticeBtn');
+            const reviewBtn = document.getElementById('modeReviewBtn');
+            const refBoxes = document.querySelectorAll('.reference-box');
+
+            if (mode === 'practice') {
+                practiceBtn.className = "px-3 py-1.5 rounded-lg transition font-bold bg-white text-indigo-700 shadow-xs flex items-center gap-1.5";
+                reviewBtn.className = "px-3 py-1.5 rounded-lg transition font-medium text-slate-600 hover:text-slate-900 flex items-center gap-1.5";
+                refBoxes.forEach(el => el.classList.add('hidden'));
+                document.body.classList.remove('mode-review');
+            } else {
+                reviewBtn.className = "px-3 py-1.5 rounded-lg transition font-bold bg-white text-emerald-700 shadow-xs flex items-center gap-1.5";
+                practiceBtn.className = "px-3 py-1.5 rounded-lg transition font-medium text-slate-600 hover:text-slate-900 flex items-center gap-1.5";
+                refBoxes.forEach(el => el.classList.remove('hidden'));
+                document.body.classList.add('mode-review');
+            }
+        }
+
+        function toggleHints() {
+            state.showHints = !state.showHints;
+            const btn = document.getElementById('toggleHintsBtn');
+            const refBoxes = document.querySelectorAll('.reference-box');
+            if (state.showHints) {
+                btn.classList.add('bg-amber-50', 'text-amber-700', 'border-amber-200');
+                refBoxes.forEach(el => el.classList.remove('hidden'));
+            } else {
+                btn.classList.remove('bg-amber-50', 'text-amber-700', 'border-amber-200');
+                if (state.workspaceMode !== 'review') {
+                    refBoxes.forEach(el => el.classList.add('hidden'));
+                }
+            }
+        }
+
+        // Gather answers from DOM inputs
+        function collectAnswersFromDOM() {
+            const inputs = document.querySelectorAll('[data-field]');
+            const answers = {};
+            inputs.forEach(input => {
+                const key = input.getAttribute('data-field');
+                answers[key] = input.value.trim();
+            });
+            return answers;
+        }
+
+        // Restore answers to DOM inputs
+        function restoreAnswersToDOM() {
+            const inputs = document.querySelectorAll('[data-field]');
+            inputs.forEach(input => {
+                const key = input.getAttribute('data-field');
+                if (currentAnswers[key] !== undefined) {
+                    input.value = currentAnswers[key];
+                }
+            });
+        }
+
+        // Save local draft
+        function saveDraftLocally() {
+            if (!state.activeWork) return;
+            const answers = collectAnswersFromDOM();
+            currentAnswers = answers;
+            const draftKey = `draft_${state.currentUser}_${state.activeWork.exercise_id}`;
+            localStorage.setItem(draftKey, JSON.stringify(answers));
+            alert("草稿已成功保存至本地浏览器！随时可以回来继续作答。");
+        }
+
+        // ----------------------------------------------------
+        // SUBMISSION & SCORING ENGINE
+        // ----------------------------------------------------
+        async function submitAnswers() {
+            if (!state.activeWork) return;
+
+            const answers = collectAnswersFromDOM();
+            currentAnswers = answers;
+
+            // Intelligent rubric scoring
+            const { score, details } = calculateExerciseScore(answers, state.activeWork);
+
+            try {
+                const payload = {
+                    user_id: state.currentUser,
+                    exercise_id: state.activeWork.exercise_id,
+                    answers: answers,
+                    score: score
+                };
+
+                const res = await fetch('/api/exercises/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) throw new Error("Submit API returned error");
+                const result = await res.json();
+
+                // Update UI state
+                document.getElementById('wsStatusBadge').textContent = `已提交 • ${score}分`;
+                document.getElementById('wsStatusBadge').className = 'text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200';
+
+                // Display score modal
+                showScoreModal(score, details);
+
+                // Refresh user stats
+                loadUserStats();
+
+            } catch (err) {
+                console.error("Failed to submit answers:", err);
+                alert("提交失败，已自动保存草稿至本地。");
+            }
+        }
+
+        // Intelligent scoring calculation
+        function calculateExerciseScore(answers, work) {
+            let totalWeights = 0;
+            let earnedWeights = 0;
+            const details = [];
+
+            const keys = Object.keys(answers);
+            const filledKeys = keys.filter(k => answers[k] && answers[k].length > 0);
+
+            // 1. Elements completeness
+            const elemKeys = keys.filter(k => !k.startsWith('disc_q_') && !k.startsWith('5w1h_'));
+            if (elemKeys.length > 0) {
+                const elemFilled = elemKeys.filter(k => answers[k] && answers[k].length >= 3);
+                const elemRatio = elemFilled.length / elemKeys.length;
+                const elemScore = Math.round(elemRatio * 100);
+                earnedWeights += elemScore * 0.35;
+                totalWeights += 35;
+                details.push({
+                    name: '文学要素分析填答度',
+                    score: elemScore,
+                    desc: `共 ${elemKeys.length} 项分析指标，有效填答 ${elemFilled.length} 项`
+                });
+            }
+
+            // 2. Discussion Questions depth
+            const discKeys = keys.filter(k => k.startsWith('disc_q_'));
+            if (discKeys.length > 0) {
+                let discEarned = 0;
+                discKeys.forEach(k => {
+                    const ans = answers[k] || '';
+                    if (ans.length >= 25) discEarned += 100;
+                    else if (ans.length >= 10) discEarned += 75;
+                    else if (ans.length > 0) discEarned += 50;
+                });
+                const discScore = Math.round(discEarned / discKeys.length);
+                earnedWeights += discScore * 0.35;
+                totalWeights += 35;
+                details.push({
+                    name: '研读讨论深度与论证',
+                    score: discScore,
+                    desc: `结合文本深度与字数分析，阐述充分度达 ${discScore}%`
+                });
+            }
+
+            // 3. 5W1H Close reading accuracy
+            const wKeys = keys.filter(k => k.startsWith('5w1h_'));
+            if (wKeys.length > 0) {
+                const wFilled = wKeys.filter(k => answers[k] && answers[k].length > 0);
+                const wScore = Math.round((wFilled.length / wKeys.length) * 100);
+                earnedWeights += wScore * 0.30;
+                totalWeights += 30;
+                details.push({
+                    name: '5W1H 语法成分还原准确率',
+                    score: wScore,
+                    desc: `长难句主干拆解完整度 ${wFilled.length} / ${wKeys.length}`
+                });
+            }
+
+            const finalScore = totalWeights > 0 ? Math.round((earnedWeights / totalWeights) * 100) : 85;
+            return { score: finalScore, details };
+        }
+
+        function showScoreModal(score, details) {
+            document.getElementById('modalScoreDisplay').textContent = `${score}%`;
+            
+            let comment = "评测结果已记录！建议开启参考答案对照模式进行逐项对比订正。";
+            if (score >= 90) comment = "卓越！文学要素解构精准，论据充分，5W1H把握极为准确。";
+            else if (score >= 75) comment = "良好！主要冲突与人物把握到位，可在讨论题中进一步补充细节。";
+            else if (score >= 60) comment = "及格。建议对照标准答案核对语法细读与未填写的要素。";
+            document.getElementById('modalScoreComment').textContent = comment;
+
+            const breakdownBox = document.getElementById('modalScoreBreakdown');
+            breakdownBox.innerHTML = details.map(d => `
+                <div class="bg-white p-3 rounded-xl border border-slate-100 flex justify-between items-center">
+                    <div>
+                        <span class="font-bold text-slate-700">${d.name}</span>
+                        <p class="text-[10px] text-slate-400">${d.desc}</p>
+                    </div>
+                    <span class="font-black text-sm text-indigo-600">${d.score}分</span>
+                </div>
+            `).join('');
+
+            document.getElementById('scoreFeedbackModal').classList.remove('hidden');
+        }
+
+        function closeScoreModal() {
+            document.getElementById('scoreFeedbackModal').classList.add('hidden');
+        }
+
+        // ----------------------------------------------------
+        // VIEW 3: USER PROGRESS & REVIEW
+        // ----------------------------------------------------
+        async function loadUserProgress() {
+            const list = document.getElementById('userProgressList');
+            const empty = document.getElementById('emptyProgressState');
+            list.innerHTML = '';
+
+            try {
+                const res = await fetch(`/api/progress/${state.currentUser}`);
+                if (!res.ok) throw new Error("Failed to load progress");
+                const records = await res.json();
+
+                if (records.length === 0) {
+                    empty.classList.remove('hidden');
+                    return;
+                } else {
+                    empty.classList.add('hidden');
+                }
+
+                records.forEach(rec => {
+                    const genreInfo = genreConfig[rec.genre] || genreConfig.fiction;
+                    const card = document.createElement('div');
+                    card.className = "bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition hover:border-slate-300";
+                    
+                    const scoreColor = (rec.score >= 85) ? 'text-emerald-600 bg-emerald-50 border-emerald-200' :
+                                      (rec.score >= 60) ? 'text-indigo-600 bg-indigo-50 border-indigo-200' :
+                                      'text-rose-600 bg-rose-50 border-rose-200';
+
+                    card.innerHTML = `
+                        <div class="space-y-1.5">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${genreInfo.badgeClass}">
+                                    ${genreInfo.label}
+                                </span>
+                                <span class="text-xs text-slate-400">${rec.updated_at || ''}</span>
+                            </div>
+                            <h3 class="text-base font-extrabold text-slate-900 font-thai">${rec.exercise_title}</h3>
+                            <p class="text-xs text-slate-500">${rec.exercise_description || ''}</p>
+                            
+                            ${rec.tutor_feedback ? `
+                                <div class="bg-indigo-50/70 border border-indigo-100 p-2.5 rounded-xl text-xs text-indigo-900 mt-2 space-y-1">
+                                    <div class="font-bold flex items-center gap-1 text-[11px] text-indigo-700">
+                                        <i class="fas fa-chalkboard-user"></i> 辅导员批语:
+                                    </div>
+                                    <p>${rec.tutor_feedback}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <div class="flex items-center gap-4 self-end md:self-auto flex-shrink-0">
+                            <div class="text-center px-3 py-1.5 rounded-xl border ${scoreColor}">
+                                <div class="text-lg font-black">${rec.score || 0}%</div>
+                                <div class="text-[9px] font-bold">综合成绩</div>
+                            </div>
+                            <div class="flex flex-col gap-1.5">
+                                <button onclick="loadExerciseToWorkspace('${rec.exercise_id}')" class="text-xs font-bold px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 shadow-xs flex items-center gap-1">
+                                    <i class="fas fa-rotate-right"></i> 查看/重练
+                                </button>
+                                <button onclick="deleteProgressRecord(${rec.id})" class="text-[11px] font-semibold text-rose-500 hover:text-rose-700 py-1 text-center">
+                                    清除本条记录
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    list.appendChild(card);
+                });
+
+            } catch (err) {
+                console.error("Error loading progress:", err);
+            }
+        }
+
+        async function deleteProgressRecord(id) {
+            if (!confirm("确定要删除这条练习记录吗？此操作不可逆。")) return;
+            try {
+                const res = await fetch(`/api/progress/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    loadUserProgress();
+                    loadUserStats();
+                }
+            } catch (err) {
+                console.error("Failed to delete progress", err);
+            }
+        }
+
+        // ----------------------------------------------------
+        // VIEW 4: TUTOR ADMIN VIEW & MODAL
+        // ----------------------------------------------------
+        let activeTutorRecord = null;
+
+        async function loadTutorAllProgress() {
+            const tbody = document.getElementById('tutorSubmissionsTbody');
+            const empty = document.getElementById('emptyTutorState');
+            tbody.innerHTML = '';
+
+            try {
+                const res = await fetch('/api/progress');
+                if (!res.ok) throw new Error("Failed to fetch all progress");
+                const records = await res.json();
+
+                if (records.length === 0) {
+                    empty.classList.remove('hidden');
+                    return;
+                } else {
+                    empty.classList.add('hidden');
+                }
+
+                records.forEach(rec => {
+                    const genreInfo = genreConfig[rec.genre] || genreConfig.fiction;
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 transition";
+                    tr.innerHTML = `
+                        <td class="px-5 py-4 font-bold text-slate-800 flex items-center gap-1.5">
+                            <i class="fas fa-user-graduate text-slate-400"></i> ${rec.user_id}
+                        </td>
+                        <td class="px-5 py-4 font-thai font-semibold text-slate-900">${rec.exercise_title}</td>
+                        <td class="px-5 py-4">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${genreInfo.badgeClass}">
+                                ${genreInfo.label}
+                            </span>
+                        </td>
+                        <td class="px-5 py-4 text-slate-500 font-mono text-[11px]">${rec.updated_at || ''}</td>
+                        <td class="px-5 py-4 font-black text-sm ${rec.score >= 80 ? 'text-emerald-600' : 'text-slate-800'}">
+                            ${rec.score || 0}分
+                        </td>
+                        <td class="px-5 py-4 text-slate-500">
+                            ${rec.tutor_feedback ? `<span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[10px] font-bold">已评注</span>` : `<span class="text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-[10px] font-bold">待批阅</span>`}
+                        </td>
+                        <td class="px-5 py-4 text-right">
+                            <button onclick="openTutorReviewModal(${JSON.stringify(rec).replace(/"/g, '&quot;')})" class="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold transition text-xs">
+                                批阅/调分
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+            } catch (err) {
+                console.error("Error loading tutor submissions:", err);
+            }
+        }
+
+        function openTutorReviewModal(rec) {
+            activeTutorRecord = rec;
+            document.getElementById('tutorModalTitle').textContent = `批阅 ${rec.user_id} 作答: ${rec.exercise_title}`;
+            document.getElementById('tutorModalSubtitle').textContent = `提交时间: ${rec.updated_at}`;
+            document.getElementById('tutorScoreInput').value = rec.score || 0;
+            document.getElementById('tutorFeedbackTextarea').value = rec.tutor_feedback || '';
+
+            const preview = document.getElementById('tutorAnswersPreview');
+            preview.innerHTML = '';
+
+            const ans = rec.answers || {};
+            const keys = Object.keys(ans);
+            if (keys.length === 0) {
+                preview.innerHTML = '<p class="text-slate-400">该提交记录无详细答案数据。</p>';
+            } else {
+                keys.forEach(k => {
+                    const row = document.createElement('div');
+                    row.className = "bg-white p-2.5 rounded-lg border border-slate-100";
+                    row.innerHTML = `
+                        <div class="font-bold text-slate-500 text-[10px] uppercase font-mono">${k}</div>
+                        <div class="text-slate-800 font-thai text-xs mt-0.5 whitespace-pre-wrap">${escapeHtml(ans[k])}</div>
+                    `;
+                    preview.appendChild(row);
+                });
+            }
+
+            document.getElementById('tutorReviewModal').classList.remove('hidden');
+        }
+
+        function closeTutorModal() {
+            document.getElementById('tutorReviewModal').classList.add('hidden');
+            activeTutorRecord = null;
+        }
+
+        async function saveTutorFeedback() {
+            if (!activeTutorRecord) return;
+            const newScore = parseFloat(document.getElementById('tutorScoreInput').value) || 0;
+            const newFeedback = document.getElementById('tutorFeedbackTextarea').value.trim();
+
+            try {
+                const res = await fetch(`/api/progress/${activeTutorRecord.id}/feedback`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ score: newScore, tutor_feedback: newFeedback })
+                });
+                if (!res.ok) throw new Error("Failed to save feedback");
+                alert("辅导员批语与成绩调整已保存！");
+                closeTutorModal();
+                loadTutorAllProgress();
+            } catch (err) {
+                console.error("Failed to save feedback", err);
+                alert("保存失败，请重试。");
+            }
+        }
+
+        // ----------------------------------------------------
+        // CRUD WORKS MANAGEMENT MODAL
+        // ----------------------------------------------------
+        function openManageWorksModal() {
+            renderManageWorksTable();
+            document.getElementById('workEditFormBlock').classList.add('hidden');
+            document.getElementById('manageWorksModal').classList.remove('hidden');
+        }
+
+        function closeManageWorksModal() {
+            document.getElementById('manageWorksModal').classList.add('hidden');
+        }
+
+        function renderManageWorksTable() {
+            const tbody = document.getElementById('manageWorksTbody');
+            tbody.innerHTML = '';
+
+            state.allWorks.forEach(w => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50";
+                tr.innerHTML = `
+                    <td class="px-4 py-2 font-mono text-[11px] text-slate-600">${w.exercise_id}</td>
+                    <td class="px-4 py-2 font-bold uppercase text-[11px]">${w.genre}</td>
+                    <td class="px-4 py-2 font-thai font-semibold text-slate-900">${w.title}</td>
+                    <td class="px-4 py-2 text-slate-500">${w.author || ''}</td>
+                    <td class="px-4 py-2 text-right space-x-1.5">
+                        <button onclick="editWork('${w.exercise_id}')" class="text-indigo-600 hover:text-indigo-800 font-bold">编辑</button>
+                        <button onclick="deleteWork('${w.exercise_id}')" class="text-rose-500 hover:text-rose-700 font-bold">删除</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openAddWorkForm() {
+            state.editingWorkId = null;
+            document.getElementById('workFormTitle').textContent = '新增文学作品与练习';
+            document.getElementById('formExerciseId').value = `lit_custom_${Date.now().toString().slice(-4)}`;
+            document.getElementById('formExerciseId').disabled = false;
+            document.getElementById('formGenre').value = 'fiction';
+            document.getElementById('formTitle').value = '';
+            document.getElementById('formAuthor').value = '';
+            document.getElementById('formDescription').value = '';
+            document.getElementById('formContentJson').value = JSON.stringify({
+                sections: [
+                    {
+                        section_number: 1,
+                        section_title: "文学要素分析",
+                        content: {}
+                    },
+                    {
+                        section_number: 2,
+                        section_title: "研读思考题",
+                        topics: []
+                    },
+                    {
+                        section_number: 3,
+                        section_title: "5W1H细读",
+                        exercises: []
+                    }
+                ]
+            }, null, 2);
+            document.getElementById('workEditFormBlock').classList.remove('hidden');
+        }
+
+        function editWork(exerciseId) {
+            const work = state.allWorks.find(w => w.exercise_id === exerciseId);
+            if (!work) return;
+
+            state.editingWorkId = exerciseId;
+            document.getElementById('workFormTitle').textContent = `编辑作品: ${work.title}`;
+            document.getElementById('formExerciseId').value = work.exercise_id;
+            document.getElementById('formExerciseId').disabled = true;
+            document.getElementById('formGenre').value = work.genre;
+            document.getElementById('formTitle').value = work.title;
+            document.getElementById('formAuthor').value = work.author || '';
+            document.getElementById('formDescription').value = work.description || '';
+            document.getElementById('formContentJson').value = JSON.stringify(work.content || {}, null, 2);
+
+            document.getElementById('workEditFormBlock').classList.remove('hidden');
+        }
+
+        function cancelWorkEdit() {
+            document.getElementById('workEditFormBlock').classList.add('hidden');
+            state.editingWorkId = null;
+        }
+
+        async function saveWorkRecord() {
+            const exercise_id = document.getElementById('formExerciseId').value.trim();
+            const genre = document.getElementById('formGenre').value;
+            const title = document.getElementById('formTitle').value.trim();
+            const author = document.getElementById('formAuthor').value.trim();
+            const description = document.getElementById('formDescription').value.trim();
+            const rawJson = document.getElementById('formContentJson').value.trim();
+
+            if (!exercise_id || !title) {
+                alert("请填写 Exercise ID 和作品标题！");
+                return;
+            }
+
+            let parsedContent = {};
+            try {
+                parsedContent = JSON.parse(rawJson);
+            } catch (e) {
+                alert("JSON 内容格式错误，请检查语法！");
+                return;
+            }
+
+            try {
+                if (state.editingWorkId) {
+                    // Update
+                    const res = await fetch(`/api/exercises/${state.editingWorkId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ genre, title, author, description, content_json: rawJson })
+                    });
+                    if (!res.ok) throw new Error("Update failed");
+                } else {
+                    // Create
+                    const res = await fetch('/api/exercises', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ exercise_id, genre, title, author, description, content_json: rawJson })
+                    });
+                    if (!res.ok) throw new Error("Create failed");
+                }
+
+                alert("作品保存成功！");
+                cancelWorkEdit();
+                await fetchAllWorks();
+                renderManageWorksTable();
+            } catch (err) {
+                console.error("Save work error:", err);
+                alert("保存失败，请检查数据。");
+            }
+        }
+
+        async function deleteWork(exerciseId) {
+            if (!confirm(`确定要彻底删除作品 '${exerciseId}' 及其全部练习提交记录吗？`)) return;
+            try {
+                const res = await fetch(`/api/exercises/${exerciseId}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error("Delete failed");
+                alert("作品已删除。");
+                await fetchAllWorks();
+                renderManageWorksTable();
+            } catch (err) {
+                console.error("Delete work error:", err);
+            }
+        }
+    </script>
+</body>
+</html>

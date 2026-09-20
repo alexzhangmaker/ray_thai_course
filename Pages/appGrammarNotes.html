@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语语法知识点复习 App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Serif+Thai:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #022c22 0%, #064e3b 50%, #0f766e 100%);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: rgba(0, 0, 0, 0.4);
+            --primary: #2dd4bf;
+            --primary-glow: rgba(45, 212, 191, 0.3);
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --correct: #10b981;
+            --wrong: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Serif Thai', 'Noto Sans SC', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+        }
+
+        #app {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Glass Panel */
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 24px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px var(--glass-shadow);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .streak-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .stat-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            padding: 8px 16px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .stat-badge.fire i { color: #f97316; }
+        .stat-badge.trophy i { color: #eab308; }
+
+        /* Main selector view */
+        .main-view {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 600px) {
+            .main-view {
+                grid-template-columns: 260px 1fr;
+            }
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .sidebar-btn {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            padding: 14px 18px;
+            border-radius: 16px;
+            text-align: left;
+            cursor: pointer;
+            color: var(--text-main);
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .sidebar-btn:hover {
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        .sidebar-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #042f2e;
+        }
+
+        .sidebar-btn.active .meta {
+            color: rgba(4, 47, 46, 0.7);
+        }
+
+        .sidebar-btn .title {
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .sidebar-btn .meta {
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        .grammar-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-content: start;
+        }
+
+        .grammar-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+        }
+
+        .grammar-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .grammar-card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+
+        .grammar-card-summary {
+            font-size: 14px;
+            color: var(--text-sub);
+            line-height: 1.5;
+        }
+
+        .badge-due {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        .badge-done {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--correct);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        /* Review flow view */
+        .review-view {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .back-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-sub);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            font-size: 15px;
+            width: fit-content;
+        }
+
+        .back-btn:hover {
+            color: var(--primary);
+        }
+
+        /* Tab Switcher */
+        .tab-nav {
+            display: flex;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            padding: 4px;
+            border-radius: 14px;
+            width: 100%;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-sub);
+            padding: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--primary);
+        }
+
+        /* Review Card Display */
+        .study-pane {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .rule-block {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+        }
+
+        .rule-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .formula-box {
+            background: rgba(45, 212, 191, 0.05);
+            border-left: 4px solid var(--primary);
+            padding: 14px;
+            border-radius: 0 16px 16px 0;
+            font-family: 'Outfit', 'Noto Sans Thai', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin: 10px 0;
+        }
+
+        .constraint-list {
+            margin-top: 10px;
+            padding-left: 20px;
+            color: var(--text-sub);
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .example-card {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+        }
+
+        .example-card.correct { border-left: 4px solid var(--correct); }
+        .example-card.wrong { border-left: 4px solid var(--wrong); }
+
+        .example-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .example-translation {
+            font-size: 14px;
+            color: var(--text-sub);
+        }
+
+        .badge-ex-status {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .badge-ex-status.correct { background: rgba(16, 185, 129, 0.1); color: var(--correct); }
+        .badge-ex-status.wrong { background: rgba(239, 68, 68, 0.1); color: var(--wrong); }
+
+        /* Flashcard CSS */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        
+        .flashcard-wrapper {
+            width: 100%;
+            max-width: 450px;
+            height: 250px;
+            cursor: pointer;
+            margin: 20px auto;
+        }
+
+        .flashcard-inner {
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .flashcard-wrapper.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .card-front {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-main);
+        }
+
+        .card-back {
+            background: rgba(45, 212, 191, 0.08);
+            border-color: var(--primary);
+            color: var(--text-main);
+        }
+
+        /* Ratings */
+        .rating-row {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            max-width: 450px;
+            margin: 0 auto;
+        }
+
+        .rating-btn {
+            flex: 1;
+            border: none;
+            padding: 14px;
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .rating-btn.forgot { background: rgba(239, 68, 68, 0.15); color: var(--wrong); border: 1px solid rgba(239,68,68,0.3); }
+        .rating-btn.vague { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+        .rating-btn.remember { background: rgba(16, 185, 129, 0.15); color: var(--correct); border: 1px solid rgba(16,185,129,0.3); }
+
+        .rating-btn.forgot:hover { background: var(--wrong); color: white; }
+        .rating-btn.vague:hover { background: var(--warning); color: white; }
+        .rating-btn.remember:hover { background: var(--correct); color: white; }
+
+        /* Hidden helpers */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="glass-panel">
+            <div class="streak-container">
+                <div class="stat-badge fire">
+                    <i class="ph-fill ph-fire"></i>
+                    <span id="streakDays">0</span> 天连击
+                </div>
+                <div class="stat-badge trophy">
+                    <i class="ph-fill ph-trophy"></i>
+                    今日 Streak: <span id="streaksToday">0</span>
+                </div>
+                <div class="stat-badge">
+                    <i class="ph ph-check-circle"></i>
+                    当前 Session 进度: <span id="streakProgress">0/10</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- View 1: Selector -->
+        <div id="viewSelection" class="glass-panel main-view">
+            <!-- Sidebar for lessons -->
+            <div class="sidebar" id="lessonContainer">
+                <!-- Populated dynamically -->
+            </div>
+
+            <!-- List of grammar notes -->
+            <div class="grammar-list" id="grammarContainer">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+
+        <!-- View 2: Review flow -->
+        <div id="viewReview" class="glass-panel review-view hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <button onclick="goBackToSelection()" class="back-btn">
+                    <i class="ph ph-arrow-left"></i> 返回目录
+                </button>
+                <span id="reviewGrammarTitle" style="font-weight:700; font-size:18px; color:var(--primary);">被动句 ถูก</span>
+            </div>
+
+            <!-- Tab Nav -->
+            <div class="tab-nav">
+                <button onclick="switchTab('study')" id="tabBtnStudy" class="tab-btn active">1. 规则研读</button>
+                <button onclick="switchTab('flashcard')" id="tabBtnFlashcard" class="tab-btn">2. 闪卡测试</button>
+            </div>
+
+            <!-- Panel 1: Rule Study -->
+            <div id="paneStudy" class="study-pane">
+                <div class="rule-block" id="rulesBlockContent">
+                    <!-- Rule formulas loaded here -->
+                </div>
+
+                <div class="rule-block">
+                    <div class="rule-title"><i class="ph ph-clipboard-text"></i> 例句对比</div>
+                    <div id="examplesContainer">
+                        <!-- Example list -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel 2: Flashcard test -->
+            <div id="paneFlashcard" class="study-pane hidden" style="text-align:center;">
+                <p style="color:var(--text-sub); font-size:14px;"><i class="ph ph-hand-tap"></i> 点击闪卡翻转卡片，并在卡片后为您的记忆水平打分</p>
+                
+                <div class="flashcard-wrapper perspective-1000" onclick="this.classList.toggle('flipped')" id="flashcardEl">
+                    <div class="flashcard-inner transform-style-3d">
+                        <!-- Front -->
+                        <div class="card-front backface-hidden">
+                            <h3 id="fcFront" style="font-size:24px; color:var(--primary); font-weight:700;">ถูก + V 是什么句式？</h3>
+                            <p id="fcFrontSub" style="margin-top:10px; color:var(--text-sub);">เขาถูกตี</p>
+                        </div>
+                        <!-- Back -->
+                        <div class="card-back backface-hidden rotate-y-180">
+                            <h3 id="fcBack" style="font-size:20px; font-weight:700;">被动句 (他被打了)</h3>
+                            <p id="fcBackDetails" style="margin-top:15px; font-size:14px; color:var(--text-sub); line-height:1.6;"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rating-row">
+                    <button onclick="submitFlashcardRating(0)" class="rating-btn forgot">忘了 (0 XP)</button>
+                    <button onclick="submitFlashcardRating(5)" class="rating-btn vague">模糊 (+5 XP)</button>
+                    <button onclick="submitFlashcardRating(10)" class="rating-btn remember">记得 (+10 XP)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const userId = "default_user";
+        let lessons = [];
+        let grammarList = [];
+        let dueReviews = [];
+        let activeLessonId = null;
+        let currentGrammarItem = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initApp();
+        });
+
+        async function initApp() {
+            await loadStreakStats();
+            await fetchLessonsAndGrammar();
+            await fetchDueReviews();
+            renderLessons();
+        }
+
+        async function loadStreakStats() {
+            try {
+                const res = await fetch(`/api/reviews/streak?userId=${userId}&sessionType=lesson_review`);
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('streakDays').textContent = data.currentStreakDays;
+                    document.getElementById('streaksToday').textContent = data.completedStreaksToday;
+                    document.getElementById('streakProgress').textContent = data.sessionProgress;
+                }
+            } catch (err) {
+                console.error("Streak stats failed", err);
+            }
+        }
+
+        async function fetchDueReviews() {
+            try {
+                const res = await fetch(`/api/reviews/due?userId=${userId}&itemType=grammar`);
+                if (res.ok) dueReviews = await res.json();
+            } catch (e) {
+                console.error("Failed to load due items", e);
+            }
+        }
+
+        async function fetchLessonsAndGrammar() {
+            try {
+                const resLessons = await fetch('/api/lessons');
+                if (resLessons.ok) lessons = await resLessons.json();
+
+                const resGrammar = await fetch('/api/grammar');
+                if (resGrammar.ok) grammarList = await resGrammar.json();
+
+                if (lessons.length > 0) activeLessonId = lessons[0].id;
+            } catch (e) {
+                console.error("Error loading structural lists", e);
+            }
+        }
+
+        function renderLessons() {
+            const container = document.getElementById('lessonContainer');
+            container.innerHTML = '';
+
+            lessons.forEach(lesson => {
+                const lessonGrammars = grammarList.filter(g => g.lessonId === lesson.id || (lesson.content && lesson.content.grammarNoteIds.includes(g.id)));
+                const dueCount = lessonGrammars.filter(g => dueReviews.some(dr => dr.itemId === g.id)).length;
+                
+                const isActive = lesson.id === activeLessonId;
+                const activeClass = isActive ? 'active' : '';
+
+                const button = document.createElement('button');
+                button.className = `sidebar-btn ${activeClass}`;
+                button.onclick = () => selectLesson(lesson.id);
+                button.innerHTML = `
+                    <div class="title">${lesson.title}</div>
+                    <div class="meta">${lessonGrammars.length} 个知识点 ${dueCount > 0 ? `<span class="badge-due" style="margin-left:4px;">${dueCount}个待复习</span>` : ''}</div>
+                `;
+                container.appendChild(button);
+            });
+
+            renderGrammarList();
+        }
+
+        function selectLesson(lessonId) {
+            activeLessonId = lessonId;
+            renderLessons();
+        }
+
+        function renderGrammarList() {
+            const container = document.getElementById('grammarContainer');
+            container.innerHTML = '';
+
+            const lesson = lessons.find(l => l.id === activeLessonId);
+            if (!lesson) return;
+
+            const lessonGrammars = grammarList.filter(g => g.lessonId === activeLessonId || (lesson.content && lesson.content.grammarNoteIds.includes(g.id)));
+
+            if (lessonGrammars.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-sub);">当前课时无语法结构笔记</div>`;
+                return;
+            }
+
+            lessonGrammars.forEach(g => {
+                const isDue = dueReviews.some(dr => dr.itemId === g.id);
+
+                const card = document.createElement('div');
+                card.className = 'grammar-card';
+                card.onclick = () => startGrammarReview(g);
+                card.innerHTML = `
+                    <div style="flex:1; padding-right:12px;">
+                        <h4 class="grammar-card-title">${g.title}</h4>
+                        <p class="grammar-card-summary">${g.summary}</p>
+                    </div>
+                    <div>
+                        ${isDue ? '<span class="badge-due">待复习</span>' : '<span class="badge-done">已学完</span>'}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // START GRAMMAR REVIEW
+        function startGrammarReview(grammar) {
+            currentGrammarItem = grammar;
+            
+            document.getElementById('viewSelection').classList.add('hidden');
+            document.getElementById('viewReview').classList.remove('hidden');
+            document.getElementById('reviewGrammarTitle').textContent = grammar.title;
+            document.getElementById('flashcardEl').classList.remove('flipped');
+
+            // Render Study details
+            renderGrammarStudyPane();
+            renderFlashcardPane();
+
+            switchTab('study');
+        }
+
+        function renderGrammarStudyPane() {
+            const rulesBlock = document.getElementById('rulesBlockContent');
+            rulesBlock.innerHTML = '<div class="rule-title"><i class="ph ph-scroll"></i> 句式规则</div>';
+
+            if (currentGrammarItem.rules && currentGrammarItem.rules.length > 0) {
+                currentGrammarItem.rules.forEach(rule => {
+                    const constraintsHtml = rule.constraints ? rule.constraints.map(c => `<li>${c}</li>`).join('') : '';
+                    rulesBlock.innerHTML += `
+                        <div style="margin-bottom:16px;">
+                            <strong style="font-size:15px; color:var(--text-main);">${rule.name}</strong>
+                            <div class="formula-box">${rule.structure}</div>
+                            <p style="font-size:14px; color:var(--text-sub); line-height:1.5;">${rule.explanation}</p>
+                            ${constraintsHtml ? `<ul class="constraint-list">${constraintsHtml}</ul>` : ''}
+                        </div>
+                    `;
+                });
+            } else {
+                rulesBlock.innerHTML += `<p style="color:var(--text-sub); font-size:14px;">暂无句式规则结构数据</p>`;
+            }
+
+            const examplesBox = document.getElementById('examplesContainer');
+            examplesBox.innerHTML = '';
+            if (currentGrammarItem.examples && currentGrammarItem.examples.length > 0) {
+                currentGrammarItem.examples.forEach(ex => {
+                    examplesBox.innerHTML += `
+                        <div class="example-card ${ex.isCorrect ? 'correct' : 'wrong'}">
+                            <div>
+                                <div class="example-text">${ex.thai}</div>
+                                <div class="example-translation">${ex.chinese}</div>
+                                <p style="font-size:12px; color:var(--text-sub); margin-top:4px;">${ex.annotation || ''}</p>
+                            </div>
+                            <span class="badge-ex-status ${ex.isCorrect ? 'correct' : 'wrong'}">${ex.isCorrect ? '正确使用' : '错误用法'}</span>
+                        </div>
+                    `;
+                });
+            } else {
+                examplesBox.innerHTML = `<p style="color:var(--text-sub); font-size:14px;">暂无对比例句数据</p>`;
+            }
+        }
+
+        function renderFlashcardPane() {
+            // Pick flashcard from interactions
+            let cardData = { front: "ถูก + V 是什么句式？", back: "被动句式", details: "" };
+            
+            if (currentGrammarItem.interactions && currentGrammarItem.interactions.length > 0) {
+                const fcInteraction = currentGrammarItem.interactions.find(i => i.type === 'flashcard');
+                if (fcInteraction && fcInteraction.payload && fcInteraction.payload.cards && fcInteraction.payload.cards.length > 0) {
+                    const rawCard = fcInteraction.payload.cards[0];
+                    cardData.front = rawCard.front.title;
+                    cardData.frontSub = rawCard.front.subtitle || "";
+                    cardData.back = rawCard.back.title;
+                    cardData.details = Array.isArray(rawCard.back.details) ? rawCard.back.details.join('<br>') : (rawCard.back.details || "");
+                }
+            }
+
+            document.getElementById('fcFront').textContent = cardData.front;
+            document.getElementById('fcFrontSub').textContent = cardData.frontSub || '';
+            document.getElementById('fcBack').innerHTML = cardData.back;
+            document.getElementById('fcBackDetails').innerHTML = cardData.details || '';
+        }
+
+        function switchTab(tab) {
+            document.getElementById('tabBtnStudy').classList.remove('active');
+            document.getElementById('tabBtnFlashcard').classList.remove('active');
+            document.getElementById('paneStudy').classList.add('hidden');
+            document.getElementById('paneFlashcard').classList.add('hidden');
+
+            if (tab === 'study') {
+                document.getElementById('tabBtnStudy').classList.add('active');
+                document.getElementById('paneStudy').classList.remove('hidden');
+            } else {
+                document.getElementById('tabBtnFlashcard').classList.add('active');
+                document.getElementById('paneFlashcard').classList.remove('hidden');
+                document.getElementById('flashcardEl').classList.remove('flipped');
+            }
+        }
+
+        // Submitting flashcard rating mapped to backend Weighted Scorer logs
+        async function submitFlashcardRating(rating) {
+            // Mappings:
+            // rating 10 (Remember) -> maps to perfect attempts (attemptsCount: 1, hintsUsed: false, correct) -> q = 5
+            // rating 5 (Vague) -> maps to vague/hints attempts (attemptsCount: 1, hintsUsed: true, correct) -> q = 3
+            // rating 0 (Forgot) -> maps to wrong attempts (attemptsCount: 1, hintsUsed: false, wrong) -> q = 0
+            
+            let mockAttempts = [];
+            if (rating === 10) {
+                mockAttempts = [{ taskId: "flashcard", attemptsCount: 1, hintsUsed: false, finalCorrect: true }];
+            } else if (rating === 5) {
+                mockAttempts = [{ taskId: "flashcard", attemptsCount: 1, hintsUsed: true, finalCorrect: true }];
+            } else {
+                mockAttempts = [{ taskId: "flashcard", attemptsCount: 1, hintsUsed: false, finalCorrect: false }];
+            }
+
+            try {
+                const res = await fetch('/api/reviews/session/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId,
+                        itemType: 'grammar',
+                        itemId: currentGrammarItem.id,
+                        sessionType: 'lesson_review',
+                        attempts: mockAttempts
+                    })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    alert(`评分已保存！\n系统计算出的宏观SM-2评分: ${data.qualityRating}分 / 5分`);
+                    
+                    // Reload
+                    await loadStreakStats();
+                    await fetchDueReviews();
+                    
+                    goBackToSelection();
+                }
+            } catch (err) {
+                console.error("Failed to submit rating", err);
+                alert("同步失败，请检查网络连接。");
+            }
+        }
+
+        function goBackToSelection() {
+            document.getElementById('viewReview').classList.add('hidden');
+            document.getElementById('viewSelection').classList.remove('hidden');
+            renderLessons();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课程课件配置与管理 - vCourse.ThaiNotes</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;750&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Noto Sans SC', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0d0f1a 0%, #0e1624 50%, #0d2030 100%);
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: rgba(0, 0, 0, 0.4);
+            --primary: #0ea5e9;
+            --primary-glow: rgba(14, 165, 233, 0.15);
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px var(--glass-shadow);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(14, 165, 233, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .glass-card.active {
+            background: rgba(14, 165, 233, 0.08);
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(14, 165, 233, 0.2);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(14, 165, 233, 0.4);
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- Header -->
+    <header class="glass-panel border-b border-slate-800/80 px-6 py-4 flex items-center justify-between shrink-0 z-10">
+        <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-sky-500 to-blue-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
+                <i class="ph-bold ph-presentation text-xl text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold leading-none tracking-tight flex items-center gap-2">
+                    <span>vCourse.ThaiNotes</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-semibold border border-sky-500/30 font-sans">课件管理后台</span>
+                </h1>
+                <span class="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mt-1">课程课件与章节讲义配置中心</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <nav class="flex items-center gap-2 font-sans">
+                <a href="/Pages/consoleCourseReview.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-layout"></i>
+                    <span>常规后台</span>
+                </a>
+                <a href="/Pages/consoleNotes.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition duration-205 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-note-pencil"></i>
+                    <span>课程笔记后台</span>
+                </a>
+                <a href="/Pages/consoleAnki.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition duration-205 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-brain"></i>
+                    <span>错词本后台</span>
+                </a>
+                <a href="/Pages/consoleReadingCoach.html" class="px-4 py-2 text-sm text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition duration-205 flex items-center gap-1.5 border border-slate-800">
+                    <i class="ph ph-book-open"></i>
+                    <span>阅读教练后台</span>
+                </a>
+                <a href="/Pages/consoleCourseware.html" class="px-4 py-2 text-sm text-white rounded-lg bg-sky-500/20 border border-sky-500/40 flex items-center gap-1.5">
+                    <i class="ph ph-presentation"></i>
+                    <span>课件后台</span>
+                </a>
+                <a href="/Pages/consoleCourseStudio.html" class="px-4 py-2 text-sm text-indigo-400 hover:text-white rounded-lg hover:bg-indigo-500/10 transition duration-200 flex items-center gap-1.5 border border-indigo-500/20">
+                    <i class="ph ph-sparkle"></i>
+                    <span>课件配置工作室</span>
+                </a>
+                <a href="/Pages/consoleCourseMgt.html" class="px-4 py-2 text-sm text-indigo-400 hover:text-white rounded-lg hover:bg-indigo-500/10 transition duration-200 flex items-center gap-1.5 border border-indigo-500/20">
+                    <i class="ph ph-books"></i>
+                    <span>科目课时管理</span>
+                </a>
+                <a href="/Pages/appCourseStudy.html" target="_blank" class="px-4 py-2 text-sm text-sky-400 hover:text-white rounded-lg hover:bg-sky-500/10 transition duration-200 flex items-center gap-1.5 border border-sky-500/20">
+                    <i class="ph ph-arrow-square-out"></i>
+                    <span>打开课件学习客户端</span>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex-grow flex overflow-hidden min-h-0">
+        <!-- Sidebar: Courseware List -->
+        <aside class="w-96 border-r border-slate-800/60 flex flex-col bg-slate-950/20 shrink-0">
+            <!-- Search & Actions -->
+            <div class="p-4 border-b border-slate-800/60 space-y-3 font-sans">
+                <div class="relative">
+                    <input type="text" id="search-input" oninput="filterCoursewares()" placeholder="搜索课件标题或标签..." 
+                        class="w-full bg-slate-900/50 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition duration-200">
+                    <i class="ph ph-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-base"></i>
+                </div>
+
+                <!-- Dropdown filters -->
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <select id="filter-course" onchange="onFilterCourseChange()"
+                        class="bg-slate-900/50 border border-slate-800 rounded-xl px-2.5 py-2 text-slate-300 focus:outline-none focus:border-sky-500 cursor-pointer">
+                        <option value="">全部课程</option>
+                    </select>
+                    <select id="filter-lesson" onchange="onFilterLessonChange()" disabled
+                        class="bg-slate-900/50 border border-slate-800 rounded-xl px-2.5 py-2 text-slate-300 focus:outline-none focus:border-sky-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                        <option value="">全部章节</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-between items-center pt-1.5">
+                    <span id="stat-total-coursewares" class="text-[11px] text-slate-400 font-semibold tracking-wider">课件总量: --</span>
+                    <button onclick="initNewCourseware()"
+                        class="flex items-center gap-1 bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-bold px-3 py-1.5 rounded-xl transition shadow-lg shadow-sky-500/10">
+                        <i class="ph-bold ph-plus-circle text-sm"></i>
+                        <span>新建课件</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- List scrollable -->
+            <div id="coursewares-list-container" class="flex-grow overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                <!-- Courseware items will load here -->
+            </div>
+        </aside>
+
+        <!-- Main Edit Panel -->
+        <main class="flex-grow flex flex-col min-w-0 bg-slate-950/5 relative">
+            <!-- Empty state -->
+            <div id="editor-empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
+                <i class="ph ph-presentation text-6xl text-slate-700 mb-4"></i>
+                <h3 class="text-lg font-medium text-slate-400">请在左侧选择或新建课件进行配置</h3>
+                <p class="text-xs text-slate-600 mt-2">支持完整的课后思考、页面批注 Markdown、随堂评测管理及课程章节绑定</p>
+            </div>
+
+            <!-- Edit Form -->
+            <form id="courseware-editor-form" class="hidden flex-grow flex flex-col overflow-hidden min-h-0" onsubmit="saveCourseware(event)">
+                <!-- Form Header Actions -->
+                <div class="glass-panel border-b border-slate-800/80 px-6 py-4 flex items-center justify-between shrink-0">
+                    <div class="flex items-center gap-3">
+                        <span id="editor-action-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-500/20">编辑</span>
+                        <h2 class="text-sm font-bold text-slate-300">课件详细配置与数据解析</h2>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="openInStudio()"
+                            class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/25 transition font-sans">
+                            <i class="ph ph-sparkle"></i>
+                            <span>在工作室中配置</span>
+                        </button>
+                        <button type="button" id="delete-courseware-btn" onclick="deleteCourseware()"
+                            class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/25 transition font-sans">
+                            <i class="ph ph-trash"></i>
+                            <span>彻底删除</span>
+                        </button>
+                        <button type="submit"
+                            class="flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-bold bg-sky-500 text-slate-950 hover:bg-sky-400 transition shadow-lg shadow-sky-500/10 font-sans">
+                            <i class="ph ph-floppy-disk"></i>
+                            <span>保存课件配置</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Form Workspace grid -->
+                <div class="flex-grow grid grid-cols-12 overflow-hidden min-h-0">
+                    <!-- Left column: Metadata & Association -->
+                    <div class="col-span-4 border-r border-slate-800/60 p-6 overflow-y-auto custom-scrollbar space-y-5">
+                        <h3 class="text-xs uppercase font-extrabold tracking-wider text-slate-400 border-b border-slate-900 pb-2">基础元数据</h3>
+                        
+                        <!-- UUID -->
+                        <div class="space-y-1.5">
+                            <label class="text-xs text-slate-400 font-bold block">UUID 唯一标识</label>
+                            <input type="text" id="form-uuid" readonly placeholder="自动分配"
+                                class="w-full bg-slate-950 border border-slate-900 rounded-xl px-4 py-2.5 text-xs font-mono text-slate-500 cursor-not-allowed">
+                        </div>
+
+                        <!-- Title -->
+                        <div class="space-y-1.5">
+                            <label class="text-xs text-slate-300 font-bold block">课件标题 <span class="text-rose-500">*</span></label>
+                            <input type="text" id="form-title" required placeholder="如：高等数学第一章课件"
+                                class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
+                        </div>
+
+                        <!-- Tags -->
+                        <div class="space-y-1.5">
+                            <label class="text-xs text-slate-300 font-bold block">标签 Tags (逗号隔开)</label>
+                            <input type="text" id="form-tags" placeholder="如：英语,阅读,PPT"
+                                class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
+                        </div>
+
+                        <!-- Courseware URI -->
+                        <div class="space-y-1.5">
+                            <label class="text-xs text-slate-300 font-bold block">课件文档 PDF URI (本地讲义文档URI)</label>
+                            <input type="text" id="form-courseware-uri" placeholder="如：coursePPT/Lesson 1 PPT- reading comprehension.pdf"
+                                class="w-full bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-sky-500">
+                            <p class="text-[10px] text-slate-500 leading-relaxed">指定课件关联的 PDF 文件路径，如果为空，系统可能退化为纯文本 Markdown 幻灯片渲染模式。</p>
+                        </div>
+
+                        <!-- Association Editor -->
+                        <div class="space-y-3 pt-3 border-t border-slate-900/80">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-xs uppercase font-extrabold tracking-wider text-slate-400">课程章节绑定关联</h3>
+                            </div>
+                            
+                            <div class="bg-slate-900/20 border border-slate-850 p-4 rounded-2xl space-y-3">
+                                <div class="grid grid-cols-1 gap-2 text-xs">
+                                    <div class="space-y-1">
+                                        <label class="text-[10px] text-slate-400 font-semibold uppercase block">科目课程</label>
+                                        <select id="assoc-course" onchange="onAssocCourseChange()"
+                                            class="w-full bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 text-slate-300 focus:outline-none focus:border-sky-500 cursor-pointer">
+                                            <option value="">-- 请选择科目课程 --</option>
+                                        </select>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="text-[10px] text-slate-400 font-semibold uppercase block">章节课时</label>
+                                        <select id="assoc-lesson" disabled
+                                            class="w-full bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 text-slate-300 focus:outline-none focus:border-sky-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                                            <option value="">-- 请先选择科目课程 --</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="addAssociation()"
+                                    class="w-full bg-slate-800 hover:bg-slate-750 text-slate-200 text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-1.5 font-sans">
+                                    <i class="ph ph-plus-circle text-base"></i>
+                                    <span>绑定此课程章节</span>
+                                </button>
+                            </div>
+
+                            <!-- List of Associations -->
+                            <div id="associations-container" class="space-y-2 max-h-[220px] overflow-y-auto custom-scrollbar pr-1">
+                                <!-- Association list loaded dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right column: Tabbed JSON editor fields -->
+                    <div class="col-span-8 p-6 flex flex-col overflow-hidden min-h-0">
+                        <!-- Tab selectors -->
+                        <div class="flex border-b border-slate-850 mb-4 shrink-0 font-sans">
+                            <button type="button" onclick="switchJsonTab('studyGuide')" id="tab-btn-studyGuide"
+                                class="px-5 py-2.5 text-xs font-bold border-b-2 border-sky-500 text-sky-400 bg-sky-500/5 flex items-center gap-2 transition duration-200">
+                                <i class="ph ph-compass text-sm"></i>
+                                <span>学习导学案 (studyGuide)</span>
+                            </button>
+                            <button type="button" onclick="switchJsonTab('pageMarkdowns')" id="tab-btn-pageMarkdowns"
+                                class="px-5 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition duration-200">
+                                <i class="ph ph-notebook text-sm"></i>
+                                <span>Markdown 批注 (pageMarkdowns)</span>
+                            </button>
+                            <button type="button" onclick="switchJsonTab('quizCheck')" id="tab-btn-quizCheck"
+                                class="px-5 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition duration-200">
+                                <i class="ph ph-exam text-sm"></i>
+                                <span>随堂评测 (quizCheck)</span>
+                            </button>
+                        </div>
+
+                        <!-- JSON Header Toolbar -->
+                        <div class="flex items-center justify-between mb-2 shrink-0">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-slate-400 font-semibold">数据结构配置</span>
+                                <button type="button" onclick="formatActiveJson()"
+                                    class="text-[10px] bg-slate-900 border border-slate-800 text-slate-400 hover:text-white px-2 py-0.5 rounded transition">
+                                    格式化排版
+                                </button>
+                                <button type="button" onclick="loadDefaultTemplate()"
+                                    class="text-[10px] bg-sky-950/40 border border-sky-800 text-sky-400 hover:bg-sky-900/40 px-2.5 py-0.5 rounded transition">
+                                    使用 eng_ch1 示例模板
+                                </button>
+                            </div>
+                            
+                            <!-- JSON Validation status badge -->
+                            <div id="json-status" class="px-2.5 py-0.5 rounded text-[10px] flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                <i class="ph-bold ph-check-circle"></i>
+                                <span>JSON 格式正确</span>
+                            </div>
+                        </div>
+
+                        <!-- Editor Workspaces -->
+                        <div class="flex-grow overflow-hidden relative border border-slate-850 rounded-xl bg-slate-950">
+                            <!-- studyGuide Editor -->
+                            <textarea id="form-studyGuide-json" required oninput="validateActiveJson()"
+                                class="absolute inset-0 w-full h-full font-mono text-xs bg-slate-950 p-4 text-slate-300 focus:outline-none leading-relaxed custom-scrollbar resize-none"></textarea>
+                            
+                            <!-- pageMarkdowns Editor -->
+                            <textarea id="form-pageMarkdowns-json" required oninput="validateActiveJson()"
+                                class="hidden absolute inset-0 w-full h-full font-mono text-xs bg-slate-950 p-4 text-slate-300 focus:outline-none leading-relaxed custom-scrollbar resize-none"></textarea>
+                            
+                            <!-- quizCheck Editor -->
+                            <textarea id="form-quizCheck-json" required oninput="validateActiveJson()"
+                                class="hidden absolute inset-0 w-full h-full font-mono text-xs bg-slate-950 p-4 text-slate-300 focus:outline-none leading-relaxed custom-scrollbar resize-none"></textarea>
+                        </div>
+                        <p class="text-[10px] text-slate-500 leading-relaxed mt-2">提示：双击或直接在此输入 JSON 字典配置。课件所有课后思考题、批注、随堂小测都是按页面号 (1, 2, 3...) 为 Key 映射的。</p>
+                    </div>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <!-- Notification / Toast Helper -->
+    <div id="connection-status" class="hidden"></div>
+
+    <script>
+        let coursewares = [];
+        let activeCourseware = null;
+        let isCreating = false;
+        let coursesData = [];
+        let lessonsData = [];
+        let activeTab = 'studyGuide'; // 'studyGuide', 'pageMarkdowns', 'quizCheck'
+
+        // ==========================================
+        // templates derived from eng_ch1 mock data
+        // ==========================================
+        const TEMPLATES = {
+            studyGuide: {
+                "warmup": {
+                    "q": "在研读泰语阅读主旨大意（การอ่านจับใจความสำคัญ）讲义前，你认为应该如何有效区分文章的主题（Topic）与核心大意（Main Idea）？"
+                },
+                "pageGuides": {
+                    "1": {
+                        "question": "请结合课件第一页内容，用中文或泰语描述你对“จับใจความสำคัญ”（抓取核心大意）这个概念的初步理解是什么？",
+                        "ref": "จับใจความสำคัญ 代表了阅读中的核心大意抓取，要求学生能够穿透表象文字，提炼并总结出一段话或一篇文章中作者最想表达的中心思想。",
+                        "keywords": ["ใจความ", "สำคัญ", "大意", "主旨", "จับ", "核心"]
+                    },
+                    "2": {
+                        "question": "根据第二页讲义中的“วัตถุประสงค์”（学习目标），用中文或泰语回答：本课前两个核心目标分别是什么？它们对于区分信息有什么要求？",
+                        "ref": "前两个目标是：(1) 能够准确识别和划定主题(topic)、核心大意(main idea)、主题句(topic sentence)及支持细节(supporting details)；(2) 能够清晰辨别“议题(ประเด็น)”与“核心大意(ใจความสำคัญ)”之间的区别。",
+                        "keywords": ["วัตถุประสงค์", "ประเด็น", "ใจความสำคัญ", "เป้าหมาย", "教学目标", "大意", "细节", "区分", "topic", "main idea"]
+                    },
+                    "3": {
+                        "question": "<strong>思考题 1：关于阅读误区与策略的转变</strong><br>许多语言学习者习惯于在阅读时进行“逐字翻译”（word-for-word translation），请结合第三页的教学内容，思考这种习惯为什么会成为获取“中心思想”的障碍？在阅读中，我们应该将注意力从哪些琐碎细节转移到哪些核心要素上？<br><br><strong>思考题 2：关于“结构化阅读”的价值</strong><br>第三页提到，本课程将训练学生阅读的“方向感”。请尝试用自己的话解释：为什么理解“段落结构”和“篇章标记”对于我们理解文章意图至关重要？这与单纯理解字面意思有什么本质区别？",
+                        "ref": "【思考题 1】逐字翻译容易让读者陷入数字、时间、地点及修饰语等琐碎细节的泥潭，从而忽略核心主旨。我们应当放弃翻译每句话的念头，转向识别段落结构、事件结构以及篇章标记。<br>【思考题 2】单纯理解字面意思会导致信息碎片化、分不清主次。结构化阅读能帮我们识别整体框架，分清论点与支持细节，建立清晰的阅读『方向感』，从而从结构层面真实理解文章意图。",
+                        "keywords": ["逐字翻译", "细节", "段落结构", "方向感", "字面", "主次", "框架", "篇章", "标记"]
+                    }
+                },
+                "summary": {
+                    "q": "恭喜您学完了本篇泰语阅读理解讲义。请用一两句话总结，在实际阅读过程中，该如何准确提炼段落的核心大意？"
+                }
+            },
+            pageMarkdowns: {
+                "2": "# การอ่านจับใจความสำคัญ\n\n## วัตถุประสงค์ของบทเรียน\n(1) ระบุประเด็น (topic) ใจความสำคัญ (main idea) ประโยคใจความสำคัญ (topic sentence) และข้อมูลสนับสนุน (supporting details)\n(2) แยกความแตกต่างระหว่าง “ประเด็น” กับ “ใจความสำคัญ”\n(3) ระบุใจความสำคัญในแต่ละย่อหน้าของบทอ่านภาษาไทยระดับ A2-B1\n(4) แยกความแตกต่างระหว่างข้อมูลสนับสนุนประเภทต่าง ๆ\n(5) สังเกตลักษณะภาษา (linguistic features) ที่สำคัญ\n(6) ทำความเข้าใจบทอ่านภาษาไทยได้ตามเวลาที่กำหนด"
+            },
+            quizCheck: {
+                "3": [
+                    {
+                        "question": "根据课程指导，外国语言学习者在阅读时常犯的哪种错误，会导致他们将大量时间浪费在如数字、时间、地点等琐碎细节上？",
+                        "options": {
+                            "A": "过度关注文章的段落结构",
+                            "B": "尝试进行“逐字翻译” (Word-for-word translation)",
+                            "C": "忽略了文章的中心思想",
+                            "D": "过度分析篇章标记 (Discourse markers)"
+                        },
+                        "answer": "B",
+                        "explanation": "第三页明确指出，阅读的核心并非“翻译每一个词”。许多外语学习者习惯于“逐字翻译”，这会使他们陷入细节的泥潭，从而难以把握文章整体想要表达的内容。"
+                    },
+                    {
+                        "question": "本课程旨在训练学生养成“有方向感”的阅读习惯。为了实现这一目标，学生应该重点观察以下哪些要素？",
+                        "options": {
+                            "A": "文章中出现的所有数字和专有名词",
+                            "B": "每一句话的语法分析和逐词翻译",
+                            "C": "段落结构 (Paragraph structure)、事件结构 (Event structures) 和篇章标记 (Discourse markers)",
+                            "D": "文章的标题和作者简介"
+                        },
+                        "answer": "C",
+                        "explanation": "本课程建议学生改变传统的阅读方式，转而通过识别“段落结构”、“事件结构”以及“篇章标记”来明确阅读方向，从而提升理解文章核心信息的能力。"
+                    }
+                ]
+            }
+        };
+
+        // ==========================================
+        // 初始化加载
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', async () => {
+            await fetchCoursesAndLessons();
+            fetchCoursewares();
+        });
+
+        async function fetchCoursesAndLessons() {
+            try {
+                const resCourses = await fetch('/api/courses');
+                if (resCourses.ok) {
+                    coursesData = await resCourses.json();
+                    populateCourseDropdowns();
+                }
+                const resLessons = await fetch('/api/lessons');
+                if (resLessons.ok) {
+                    lessonsData = await resLessons.json();
+                }
+            } catch (err) {
+                console.error("Failed to load courses/lessons:", err);
+            }
+        }
+
+        function populateCourseDropdowns() {
+            const filterCourse = document.getElementById('filter-course');
+            const assocCourse = document.getElementById('assoc-course');
+            if (filterCourse) filterCourse.innerHTML = '<option value="">全部课程</option>';
+            if (assocCourse) assocCourse.innerHTML = '<option value="">-- 请选择科目课程 --</option>';
+
+            coursesData.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.name;
+                if (filterCourse) filterCourse.appendChild(opt.cloneNode(true));
+                if (assocCourse) assocCourse.appendChild(opt);
+            });
+        }
+
+        function onFilterCourseChange() {
+            const courseId = document.getElementById('filter-course').value;
+            const filterLesson = document.getElementById('filter-lesson');
+            if (!filterLesson) return;
+            
+            filterLesson.innerHTML = '<option value="">全部章节</option>';
+            if (!courseId) {
+                filterLesson.disabled = true;
+            } else {
+                filterLesson.disabled = false;
+                const lessons = lessonsData.filter(l => l.course_id === courseId);
+                lessons.forEach(l => {
+                    const opt = document.createElement('option');
+                    opt.value = l.id;
+                    opt.textContent = l.title;
+                    filterLesson.appendChild(opt);
+                });
+            }
+            renderCoursewareList();
+        }
+
+        function onFilterLessonChange() {
+            renderCoursewareList();
+        }
+
+        function onAssocCourseChange() {
+            const courseId = document.getElementById('assoc-course').value;
+            const assocLesson = document.getElementById('assoc-lesson');
+            if (!assocLesson) return;
+            
+            assocLesson.innerHTML = '<option value="">-- 请选择章节课时 --</option>';
+            if (!courseId) {
+                assocLesson.disabled = true;
+            } else {
+                assocLesson.disabled = false;
+                const lessons = lessonsData.filter(l => l.course_id === courseId);
+                lessons.forEach(l => {
+                    const opt = document.createElement('option');
+                    opt.value = l.id;
+                    opt.textContent = l.title;
+                    assocLesson.appendChild(opt);
+                });
+            }
+        }
+
+        function getCourseName(courseId) {
+            const course = coursesData.find(c => c.id === courseId);
+            return course ? course.name : courseId;
+        }
+
+        function getLessonName(courseId, lessonId) {
+            const lesson = lessonsData.find(l => l.course_id === courseId && l.id === lessonId);
+            return lesson ? lesson.title : lessonId;
+        }
+
+        function renderAssociations() {
+            const container = document.getElementById('associations-container');
+            if (!container) return;
+            
+            const assocs = activeCourseware ? (activeCourseware.courses || []) : [];
+            if (assocs.length === 0) {
+                container.innerHTML = `
+                    <div class="flex items-center justify-center p-4 border border-dashed border-slate-800 rounded-xl text-xs text-slate-500">
+                        <span>暂无关联的课程章节</span>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = assocs.map((assoc, idx) => {
+                const cName = getCourseName(assoc.courseId);
+                const lName = getLessonName(assoc.courseId, assoc.lessonId);
+                return `
+                    <div class="flex justify-between items-center bg-slate-900/30 border border-slate-850 p-2.5 rounded-xl text-xs">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-sky-400 font-bold">${cName}</span>
+                            <span class="text-slate-600">/</span>
+                            <span class="text-slate-300">${lName}</span>
+                        </div>
+                        <button type="button" onclick="removeAssociation(${idx})" class="p-1 text-slate-500 hover:text-rose-400 rounded transition">
+                            <i class="ph ph-x-circle text-lg"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addAssociation() {
+            const courseSelect = document.getElementById('assoc-course');
+            const lessonSelect = document.getElementById('assoc-lesson');
+            if (!courseSelect || !lessonSelect) return;
+            
+            const courseId = courseSelect.value;
+            const lessonId = lessonSelect.value;
+            
+            if (!courseId || !lessonId) {
+                alert("请先选择科目与章节课时！");
+                return;
+            }
+
+            if (!activeCourseware.courses) activeCourseware.courses = [];
+
+            // Prevent duplicate
+            const isDup = activeCourseware.courses.some(a => a.courseId === courseId && a.lessonId === lessonId);
+            if (isDup) {
+                alert("此关联已经存在！");
+                return;
+            }
+
+            activeCourseware.courses.push({ courseId, lessonId });
+            renderAssociations();
+            
+            // Reset dropdowns
+            courseSelect.value = '';
+            lessonSelect.innerHTML = '<option value="">-- 请先选择科目课程 --</option>';
+            lessonSelect.disabled = true;
+        }
+
+        function removeAssociation(idx) {
+            if (!activeCourseware.courses) return;
+            activeCourseware.courses.splice(idx, 1);
+            renderAssociations();
+        }
+
+        async function fetchCoursewares() {
+            try {
+                const res = await fetch('/api/coursewares');
+                if (!res.ok) throw new Error("获取课件列表失败");
+                coursewares = await res.json();
+                renderCoursewareList();
+            } catch (err) {
+                console.error(err);
+                alert("加载课件列表失败: " + err.message);
+            }
+        }
+
+        // ==========================================
+        // 列表渲染
+        // ==========================================
+        function renderCoursewareList() {
+            const container = document.getElementById('coursewares-list-container');
+            const searchVal = document.getElementById('search-input').value.trim().toLowerCase();
+            const filterCourseId = document.getElementById('filter-course').value;
+            const filterLessonId = document.getElementById('filter-lesson').value;
+            
+            const filtered = coursewares.filter(cw => {
+                // Course & Lesson filters
+                if (filterCourseId) {
+                    if (!cw.courses || !cw.courses.some(c => c.courseId === filterCourseId)) {
+                        return false;
+                    }
+                }
+                if (filterLessonId) {
+                    if (!cw.courses || !cw.courses.some(c => c.lessonId === filterLessonId)) {
+                        return false;
+                    }
+                }
+
+                const titleMatch = cw.title.toLowerCase().includes(searchVal);
+                const tagMatch = (cw.tags || '').toLowerCase().includes(searchVal);
+                return titleMatch || tagMatch;
+            });
+
+            document.getElementById('stat-total-coursewares').textContent = `课件总量: ${coursewares.length}`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-32 text-slate-500">
+                        <i class="ph ph-folder-open text-2xl mb-1.5"></i>
+                        <span class="text-xs">无符合条件的课件</span>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(cw => {
+                const isActive = activeCourseware && activeCourseware.uuid === cw.uuid;
+                
+                const courseTags = cw.courses && cw.courses.length > 0
+                    ? cw.courses.slice(0, 2).map(assoc => {
+                        const cName = getCourseName(assoc.courseId);
+                        return `<span class="bg-sky-500/10 border border-sky-500/20 px-1.5 py-0.5 rounded text-[9px] text-sky-400 font-semibold truncate max-w-[100px]" title="${cName}">${cName}</span>`;
+                    }).join('')
+                    : '';
+
+                const tagList = cw.tags 
+                    ? cw.tags.split(',').map(t => `<span class="bg-slate-800 px-1 rounded text-[9px] text-slate-400 font-medium">${t.trim()}</span>`).join(' ')
+                    : '';
+
+                return `
+                    <div onclick="selectCourseware('${cw.uuid}')" 
+                        class="glass-card p-4 rounded-xl cursor-pointer border relative flex flex-col gap-1.5 transition duration-150 ${isActive ? 'active' : 'border-slate-800'}"
+                        data-uuid="${cw.uuid}">
+                        <div class="flex justify-between items-start gap-2">
+                            <span class="font-bold text-sm text-slate-200 line-clamp-2">${cw.title}</span>
+                        </div>
+                        ${courseTags ? `<div class="flex flex-wrap gap-1 mt-1">${courseTags}</div>` : ''}
+                        <div class="flex flex-wrap gap-1 mt-0.5">${tagList}</div>
+                        <div class="flex justify-between items-center text-[10px] text-slate-500 mt-1">
+                            <span class="truncate max-w-[180px]" title="${cw.coursewareURI || '无文档URI'}">${cw.coursewareURI || '无文档URI'}</span>
+                            <span>${cw.created_at ? cw.created_at.split(' ')[0] : ''}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterCoursewares() {
+            renderCoursewareList();
+        }
+
+        // ==========================================
+        // 选中/加载单条课件
+        // ==========================================
+        async function selectCourseware(uuid) {
+            isCreating = false;
+            try {
+                const res = await fetch(`/api/coursewares/${uuid}`);
+                if (!res.ok) throw new Error("获取课件详情失败");
+                const data = await res.json();
+                activeCourseware = data;
+                
+                // Show Editor Form, Hide Empty State
+                document.getElementById('editor-empty-state').classList.add('hidden');
+                document.getElementById('courseware-editor-form').classList.remove('hidden');
+                
+                // Bind form values
+                document.getElementById('editor-action-badge').textContent = "编辑";
+                document.getElementById('editor-action-badge').className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-500/20";
+                document.getElementById('delete-courseware-btn').classList.remove('hidden');
+                
+                document.getElementById('form-uuid').value = data.uuid;
+                document.getElementById('form-title').value = data.title;
+                document.getElementById('form-tags').value = data.tags || '';
+                document.getElementById('form-courseware-uri').value = data.coursewareURI || '';
+                
+                // Set textareas
+                document.getElementById('form-studyGuide-json').value = JSON.stringify(data.studyGuide || {}, null, 2);
+                document.getElementById('form-pageMarkdowns-json').value = JSON.stringify(data.pageMarkdowns || {}, null, 2);
+                document.getElementById('form-quizCheck-json').value = JSON.stringify(data.quizCheck || {}, null, 2);
+                
+                validateActiveJson();
+                
+                // Render Course Associations
+                renderAssociations();
+
+                // Highlight left list card active state
+                renderCoursewareList();
+            } catch (err) {
+                console.error(err);
+                alert("加载课件详情失败: " + err.message);
+            }
+        }
+
+        // ==========================================
+        // 新增课件
+        // ==========================================
+        function initNewCourseware() {
+            isCreating = true;
+            activeCourseware = {
+                uuid: "",
+                title: "",
+                tags: "",
+                coursewareURI: "",
+                studyGuide: TEMPLATES.studyGuide,
+                pageMarkdowns: TEMPLATES.pageMarkdowns,
+                quizCheck: TEMPLATES.quizCheck,
+                courses: []
+            };
+
+            // Show form
+            document.getElementById('editor-empty-state').classList.add('hidden');
+            document.getElementById('courseware-editor-form').classList.remove('hidden');
+
+            document.getElementById('editor-action-badge').textContent = "新建";
+            document.getElementById('editor-action-badge').className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-500/20";
+            document.getElementById('delete-courseware-btn').classList.add('hidden');
+
+            // Reset values
+            document.getElementById('form-uuid').value = '';
+            document.getElementById('form-title').value = '';
+            document.getElementById('form-tags').value = '';
+            document.getElementById('form-courseware-uri').value = '';
+            
+            // Set boilerplate JSON
+            document.getElementById('form-studyGuide-json').value = JSON.stringify(TEMPLATES.studyGuide, null, 2);
+            document.getElementById('form-pageMarkdowns-json').value = JSON.stringify(TEMPLATES.pageMarkdowns, null, 2);
+            document.getElementById('form-quizCheck-json').value = JSON.stringify(TEMPLATES.quizCheck, null, 2);
+            
+            validateActiveJson();
+
+            renderAssociations();
+            renderCoursewareList();
+        }
+
+        // ==========================================
+        // Tab 切换
+        // ==========================================
+        function switchJsonTab(tabName) {
+            activeTab = tabName;
+            
+            const tabs = ['studyGuide', 'pageMarkdowns', 'quizCheck'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-btn-${t}`);
+                const editor = document.getElementById(`form-${t}-json`);
+                if (t === tabName) {
+                    btn.className = "px-5 py-2.5 text-xs font-bold border-b-2 border-sky-500 text-sky-400 bg-sky-500/5 flex items-center gap-2 transition duration-200";
+                    editor.classList.remove('hidden');
+                } else {
+                    btn.className = "px-5 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition duration-200";
+                    editor.classList.add('hidden');
+                }
+            });
+
+            validateActiveJson();
+        }
+
+        // ==========================================
+        // JSON 验证与格式化
+        // ==========================================
+        function getActiveTextarea() {
+            return document.getElementById(`form-${activeTab}-json`);
+        }
+
+        function validateActiveJson() {
+            const textarea = getActiveTextarea();
+            const statusBadge = document.getElementById('json-status');
+            const val = textarea.value.trim();
+            
+            if (!val) {
+                statusBadge.className = "px-2.5 py-0.5 rounded text-[10px] flex items-center gap-1.5 bg-rose-500/10 text-rose-400 border border-rose-500/20";
+                statusBadge.innerHTML = `<i class="ph-bold ph-x-circle"></i><span>JSON 内容不能为空</span>`;
+                return false;
+            }
+
+            try {
+                const parsed = JSON.parse(val);
+                
+                // Extra validation rules based on tabs
+                if (activeTab === 'studyGuide') {
+                    if (parsed.warmup && !parsed.warmup.q) {
+                        throw new Error("学习导学案必须包含 'warmup' 项，其子项包含 'q' 提问字段");
+                    }
+                } else if (activeTab === 'pageMarkdowns') {
+                    if (typeof parsed !== 'object' || Array.isArray(parsed)) {
+                        throw new Error("页面 Markdown 必须是一个以页面数字为 Key 的 JSON 键值对对象");
+                    }
+                } else if (activeTab === 'quizCheck') {
+                    if (typeof parsed !== 'object' || Array.isArray(parsed)) {
+                        throw new Error("随堂评测必须是以页面数字为 Key，数组为 Value 的 JSON 键值对对象");
+                    }
+                }
+
+                statusBadge.className = "px-2.5 py-0.5 rounded text-[10px] flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+                statusBadge.innerHTML = `<i class="ph-bold ph-check-circle"></i><span>JSON 格式及字段结构正确</span>`;
+                return true;
+            } catch (err) {
+                statusBadge.className = "px-2.5 py-0.5 rounded text-[10px] flex items-center gap-1.5 bg-rose-500/10 text-rose-400 border border-rose-500/20";
+                statusBadge.innerHTML = `<i class="ph-bold ph-x-circle"></i><span>错误: ${err.message}</span>`;
+                return false;
+            }
+        }
+
+        function formatActiveJson() {
+            const textarea = getActiveTextarea();
+            try {
+                const parsed = JSON.parse(textarea.value);
+                textarea.value = JSON.stringify(parsed, null, 2);
+                validateActiveJson();
+            } catch (err) {
+                alert("JSON 格式不正确，无法自动排版，请先修正错误: " + err.message);
+            }
+        }
+
+        function loadDefaultTemplate() {
+            if (confirm(`是否使用系统提供的默认 ${activeTab} 模版结构替换当前编辑框内容？`)) {
+                const textarea = getActiveTextarea();
+                textarea.value = JSON.stringify(TEMPLATES[activeTab], null, 2);
+                validateActiveJson();
+            }
+        }
+
+        // ==========================================
+        // 保存课件 (CRUD: Create & Update)
+        // ==========================================
+        async function saveCourseware(event) {
+            event.preventDefault();
+
+            // Validate all three JSON textareas
+            const tabNames = ['studyGuide', 'pageMarkdowns', 'quizCheck'];
+            for (const t of tabNames) {
+                const val = document.getElementById(`form-${t}-json`).value.trim();
+                try {
+                    JSON.parse(val);
+                } catch (e) {
+                    alert(`保存失败！"${t}" 编辑框中的 JSON 语法不正确，请先切换到该页签进行修正！\n错误: ` + e.message);
+                    switchJsonTab(t);
+                    return;
+                }
+            }
+
+            const uuid = document.getElementById('form-uuid').value;
+            const title = document.getElementById('form-title').value.trim();
+            const tags = document.getElementById('form-tags').value.trim();
+            const coursewareURI = document.getElementById('form-courseware-uri').value.trim();
+            
+            const studyGuide = JSON.parse(document.getElementById('form-studyGuide-json').value);
+            const pageMarkdowns = JSON.parse(document.getElementById('form-pageMarkdowns-json').value);
+            const quizCheck = JSON.parse(document.getElementById('form-quizCheck-json').value);
+
+            const payload = {
+                title,
+                tags,
+                coursewareURI,
+                studyGuide,
+                pageMarkdowns,
+                quizCheck,
+                courses: activeCourseware ? (activeCourseware.courses || []) : []
+            };
+
+            const url = isCreating ? '/api/coursewares' : `/api/coursewares/${uuid}`;
+            const method = isCreating ? 'POST' : 'PUT';
+
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const errRes = await res.json();
+                    throw new Error(errRes.error || "保存失败");
+                }
+
+                const result = await res.json();
+                alert(isCreating ? "新课件创建成功！" : "课件修改已保存！");
+                
+                await fetchCoursewares();
+                
+                if (isCreating) {
+                    selectCourseware(result.uuid);
+                } else {
+                    selectCourseware(uuid);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("保存课件发生错误: " + err.message);
+            }
+        }
+
+        // ==========================================
+        // 删除课件 (CRUD: Delete)
+        // ==========================================
+        async function deleteCourseware() {
+            if (!activeCourseware) return;
+            
+            const confirmMsg = `你确定要彻底删除课件《${activeCourseware.title}》吗？此操作将同时删除与其绑定的课程关联关系，且无法恢复！`;
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                const res = await fetch(`/api/coursewares/${activeCourseware.uuid}`, {
+                    method: 'DELETE'
+                });
+
+                if (!res.ok) {
+                    const errRes = await res.json();
+                    throw new Error(errRes.error || "删除失败");
+                }
+
+                alert("课件删除成功！");
+                
+                // Hide editor
+                document.getElementById('courseware-editor-form').classList.add('hidden');
+                document.getElementById('editor-empty-state').classList.remove('hidden');
+                
+                activeCourseware = null;
+                await fetchCoursewares();
+            } catch (err) {
+                console.error(err);
+                alert("删除课件发生错误: " + err.message);
+            }
+        }
+
+        // ==========================================
+        // 跳转课件配置工作室
+        // ==========================================
+        function openInStudio() {
+            const uuid = document.getElementById('form-uuid').value;
+            if (uuid) {
+                window.location.href = `/Pages/consoleCourseStudio.html?uuid=${uuid}`;
+            } else {
+                alert("请先选择一个课件，再打开配置工作室");
+            }
+        }
+    </script>
+</body>
+</html>

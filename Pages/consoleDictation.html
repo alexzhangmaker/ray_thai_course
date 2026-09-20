@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>听写词库与词集管理 · 开发者 API - vCourse.ThaiNotes</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Serif+Thai:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Sarabun:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Noto Sans SC', 'sans-serif'],
+                        thai: ['Noto Serif Thai', 'Sarabun', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace']
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at 50% 0%, #151028 0%, #0c0916 60%, #07050d 100%);
+            --glass-bg: rgba(23, 19, 43, 0.7);
+            --glass-card: rgba(28, 24, 52, 0.5);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --primary-glow: rgba(139, 92, 246, 0.25);
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            background: var(--bg-gradient);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+
+        .font-thai {
+            font-family: 'Noto Serif Thai', 'Sarabun', serif;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .glass-card {
+            background: var(--glass-card);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(139, 92, 246, 0.35);
+        }
+
+        .tab-btn {
+            position: relative;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #8b5cf6;
+            border-radius: 9999px;
+            box-shadow: 0 0 12px #8b5cf6;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.3);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.3);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Header Navigation -->
+    <header class="glass-panel sticky top-0 z-30 border-b border-white/10 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3.5">
+            <a href="./appPortal.html" class="h-9 w-9 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition">
+                <i class="ph-bold ph-arrow-left text-lg"></i>
+            </a>
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-violet-500/25">
+                    <i class="ph-fill ph-sliders-horizontal text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-base font-bold text-white leading-tight flex items-center gap-2">
+                        听写词库与词集管理
+                        <span class="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">Console & API</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">词汇增删改查 · 多例句维护 · SM-2 统计 · 外部 RESTful API 接入</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+            <a href="./appDictation.html" class="h-9 px-3.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-medium text-xs shadow-lg shadow-violet-500/25 flex items-center gap-1.5 transition">
+                <i class="ph-bold ph-headphones text-sm"></i>
+                <span>打开听写助手</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Subheader Stats Bar -->
+    <div class="border-b border-white/5 bg-black/20 px-6 py-3">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-6 text-xs">
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-400">词集总数:</span>
+                    <strong id="statBarCols" class="text-white font-bold">--</strong>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-400">总词汇量:</span>
+                    <strong id="statBarWords" class="text-violet-300 font-bold">--</strong>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-400">今日待复习:</span>
+                    <strong id="statBarDue" class="text-amber-400 font-bold">--</strong>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-400">已熟练掌握:</span>
+                    <strong id="statBarMastered" class="text-emerald-400 font-bold">--</strong>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-400">总体留存率:</span>
+                    <strong id="statBarAccuracy" class="text-fuchsia-400 font-bold">--%</strong>
+                </div>
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="flex items-center gap-4 text-xs font-medium border-b border-transparent">
+                <button onclick="switchTab('collections')" id="tabNavCollections" class="tab-btn active pb-2 text-slate-300 hover:text-white flex items-center gap-1.5">
+                    <i class="ph-bold ph-folders"></i>
+                    词集单元 (Collections)
+                </button>
+                <button onclick="switchTab('words')" id="tabNavWords" class="tab-btn pb-2 text-slate-400 hover:text-white flex items-center gap-1.5">
+                    <i class="ph-bold ph-list-dashes"></i>
+                    核心词库 (Vocabulary CRUD)
+                </button>
+                <button onclick="switchTab('import')" id="tabNavImport" class="tab-btn pb-2 text-slate-400 hover:text-white flex items-center gap-1.5">
+                    <i class="ph-bold ph-file-arrow-up"></i>
+                    批量导入 / 导出
+                </button>
+                <button onclick="switchTab('api')" id="tabNavApi" class="tab-btn pb-2 text-slate-400 hover:text-white flex items-center gap-1.5">
+                    <i class="ph-bold ph-code"></i>
+                    外部 REST API 对接
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+
+        <!-- ========================================================= -->
+        <!-- TAB 1: COLLECTIONS MANAGEMENT                             -->
+        <!-- ========================================================= -->
+        <section id="tabCollections" class="space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white">词集单元列表</h2>
+                    <p class="text-xs text-slate-400">可自定义分组（如课时单元、生活场景、备考高频），支持给词集绑定多个生词条目。</p>
+                </div>
+                <button onclick="openCreateCollectionModal()" class="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs shadow-lg shadow-violet-500/20 flex items-center gap-1.5 transition">
+                    <i class="ph-bold ph-plus"></i>
+                    新建词集单元
+                </button>
+            </div>
+
+            <!-- Collections Grid -->
+            <div id="collectionsListContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Rendered dynamically -->
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 2: WORDS VOCABULARY CRUD                              -->
+        <!-- ========================================================= -->
+        <section id="tabWords" class="hidden space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white">生词主词库管理</h2>
+                    <p class="text-xs text-slate-400">录入、更新、删除泰语单词，支持多例句结构与 SM-2 记忆参数精细化调节。</p>
+                </div>
+                <button onclick="openCreateWordModal()" class="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs shadow-lg shadow-violet-500/20 flex items-center gap-1.5 transition">
+                    <i class="ph-bold ph-plus"></i>
+                    录入新词条 (含例句)
+                </button>
+            </div>
+
+            <!-- Filter & Search Bar -->
+            <div class="glass-panel rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div class="flex flex-wrap items-center gap-3 flex-1">
+                    <!-- Search Input -->
+                    <div class="relative min-w-[240px] flex-1">
+                        <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input id="wordSearchInput" type="text" placeholder="搜索泰文、读音、中文释义或例句..." oninput="debounceWordSearch()" class="w-full pl-9 pr-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition">
+                    </div>
+
+                    <!-- Collection Filter Dropdown -->
+                    <select id="wordCollectionFilter" onchange="loadWordsTable()" class="px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-slate-200 focus:outline-none focus:border-violet-500">
+                        <option value="">全部词集 (All Collections)</option>
+                        <!-- Populated dynamically -->
+                    </select>
+
+                    <!-- Due Status Filter -->
+                    <select id="wordDueFilter" onchange="loadWordsTable()" class="px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-slate-200 focus:outline-none focus:border-violet-500">
+                        <option value="">全部状态 (All Status)</option>
+                        <option value="due">仅看今日待复习 (Due Today)</option>
+                        <option value="learning">学习中 (Learning: Rep 1-2)</option>
+                        <option value="mastered">已熟练 (Mastered: Rep 3+)</option>
+                        <option value="new">全新词条 (New: Rep 0)</option>
+                    </select>
+                </div>
+
+                <div class="text-slate-400 shrink-0">
+                    已显示 <span id="filteredWordsCount" class="text-white font-bold">0</span> 条词汇
+                </div>
+            </div>
+
+            <!-- Words Table -->
+            <div class="glass-panel rounded-2xl border border-white/10 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-white/5 text-slate-400 font-semibold border-b border-white/10 uppercase tracking-wider">
+                            <tr>
+                                <th class="py-3 px-4">泰语词 (Word)</th>
+                                <th class="py-3 px-4">读音 (Phonetic)</th>
+                                <th class="py-3 px-4">中文释义 (Meaning)</th>
+                                <th class="py-3 px-4">配套例句 (Examples)</th>
+                                <th class="py-3 px-4">SM-2 状态 (Rep / Int / EF)</th>
+                                <th class="py-3 px-4">下次复习排期</th>
+                                <th class="py-3 px-4 text-right">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="wordsTableBody" class="divide-y divide-white/5">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 3: BATCH IMPORT & EXPORT                              -->
+        <!-- ========================================================= -->
+        <section id="tabImport" class="hidden space-y-5">
+            <div class="glass-panel rounded-3xl p-6 sm:p-8 space-y-6">
+                <div>
+                    <h2 class="text-lg font-bold text-white">批量 JSON 导入与数据归档</h2>
+                    <p class="text-xs text-slate-400">支持一键导入成套词集与带多例句结构的生词，亦可将整个词库导出备份。</p>
+                </div>
+
+                <!-- Template Loader Buttons -->
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <span class="text-xs text-slate-400">预设模板快速填充:</span>
+                    <button onclick="loadTemplateJson('coreWords')" class="px-3 py-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-xs text-indigo-300 transition flex items-center gap-1">
+                        <i class="ph-bold ph-book-open"></i>
+                        📘 核心词库 JSON 数组 (含例句)
+                    </button>
+                    <button onclick="loadTemplateJson('shopping')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-violet-300 transition">
+                        🛍️ 超市商场购物词集
+                    </button>
+                    <button onclick="loadTemplateJson('weather')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-violet-300 transition">
+                        🌤️ 泰国天气与气候
+                    </button>
+                    <button onclick="loadTemplateJson('medical')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-violet-300 transition">
+                        🏥 医院与健康问诊
+                    </button>
+                </div>
+
+                <!-- Target Collection & Deduplication Options -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-slate-300">目标词集单元 (可选):</label>
+                        <div class="flex items-center gap-2">
+                            <select id="importTargetCollectionSelect" class="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-slate-200 text-xs focus:outline-none focus:border-violet-500">
+                                <option value="__NEW__">自动识别 / 新建词集</option>
+                            </select>
+                            <input id="importCustomColName" type="text" placeholder="自定义新词集名称 (留空自动命名)" class="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500">
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-slate-300">防重复过滤机制 (已启用):</label>
+                        <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-medium">
+                            <i class="ph-bold ph-shield-check text-base shrink-0"></i>
+                            <span>词库已存在的单词自动忽略跳过，只增加词库中不存在的新单词</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Textarea -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-semibold text-slate-300">粘贴批量导入 JSON 数据:</label>
+                        <span class="text-[11px] text-slate-400">支持核心词库导出的 <code>[...]</code> 单词数组，或完整 <code>{ collectionName, words }</code> 对象</span>
+                    </div>
+                    <textarea id="importJsonTextarea" rows="12" placeholder='[\n  {\n    "id": "cw_les1789640305156t3bp1_001",\n    "lessonId": "les_1789640305156_t3bp1",\n    "setId": "set_les_1789640305156_t3bp1_1",\n    "order": 1,\n    "word": "อ้างอิง",\n    "ipa": "/ʔâːŋ˥˩.ʔiŋ˧/",\n    "meanings": [\n      {\n        "part_of_speech": "v.",\n        "meaning": "引用、参考",\n        "examples": [\n          { "sentence": "บทความนี้มีแหล่งอ้างอิงที่ชัดเจน", "meaning": "这篇文章有明确的引用来源" }\n        ]\n      }\n    ]\n  }\n]' class="w-full p-4 rounded-xl bg-slate-950 border border-white/10 font-mono text-xs text-slate-200 focus:outline-none focus:border-violet-500 custom-scrollbar"></textarea>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap items-center justify-between gap-4 pt-2">
+                    <div class="flex items-center gap-3">
+                        <button onclick="executeBatchImport()" class="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs shadow-lg shadow-violet-500/20 flex items-center gap-2 transition">
+                            <i class="ph-bold ph-check"></i>
+                            确认执行批量导入
+                        </button>
+                        <button onclick="document.getElementById('importJsonTextarea').value=''" class="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white text-xs transition">
+                            清空内容
+                        </button>
+                    </div>
+
+                    <button onclick="exportAllJson()" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-slate-200 text-xs font-medium flex items-center gap-1.5 transition">
+                        <i class="ph-bold ph-download-simple"></i>
+                        导出全量词库 JSON
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 4: EXTERNAL REST API DOCUMENTATION & TESTER           -->
+        <!-- ========================================================= -->
+        <section id="tabApi" class="hidden space-y-6">
+            <!-- API Key Card -->
+            <div class="glass-panel rounded-3xl p-6 sm:p-8 space-y-4 border border-violet-500/30">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-semibold">
+                            <i class="ph-fill ph-shield-check"></i>
+                            REST API 身份认证已就绪
+                        </div>
+                        <h2 class="text-lg font-bold text-white">外部系统接入鉴权 (API Authentication)</h2>
+                        <p class="text-xs text-slate-300">
+                            外部应用访问词集与词库 CRUD 端点时，需携带以下两种鉴权头之一，或在 URL 追加 <code class="text-violet-300 font-mono">?apiKey=...</code>：
+                        </p>
+                    </div>
+
+                    <!-- Token Display Box -->
+                    <div class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-950 border border-white/10">
+                        <span class="text-xs text-slate-400 pl-1 font-mono">X-API-Key:</span>
+                        <code id="apiKeyValue" class="text-xs font-mono font-bold text-amber-300 select-all">thainotes_api_key_2026</code>
+                        <button onclick="copyApiKey()" title="复制 API Key" class="h-7 w-7 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 flex items-center justify-center transition">
+                            <i class="ph-bold ph-copy text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-xl bg-white/5 border border-white/5 space-y-2 text-xs text-slate-300 font-mono">
+                    <div class="text-slate-400">// cURL 快速接入示例:</div>
+                    <div class="text-violet-300 select-all overflow-x-auto custom-scrollbar whitespace-nowrap">
+                        curl -H "X-API-Key: thainotes_api_key_2026" http://localhost:3002/api/collections
+                    </div>
+                    <div class="text-violet-300 select-all overflow-x-auto custom-scrollbar whitespace-nowrap">
+                        curl -H "Authorization: Bearer thainotes_api_key_2026" http://localhost:3002/api/words
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Endpoints Explorer -->
+            <div class="glass-panel rounded-3xl p-6 sm:p-8 space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-white">标准 REST API 端点手册</h3>
+                        <p class="text-xs text-slate-400">支持词集管理、词条 CRUD、动态多例句维护与 SM-2 记忆算法评测打分。</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <!-- Endpoint 1 -->
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                        <div class="flex items-center gap-3">
+                            <span class="px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-300 font-mono font-bold text-xs">GET</span>
+                            <code class="text-xs font-mono text-white font-semibold">/api/collections</code>
+                            <span class="text-xs text-slate-400 ml-auto">获取全部词集单元列表 (附带词数与到期数)</span>
+                        </div>
+                    </div>
+
+                    <!-- Endpoint 2 -->
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                        <div class="flex items-center gap-3">
+                            <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-mono font-bold text-xs">POST</span>
+                            <code class="text-xs font-mono text-white font-semibold">/api/collections</code>
+                            <span class="text-xs text-slate-400 ml-auto">创建新词集 (Body: name, description, tags)</span>
+                        </div>
+                    </div>
+
+                    <!-- Endpoint 3 -->
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                        <div class="flex items-center gap-3">
+                            <span class="px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-300 font-mono font-bold text-xs">GET</span>
+                            <code class="text-xs font-mono text-white font-semibold">/api/collections/:id</code>
+                            <span class="text-xs text-slate-400 ml-auto">获取特定词集详情及其完整生词数组 (含多例句)</span>
+                        </div>
+                    </div>
+
+                    <!-- Endpoint 4 -->
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                        <div class="flex items-center gap-3">
+                            <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-mono font-bold text-xs">PUT</span>
+                            <code class="text-xs font-mono text-white font-semibold">/api/collections/:id</code>
+                            <span class="text-xs text-slate-400 ml-auto">更新词集名称、描述或标签</span>
+                        </div>
+                    </div>
+
+                    <!-- Endpoint 5 -->
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                        <div class="flex items-center gap-3">
+                            <span class="px-2 py-0.5 rounded-md bg-red-500/20 text-red-300 font-mono font-bold text-xs">DELETE</span>
+                            <code class="text-xs font-mono text-white font-semibold">/api/collections/:id</code>
+                            <span class="text-xs text-slate-400 ml-auto">删除词集单元 (自动解绑关联映射)</span>
+                        </div>
+                    </div>
+
+                    <!-- Endpoint 6 -->
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                        <div class="flex items-center gap-3">
+                            <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-mono font-bold text-xs">POST</span>
+                            <code class="text-xs font-mono text-white font-semibold">/api/collections/:id/words</code>
+                            <span class="text-xs text-slate-400 ml-auto">向指定词集添加生词条目 (支持 examples JSON 数组)</span>
+                        </div>
+                    </div>
+
+                    <!-- Endpoint 7 -->
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                        <div class="flex items-center gap-3">
+                            <span class="px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-300 font-mono font-bold text-xs">GET</span>
+                            <code class="text-xs font-mono text-white font-semibold">/api/words</code>
+                            <span class="text-xs text-slate-400 ml-auto">全量词库检索 (?collectionId, ?dueOnly, ?search)</span>
+                        </div>
+                    </div>
+
+                    <!-- Endpoint 8 -->
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                        <div class="flex items-center gap-3">
+                            <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-mono font-bold text-xs">PUT</span>
+                            <code class="text-xs font-mono text-white font-semibold">/api/words/:id</code>
+                            <span class="text-xs text-slate-400 ml-auto">更新具体生词信息、音标、释义与 examples 数组</span>
+                        </div>
+                    </div>
+
+                    <!-- Endpoint 9 -->
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                        <div class="flex items-center gap-3">
+                            <span class="px-2 py-0.5 rounded-md bg-red-500/20 text-red-300 font-mono font-bold text-xs">DELETE</span>
+                            <code class="text-xs font-mono text-white font-semibold">/api/words/:id</code>
+                            <span class="text-xs text-slate-400 ml-auto">删除单个生词条目及其所有关联记录</span>
+                        </div>
+                    </div>
+
+                    <!-- Endpoint 10 -->
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                        <div class="flex items-center gap-3">
+                            <span class="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 font-mono font-bold text-xs">POST</span>
+                            <code class="text-xs font-mono text-white font-semibold">/api/dictation/review</code>
+                            <span class="text-xs text-slate-400 ml-auto">提交导师听写评测 (Body: wordId, rating [0-5]) 自动更新 SM-2</span>
+                        </div>
+                    </div>
+
+                    <!-- Endpoint 11 -->
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                        <div class="flex items-center gap-3">
+                            <span class="px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-300 font-mono font-bold text-xs">GET</span>
+                            <code class="text-xs font-mono text-white font-semibold">/api/dictation/queue</code>
+                            <span class="text-xs text-slate-400 ml-auto">获取听写会话队列 (?type=smart_due | collection | all)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Built-in Live API Tester -->
+            <div class="glass-panel rounded-3xl p-6 sm:p-8 space-y-4">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="ph-bold ph-terminal-window text-violet-400"></i>
+                    在线 API 交互测试台 (Live Tester)
+                </h3>
+                <div class="flex items-center gap-2">
+                    <select id="apiTestEndpoint" class="px-3 py-2 rounded-xl bg-slate-950 border border-white/10 text-xs font-mono text-slate-200">
+                        <option value="/collections">GET /api/collections</option>
+                        <option value="/dictation/stats">GET /api/dictation/stats</option>
+                        <option value="/words?limit=5">GET /api/words?limit=5</option>
+                        <option value="/dictation/queue?type=smart_due&limit=3">GET /api/dictation/queue?type=smart_due</option>
+                    </select>
+                    <button onclick="runApiTest()" class="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs transition">
+                        发送请求 (Send)
+                    </button>
+                </div>
+                <pre id="apiTestOutput" class="p-4 rounded-xl bg-slate-950 border border-white/10 font-mono text-xs text-emerald-400 overflow-x-auto custom-scrollbar max-h-60">// 点击上方发送请求以查看实时响应 JSON</pre>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ========================================================= -->
+    <!-- MODAL: CREATE / EDIT COLLECTION                           -->
+    <!-- ========================================================= -->
+    <div id="modalCollection" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="glass-panel rounded-3xl max-w-lg w-full p-6 border border-white/10 shadow-2xl space-y-5 animate-scaleUp">
+            <div class="flex items-center justify-between">
+                <h3 id="modalCollectionTitle" class="text-base font-bold text-white">新建词集单元</h3>
+                <button onclick="closeCollectionModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <input type="hidden" id="colFormId">
+
+            <div class="space-y-3.5 text-xs">
+                <div class="space-y-1">
+                    <label class="font-semibold text-slate-300">词集名称 (Name) *</label>
+                    <input id="colFormName" type="text" placeholder="例如: Unit 1: Food & Dining (อาหารและเครื่องดื่ม)" class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="font-semibold text-slate-300">词集描述 (Description)</label>
+                    <textarea id="colFormDesc" rows="3" placeholder="简述该词集适用的教学场景或练习要点..." class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"></textarea>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="font-semibold text-slate-300">标签分类 (Tags, 逗号分隔)</label>
+                    <input id="colFormTags" type="text" placeholder="例如: Food, Dining, Daily" class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2.5 pt-2">
+                <button onclick="closeCollectionModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-medium transition">
+                    取消
+                </button>
+                <button onclick="saveCollectionForm()" class="px-5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-lg shadow-violet-500/20 transition">
+                    保存词集
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAL: CREATE / EDIT WORD (With dynamic examples array)   -->
+    <!-- ========================================================= -->
+    <div id="modalWord" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="glass-panel rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col p-6 border border-white/10 shadow-2xl space-y-5 animate-scaleUp">
+            <div class="flex items-center justify-between shrink-0">
+                <h3 id="modalWordTitle" class="text-base font-bold text-white">录入生词条目</h3>
+                <button onclick="closeWordModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <input type="hidden" id="wordFormId">
+
+            <!-- Form Body with Scroll -->
+            <div class="space-y-4 text-xs overflow-y-auto custom-scrollbar pr-2 flex-1">
+                <!-- Basic Info Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div class="space-y-1">
+                        <label class="font-semibold text-slate-300">泰文单词 (Thai Word) *</label>
+                        <div class="flex items-center gap-2">
+                            <input id="wordFormThai" type="text" placeholder="例如: กาแฟเย็น" class="flex-1 font-thai text-sm px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500">
+                            <button type="button" onclick="previewFormThaiAudio()" title="试听发音" class="h-10 w-10 rounded-xl bg-violet-600/30 hover:bg-violet-600 text-violet-300 hover:text-white flex items-center justify-center shrink-0 transition">
+                                <i class="ph-bold ph-speaker-high"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="font-semibold text-slate-300">读音 / 罗马注音 (Phonetic / RTGS)</label>
+                        <input id="wordFormPhonetic" type="text" placeholder="例如: gaa-fae-yen" class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 font-mono text-white placeholder-slate-500 focus:outline-none focus:border-violet-500">
+                    </div>
+
+                    <div class="space-y-1 sm:col-span-2">
+                        <label class="font-semibold text-slate-300">中文释义 (Meaning / Translation) *</label>
+                        <input id="wordFormMeaning" type="text" placeholder="例如: 冰咖啡" class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500">
+                    </div>
+
+                    <div class="space-y-1 sm:col-span-2">
+                        <label class="font-semibold text-slate-300">自定义外部音频链接 (Audio URL, 留空则使用智能 TTS)</label>
+                        <input id="wordFormAudio" type="text" placeholder="https://example.com/audio/word.mp3" class="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500">
+                    </div>
+                </div>
+
+                <!-- Collection Assignment Checkboxes -->
+                <div class="space-y-1.5 pt-2 border-t border-white/10">
+                    <label class="font-semibold text-slate-300">所属词集单元 (可多选):</label>
+                    <div id="wordFormCollectionsCheckboxes" class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 rounded-xl bg-white/5 border border-white/5 max-h-32 overflow-y-auto custom-scrollbar">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Dynamic Example Sentences Form -->
+                <div class="space-y-2.5 pt-2 border-t border-white/10">
+                    <div class="flex items-center justify-between">
+                        <label class="font-semibold text-slate-300 flex items-center gap-1.5">
+                            <i class="ph-bold ph-chat-centered-text text-violet-400"></i>
+                            配套双语例句 (Examples JSON Array)
+                        </label>
+                        <button type="button" onclick="addExampleRow()" class="px-2.5 py-1 rounded-lg bg-violet-600/30 hover:bg-violet-600 text-violet-200 hover:text-white text-[11px] font-semibold flex items-center gap-1 transition">
+                            <i class="ph-bold ph-plus"></i>
+                            添加例句
+                        </button>
+                    </div>
+
+                    <div id="examplesFormList" class="space-y-2.5">
+                        <!-- Dynamic example rows -->
+                    </div>
+                </div>
+
+                <!-- Advanced SM-2 Override (Optional Accordion) -->
+                <details class="pt-2 border-t border-white/10">
+                    <summary class="font-semibold text-slate-400 hover:text-slate-200 cursor-pointer text-[11px]">
+                        ⚙️ 高级 SM-2 记忆算法参数微调 (可选)
+                    </summary>
+                    <div class="grid grid-cols-3 gap-3 pt-3">
+                        <div class="space-y-1">
+                            <label class="text-slate-400">连续成功数 (Repetition)</label>
+                            <input id="wordFormRepetition" type="number" min="0" class="w-full px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-slate-400">间隔天数 (Interval Days)</label>
+                            <input id="wordFormInterval" type="number" min="1" class="w-full px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-slate-400">难度因子 (Easiness Factor)</label>
+                            <input id="wordFormEF" type="number" step="0.05" min="1.3" max="3.0" class="w-full px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white">
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <div class="flex items-center justify-end gap-2.5 pt-2 shrink-0 border-t border-white/10">
+                <button onclick="closeWordModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-medium transition">
+                    取消
+                </button>
+                <button onclick="saveWordForm()" class="px-5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-lg shadow-violet-500/20 transition">
+                    保存词条
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toastNotification" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full bg-slate-900/90 border border-violet-500/40 text-white text-xs font-medium shadow-2xl backdrop-blur-md flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-300">
+        <i id="toastIcon" class="ph-fill ph-check-circle text-emerald-400 text-base"></i>
+        <span id="toastMessage">已更新</span>
+    </div>
+
+    <!-- Script Logic -->
+    <script>
+        const API_KEY = 'thainotes_api_key_2026';
+        const API_BASE = '/api';
+
+        let appStats = null;
+        let collections = [];
+        let words = [];
+        let searchDebounceTimeout = null;
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadAllStats();
+            await loadCollections();
+            await loadWordsTable();
+        });
+
+        // -------------------------------------------------------------
+        // Tab Navigation
+        // -------------------------------------------------------------
+        function switchTab(tabId) {
+            const tabs = ['collections', 'words', 'import', 'api'];
+            tabs.forEach(t => {
+                const navBtn = document.getElementById(`tabNav${capitalize(t)}`);
+                const section = document.getElementById(`tab${capitalize(t)}`);
+                if (t === tabId) {
+                    navBtn.classList.add('active');
+                    navBtn.classList.remove('text-slate-400');
+                    navBtn.classList.add('text-slate-300');
+                    section.classList.remove('hidden');
+                } else {
+                    navBtn.classList.remove('active');
+                    navBtn.classList.add('text-slate-400');
+                    navBtn.classList.remove('text-slate-300');
+                    section.classList.add('hidden');
+                }
+            });
+        }
+
+        function capitalize(s) {
+            return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+
+        // -------------------------------------------------------------
+        // API Fetch Helper
+        // -------------------------------------------------------------
+        async function fetchApi(endpoint, options = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-API-Key': API_KEY,
+                ...(options.headers || {})
+            };
+            const response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `HTTP ${response.status}`);
+            }
+            return response.json();
+        }
+
+        // -------------------------------------------------------------
+        // Load Overall Statistics
+        // -------------------------------------------------------------
+        async function loadAllStats() {
+            try {
+                const res = await fetchApi('/dictation/stats');
+                appStats = res.stats;
+                document.getElementById('statBarCols').innerText = appStats.totalCollections;
+                document.getElementById('statBarWords').innerText = appStats.totalWords;
+                document.getElementById('statBarDue').innerText = appStats.dueCount;
+                document.getElementById('statBarMastered').innerText = appStats.masteredCount;
+                document.getElementById('statBarAccuracy').innerText = `${appStats.accuracyRate}%`;
+            } catch (err) {
+                console.error('Failed to load stats:', err);
+            }
+        }
+
+        // -------------------------------------------------------------
+        // Collections Operations
+        // -------------------------------------------------------------
+        async function loadCollections() {
+            try {
+                const res = await fetchApi('/collections');
+                collections = res.collections || [];
+                renderCollectionsList();
+                populateCollectionDropdowns();
+            } catch (err) {
+                console.error('Failed to load collections:', err);
+            }
+        }
+
+        function renderCollectionsList() {
+            const container = document.getElementById('collectionsListContainer');
+            if (collections.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full p-8 text-center glass-card rounded-2xl text-slate-400 text-xs">
+                        暂无词集单元，请点击上方“新建词集单元”开始创建。
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = collections.map(col => {
+                const tagsBadges = (col.tags || []).map(t => 
+                    `<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-white/5 text-slate-300 border border-white/10">${t}</span>`
+                ).join('');
+
+                return `
+                    <div class="glass-card rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-violet-500/40 transition">
+                        <div class="space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-violet-400 bg-violet-500/15 border border-violet-500/25 px-2 py-0.5 rounded-md">
+                                    ${col.wordCount} 词条
+                                </span>
+                                ${col.dueCount > 0 ? `<span class="text-[10px] font-bold text-amber-300 bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 rounded-md">${col.dueCount} 词待复习</span>` : ''}
+                            </div>
+                            <h4 class="font-bold text-white text-base">${col.name}</h4>
+                            <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">${col.description || '暂无描述说明'}</p>
+                            <div class="flex flex-wrap gap-1.5 pt-1">
+                                ${tagsBadges}
+                            </div>
+                        </div>
+
+                        <div class="space-y-2 pt-2 border-t border-white/5">
+                            <a href="./appDictation.html?collectionId=${col.id}" class="w-full py-2 px-3 rounded-xl bg-violet-600/30 hover:bg-violet-600 border border-violet-500/40 hover:border-violet-500 text-violet-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                                <i class="ph-bold ph-play"></i>
+                                开始听写此词集
+                            </a>
+                            <div class="flex items-center gap-2">
+                                <button onclick="filterWordsByCollection('${col.id}')" class="flex-1 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs transition">
+                                    查看包含生词
+                                </button>
+                                <button onclick="openEditCollectionModal('${col.id}')" title="编辑词集" class="h-7 w-7 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 flex items-center justify-center transition">
+                                    <i class="ph-bold ph-pencil-simple text-xs"></i>
+                                </button>
+                                <button onclick="deleteCollection('${col.id}')" title="删除词集" class="h-7 w-7 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center transition">
+                                    <i class="ph-bold ph-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function populateCollectionDropdowns() {
+            // Word table filter dropdown
+            const filterDropdown = document.getElementById('wordCollectionFilter');
+            const curVal = filterDropdown.value;
+            filterDropdown.innerHTML = `
+                <option value="">全部词集 (All Collections)</option>
+                ${collections.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+            `;
+            filterDropdown.value = curVal;
+
+            // Import target collection dropdown
+            const importColSelect = document.getElementById('importTargetCollectionSelect');
+            if (importColSelect) {
+                const curImportVal = importColSelect.value;
+                importColSelect.innerHTML = `
+                    <option value="__NEW__">自动识别 / 新建词集</option>
+                    ${collections.map(c => `<option value="${c.id}">归入现有词集: ${c.name}</option>`).join('')}
+                `;
+                if (curImportVal && (curImportVal === '__NEW__' || collections.some(c => c.id === curImportVal))) {
+                    importColSelect.value = curImportVal;
+                } else {
+                    importColSelect.value = '__NEW__';
+                }
+            }
+
+            // Word form checkboxes
+            const cbContainer = document.getElementById('wordFormCollectionsCheckboxes');
+            cbContainer.innerHTML = collections.map(c => `
+                <label class="flex items-center gap-2 text-slate-300 hover:text-white cursor-pointer select-none">
+                    <input type="checkbox" name="wordColCb" value="${c.id}" class="rounded border-white/20 bg-white/5 text-violet-600 focus:ring-0">
+                    <span class="truncate">${c.name}</span>
+                </label>
+            `).join('');
+        }
+
+        function openCreateCollectionModal() {
+            document.getElementById('modalCollectionTitle').innerText = '新建词集单元';
+            document.getElementById('colFormId').value = '';
+            document.getElementById('colFormName').value = '';
+            document.getElementById('colFormDesc').value = '';
+            document.getElementById('colFormTags').value = '';
+            document.getElementById('modalCollection').classList.remove('hidden');
+        }
+
+        function openEditCollectionModal(id) {
+            const col = collections.find(c => c.id === id);
+            if (!col) return;
+            document.getElementById('modalCollectionTitle').innerText = '编辑词集单元';
+            document.getElementById('colFormId').value = col.id;
+            document.getElementById('colFormName').value = col.name;
+            document.getElementById('colFormDesc').value = col.description || '';
+            document.getElementById('colFormTags').value = col.tagsString || '';
+            document.getElementById('modalCollection').classList.remove('hidden');
+        }
+
+        function closeCollectionModal() {
+            document.getElementById('modalCollection').classList.add('hidden');
+        }
+
+        async function saveCollectionForm() {
+            const id = document.getElementById('colFormId').value;
+            const name = document.getElementById('colFormName').value.trim();
+            const description = document.getElementById('colFormDesc').value.trim();
+            const tags = document.getElementById('colFormTags').value.trim();
+
+            if (!name) {
+                alert('词集名称不能为空');
+                return;
+            }
+
+            try {
+                if (id) {
+                    await fetchApi(`/collections/${id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ name, description, tags })
+                    });
+                    showToast('词集已成功更新');
+                } else {
+                    await fetchApi('/collections', {
+                        method: 'POST',
+                        body: JSON.stringify({ name, description, tags })
+                    });
+                    showToast('词集创建成功');
+                }
+                closeCollectionModal();
+                await loadCollections();
+                await loadAllStats();
+            } catch (err) {
+                console.error('Failed to save collection:', err);
+                alert('保存失败: ' + err.message);
+            }
+        }
+
+        async function deleteCollection(id) {
+            if (!confirm(`确定要删除此词集吗？词集下的单词仍将保留在全局主词库中。`)) return;
+            try {
+                await fetchApi(`/collections/${id}`, { method: 'DELETE' });
+                showToast('词集已删除');
+                await loadCollections();
+                await loadAllStats();
+            } catch (err) {
+                console.error('Failed to delete collection:', err);
+                alert('删除失败: ' + err.message);
+            }
+        }
+
+        function filterWordsByCollection(colId) {
+            switchTab('words');
+            document.getElementById('wordCollectionFilter').value = colId;
+            loadWordsTable();
+        }
+
+        // -------------------------------------------------------------
+        // Vocabulary CRUD Operations
+        // -------------------------------------------------------------
+        function debounceWordSearch() {
+            clearTimeout(searchDebounceTimeout);
+            searchDebounceTimeout = setTimeout(() => {
+                loadWordsTable();
+            }, 300);
+        }
+
+        async function loadWordsTable() {
+            const search = document.getElementById('wordSearchInput').value.trim();
+            const collectionId = document.getElementById('wordCollectionFilter').value;
+            const dueFilter = document.getElementById('wordDueFilter').value;
+
+            let url = `/words?limit=100`;
+            if (search) url += `&search=${encodeURIComponent(search)}`;
+            if (collectionId) url += `&collectionId=${collectionId}`;
+            if (dueFilter === 'due') url += `&dueOnly=true`;
+
+            try {
+                const res = await fetchApi(url);
+                let fetchedWords = res.words || [];
+
+                // Filter by learning / mastered / new if selected
+                if (dueFilter === 'learning') {
+                    fetchedWords = fetchedWords.filter(w => w.repetition > 0 && w.repetition < 3);
+                } else if (dueFilter === 'mastered') {
+                    fetchedWords = fetchedWords.filter(w => w.repetition >= 3);
+                } else if (dueFilter === 'new') {
+                    fetchedWords = fetchedWords.filter(w => w.repetition === 0);
+                }
+
+                words = fetchedWords;
+                document.getElementById('filteredWordsCount').innerText = words.length;
+                renderWordsTable();
+            } catch (err) {
+                console.error('Failed to load words:', err);
+            }
+        }
+
+        function renderWordsTable() {
+            const tbody = document.getElementById('wordsTableBody');
+            if (words.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="py-8 text-center text-slate-400">
+                            未检索到符合条件的生词，请调整筛选或点击右上角录入新词。
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = words.map(w => {
+                const exCount = (w.examples || []).length;
+                const exBadge = exCount > 0 
+                    ? `<span class="px-2 py-0.5 rounded-full bg-violet-500/15 border border-violet-500/30 text-violet-300 font-semibold text-[10px]">${exCount} 个例句</span>` 
+                    : `<span class="text-slate-500 text-[10px]">无例句</span>`;
+
+                let statusBadge = `<span class="px-2 py-0.5 rounded bg-white/5 text-slate-400 text-[10px]">新词 (Rep: 0)</span>`;
+                if (w.repetition >= 3) {
+                    statusBadge = `<span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">已熟练 (Rep: ${w.repetition})</span>`;
+                } else if (w.repetition > 0) {
+                    statusBadge = `<span class="px-2 py-0.5 rounded bg-blue-500/15 text-blue-300 border border-blue-500/30 text-[10px] font-bold">强化中 (Rep: ${w.repetition})</span>`;
+                }
+
+                const nextDate = w.nextReviewDate ? new Date(w.nextReviewDate).toLocaleDateString() : '--';
+                const isDueBadge = w.isDue ? `<span class="ml-1 px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-bold">今日到期</span>` : '';
+
+                return `
+                    <tr class="hover:bg-white/5 transition">
+                        <td class="py-3 px-4">
+                            <div class="flex items-center gap-2">
+                                <span class="font-thai text-base font-bold text-white">${w.thaiWord}</span>
+                                <button onclick="playWordVoice('${w.id}')" title="播放发音" class="text-violet-400 hover:text-white transition">
+                                    <i class="ph-bold ph-speaker-high text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 font-mono text-violet-300 text-xs">${w.phonetic || '--'}</td>
+                        <td class="py-3 px-4 text-slate-200 font-medium">${w.meaning}</td>
+                        <td class="py-3 px-4">${exBadge}</td>
+                        <td class="py-3 px-4">
+                            <div class="space-y-0.5">
+                                ${statusBadge}
+                                <div class="text-[10px] text-slate-400 font-mono">间隔: ${w.interval}天 · EF: ${w.easinessFactor}</div>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-slate-300">
+                            ${nextDate}${isDueBadge}
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <button onclick="openEditWordModal('${w.id}')" title="编辑词条" class="h-7 w-7 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white flex items-center justify-center transition">
+                                    <i class="ph-bold ph-pencil-simple text-xs"></i>
+                                </button>
+                                <button onclick="deleteWord('${w.id}')" title="删除词条" class="h-7 w-7 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center transition">
+                                    <i class="ph-bold ph-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // -------------------------------------------------------------
+        // Word Modal & Dynamic Examples Logic
+        // -------------------------------------------------------------
+        function openCreateWordModal() {
+            document.getElementById('modalWordTitle').innerText = '录入生词条目 (支持多例句)';
+            document.getElementById('wordFormId').value = '';
+            document.getElementById('wordFormThai').value = '';
+            document.getElementById('wordFormPhonetic').value = '';
+            document.getElementById('wordFormMeaning').value = '';
+            document.getElementById('wordFormAudio').value = '';
+            document.getElementById('wordFormRepetition').value = 0;
+            document.getElementById('wordFormInterval').value = 1;
+            document.getElementById('wordFormEF').value = 2.5;
+
+            // Reset collection checkboxes
+            const selectedCol = document.getElementById('wordCollectionFilter').value;
+            document.querySelectorAll('input[name="wordColCb"]').forEach(cb => {
+                cb.checked = selectedCol ? (cb.value === selectedCol) : false;
+            });
+
+            // Initialize with one empty example row
+            const exContainer = document.getElementById('examplesFormList');
+            exContainer.innerHTML = '';
+            addExampleRow();
+
+            document.getElementById('modalWord').classList.remove('hidden');
+        }
+
+        function openEditWordModal(id) {
+            const word = words.find(w => w.id === id);
+            if (!word) return;
+
+            document.getElementById('modalWordTitle').innerText = '编辑生词条目';
+            document.getElementById('wordFormId').value = word.id;
+            document.getElementById('wordFormThai').value = word.thaiWord;
+            document.getElementById('wordFormPhonetic').value = word.phonetic || word.transliteration || '';
+            document.getElementById('wordFormMeaning').value = word.meaning;
+            document.getElementById('wordFormAudio').value = word.audioUrl || '';
+            document.getElementById('wordFormRepetition').value = word.repetition || 0;
+            document.getElementById('wordFormInterval').value = word.interval || 1;
+            document.getElementById('wordFormEF').value = word.easinessFactor || 2.5;
+
+            // Check associated collections
+            const wordColIds = word.collectionIds || [];
+            document.querySelectorAll('input[name="wordColCb"]').forEach(cb => {
+                cb.checked = wordColIds.includes(cb.value);
+            });
+
+            // Populate examples
+            const exContainer = document.getElementById('examplesFormList');
+            exContainer.innerHTML = '';
+            const examples = word.examples || [];
+            if (examples.length === 0) {
+                addExampleRow();
+            } else {
+                examples.forEach(ex => addExampleRow(ex.thai, ex.translation));
+            }
+
+            document.getElementById('modalWord').classList.remove('hidden');
+        }
+
+        function closeWordModal() {
+            document.getElementById('modalWord').classList.add('hidden');
+        }
+
+        function addExampleRow(thaiText = '', transText = '') {
+            const exContainer = document.getElementById('examplesFormList');
+            const rowId = `ex_row_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`;
+            const row = document.createElement('div');
+            row.id = rowId;
+            row.className = 'p-2.5 rounded-xl bg-white/5 border border-white/5 space-y-2 relative group';
+            row.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] text-slate-400 font-semibold">例句</span>
+                    <button type="button" onclick="removeExampleRow('${rowId}')" class="text-slate-500 hover:text-red-400 transition text-xs">
+                        <i class="ph-bold ph-trash"></i>
+                    </button>
+                </div>
+                <div class="space-y-1.5">
+                    <input type="text" placeholder="泰文例句: เช่น ผมชอบกินข้าวผัดกุ้ง" value="${escapeHtml(thaiText)}" class="ex-thai w-full font-thai px-3 py-1.5 rounded-lg bg-black/20 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500">
+                    <input type="text" placeholder="中文翻译: 例如 我喜欢吃鲜虾炒饭。" value="${escapeHtml(transText)}" class="ex-trans w-full px-3 py-1.5 rounded-lg bg-black/20 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500">
+                </div>
+            `;
+            exContainer.appendChild(row);
+        }
+
+        function removeExampleRow(rowId) {
+            const row = document.getElementById(rowId);
+            if (row) row.remove();
+        }
+
+        function previewFormThaiAudio() {
+            const text = document.getElementById('wordFormThai').value.trim();
+            const audioUrl = document.getElementById('wordFormAudio').value.trim();
+            if (!text) {
+                alert('请先输入泰文单词');
+                return;
+            }
+            window.playSentenceVoice(text, audioUrl);
+        }
+
+        async function saveWordForm() {
+            const id = document.getElementById('wordFormId').value;
+            const thaiWord = document.getElementById('wordFormThai').value.trim();
+            const phonetic = document.getElementById('wordFormPhonetic').value.trim();
+            const meaning = document.getElementById('wordFormMeaning').value.trim();
+            const audioUrl = document.getElementById('wordFormAudio').value.trim();
+
+            const repetition = parseInt(document.getElementById('wordFormRepetition').value, 10);
+            const interval = parseInt(document.getElementById('wordFormInterval').value, 10);
+            const easinessFactor = parseFloat(document.getElementById('wordFormEF').value);
+
+            if (!thaiWord) {
+                alert('泰文单词不能为空');
+                return;
+            }
+            if (!meaning) {
+                alert('中文释义不能为空');
+                return;
+            }
+
+            // Extract examples array
+            const examples = [];
+            const rows = document.querySelectorAll('#examplesFormList > div');
+            rows.forEach(r => {
+                const thai = r.querySelector('.ex-thai').value.trim();
+                const trans = r.querySelector('.ex-trans').value.trim();
+                if (thai || trans) {
+                    examples.push({ thai, translation: trans });
+                }
+            });
+
+            // Extract collectionIds
+            const collectionIds = [];
+            document.querySelectorAll('input[name="wordColCb"]:checked').forEach(cb => {
+                collectionIds.push(cb.value);
+            });
+
+            const payload = {
+                thaiWord,
+                phonetic,
+                meaning,
+                audioUrl,
+                examples,
+                collectionIds,
+                repetition,
+                interval,
+                easinessFactor
+            };
+
+            try {
+                if (id) {
+                    await fetchApi(`/words/${id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(payload)
+                    });
+                    showToast('生词已成功更新');
+                } else {
+                    await fetchApi('/words', {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+                    showToast('生词已成功录入');
+                }
+                closeWordModal();
+                await loadWordsTable();
+                await loadCollections();
+                await loadAllStats();
+            } catch (err) {
+                console.error('Failed to save word:', err);
+                alert('保存词条失败: ' + err.message);
+            }
+        }
+
+        async function deleteWord(id) {
+            if (!confirm('确定要删除此词条吗？相关的例句与复习日志也会同步清除。')) return;
+            try {
+                await fetchApi(`/words/${id}`, { method: 'DELETE' });
+                showToast('词条已删除');
+                await loadWordsTable();
+                await loadCollections();
+                await loadAllStats();
+            } catch (err) {
+                console.error('Failed to delete word:', err);
+                alert('删除词条失败: ' + err.message);
+            }
+        }
+
+        // -------------------------------------------------------------
+        // Batch Import & Export
+        // -------------------------------------------------------------
+        const presets = {
+            shopping: {
+                collectionName: "Unit 4: Supermarket & Shopping (ห้างสรรพสินค้าและการซื้อของ)",
+                collectionDescription: "超市购物、商场挑选、讨价还价常用词汇与句型",
+                tags: ["Shopping", "Market", "Daily"],
+                words: [
+                    {
+                        thaiWord: "ราคา",
+                        phonetic: "raa-khaa",
+                        meaning: "价格 / 价钱",
+                        examples: [
+                            { thai: "เสื้อตัวนี้ราคาเท่าไหร่ครับ", translation: "这件衣服价格多少钱？" },
+                            { thai: "สินค้าร้านนี้ราคาสมเหตุสมผล", translation: "这家店的商品价格很合理。" }
+                        ]
+                    },
+                    {
+                        thaiWord: "ลดราคา",
+                        phonetic: "lót-raa-khaa",
+                        meaning: "打折 / 降价",
+                        examples: [
+                            { thai: "ช่วงนี้ห้างมีโปรโมชั่นลดราคาพิเศษ", translation: "最近商场有特别打折促销活动。" },
+                            { thai: "ลดราคาให้อีกนิดได้ไหมครับ", translation: "能再给我打点折吗？" }
+                        ]
+                    },
+                    {
+                        thaiWord: "กระเป๋า",
+                        phonetic: "grà-bpǎo",
+                        meaning: "包 / 钱包 / 行李袋",
+                        examples: [
+                            { thai: "กระเป๋าใบนี้สวยและทนทานมาก", translation: "这个包既好看又非常耐用。" },
+                            { thai: "อย่าลืมหยิบกระเป๋าสตางค์มาด้วยนะ", translation: "别忘了把钱包也带上。" }
+                        ]
+                    }
+                ]
+            },
+            weather: {
+                collectionName: "Unit 5: Weather & Seasons (สภาพอากาศและฤดูกาล)",
+                collectionDescription: "泰国气候、雨季风季及气温日常表达",
+                tags: ["Weather", "Climate", "Daily"],
+                words: [
+                    {
+                        thaiWord: "อากาศ",
+                        phonetic: "aa-gàat",
+                        meaning: "天气 / 气候 / 空气",
+                        examples: [
+                            { thai: "วันนี้อากาศดีมาก เหมาะกับการไปเที่ยว", translation: "今天天气很好，很适合去出游。" },
+                            { thai: "ตอนเช้าอากาศค่อนข้างเย็นสบาย", translation: "早晨的气候相当凉爽舒服。" }
+                        ]
+                    },
+                    {
+                        thaiWord: "ฝนตก",
+                        phonetic: "fǒn-dtòk",
+                        meaning: "下雨",
+                        examples: [
+                            { thai: "อย่าลืมพกร่มไปด้วย ตอนบ่ายฝนตก", translation: "别忘了带伞，下午要下雨。" },
+                            { thai: "ฝนตกหนักจนน้ำท่วมถนน", translation: "雨下得很大导致路上都积水了。" }
+                        ]
+                    }
+                ]
+            },
+            medical: {
+                collectionName: "Unit 6: Medical & Health (การแพทย์และสุขภาพ)",
+                collectionDescription: "看病问诊、药房买药及身体不适表达",
+                tags: ["Health", "Hospital", "Emergency"],
+                words: [
+                    {
+                        thaiWord: "ปวดหัว",
+                        phonetic: "bpùat-hǔa",
+                        meaning: "头痛 / 头晕",
+                        examples: [
+                            { thai: "ผมรู้สึกปวดหัวตั้งแต่เช้าแล้ว", translation: "我从早上开始就感到头痛了。" }
+                        ]
+                    },
+                    {
+                        thaiWord: "โรงพยาบาล",
+                        phonetic: "roong-pá-yaa-baan",
+                        meaning: "医院",
+                        examples: [
+                            { thai: "โรงพยาบาลกรุงเทพอยู่ห่างจากที่นี่ไม่ไกล", translation: "曼谷医院离这里不远。" }
+                        ]
+                    }
+                ]
+            },
+            coreWords: [
+                {
+                    "id": "cw_les1789640305156t3bp1_001",
+                    "lessonId": "les_1789640305156_t3bp1",
+                    "setId": "set_les_1789640305156_t3bp1_1",
+                    "order": 1,
+                    "word": "อ้างอิง",
+                    "ipa": "/ʔâːŋ˥˩.ʔiŋ˧/",
+                    "meanings": [
+                        {
+                            "part_of_speech": "v.",
+                            "meaning": "引用、参考",
+                            "examples": [
+                                {
+                                    "sentence": "บทความนี้มีแหล่งอ้างอิงที่ชัดเจน",
+                                    "meaning": "这篇文章有明确的引用来源"
+                                },
+                                {
+                                    "sentence": "กรุณาอ้างอิงข้อมูลจากแหล่งที่เชื่อถือได้",
+                                    "meaning": "请引用可信来源的信息"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        function loadTemplateJson(key) {
+            if (presets[key]) {
+                document.getElementById('importJsonTextarea').value = JSON.stringify(presets[key], null, 2);
+                const title = presets[key].collectionName || (key === 'coreWords' ? '核心词库 JSON 数组' : key);
+                showToast(`已填充模板: ${title}`);
+            }
+        }
+
+        async function executeBatchImport() {
+            const text = document.getElementById('importJsonTextarea').value.trim();
+            if (!text) {
+                alert('请先在文本框中粘贴 JSON 数据');
+                return;
+            }
+
+            let parsed;
+            try {
+                parsed = JSON.parse(text);
+            } catch (e) {
+                alert('JSON 解析失败，请检查格式是否正确: ' + e.message);
+                return;
+            }
+
+            const targetColSelect = document.getElementById('importTargetCollectionSelect');
+            const customColInput = document.getElementById('importCustomColName');
+            const targetColId = (targetColSelect && targetColSelect.value !== '__NEW__') ? targetColSelect.value : null;
+            const customColName = customColInput ? customColInput.value.trim() : '';
+
+            let payload;
+            if (Array.isArray(parsed)) {
+                payload = {
+                    collectionName: customColName || '',
+                    targetCollectionId: targetColId,
+                    words: parsed
+                };
+            } else if (parsed && typeof parsed === 'object') {
+                payload = { ...parsed };
+                if (customColName) payload.collectionName = customColName;
+                if (targetColId) payload.targetCollectionId = targetColId;
+            } else {
+                alert('不支持的 JSON 数据格式，必须为 JSON 数组或包含 words 属性的对象');
+                return;
+            }
+
+            try {
+                const res = await fetchApi('/dictation/batch-import', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                let msg = `批量导入完成！`;
+                if (res.wordsImported > 0) {
+                    msg += `新增入库 ${res.wordsImported} 条生词。`;
+                }
+                if (res.wordsSkipped > 0) {
+                    msg += `已自动忽略 ${res.wordsSkipped} 条词库已存在单词。`;
+                }
+                if (res.wordsImported === 0 && res.wordsSkipped > 0) {
+                    msg = `词库已存在本次导入的全部 ${res.wordsSkipped} 条单词，已全部自动忽略跳过，未产生重复词汇。`;
+                }
+
+                showToast(msg, res.wordsImported > 0 ? 'success' : 'info');
+                alert(res.message || msg);
+
+                document.getElementById('importJsonTextarea').value = '';
+                if (customColInput) customColInput.value = '';
+                await loadCollections();
+                await loadWordsTable();
+                await loadAllStats();
+                switchTab('collections');
+            } catch (err) {
+                console.error('Failed to batch import:', err);
+                alert('批量导入失败: ' + err.message);
+            }
+        }
+
+        async function exportAllJson() {
+            try {
+                const wordsRes = await fetchApi('/words?limit=1000');
+                const colsRes = await fetchApi('/collections');
+                const exportObj = {
+                    exportTime: new Date().toISOString(),
+                    collections: colsRes.collections || [],
+                    words: wordsRes.words || []
+                };
+
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, 2));
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.setAttribute("href", dataStr);
+                downloadAnchor.setAttribute("download", `ThaiNotes_Dictation_Export_${new Date().toISOString().slice(0, 10)}.json`);
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                downloadAnchor.remove();
+                showToast('已生成并下载 JSON 词库备份');
+            } catch (err) {
+                console.error('Failed to export JSON:', err);
+                alert('导出失败: ' + err.message);
+            }
+        }
+
+        // -------------------------------------------------------------
+        // API Live Tester & Copy
+        // -------------------------------------------------------------
+        function copyApiKey() {
+            navigator.clipboard.writeText(API_KEY);
+            showToast('API Key 已复制到剪贴板');
+        }
+
+        async function runApiTest() {
+            const endpoint = document.getElementById('apiTestEndpoint').value;
+            const outputEl = document.getElementById('apiTestOutput');
+            outputEl.innerText = '// 发送中...';
+            try {
+                const res = await fetchApi(endpoint);
+                outputEl.innerText = JSON.stringify(res, null, 2);
+            } catch (err) {
+                outputEl.innerText = '// 请求出错: ' + err.message;
+            }
+        }
+
+        // -------------------------------------------------------------
+        // Audio Playback Engine (Cloud TTS & Direct Voice)
+        // -------------------------------------------------------------
+        window.playAudioDirect = (text) => {
+            if (!text) return;
+            const url = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(text)}`;
+            new Audio(url).play().catch(err => console.error("Audio playback error:", err));
+        };
+
+        window.playSentenceVoice = (text, audioUrl) => {
+            if (audioUrl) {
+                new Audio(audioUrl).play().catch(err => {
+                    console.warn("Direct audio playback failed, falling back to TTS:", err);
+                    window.playAudioDirect(text);
+                });
+            } else {
+                window.playAudioDirect(text);
+            }
+        };
+
+        function speakThai(text) {
+            window.playAudioDirect(text);
+        }
+
+        function playWordVoice(wordId) {
+            const word = words.find(w => w.id === wordId);
+            if (!word) return;
+            window.playSentenceVoice(word.thaiWord, word.audioUrl);
+        }
+
+        function escapeJsString(str) {
+            return (str || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+
+        // -------------------------------------------------------------
+        // Toast Helper
+        // -------------------------------------------------------------
+        let toastTimeout = null;
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('toastNotification');
+            const messageEl = document.getElementById('toastMessage');
+            const iconEl = document.getElementById('toastIcon');
+
+            messageEl.innerText = msg;
+            if (type === 'error') {
+                iconEl.className = 'ph-fill ph-x-circle text-red-400 text-base';
+            } else if (type === 'warning') {
+                iconEl.className = 'ph-fill ph-warning text-amber-400 text-base';
+            } else {
+                iconEl.className = 'ph-fill ph-check-circle text-emerald-400 text-base';
+            }
+
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+                toast.classList.remove('opacity-100');
+            }, 2500);
+        }
+
+        function escapeHtml(str) {
+            return (str || '')
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>

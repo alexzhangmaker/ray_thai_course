@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语成语与核心熟语 - vCourse.ThaiNotes</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Serif+Thai:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Noto Sans SC', 'sans-serif'],
+                        thai: ['Noto Serif Thai', 'Outfit', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            200: '#a7f3d0',
+                            300: '#6ee7b7',
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --primary: #059669;
+            --primary-light: #ecfdf5;
+            --text-main: #0f172a;
+            --text-sub: #64748b;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc;
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .font-thai {
+            font-family: 'Noto Serif Thai', serif;
+        }
+
+        .glass-header {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .idiom-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .idiom-card:hover {
+            border-color: rgba(16, 185, 129, 0.45);
+            box-shadow: 0 12px 28px -4px rgba(16, 185, 129, 0.12);
+            transform: translateY(-3px);
+        }
+
+        .idiom-card.is-playing {
+            border-color: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3), 0 12px 28px -4px rgba(16, 185, 129, 0.15);
+        }
+
+        .audio-pulse {
+            animation: pulse-wave 1.2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-wave {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.18); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* 3D Flip Card for Flashcard Mode */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .flip-card-inner {
+            transition: transform 0.5s;
+            transform-style: preserve-3d;
+        }
+        .flip-card-inner.flipped {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+
+        /* Print styles */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+            .print-table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            .print-table th, .print-table td {
+                border: 1px solid #cbd5e1 !important;
+                padding: 8px 12px !important;
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Top Sticky Header -->
+    <header class="glass-header sticky top-0 z-30 px-4 sm:px-6 py-3.5 no-print">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
+            
+            <!-- Left Branding & Breadcrumbs -->
+            <div class="flex items-center gap-3">
+                <a href="/Pages/appPortal.html" class="p-2 rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition border border-slate-200 shadow-sm" title="返回系统主导航">
+                    <i class="ph-bold ph-arrow-left text-lg"></i>
+                </a>
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
+                        <i class="ph-bold ph-translate text-xl"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-lg font-bold tracking-tight text-slate-900 leading-none">泰语成语与核心熟语</h1>
+                            <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold border border-emerald-200">中泰对照 · 熟语库</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1 font-medium">常用熟语、成语对照、双语例句与泰语智能点击播音</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Controls: View Switcher, Audio Rate, Admin Link -->
+            <div class="flex items-center flex-wrap gap-2 sm:gap-3">
+                
+                <!-- View Mode Switcher Buttons -->
+                <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs font-medium text-slate-600">
+                    <button id="btnViewGrid" onclick="switchViewMode('grid')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-emerald-700 font-bold shadow-sm transition">
+                        <i class="ph-bold ph-squares-four"></i>
+                        <span>卡片网格</span>
+                    </button>
+                    <button id="btnViewTable" onclick="switchViewMode('table')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:text-slate-900 transition">
+                        <i class="ph-bold ph-table"></i>
+                        <span>表格对照</span>
+                    </button>
+                    <button id="btnViewFlashcard" onclick="switchViewMode('flashcard')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:text-slate-900 transition">
+                        <i class="ph-bold ph-cards"></i>
+                        <span>闪卡背诵</span>
+                    </button>
+                    <button id="btnViewAudioFlow" onclick="switchViewMode('audioflow')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:text-slate-900 transition">
+                        <i class="ph-bold ph-headphones"></i>
+                        <span>随身听播音</span>
+                    </button>
+                </div>
+
+                <!-- Speech Rate Setting -->
+                <div class="flex items-center gap-1 bg-white border border-slate-200 rounded-xl px-2 py-1 text-xs shadow-sm">
+                    <i class="ph-bold ph-speaker-high text-emerald-600"></i>
+                    <select id="audioSpeedSelect" onchange="changeAudioSpeed(this.value)" class="bg-transparent font-semibold text-slate-700 focus:outline-none cursor-pointer">
+                        <option value="0.75">0.75x 慢速</option>
+                        <option value="0.9" selected>0.9x 标准</option>
+                        <option value="1.0">1.0x 常速</option>
+                        <option value="1.15">1.15x 快速</option>
+                    </select>
+                </div>
+
+                <!-- Admin Link -->
+                <a href="/Pages/consoleIdioms.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-sm transition">
+                    <i class="ph-bold ph-gear"></i>
+                    <span>后台管理</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sub-Navbar: Search & Tags Filter -->
+    <div class="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 no-print">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            
+            <!-- Search Box -->
+            <div class="relative flex-1 max-w-md">
+                <i class="ph-bold ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-base"></i>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    oninput="handleSearch(this.value)"
+                    placeholder="搜索泰语熟语、中文释义、例句关键词..." 
+                    class="w-full pl-10 pr-9 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 transition"
+                >
+                <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    <i class="ph-bold ph-x text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Tags Filter Chips -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 custom-scrollbar text-xs">
+                <button onclick="filterTag('all')" data-tag="all" class="tag-chip active px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold shadow-sm whitespace-nowrap transition">
+                    全部 (<span id="countAll">0</span>)
+                </button>
+                <button onclick="filterTag('starred')" data-tag="starred" class="tag-chip px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium whitespace-nowrap transition flex items-center gap-1">
+                    <i class="ph-fill ph-star text-amber-500"></i>
+                    <span>已收藏 (<span id="countStarred">0</span>)</span>
+                </button>
+                <div id="dynamicTagsContainer" class="flex items-center gap-1.5">
+                    <!-- Dynamic tag buttons injected here -->
+                </div>
+            </div>
+
+            <!-- Print & Quick Stats -->
+            <div class="flex items-center gap-2 text-xs text-slate-500 shrink-0">
+                <button onclick="window.print()" class="p-2 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg border border-slate-200 transition" title="打印/导出为PDF">
+                    <i class="ph-bold ph-printer text-base"></i>
+                </button>
+                <div class="bg-slate-100 px-2.5 py-1.5 rounded-lg font-medium">
+                    展示: <span id="displayedCount" class="font-bold text-slate-900">0</span> / <span id="totalCount">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
+        
+        <!-- Loading State -->
+        <div id="loadingState" class="flex flex-col items-center justify-center py-20">
+            <div class="w-12 h-12 rounded-full border-4 border-emerald-200 border-t-emerald-600 animate-spin mb-4"></div>
+            <p class="text-sm font-semibold text-slate-600">正在载入泰语熟语库...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden flex-col items-center justify-center py-16 text-center">
+            <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
+                <i class="ph-bold ph-magnifying-glass text-3xl"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-800">未找到匹配的泰语熟语</h3>
+            <p class="text-xs text-slate-500 mt-1">请尝试更换搜索关键词或重置筛选标签</p>
+            <button onclick="resetFilters()" class="mt-4 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition">
+                重置所有筛选
+            </button>
+        </div>
+
+        <!-- VIEW 1: Cards Grid -->
+        <div id="viewGrid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            <!-- Cards populated dynamically -->
+        </div>
+
+        <!-- VIEW 2: Table List -->
+        <div id="viewTable" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left border-collapse print-table">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-wider">
+                            <th class="py-3.5 px-4 w-16 text-center">编号</th>
+                            <th class="py-3.5 px-5 w-1/4">泰语核心熟语 / 短语</th>
+                            <th class="py-3.5 px-5 w-1/4">中文成语 / 熟语</th>
+                            <th class="py-3.5 px-5">泰语例句 (原句) 与释义</th>
+                            <th class="py-3.5 px-4 w-24 text-center no-print">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-100 text-sm">
+                        <!-- Table rows populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- VIEW 3: Flashcard Practice Mode (翻卡背诵) -->
+        <div id="viewFlashcard" class="hidden flex flex-col items-center justify-center max-w-2xl mx-auto py-4">
+            
+            <!-- Mode switch & Controls -->
+            <div class="w-full flex items-center justify-between mb-4 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex items-center gap-2 text-xs font-medium text-slate-600">
+                    <span>测试方向:</span>
+                    <select id="flashcardModeSelect" onchange="resetFlashcards()" class="bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-800 font-bold focus:outline-none cursor-pointer">
+                        <option value="thai-to-cn">泰语 ➔ 中文</option>
+                        <option value="cn-to-thai">中文 ➔ 泰语</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="shuffleFlashcards()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1" title="随机打乱顺序">
+                        <i class="ph-bold ph-shuffle"></i>
+                        <span>打乱</span>
+                    </button>
+                    <span id="flashcardCounter" class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl">
+                        1 / 29
+                    </span>
+                </div>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mb-6">
+                <div id="flashcardProgressBar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 3%"></div>
+            </div>
+
+            <!-- 3D Flipping Flashcard Container -->
+            <div class="w-full h-96 perspective-1000 cursor-pointer select-none" onclick="toggleFlipCard()">
+                <div id="flipCardInner" class="flip-card-inner relative w-full h-full rounded-3xl shadow-xl border border-slate-200/80 bg-white">
+                    
+                    <!-- Front Face -->
+                    <div class="flip-card-front absolute inset-0 rounded-3xl p-8 flex flex-col justify-between bg-gradient-to-b from-white to-slate-50 border border-slate-100">
+                        <div class="flex items-center justify-between">
+                            <span id="fcFrontBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                #1 熟语卡
+                            </span>
+                            <span class="text-xs text-slate-400 font-medium flex items-center gap-1">
+                                <i class="ph-bold ph-arrows-clockwise"></i> 点击卡片翻面
+                            </span>
+                        </div>
+
+                        <div class="text-center my-auto py-6">
+                            <div id="fcFrontMainText" class="font-thai text-4xl sm:text-5xl font-bold text-slate-900 leading-snug tracking-wide">
+                                รัดเข็มขัด
+                            </div>
+                            <div id="fcFrontSubText" class="text-sm font-semibold text-slate-500 mt-3">
+                                点击卡片揭晓中文释义与例句
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs text-slate-400 pt-3 border-t border-slate-100">
+                            <span id="fcFrontHint">提示: 快捷键 空格 翻卡 / 左右键 切换</span>
+                            <button onclick="event.stopPropagation(); playCurrentFlashcardAudio();" class="p-2 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition" title="朗读发音">
+                                <i class="ph-bold ph-speaker-high text-base"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Back Face -->
+                    <div class="flip-card-back absolute inset-0 rounded-3xl p-8 flex flex-col justify-between bg-gradient-to-b from-emerald-50/40 via-white to-white border border-emerald-200">
+                        <div class="flex items-center justify-between">
+                            <span id="fcBackBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-600 text-white">
+                                答案揭晓
+                            </span>
+                            <button onclick="event.stopPropagation(); toggleStarCurrentFlashcard();" id="fcStarBtn" class="text-slate-400 hover:text-amber-500 p-1.5 transition">
+                                <i class="ph-bold ph-star text-lg"></i>
+                            </button>
+                        </div>
+
+                        <div class="my-auto py-2">
+                            <div class="text-xs font-bold uppercase tracking-wider text-emerald-600 mb-1">中文成语 / 熟语</div>
+                            <div id="fcBackChinese" class="text-2xl font-extrabold text-slate-900 mb-3">
+                                勒紧裤腰带（比喻节约开支）
+                            </div>
+
+                            <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-left mb-2">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xs font-bold text-slate-500">泰语原示例句</span>
+                                    <button onclick="event.stopPropagation(); playAudioDirect(currentFlashcard?.thaiExample);" class="p-1 text-emerald-600 hover:text-emerald-800 transition" title="朗读例句">
+                                        <i class="ph-bold ph-speaker-high text-sm"></i>
+                                    </button>
+                                </div>
+                                <div id="fcBackThaiSentence" class="font-thai text-base font-semibold text-emerald-950 leading-relaxed">
+                                    เศรษฐกิจย่ำแย่แบบนี้ ทุกคนต้องช่วยกันรัดเข็มขัด
+                                </div>
+                                <div id="fcBackTranslation" class="text-xs text-slate-600 mt-1">
+                                    经济如此低迷，大家都必须一起勒紧裤腰带过日子。
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+                            <span id="fcBackLiteral" class="text-slate-400 truncate max-w-[300px]"></span>
+                            <span class="text-emerald-700 font-semibold flex items-center gap-1">
+                                <i class="ph-bold ph-speaker-high"></i> 按 ↑ 重新发音
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Flashcard Navigation Buttons -->
+            <div class="w-full flex items-center justify-between mt-6 gap-3">
+                <button onclick="prevFlashcard()" class="flex-1 py-3 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-sm shadow-sm transition flex items-center justify-center gap-2 active:scale-98">
+                    <i class="ph-bold ph-arrow-left"></i>
+                    <span>上一张 (←)</span>
+                </button>
+                <button onclick="toggleFlipCard()" class="px-5 py-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-sm shadow-sm transition hover:bg-emerald-100 active:scale-98 flex items-center gap-1.5">
+                    <i class="ph-bold ph-arrows-clockwise"></i>
+                    <span>翻转 (Space)</span>
+                </button>
+                <button onclick="nextFlashcard()" class="flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-2 active:scale-98">
+                    <span>下一张 (→)</span>
+                    <i class="ph-bold ph-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- VIEW 4: Continuous Listening / Audio Flow Mode (随身听播音) -->
+        <div id="viewAudioFlow" class="hidden flex flex-col max-w-4xl mx-auto">
+            
+            <!-- Flow Player Hero Control Bar -->
+            <div class="bg-gradient-to-tr from-slate-900 via-slate-800 to-emerald-950 rounded-3xl p-6 text-white shadow-xl mb-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-700">
+                    <div>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            随身听沉浸模式
+                        </span>
+                        <h2 id="playerCurrentTitle" class="text-2xl font-extrabold text-white mt-2 font-thai flex items-center gap-3">
+                            <span>点击开始连续播音</span>
+                        </h2>
+                        <p id="playerCurrentMeaning" class="text-xs text-slate-300 mt-1">
+                            自动循环顺序播放泰语熟语发音与对应例句
+                        </p>
+                    </div>
+
+                    <!-- Flow Playback Controls -->
+                    <div class="flex items-center gap-3">
+                        <button onclick="playPrevFlowItem()" class="p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white transition active:scale-95" title="上一个">
+                            <i class="ph-bold ph-skip-back text-lg"></i>
+                        </button>
+                        <button id="flowPlayPauseBtn" onclick="toggleFlowPlay()" class="w-14 h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center transition shadow-lg shadow-emerald-500/30 active:scale-95">
+                            <i id="flowPlayPauseIcon" class="ph-fill ph-play text-2xl ml-0.5"></i>
+                        </button>
+                        <button onclick="playNextFlowItem()" class="p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white transition active:scale-95" title="下一个">
+                            <i class="ph-bold ph-skip-forward text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Live Sentence Highlight Box -->
+                <div class="mt-4 bg-slate-800/80 rounded-2xl p-4 border border-slate-700/80">
+                    <div class="text-[11px] font-semibold uppercase tracking-wider text-emerald-400 mb-1 flex items-center justify-between">
+                        <span>当前播放原句</span>
+                        <span id="flowProgressText" class="text-slate-400">0 / 0</span>
+                    </div>
+                    <div id="playerCurrentSentence" class="font-thai text-lg sm:text-xl font-bold text-white leading-relaxed">
+                        —
+                    </div>
+                    <div id="playerCurrentTranslation" class="text-xs text-slate-300 mt-1.5">
+                        —
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flow Items Playlist -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">播放列表清单</span>
+                    <span class="text-xs text-slate-500">点击任意条目即可从该条目开始随身听</span>
+                </div>
+                <div id="flowPlaylistContainer" class="divide-y divide-slate-100 max-h-[500px] overflow-y-auto custom-scrollbar">
+                    <!-- Playlist rows injected dynamically -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Detail Modal -->
+    <div id="detailModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm no-print">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 flex flex-col max-h-[90vh] overflow-y-auto custom-scrollbar animate-scale-in">
+            
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <span id="modalOrderBadge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                        #1
+                    </span>
+                    <span id="modalTags" class="text-xs text-slate-500 font-medium"></span>
+                </div>
+                <button onclick="closeModal()" class="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <div class="my-4">
+                <div class="flex items-center justify-between">
+                    <h2 id="modalThaiPhrase" class="font-thai text-3xl font-extrabold text-slate-900">
+                        รัดเข็มขัด
+                    </h2>
+                    <button id="modalPlayPhraseBtn" class="p-2.5 rounded-2xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition" title="朗读熟语发音">
+                        <i class="ph-bold ph-speaker-high text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="mt-2 text-lg font-bold text-emerald-700" id="modalChineseMeaning">
+                    勒紧裤腰带（比喻节约开支）
+                </div>
+
+                <div id="modalLiteralBox" class="mt-3 p-3 rounded-xl bg-amber-50/60 border border-amber-200/60 text-xs text-amber-900">
+                    <span class="font-bold text-amber-800">【字面直译】：</span>
+                    <span id="modalLiteralMeaning"></span>
+                </div>
+
+                <!-- Example sentence card -->
+                <div class="mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">泰语原句例句</span>
+                        <button id="modalPlaySentenceBtn" class="flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-800 transition">
+                            <i class="ph-bold ph-speaker-high"></i>
+                            <span>朗读原句</span>
+                        </button>
+                    </div>
+                    <div id="modalThaiExample" class="font-thai text-base font-semibold text-slate-800 leading-relaxed"></div>
+                    <div id="modalExampleTrans" class="text-xs text-slate-500 mt-2 font-medium"></div>
+                </div>
+
+                <!-- Notes / Culture context -->
+                <div id="modalNotesBox" class="mt-4 p-3.5 rounded-2xl bg-slate-100/70 border border-slate-200 text-xs text-slate-600">
+                    <span class="font-bold text-slate-800">【文化背景与语用指南】：</span>
+                    <span id="modalNotesText"></span>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                <button onclick="copyModalContent()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5">
+                    <i class="ph-bold ph-copy"></i>
+                    <span>复制文本</span>
+                </button>
+                <button onclick="closeModal()" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Audio Status Pill Indicator -->
+    <div id="floatingAudioPill" class="hidden fixed bottom-6 right-6 z-40 bg-slate-900 text-white px-4 py-2.5 rounded-full shadow-2xl border border-slate-700 flex items-center gap-3 animate-slide-up no-print">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+        <span id="floatingAudioText" class="text-xs font-semibold max-w-[200px] truncate">正在播音...</span>
+        <button onclick="stopAudio()" class="text-slate-400 hover:text-white transition text-xs">
+            <i class="ph-bold ph-x"></i>
+        </button>
+    </div>
+
+    <script>
+        // ==========================================
+        // STATE MANAGEMENT
+        // ==========================================
+        let allIdioms = [];
+        let filteredIdioms = [];
+        let activeTag = 'all';
+        let currentSearch = '';
+        let currentViewMode = 'grid';
+        let starredIds = new Set(JSON.parse(localStorage.getItem('starred_idioms') || '[]'));
+        let currentAudio = null;
+        let audioSpeed = 0.9;
+
+        // Flashcard state
+        let flashcardIndex = 0;
+        let isCardFlipped = false;
+        let flashcardsList = [];
+
+        // Flow Audio state
+        let isFlowPlaying = false;
+        let flowIndex = 0;
+        let flowTimeout = null;
+
+        // ==========================================
+        // AUDIO ENGINE
+        // ==========================================
+        window.playAudioDirect = (text) => {
+            if (!text) return;
+            const cleanText = text.replace(/“|”/g, '').trim();
+            if (!cleanText) return;
+
+            showAudioPill(cleanText);
+
+            if (currentAudio) {
+                try {
+                    currentAudio.pause();
+                    currentAudio.currentTime = 0;
+                } catch(e) {}
+            }
+
+            const url = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(cleanText)}`;
+            currentAudio = new Audio(url);
+            currentAudio.playbackRate = audioSpeed;
+
+            currentAudio.play().then(() => {
+                currentAudio.onended = () => {
+                    hideAudioPill();
+                };
+            }).catch(err => {
+                console.warn("Direct Cloud Audio failed, fallback to Web Speech API:", err);
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utter = new SpeechSynthesisUtterance(cleanText);
+                    utter.lang = 'th-TH';
+                    utter.rate = audioSpeed;
+                    utter.onend = () => hideAudioPill();
+                    utter.onerror = () => hideAudioPill();
+                    window.speechSynthesis.speak(utter);
+                } else {
+                    hideAudioPill();
+                }
+            });
+        };
+
+        function stopAudio() {
+            if (currentAudio) {
+                try { currentAudio.pause(); } catch(e){}
+                currentAudio = null;
+            }
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            hideAudioPill();
+            if (isFlowPlaying) {
+                toggleFlowPlay();
+            }
+        }
+
+        function showAudioPill(text) {
+            const pill = document.getElementById('floatingAudioPill');
+            const txt = document.getElementById('floatingAudioText');
+            if (pill && txt) {
+                txt.textContent = `朗读中: ${text}`;
+                pill.classList.remove('hidden');
+            }
+        }
+
+        function hideAudioPill() {
+            const pill = document.getElementById('floatingAudioPill');
+            if (pill) pill.classList.add('hidden');
+        }
+
+        function changeAudioSpeed(val) {
+            audioSpeed = parseFloat(val) || 0.9;
+            if (currentAudio) {
+                currentAudio.playbackRate = audioSpeed;
+            }
+        }
+
+        // ==========================================
+        // DATA FETCHING & INITIALIZATION
+        // ==========================================
+        async function fetchIdioms() {
+            const loading = document.getElementById('loadingState');
+            loading.classList.remove('hidden');
+
+            try {
+                const res = await fetch('/api/idioms');
+                if (!res.ok) throw new Error('网络请求失败');
+                allIdioms = await res.json();
+                
+                // Sort by sort_order
+                allIdioms.sort((a, b) => (a.sortOrder || a.order || 0) - (b.sortOrder || b.order || 0));
+                
+                renderTags();
+                applyFilters();
+            } catch (err) {
+                console.error('Failed to load idioms:', err);
+                alert('载入成语熟语数据失败，请确认后台服务已正常运行。');
+            } finally {
+                loading.classList.add('hidden');
+            }
+        }
+
+        function renderTags() {
+            const tagSet = new Set();
+            allIdioms.forEach(item => {
+                if (item.tags) {
+                    item.tags.split(',').map(t => t.trim()).filter(Boolean).forEach(t => tagSet.add(t));
+                }
+            });
+
+            const container = document.getElementById('dynamicTagsContainer');
+            container.innerHTML = '';
+            
+            tagSet.forEach(tag => {
+                const count = allIdioms.filter(it => it.tags && it.tags.includes(tag)).length;
+                const btn = document.createElement('button');
+                btn.className = `tag-chip px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium whitespace-nowrap transition`;
+                btn.setAttribute('data-tag', tag);
+                btn.onclick = () => filterTag(tag);
+                btn.innerHTML = `${tag} (${count})`;
+                container.appendChild(btn);
+            });
+
+            document.getElementById('countAll').textContent = allIdioms.length;
+            document.getElementById('countStarred').textContent = starredIds.size;
+            document.getElementById('totalCount').textContent = allIdioms.length;
+        }
+
+        // ==========================================
+        // FILTERING & SEARCH
+        // ==========================================
+        function applyFilters() {
+            filteredIdioms = allIdioms.filter(item => {
+                // Tag filter
+                if (activeTag === 'starred') {
+                    if (!starredIds.has(item.id)) return false;
+                } else if (activeTag !== 'all') {
+                    if (!item.tags || !item.tags.includes(activeTag)) return false;
+                }
+
+                // Search query
+                if (currentSearch) {
+                    const q = currentSearch.toLowerCase();
+                    const matchThai = (item.thaiPhrase || '').toLowerCase().includes(q);
+                    const matchCn = (item.chineseMeaning || '').toLowerCase().includes(q);
+                    const matchEx = (item.thaiExample || '').toLowerCase().includes(q);
+                    const matchNotes = (item.notes || '').toLowerCase().includes(q);
+                    const matchLiteral = (item.literalMeaning || '').toLowerCase().includes(q);
+                    if (!matchThai && !matchCn && !matchEx && !matchNotes && !matchLiteral) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            document.getElementById('displayedCount').textContent = filteredIdioms.length;
+
+            const emptyState = document.getElementById('emptyState');
+            if (filteredIdioms.length === 0) {
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+            } else {
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+            }
+
+            renderCurrentView();
+        }
+
+        function filterTag(tag) {
+            activeTag = tag;
+            document.querySelectorAll('.tag-chip').forEach(btn => {
+                if (btn.getAttribute('data-tag') === tag) {
+                    btn.className = 'tag-chip active px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold shadow-sm whitespace-nowrap transition';
+                } else {
+                    btn.className = 'tag-chip px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium whitespace-nowrap transition';
+                }
+            });
+            applyFilters();
+        }
+
+        function handleSearch(val) {
+            currentSearch = val.trim();
+            const clearBtn = document.getElementById('clearSearchBtn');
+            if (currentSearch) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+            applyFilters();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            handleSearch('');
+        }
+
+        function resetFilters() {
+            clearSearch();
+            filterTag('all');
+        }
+
+        // ==========================================
+        // STAR / FAVORITE MANAGEMENT
+        // ==========================================
+        function toggleStar(id) {
+            if (starredIds.has(id)) {
+                starredIds.delete(id);
+            } else {
+                starredIds.add(id);
+            }
+            localStorage.setItem('starred_idioms', JSON.stringify(Array.from(starredIds)));
+            document.getElementById('countStarred').textContent = starredIds.size;
+            renderCurrentView();
+        }
+
+        // ==========================================
+        // VIEW MODE SWITCHING
+        // ==========================================
+        function switchViewMode(mode) {
+            currentViewMode = mode;
+            
+            const btnGrid = document.getElementById('btnViewGrid');
+            const btnTable = document.getElementById('btnViewTable');
+            const btnFlashcard = document.getElementById('btnViewFlashcard');
+            const btnAudioFlow = document.getElementById('btnViewAudioFlow');
+
+            [btnGrid, btnTable, btnFlashcard, btnAudioFlow].forEach(b => {
+                b.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:text-slate-900 transition';
+            });
+
+            document.getElementById('viewGrid').classList.add('hidden');
+            document.getElementById('viewTable').classList.add('hidden');
+            document.getElementById('viewFlashcard').classList.add('hidden');
+            document.getElementById('viewAudioFlow').classList.add('hidden');
+
+            if (mode === 'grid') {
+                btnGrid.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-emerald-700 font-bold shadow-sm transition';
+                document.getElementById('viewGrid').classList.remove('hidden');
+            } else if (mode === 'table') {
+                btnTable.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-emerald-700 font-bold shadow-sm transition';
+                document.getElementById('viewTable').classList.remove('hidden');
+            } else if (mode === 'flashcard') {
+                btnFlashcard.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-emerald-700 font-bold shadow-sm transition';
+                document.getElementById('viewFlashcard').classList.remove('hidden');
+                resetFlashcards();
+            } else if (mode === 'audioflow') {
+                btnAudioFlow.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-emerald-700 font-bold shadow-sm transition';
+                document.getElementById('viewAudioFlow').classList.remove('hidden');
+                initFlowAudioPlaylist();
+            }
+
+            renderCurrentView();
+        }
+
+        function renderCurrentView() {
+            if (currentViewMode === 'grid') {
+                renderGridCards();
+            } else if (currentViewMode === 'table') {
+                renderTableRows();
+            } else if (currentViewMode === 'flashcard') {
+                updateFlashcardDisplay();
+            } else if (currentViewMode === 'audioflow') {
+                renderFlowPlaylist();
+            }
+        }
+
+        // ==========================================
+        // RENDER VIEW 1: GRID CARDS
+        // ==========================================
+        function renderGridCards() {
+            const container = document.getElementById('viewGrid');
+            container.innerHTML = '';
+
+            filteredIdioms.forEach(item => {
+                const isStarred = starredIds.has(item.id);
+                const tagsList = (item.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+
+                // Highlight idiom in example sentence if found
+                let sentenceHtml = escapeHtml(item.thaiExample || '');
+                if (item.thaiPhrase && sentenceHtml.includes(item.thaiPhrase)) {
+                    sentenceHtml = sentenceHtml.replace(
+                        new RegExp(escapeRegex(item.thaiPhrase), 'g'),
+                        `<span class="text-emerald-700 font-bold underline decoration-emerald-400 underline-offset-4">${item.thaiPhrase}</span>`
+                    );
+                }
+
+                const card = document.createElement('div');
+                card.className = 'idiom-card p-5 flex flex-col justify-between';
+                card.id = `card-${item.id}`;
+
+                card.innerHTML = `
+                    <div>
+                        <!-- Card Top meta -->
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-1.5">
+                                <span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700">
+                                    #${item.sortOrder || item.order || ''}
+                                </span>
+                                ${tagsList.map(t => `
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                                        ${t}
+                                    </span>
+                                `).join('')}
+                            </div>
+                            <button onclick="toggleStar('${item.id}')" class="text-slate-300 hover:text-amber-500 p-1 transition" title="收藏此熟语">
+                                <i class="${isStarred ? 'ph-fill ph-star text-amber-500 text-base' : 'ph-bold ph-star text-base'}"></i>
+                            </button>
+                        </div>
+
+                        <!-- Thai Core Phrase Header -->
+                        <div class="flex items-start justify-between gap-2 group cursor-pointer" onclick="playAudioDirect('${escapeSingleQuotes(item.thaiPhrase)}')">
+                            <h3 class="font-thai text-2xl font-bold text-slate-900 group-hover:text-emerald-600 transition leading-snug tracking-tight">
+                                ${escapeHtml(item.thaiPhrase)}
+                            </h3>
+                            <button onclick="event.stopPropagation(); playAudioDirect('${escapeSingleQuotes(item.thaiPhrase)}')" class="p-1.5 rounded-xl bg-slate-100 group-hover:bg-emerald-100 text-slate-500 group-hover:text-emerald-700 shrink-0 transition" title="点击朗读熟语发音">
+                                <i class="ph-bold ph-speaker-high text-base"></i>
+                            </button>
+                        </div>
+
+                        <!-- Chinese Meaning -->
+                        <div class="mt-2 text-sm font-bold text-emerald-800 leading-snug">
+                            ${escapeHtml(item.chineseMeaning)}
+                        </div>
+
+                        <!-- Literal Meaning if available -->
+                        ${item.literalMeaning ? `
+                            <div class="mt-2 text-[11px] text-amber-800 bg-amber-50/70 px-2.5 py-1 rounded-lg border border-amber-200/50">
+                                <span class="font-semibold">直译:</span> ${escapeHtml(item.literalMeaning)}
+                            </div>
+                        ` : ''}
+
+                        <!-- Thai Example Sentence Box -->
+                        <div class="mt-3.5 p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+                            <div class="flex items-center justify-between text-[11px] font-bold text-slate-500 mb-1">
+                                <span>泰语原句例句</span>
+                                <button onclick="playAudioDirect('${escapeSingleQuotes(item.thaiExample || '')}')" class="text-slate-400 hover:text-emerald-600 flex items-center gap-1 transition" title="朗读例句发音">
+                                    <i class="ph-bold ph-speaker-high text-xs"></i>
+                                    <span>播音</span>
+                                </button>
+                            </div>
+                            <div class="font-thai text-sm text-slate-800 leading-relaxed font-medium cursor-pointer hover:text-emerald-900 transition" onclick="playAudioDirect('${escapeSingleQuotes(item.thaiExample || '')}')">
+                                “ ${sentenceHtml} ”
+                            </div>
+                            ${item.exampleTranslation ? `
+                                <div class="text-[11px] text-slate-500 mt-1.5 leading-normal">
+                                    ${escapeHtml(item.exampleTranslation)}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Bottom Action Bar -->
+                    <div class="pt-3.5 mt-3.5 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <button onclick="openModal('${item.id}')" class="text-emerald-600 hover:text-emerald-800 font-bold flex items-center gap-1 transition">
+                            <i class="ph-bold ph-info"></i>
+                            <span>查看详解</span>
+                        </button>
+                        <div class="flex items-center gap-1">
+                            <button onclick="playAudioDirect('${escapeSingleQuotes(item.thaiPhrase)}')" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold transition" title="朗读熟语">
+                                熟语音
+                            </button>
+                            <button onclick="playAudioDirect('${escapeSingleQuotes(item.thaiExample || '')}')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition" title="朗读整句">
+                                例句音
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // ==========================================
+        // RENDER VIEW 2: TABLE LIST
+        // ==========================================
+        function renderTableRows() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            filteredIdioms.forEach((item, idx) => {
+                const isStarred = starredIds.has(item.id);
+                const tr = document.createElement('tr');
+                tr.className = `${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'} hover:bg-emerald-50/40 transition`;
+                
+                tr.innerHTML = `
+                    <td class="py-3.5 px-4 text-center font-bold text-slate-500 text-xs">
+                        ${item.sortOrder || item.order || (idx + 1)}
+                    </td>
+                    <td class="py-3.5 px-5">
+                        <div class="flex items-center gap-2">
+                            <span class="font-thai text-lg font-bold text-slate-900 cursor-pointer hover:text-emerald-600 transition font-thai-clickable" onclick="playAudioDirect('${escapeSingleQuotes(item.thaiPhrase)}')">
+                                ${escapeHtml(item.thaiPhrase)}
+                            </span>
+                            <button onclick="playAudioDirect('${escapeSingleQuotes(item.thaiPhrase)}')" class="p-1 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition" title="朗读熟语发音">
+                                <i class="ph-bold ph-speaker-high text-sm"></i>
+                            </button>
+                        </div>
+                        ${item.literalMeaning ? `<div class="text-[11px] text-amber-700 mt-0.5">直译: ${escapeHtml(item.literalMeaning)}</div>` : ''}
+                    </td>
+                    <td class="py-3.5 px-5 font-bold text-slate-800">
+                        ${escapeHtml(item.chineseMeaning)}
+                    </td>
+                    <td class="py-3.5 px-5">
+                        <div class="flex items-start gap-2">
+                            <button onclick="playAudioDirect('${escapeSingleQuotes(item.thaiExample || '')}')" class="p-1 mt-0.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 shrink-0 transition" title="朗读例句发音">
+                                <i class="ph-bold ph-speaker-high text-sm"></i>
+                            </button>
+                            <div>
+                                <div class="font-thai text-sm font-medium text-slate-800 cursor-pointer hover:text-emerald-800 transition" onclick="playAudioDirect('${escapeSingleQuotes(item.thaiExample || '')}')">
+                                    ${escapeHtml(item.thaiExample || '')}
+                                </div>
+                                ${item.exampleTranslation ? `<div class="text-xs text-slate-500 mt-0.5">${escapeHtml(item.exampleTranslation)}</div>` : ''}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3.5 px-4 text-center no-print">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="toggleStar('${item.id}')" class="p-1 text-slate-300 hover:text-amber-500 transition" title="收藏">
+                                <i class="${isStarred ? 'ph-fill ph-star text-amber-500' : 'ph-bold ph-star'}"></i>
+                            </button>
+                            <button onclick="openModal('${item.id}')" class="p-1 text-slate-400 hover:text-emerald-600 transition" title="详情">
+                                <i class="ph-bold ph-eye"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ==========================================
+        // RENDER VIEW 3: FLASHCARD MODE
+        // ==========================================
+        function resetFlashcards() {
+            flashcardsList = [...filteredIdioms];
+            if (flashcardsList.length === 0) flashcardsList = [...allIdioms];
+            flashcardIndex = 0;
+            isCardFlipped = false;
+            document.getElementById('flipCardInner').classList.remove('flipped');
+            updateFlashcardDisplay();
+        }
+
+        function shuffleFlashcards() {
+            for (let i = flashcardsList.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [flashcardsList[i], flashcardsList[j]] = [flashcardsList[j], flashcardsList[i]];
+            }
+            flashcardIndex = 0;
+            isCardFlipped = false;
+            document.getElementById('flipCardInner').classList.remove('flipped');
+            updateFlashcardDisplay();
+        }
+
+        function toggleFlipCard() {
+            isCardFlipped = !isCardFlipped;
+            const inner = document.getElementById('flipCardInner');
+            if (isCardFlipped) {
+                inner.classList.add('flipped');
+            } else {
+                inner.classList.remove('flipped');
+            }
+        }
+
+        function nextFlashcard() {
+            if (flashcardIndex < flashcardsList.length - 1) {
+                flashcardIndex++;
+            } else {
+                flashcardIndex = 0;
+            }
+            isCardFlipped = false;
+            document.getElementById('flipCardInner').classList.remove('flipped');
+            updateFlashcardDisplay();
+        }
+
+        function prevFlashcard() {
+            if (flashcardIndex > 0) {
+                flashcardIndex--;
+            } else {
+                flashcardIndex = flashcardsList.length - 1;
+            }
+            isCardFlipped = false;
+            document.getElementById('flipCardInner').classList.remove('flipped');
+            updateFlashcardDisplay();
+        }
+
+        function updateFlashcardDisplay() {
+            if (!flashcardsList || flashcardsList.length === 0) return;
+            const item = flashcardsList[flashcardIndex];
+            if (!item) return;
+
+            const mode = document.getElementById('flashcardModeSelect')?.value || 'thai-to-cn';
+            const counter = document.getElementById('flashcardCounter');
+            const progress = document.getElementById('flashcardProgressBar');
+
+            counter.textContent = `${flashcardIndex + 1} / ${flashcardsList.length}`;
+            progress.style.width = `${((flashcardIndex + 1) / flashcardsList.length) * 100}%`;
+
+            const isStarred = starredIds.has(item.id);
+            const starBtn = document.getElementById('fcStarBtn');
+            if (starBtn) {
+                starBtn.innerHTML = `<i class="${isStarred ? 'ph-fill ph-star text-amber-500' : 'ph-bold ph-star text-slate-400'} text-xl"></i>`;
+            }
+
+            document.getElementById('fcFrontBadge').textContent = `#${item.sortOrder || item.order || (flashcardIndex + 1)} 熟语背诵卡`;
+
+            if (mode === 'thai-to-cn') {
+                document.getElementById('fcFrontMainText').textContent = item.thaiPhrase;
+                document.getElementById('fcFrontSubText').textContent = '点击卡片翻面揭晓中文释义与原句';
+                document.getElementById('fcBackChinese').textContent = item.chineseMeaning;
+            } else {
+                document.getElementById('fcFrontMainText').textContent = item.chineseMeaning;
+                document.getElementById('fcFrontSubText').textContent = '点击卡片翻面揭晓泰语熟语原词与例句';
+                document.getElementById('fcBackChinese').textContent = item.thaiPhrase;
+            }
+
+            document.getElementById('fcBackThaiSentence').textContent = item.thaiExample || '';
+            document.getElementById('fcBackTranslation').textContent = item.exampleTranslation || '';
+            document.getElementById('fcBackLiteral').textContent = item.literalMeaning ? `直译: ${item.literalMeaning}` : '';
+        }
+
+        function playCurrentFlashcardAudio() {
+            const item = flashcardsList[flashcardIndex];
+            if (item) {
+                playAudioDirect(item.thaiPhrase);
+            }
+        }
+
+        function toggleStarCurrentFlashcard() {
+            const item = flashcardsList[flashcardIndex];
+            if (item) {
+                toggleStar(item.id);
+                updateFlashcardDisplay();
+            }
+        }
+
+        // ==========================================
+        // RENDER VIEW 4: FLOW AUDIO / PLAYLIST MODE
+        // ==========================================
+        function initFlowAudioPlaylist() {
+            flowIndex = 0;
+            renderFlowPlaylist();
+            updateFlowPlayerHero();
+        }
+
+        function renderFlowPlaylist() {
+            const container = document.getElementById('flowPlaylistContainer');
+            container.innerHTML = '';
+
+            filteredIdioms.forEach((item, idx) => {
+                const isActive = (idx === flowIndex);
+                const row = document.createElement('div');
+                row.className = `p-3.5 flex items-center justify-between cursor-pointer transition ${isActive ? 'bg-emerald-50 text-emerald-950 font-bold border-l-4 border-emerald-600' : 'hover:bg-slate-50 text-slate-800'}`;
+                row.onclick = () => {
+                    flowIndex = idx;
+                    renderFlowPlaylist();
+                    updateFlowPlayerHero();
+                    if (isFlowPlaying) {
+                        playCurrentFlowItem();
+                    }
+                };
+
+                row.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-7 h-7 rounded-full flex items-center justify-center text-xs ${isActive ? 'bg-emerald-600 text-white font-bold' : 'bg-slate-100 text-slate-500'}">
+                            ${item.sortOrder || item.order || (idx + 1)}
+                        </span>
+                        <div>
+                            <div class="font-thai text-base leading-snug">${escapeHtml(item.thaiPhrase)}</div>
+                            <div class="text-xs text-slate-500 font-normal mt-0.5">${escapeHtml(item.chineseMeaning)}</div>
+                        </div>
+                    </div>
+                    <button onclick="event.stopPropagation(); playAudioDirect('${escapeSingleQuotes(item.thaiPhrase)}')" class="p-2 rounded-xl text-slate-400 hover:text-emerald-600 transition" title="单曲播放">
+                        <i class="ph-bold ph-speaker-high text-base"></i>
+                    </button>
+                `;
+                container.appendChild(row);
+            });
+
+            document.getElementById('flowProgressText').textContent = `${flowIndex + 1} / ${filteredIdioms.length}`;
+        }
+
+        function updateFlowPlayerHero() {
+            if (!filteredIdioms || filteredIdioms.length === 0) return;
+            const item = filteredIdioms[flowIndex];
+            if (!item) return;
+
+            document.getElementById('playerCurrentTitle').innerHTML = `
+                <span>${escapeHtml(item.thaiPhrase)}</span>
+                <span class="text-sm font-normal text-emerald-300">(${escapeHtml(item.chineseMeaning)})</span>
+            `;
+            document.getElementById('playerCurrentMeaning').textContent = item.literalMeaning ? `【直译】：${item.literalMeaning}` : (item.notes || '');
+            document.getElementById('playerCurrentSentence').textContent = item.thaiExample ? `“ ${item.thaiExample} ”` : '';
+            document.getElementById('playerCurrentTranslation').textContent = item.exampleTranslation || '';
+            document.getElementById('flowProgressText').textContent = `${flowIndex + 1} / ${filteredIdioms.length}`;
+        }
+
+        function toggleFlowPlay() {
+            isFlowPlaying = !isFlowPlaying;
+            const btnIcon = document.getElementById('flowPlayPauseIcon');
+            if (isFlowPlaying) {
+                btnIcon.className = 'ph-fill ph-pause text-2xl';
+                playCurrentFlowItem();
+            } else {
+                btnIcon.className = 'ph-fill ph-play text-2xl ml-0.5';
+                if (flowTimeout) clearTimeout(flowTimeout);
+                if (currentAudio) currentAudio.pause();
+            }
+        }
+
+        function playCurrentFlowItem() {
+            if (!isFlowPlaying || !filteredIdioms[flowIndex]) return;
+            const item = filteredIdioms[flowIndex];
+
+            updateFlowPlayerHero();
+            renderFlowPlaylist();
+
+            // 1. Play core idiom
+            playAudioDirect(item.thaiPhrase);
+
+            // 2. Play example sentence after pause, then advance to next
+            if (flowTimeout) clearTimeout(flowTimeout);
+            flowTimeout = setTimeout(() => {
+                if (!isFlowPlaying) return;
+                if (item.thaiExample) {
+                    playAudioDirect(item.thaiExample);
+                    flowTimeout = setTimeout(() => {
+                        if (!isFlowPlaying) return;
+                        playNextFlowItem();
+                    }, 4500);
+                } else {
+                    playNextFlowItem();
+                }
+            }, 2500);
+        }
+
+        function playNextFlowItem() {
+            if (flowIndex < filteredIdioms.length - 1) {
+                flowIndex++;
+            } else {
+                flowIndex = 0;
+            }
+            if (isFlowPlaying) {
+                playCurrentFlowItem();
+            } else {
+                updateFlowPlayerHero();
+                renderFlowPlaylist();
+            }
+        }
+
+        function playPrevFlowItem() {
+            if (flowIndex > 0) {
+                flowIndex--;
+            } else {
+                flowIndex = filteredIdioms.length - 1;
+            }
+            if (isFlowPlaying) {
+                playCurrentFlowItem();
+            } else {
+                updateFlowPlayerHero();
+                renderFlowPlaylist();
+            }
+        }
+
+        // ==========================================
+        // DETAIL MODAL
+        // ==========================================
+        let currentModalItem = null;
+
+        function openModal(id) {
+            const item = allIdioms.find(it => it.id === id);
+            if (!item) return;
+            currentModalItem = item;
+
+            document.getElementById('modalOrderBadge').textContent = `#${item.sortOrder || item.order || ''}`;
+            document.getElementById('modalTags').textContent = item.tags ? `标签: ${item.tags}` : '';
+            document.getElementById('modalThaiPhrase').textContent = item.thaiPhrase;
+            document.getElementById('modalChineseMeaning').textContent = item.chineseMeaning;
+
+            const litBox = document.getElementById('modalLiteralBox');
+            if (item.literalMeaning) {
+                litBox.classList.remove('hidden');
+                document.getElementById('modalLiteralMeaning').textContent = item.literalMeaning;
+            } else {
+                litBox.classList.add('hidden');
+            }
+
+            document.getElementById('modalThaiExample').textContent = item.thaiExample || '暂比例句';
+            document.getElementById('modalExampleTrans').textContent = item.exampleTranslation || '';
+
+            const notesBox = document.getElementById('modalNotesBox');
+            if (item.notes) {
+                notesBox.classList.remove('hidden');
+                document.getElementById('modalNotesText').textContent = item.notes;
+            } else {
+                notesBox.classList.add('hidden');
+            }
+
+            document.getElementById('modalPlayPhraseBtn').onclick = () => playAudioDirect(item.thaiPhrase);
+            document.getElementById('modalPlaySentenceBtn').onclick = () => playAudioDirect(item.thaiExample || '');
+
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+            currentModalItem = null;
+        }
+
+        function copyModalContent() {
+            if (!currentModalItem) return;
+            const text = `${currentModalItem.thaiPhrase} - ${currentModalItem.chineseMeaning}\n例句: ${currentModalItem.thaiExample || ''}\n翻译: ${currentModalItem.exampleTranslation || ''}`;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('已成功复制熟语及例句到剪贴板！');
+            });
+        }
+
+        // ==========================================
+        // KEYBOARD SHORTCUTS
+        // ==========================================
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                return;
+            }
+
+            if (currentViewMode === 'flashcard') {
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    toggleFlipCard();
+                } else if (e.code === 'ArrowRight') {
+                    e.preventDefault();
+                    nextFlashcard();
+                } else if (e.code === 'ArrowLeft') {
+                    e.preventDefault();
+                    prevFlashcard();
+                } else if (e.code === 'ArrowUp') {
+                    e.preventDefault();
+                    playCurrentFlashcardAudio();
+                } else if (e.code === 'ArrowDown') {
+                    e.preventDefault();
+                    toggleStarCurrentFlashcard();
+                }
+            } else if (e.code === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // ==========================================
+        // HELPERS
+        // ==========================================
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function escapeSingleQuotes(str) {
+            if (!str) return '';
+            return str.replace(/'/g, "\\'").replace(/\n/g, ' ');
+        }
+
+        function escapeRegex(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // Start
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchIdioms();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+BEServices/node_modules/
+
+# Logs
+*.log
+logs/
+
+# OS metadata
+.DS_Store
+._*
+Thumbs.db
+
+# Temp / Scratch captures
+*.tmp
+*.temp
+scratch/*.txt

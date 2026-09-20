@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语学习系统导航入口 - vCourse.ThaiNotes</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --bg-color: #080911;
+            --card-bg: rgba(20, 22, 45, 0.45);
+            --card-border: rgba(255, 255, 255, 0.06);
+            --card-border-hover: rgba(99, 102, 241, 0.35);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --accent-glow: rgba(99, 102, 241, 0.15);
+            --font-sans: 'Outfit', 'Noto Sans SC', 'Sarabun', sans-serif;
+        }
+
+        /* Reset & Base Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 50% 0%, #161838 0%, #080911 70%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+            line-height: 1.5;
+        }
+
+        /* Glowing Decorative Blobs */
+        .glow-blobs {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(130px);
+            opacity: 0.12;
+            animation: float 25s infinite alternate ease-in-out;
+        }
+
+        .blob-1 {
+            width: 500px;
+            height: 500px;
+            background: #6366f1;
+            top: -10%;
+            left: -10%;
+        }
+
+        .blob-2 {
+            width: 600px;
+            height: 600px;
+            background: #d946ef;
+            bottom: 5%;
+            right: -10%;
+            animation-delay: -7s;
+        }
+
+        .blob-3 {
+            width: 400px;
+            height: 400px;
+            background: #06b6d4;
+            top: 40%;
+            left: 45%;
+            animation-delay: -14s;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(60px, 40px) scale(1.15); }
+        }
+
+        /* Header Layout */
+        header {
+            position: relative;
+            z-index: 10;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(8, 9, 17, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 16px 20px;
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo-box {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 800;
+            color: #ffffff;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo-title h1 {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #ffffff, #c7d2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-title p {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            margin-top: 1px;
+        }
+
+        /* Connection Badge */
+        .connection-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .connection-badge.loading {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .connection-badge.connected {
+            background: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .connection-badge.disconnected {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: currentColor;
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        .connection-badge.loading .status-dot {
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        /* Main Container */
+        main {
+            position: relative;
+            z-index: 10;
+            max-width: 1300px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 48px 40px 80px 40px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 36px;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                padding: 24px 20px 48px 20px;
+                gap: 28px;
+            }
+        }
+
+        /* Hero Banner */
+        .hero-banner {
+            text-align: center;
+            max-width: 720px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .hero-banner h2 {
+            font-size: 38px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1.2;
+            background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-banner p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            max-width: 580px;
+            margin: 0 auto;
+        }
+
+        /* Interactive Dashboard Stats */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 840px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 640px) {
+            .stats-row {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(25, 28, 54, 0.6);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-card.active {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.08);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+        }
+
+        .stat-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1;
+        }
+
+        .stat-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover .stat-icon, .stat-card.active .stat-icon {
+            background: var(--primary-gradient);
+            color: #ffffff;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+        }
+
+        /* Controls Section (Search + Navigation) */
+        .controls-section {
+            background: rgba(15, 17, 36, 0.4);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 24px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .search-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        /* Search Input */
+        .search-wrapper {
+            position: relative;
+            flex-grow: 1;
+        }
+
+        .search-wrapper i.search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            color: var(--text-secondary);
+            pointer-events: none;
+            transition: color 0.3s ease;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(8, 9, 17, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 14px 18px 14px 48px;
+            font-size: 15px;
+            font-family: var(--font-sans);
+            color: #ffffff;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input::placeholder {
+            color: #64748b;
+        }
+
+        .search-input:focus {
+            border-color: #6366f1;
+            background: rgba(8, 9, 17, 0.95);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+        }
+
+        .search-input:focus + i.search-icon {
+            color: #818cf8;
+        }
+
+        .clear-search-btn {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 18px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 2px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .clear-search-btn:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Category Filter Tabs */
+        .tabs-nav {
+            display: flex;
+            background: rgba(8, 9, 17, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 6px;
+            border-radius: 14px;
+            gap: 4px;
+            width: fit-content;
+            align-self: center;
+        }
+
+        @media (max-width: 640px) {
+            .tabs-nav {
+                width: 100%;
+            }
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            font-weight: 600;
+            padding: 10px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 640px) {
+            .tab-btn {
+                flex: 1;
+                justify-content: center;
+                padding: 10px 8px;
+                font-size: 13px;
+            }
+        }
+
+        .tab-btn:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .tab-btn.active {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Tag Cloud */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            padding-top: 4px;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .tag-filter-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-right: 8px;
+        }
+
+        .tag-btn {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: 500;
+            padding: 6px 14px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tag-btn:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .tag-btn.active {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: rgba(99, 102, 241, 0.5);
+            color: #a5b4fc;
+            font-weight: 600;
+        }
+
+        /* Application Grid */
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 24px;
+            position: relative;
+            z-index: 10;
+        }
+
+        @media (max-width: 640px) {
+            .app-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+
+        /* App Card Design */
+        .app-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 26px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+            cursor: pointer;
+        }
+
+        /* Hover glows and scaling */
+        .app-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--card-border-hover);
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3),
+                        0 0 25px var(--accent-glow),
+                        inset 0 0 12px rgba(255, 255, 255, 0.02);
+            background: rgba(25, 28, 54, 0.55);
+        }
+
+        /* Light sweeping overlay on card hover */
+        .app-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0) 100%);
+            transform: translateX(-100%) translateY(-100%);
+            transition: transform 0.6s ease;
+            pointer-events: none;
+        }
+
+        .app-card:hover::after {
+            transform: translateX(100%) translateY(100%);
+        }
+
+        /* Card Header */
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .icon-box {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            color: #ffffff;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 2;
+            transition: transform 0.4s ease;
+        }
+
+        .app-card:hover .icon-box {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        /* Custom Gradients helper classes for cards */
+        .bg-rose-grad { background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%); }
+        .bg-indigo-grad { background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); }
+        .bg-blue-grad { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+        .bg-emerald-grad { background: linear-gradient(135deg, #10b981 0%, #047857 100%); }
+        .bg-amber-grad { background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%); }
+        .bg-purple-grad { background: linear-gradient(135deg, #a855f7 0%, #6b21a8 100%); }
+        .bg-violet-grad { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); }
+        .bg-lime-grad { background: linear-gradient(135deg, #84cc16 0%, #4d7c0f 100%); }
+        .bg-pink-grad { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); }
+        .bg-sky-grad { background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); }
+        .bg-slate-grad { background: linear-gradient(135deg, #64748b 0%, #334155 100%); }
+        .bg-orange-grad { background: linear-gradient(135deg, #f97316 0%, #c2410c 100%); }
+
+        /* Badges */
+        .badge-type {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 50px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .badge-type.app {
+            background: rgba(99, 102, 241, 0.1);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.25);
+        }
+
+        .badge-type.console {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fde047;
+            border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+
+        /* Card Content */
+        .card-body {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-eng-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: 'Outfit', sans-serif;
+            margin-top: -2px;
+        }
+
+        .card-desc {
+            font-size: 13.5px;
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-top: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .app-card:hover .card-desc {
+            color: #cbd5e1;
+        }
+
+        /* Card Footer */
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            padding-top: 16px;
+            margin-top: auto;
+        }
+
+        .card-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .card-tag {
+            font-size: 11px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-secondary);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 550;
+        }
+
+        .enter-btn {
+            font-size: 13px;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.3s ease;
+            opacity: 0.8;
+        }
+
+        .enter-btn i {
+            transition: transform 0.3s ease;
+        }
+
+        .app-card:hover .enter-btn {
+            color: #818cf8;
+            opacity: 1;
+        }
+
+        .app-card:hover .enter-btn i {
+            transform: translateX(4px);
+        }
+
+        /* Empty State */
+        .empty-state {
+            grid-column: 1 / -1;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 60px 40px;
+            text-align: center;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.02);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 8px;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            max-width: 320px;
+        }
+
+        .reset-search-btn {
+            background: var(--primary-gradient);
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .reset-search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 28px 40px;
+            text-align: center;
+            background: rgba(5, 6, 12, 0.8);
+            position: relative;
+            z-index: 10;
+        }
+
+        footer p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        footer .tech-stack {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #4b5563;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Glowing Auroral background elements -->
+    <div class="glow-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="logo-section">
+            <div class="logo-box">T</div>
+            <div class="logo-title">
+                <h1>vCourse.ThaiNotes</h1>
+                <p>Web Application Gateway</p>
+            </div>
+        </div>
+        
+        <!-- Live Server Connection Check -->
+        <div id="connection-status" class="connection-badge loading">
+            <span class="status-dot"></span>
+            <span>正在检测服务器状态...</span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main>
+        
+        <!-- Hero Header -->
+        <section class="hero-banner">
+            <h2>泰语学习系统导航中心</h2>
+            <p>集成多套轻量化辅助学习闪卡（App端）与课件语料配置仪表盘（后台管理端），提供一站式课程内容检索与自测复习入口。</p>
+        </section>
+
+        <!-- Dynamic Counter Cards -->
+        <section class="stats-row">
+            <div class="stat-card active" id="stat-all" onclick="selectTab('all')">
+                <div class="stat-info">
+                    <span class="stat-label">全部应用</span>
+                    <span class="stat-value" id="count-all">0</span>
+                </div>
+                <div class="stat-icon">
+                    <i class="ph-bold ph-squares-four"></i>
+                </div>
+            </div>
+            
+            <div class="stat-card" id="stat-app" onclick="selectTab('app')">
+                <div class="stat-info">
+                    <span class="stat-label">学习端应用 (App)</span>
+                    <span class="stat-value" id="count-app">0</span>
+                </div>
+                <div class="stat-icon">
+                    <i class="ph-bold ph-student"></i>
+                </div>
+            </div>
+            
+            <div class="stat-card" id="stat-console" onclick="selectTab('console')">
+                <div class="stat-info">
+                    <span class="stat-label">管理控制台 (Console)</span>
+                    <span class="stat-value" id="count-console">0</span>
+                </div>
+                <div class="stat-icon">
+                    <i class="ph-bold ph-chart-bar"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- Search, Tab Filters & Tag Cloud Panel -->
+        <section class="controls-section">
+            <!-- Search Row -->
+            <div class="search-row">
+                <div class="search-wrapper">
+                    <i class="ph-bold ph-magnifying-glass search-icon"></i>
+                    <input type="text" id="search-input" class="search-input" placeholder="输入名称、英文名、标签或简介进行搜索..." autocomplete="off">
+                    <button id="clear-search" class="clear-search-btn" title="清除搜索内容">
+                        <i class="ph-bold ph-x"></i>
+                    </button>
+                </div>
+                
+                <!-- Pill Tabs -->
+                <div class="tabs-nav">
+                    <button class="tab-btn active" id="tab-all" onclick="selectTab('all')">
+                        <i class="ph-bold ph-grid-four"></i>
+                        <span>全部</span>
+                    </button>
+                    <button class="tab-btn" id="tab-app" onclick="selectTab('app')">
+                        <i class="ph-bold ph-sparkle"></i>
+                        <span>学习端</span>
+                    </button>
+                    <button class="tab-btn" id="tab-console" onclick="selectTab('console')">
+                        <i class="ph-bold ph-terminal-window"></i>
+                        <span>管理端</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tag cloud -->
+            <div class="tags-wrapper" id="tag-cloud">
+                <span class="tag-filter-title">快捷分类过滤:</span>
+                <!-- Tag buttons will be rendered dynamically -->
+            </div>
+        </section>
+
+        <!-- Grid layout for web apps -->
+        <section class="app-grid" id="apps-container">
+            <!-- App cards will be dynamically rendered here -->
+            
+            <!-- Fallback empty search results template -->
+            <div class="empty-state" id="empty-state">
+                <div class="empty-icon">
+                    <i class="ph-bold ph-binoculars"></i>
+                </div>
+                <h3>未找到匹配的应用</h3>
+                <p>试试其他搜索词，或者点击下方按钮重置过滤条件。</p>
+                <button class="reset-search-btn" onclick="resetFilters()">重置筛选</button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 vCourse.ThaiNotes 泰语微课笔记工具集. All Rights Reserved.</p>
+        <div class="tech-stack">
+            <span>Powered by Vanilla CSS & JS</span>
+            <span>&bull;</span>
+            <span>Outfit & Noto Sans Fonts</span>
+            <span>&bull;</span>
+            <span>Phosphor Icons Pack</span>
+        </div>
+    </footer>
+
+    <!-- Logic script -->
+    <script>
+        // Full applications metadata list
+        const apps = [
+            // Student Apps (App Class)
+            {
+                id: 'appAnkiError',
+                title: '每日错词本',
+                englishTitle: 'Anki Error Cards',
+                category: 'app',
+                path: './appAnkiError.html',
+                icon: 'ph-brain',
+                colorClass: 'bg-rose-grad',
+                tags: ['词汇', '错词', '记忆'],
+                description: '针对日常练习中做错的泰语词汇，进行个性化定制的间隔重复（Spaced Repetition）复习，加深记忆。'
+            },
+            {
+                id: 'appCourseReview',
+                title: '课程课文复习',
+                englishTitle: 'Course & Text Review',
+                category: 'app',
+                path: './appCourseReview.html',
+                icon: 'ph-book-open',
+                colorClass: 'bg-blue-grad',
+                tags: ['课程', '课文', '综合'],
+                description: '系统化复习泰语课程中的课文内容、核心词汇与配套语法要点，提供语境下的完整复习。'
+            },
+            {
+                id: 'appGrammarNotes',
+                title: '语法要点卡片',
+                englishTitle: 'Grammar Cards',
+                category: 'app',
+                path: './appGrammarNotes.html',
+                icon: 'ph-cards',
+                colorClass: 'bg-emerald-grad',
+                tags: ['语法', '卡片', '查询'],
+                description: '将泰语语法结构与句法规则整理为知识卡片，方便快速检索、背诵与语法逻辑整理。'
+            },
+            {
+                id: 'appHighFreqWords',
+                title: '高频词闪卡',
+                englishTitle: 'High Freq Words',
+                category: 'app',
+                path: './appHighFreqWords.html',
+                icon: 'ph-lightning',
+                colorClass: 'bg-amber-grad',
+                tags: ['词汇', '高频', '闪卡'],
+                description: '泰语中最常用、最高频词汇的快速闪卡训练，采用科学的记忆卡片机制进行高强度复习。'
+            },
+            {
+                id: 'appCoreWords',
+                title: '重点词汇学习',
+                englishTitle: 'Key Vocabulary',
+                category: 'app',
+                path: './appCoreWords.html',
+                icon: 'ph-star',
+                colorClass: 'bg-purple-grad',
+                tags: ['词汇', '重点', '学习', '例句'],
+                description: '按科目与课时学习核心重点词汇，提供多词性多释义、双语例句、划词查词与自测复习追踪。'
+            },
+            {
+                id: 'appStudyWordsInContext',
+                title: '语境词汇研习',
+                englishTitle: 'Words in Context',
+                category: 'app',
+                path: './appStudyWordsInContext.html',
+                icon: 'ph-chats-circle',
+                colorClass: 'bg-indigo-grad',
+                tags: ['词汇', '语境', '选择题', '例句', '自测'],
+                description: '在真实泰语例句语境中推测词义，基于当前词集动态生成干扰项选择题自测，成绩沉淀至IndexedDB。'
+            },
+            {
+                id: 'appWordBank',
+                title: '课时词库对照表',
+                englishTitle: 'WordBank',
+                category: 'app',
+                path: './appWordBank.html',
+                icon: 'ph-cards',
+                colorClass: 'bg-blue-grad',
+                tags: ['词库', '双组对照', '6列表格', '点读', '评分'],
+                description: '按科目与课时呈现6列两组对照词库，支持泰语在线点读、0-5分熟练度评定记录与JSON批量导入。'
+            },
+            {
+                id: 'appDictation',
+                title: '泰语听写助手 (SM-2)',
+                englishTitle: 'Thai Dictation Assistant',
+                category: 'app',
+                path: './appDictation.html',
+                icon: 'ph-headphones',
+                colorClass: 'bg-violet-grad',
+                tags: ['听写', 'SM-2', '间隔复习', '纸上默写', 'TTS发音', '双语例句'],
+                description: '专为泰语纸上默写与导师评测设计的听写助手：纯正发音播放、拼写防窥、翻开核对、配套例句朗读与 SM-2 艾宾浩斯自适应间隔排期。'
+            },
+            {
+                id: 'appSentence',
+                title: '泰语造句与翻译练习 (SM-2)',
+                englishTitle: 'Sentence Translation Practice',
+                category: 'app',
+                path: './appSentence.html',
+                icon: 'ph-translate',
+                colorClass: 'bg-indigo-grad',
+                tags: ['造句', '翻译', 'SM-2', '纸面作答', '单词约束', '老师评分'],
+                description: '要求学生在纸面手写将中文句子翻译为泰语并必须使用指定目标单词，由辅导老师按0-5分评分，系统根据SM-2算法调度下一次重练复习时间，支持单词组练习与智能复习两种模式。'
+            },
+            {
+                id: 'appMemorizeNotes',
+                title: '笔记记忆助手',
+                englishTitle: 'Memorize Helper',
+                category: 'app',
+                path: './appMemorizeNotes.html',
+                icon: 'ph-student',
+                colorClass: 'bg-lime-grad',
+                tags: ['笔记', '记忆', '辅助'],
+                description: '针对泰语课程笔记的多模式交互记忆工具，包含渐进式大纲呈现、闪卡卡片回忆及挖空拼接等多维背诵模式。'
+            },
+            {
+                id: 'appReadingCoach',
+                title: 'AI 阅读教练',
+                englishTitle: 'AI Reading Coach',
+                category: 'app',
+                path: './appReadingCoach.html',
+                icon: 'ph-microphone-stage',
+                colorClass: 'bg-pink-grad',
+                tags: ['阅读', 'AI', '精读'],
+                description: '泰语短文与文章的精读教练，提供即时翻译、单词高亮及 AI 语法深度剖析。'
+            },
+            {
+                id: 'appSentenceCoach',
+                title: '泰语句型教练 (句型辅导)',
+                englishTitle: 'AI Sentence Coach',
+                category: 'app',
+                path: './appSentenceCoach.html',
+                icon: 'ph-chats-teardrop',
+                colorClass: 'bg-sky-grad',
+                tags: ['句型', '句型辅导', 'AI', '句法', '辅导'],
+                description: '泰语句型辅导与跟读练习App，包含 AI 智能句法结构剖析、槽位练习、填空自测与口语跟读训练。'
+            },
+            {
+                id: 'appTranslate',
+                title: '句子精读',
+                englishTitle: 'Translation Practice',
+                category: 'app',
+                path: './appTranslate.html',
+                icon: 'ph-translate',
+                colorClass: 'bg-emerald-grad',
+                tags: ['翻译', '练习', '词汇'],
+                description: '提供泰语和中文的双向翻译练习，支持选择词库、选择答题方向与显示拼音等多种辅助训练模式。'
+            },
+            {
+                id: 'appWordset',
+                title: '主题词汇集自测',
+                englishTitle: 'Wordset Quiz',
+                category: 'app',
+                path: './appWordset.html',
+                icon: 'ph-cards',
+                colorClass: 'bg-violet-grad',
+                tags: ['词汇', '主题', '自测'],
+                description: '按不同生活/学习主题分类的泰语词汇集自测，支持根据标签过滤，通过错题循环攻克词汇。'
+            },
+            {
+                id: 'appCourseStudy',
+                title: '课件复习 App',
+                englishTitle: 'Courseware Review App',
+                category: 'app',
+                path: './appCourseStudy.html',
+                icon: 'ph-presentation',
+                colorClass: 'bg-orange-grad',
+                tags: ['课件', '复习', '学习', 'PDF'],
+                description: '课件互动复习与精读 App，支持载入本地 PDF 讲义与课件包，提供双栏对比阅读、AI 智能释义、划词翻译与笔记巩固。'
+            },
+            {
+                id: 'appQuiz',
+                title: 'Quiz 知识测验',
+                englishTitle: 'Quiz Assessment',
+                category: 'app',
+                path: './appQuiz.html',
+                icon: 'ph-graduation-cap',
+                colorClass: 'bg-indigo-grad',
+                tags: ['测验', '评估', '练习'],
+                description: '泰语综合知识与阅读理解测验，提供单选、多选、判断等题型训练，配备智能排错与沉浸式划词生词查询。'
+            },
+            {
+                id: 'appIdioms',
+                title: '成语与熟语对照',
+                englishTitle: 'Thai Idioms & Phrases',
+                category: 'app',
+                path: './appIdioms.html',
+                icon: 'ph-translate',
+                colorClass: 'bg-emerald-grad',
+                tags: ['熟语', '成语', '俗语', '例句', '播音'],
+                description: '常用泰语核心熟语与中文成语对照学习库，提供多维背诵卡片、双语原示例句、智能点击播音与随身听沉浸模式。'
+            },
+            {
+                id: 'appLiteracyTutor',
+                title: '文学分析练习导师',
+                englishTitle: 'Literature Analysis Tutor',
+                category: 'app',
+                path: './appLiteracyTutor.html',
+                icon: 'ph-book-open-text',
+                colorClass: 'bg-purple-grad',
+                tags: ['文学', '多体裁', '5W1H', '分析', '写作'],
+                description: '支持小说、诗歌、散文、戏剧多体裁文学作品结构化细读与分析，提供动态要素表单、深度思考讨论题、5W1H语法细读及辅导员批阅。'
+            },
+
+            // Admin Consoles (Console Class)
+            {
+                id: 'consoleCourseMgt',
+                title: '课时基础数据管理',
+                englishTitle: 'Course & Lesson Admin',
+                category: 'console',
+                path: './consoleCourseMgt.html',
+                icon: 'ph-books',
+                colorClass: 'bg-indigo-grad',
+                tags: ['科目', '课时', '基础数据', '管理'],
+                description: '科目与课时章节基础数据配置中心，支持课程科目的增删改查、课时列表结构管理、排序以及关联维护。'
+            },
+            {
+                id: 'consoleCourseStudio',
+                title: '课件管理器',
+                englishTitle: 'Courseware Studio Console',
+                category: 'console',
+                path: './consoleCourseStudio.html',
+                icon: 'ph-sliders-horizontal',
+                colorClass: 'bg-indigo-grad',
+                tags: ['课件', '管理', '工作室', '配置'],
+                description: '课件可视化配置工作室（课件管理器），支持可视化 PDF 精读与讲义编排、JSON 数据导入导出及自测题一体化配置。'
+            },
+            {
+                id: 'consoleQuiz',
+                title: 'Quiz 试卷管理',
+                englishTitle: 'Quiz Admin Console',
+                category: 'console',
+                path: './consoleQuiz.html',
+                icon: 'ph-graduation-cap',
+                colorClass: 'bg-indigo-grad',
+                tags: ['测验', '试卷', '管理'],
+                description: 'Quiz 测验试卷集中管理平台，支持可视化题目预览、JSON 源码编辑校验、试卷状态管理与 AI Prompt 生成导入。'
+            },
+            {
+                id: 'consoleCourseReview',
+                title: '课程复习管理中心',
+                englishTitle: 'Course Review Console',
+                category: 'console',
+                path: './consoleCourseReview.html',
+                icon: 'ph-squares-four',
+                colorClass: 'bg-slate-grad',
+                tags: ['系统', '后台', '综合'],
+                description: '泰语学习系统的核心后台控制台，提供数据看板、数据导入以及各项核心参数的一站式配置。'
+            },
+            {
+                id: 'consoleAnki',
+                title: '错词数据管理',
+                englishTitle: 'Anki Error Admin',
+                category: 'console',
+                path: './consoleAnki.html',
+                icon: 'ph-trash-simple',
+                colorClass: 'bg-rose-grad',
+                tags: ['错词', '管理', '重置'],
+                description: '查看、清理或手动重置用户的每日错词库，维护错词的间隔重复状态与学习记录。'
+            },
+            {
+                id: 'consoleHFWords',
+                title: '高频词库管理',
+                englishTitle: 'High Freq Words Admin',
+                category: 'console',
+                path: './consoleHFWords.html',
+                icon: 'ph-database',
+                colorClass: 'bg-orange-grad',
+                tags: ['词汇', '高频', '词库'],
+                description: '录入和修改核心高频词组数据，调配词汇的难度评级、标签与泰语发音链接。'
+            },
+            {
+                id: 'consoleNotes',
+                title: '课程内容管理',
+                englishTitle: 'Course Notes Admin',
+                category: 'console',
+                path: './consoleNotes.html',
+                icon: 'ph-folder-open',
+                colorClass: 'bg-amber-grad',
+                tags: ['课程', '大纲', '内容'],
+                description: '管理完整的课程大纲、课时设置，编辑并关联相应的生词清单与语法解析规则。'
+            },
+            {
+                id: 'consoleReadingCoach',
+                title: '阅读文章管理',
+                englishTitle: 'Reading Coach Admin',
+                category: 'console',
+                path: './consoleReadingCoach.html',
+                icon: 'ph-article',
+                colorClass: 'bg-pink-grad',
+                tags: ['阅读', '文章', '内容'],
+                description: '录入泰语精读文章及其中文译文，配置文章段落中的重难点生词关联及辅导信息。'
+            },
+            {
+                id: 'consoleSentencePattern',
+                title: '泰语句型配置与管理',
+                englishTitle: 'Sentence Pattern Admin',
+                category: 'console',
+                path: './consoleSentencePattern.html',
+                icon: 'ph-tree-structure',
+                colorClass: 'bg-sky-grad',
+                tags: ['句型', '句型库', '语法', '管理', '关联'],
+                description: '泰语句型数据配置中心（tblSentencePattern），管理句型结构公式、语法槽位、双语例句、自测题库与课时关联维护。'
+            },
+            {
+                id: 'consoleSentence',
+                title: '造句与翻译句库管理',
+                englishTitle: 'Sentence Practice Admin',
+                category: 'console',
+                path: './consoleSentence.html',
+                icon: 'ph-list-numbers',
+                colorClass: 'bg-indigo-grad',
+                tags: ['造句', '翻译', 'SM-2', '分组CRUD', 'JSON导入'],
+                description: '统一管理泰语造句与翻译练习的分组及各组句子CRUD，支持JSON批量数据导入与导出、SM-2调度排程监控与直达练习链接。'
+            },
+            {
+                id: 'consoleTranslate',
+                title: '翻译句库管理',
+                englishTitle: 'Translation Admin',
+                category: 'console',
+                path: './consoleTranslate.html',
+                icon: 'ph-pencil-line',
+                colorClass: 'bg-emerald-grad',
+                tags: ['翻译', '管理', '语料'],
+                description: '录入和修改翻译练习的多语言语料句子，包含关键词划定、空格分词及自动分词索引推导。'
+            },
+            {
+                id: 'consoleWordset',
+                title: '词汇集配置管理',
+                englishTitle: 'Wordset Admin',
+                category: 'console',
+                path: './consoleWordset.html',
+                icon: 'ph-cards',
+                colorClass: 'bg-violet-grad',
+                tags: ['词汇', '主题', '管理'],
+                description: '创建和维护各种不同主题的词汇包，管理词汇内容、发音、干扰项、关联标签及双语对照巩固例句。'
+            },
+            {
+                id: 'consoleImportantWords',
+                title: '重点词汇配置管理',
+                englishTitle: 'Important Words Admin',
+                category: 'console',
+                path: './consoleImportantWords.html',
+                icon: 'ph-star',
+                colorClass: 'bg-amber-grad',
+                tags: ['重点', '核心', '管理'],
+                description: '创建与维护重点词汇集（tblImportantWords），支持词汇卡片管理、表格编辑、JSON 导入导出及错题集关联。'
+            },
+            {
+                id: 'consoleCoreWords',
+                title: '核心词汇配置管理',
+                englishTitle: 'Core Words Admin',
+                category: 'console',
+                path: './consoleCoreWords.html',
+                icon: 'ph-book-open',
+                colorClass: 'bg-indigo-grad',
+                tags: ['核心词', '多释义', '例句', '管理'],
+                description: '管理核心词汇（tblCoreWords），支持多词性多释义绑定、泰中对照例句结构、表格批量浏览与实时 JSON 导入导出。'
+            },
+            {
+                id: 'consoleIdioms',
+                title: '成语熟语配置管理',
+                englishTitle: 'Idioms & Proverbs Admin',
+                category: 'console',
+                path: './consoleIdioms.html',
+                icon: 'ph-translate',
+                colorClass: 'bg-emerald-grad',
+                tags: ['成语', '熟语', 'Markdown', '管理'],
+                description: '管理中泰成语与熟语对照表（tblIdioms），支持 Markdown 表格批量解析导入导出、单条编辑、即时播音校验与完整 CRUD。'
+            },
+            {
+                id: 'consoleDictation',
+                title: '听写词库与词集管理',
+                englishTitle: 'Dictation & API Admin',
+                category: 'console',
+                path: './consoleDictation.html',
+                icon: 'ph-sliders-horizontal',
+                colorClass: 'bg-purple-grad',
+                tags: ['词集', '听写', '例句数组', 'SM-2', 'REST API'],
+                description: '管理听写词集单元与核心词库，动态录入多双语例句，实时监控 SM-2 记忆曲线，提供安全 RESTful API 供外部系统对接 CRUD。'
+            },
+            {
+                id: 'appPaperExercise',
+                title: '翻译练习打印系统',
+                englishTitle: 'Paper Exercise Generator',
+                category: 'console',
+                path: './appPaperExercise.html',
+                icon: 'ph-printer',
+                colorClass: 'bg-indigo-grad',
+                tags: ['翻译', '核心词', '打印', '纸质'],
+                description: '连通后台翻译句库、核心词汇库（tblCoreWords）与词汇集，自由选择科目与课时章节，支持核心词汇手写释义/词性及例句双向翻译排版，一键生成标准化 A4 纸质练习卷。'
+            },
+            {
+                id: 'toolWritingAssignments',
+                title: '手写作业OCR系统',
+                englishTitle: 'Handwritten Homework OCR',
+                category: 'console',
+                path: './toolWritingAssignments.html',
+                icon: 'ph-note-pencil',
+                colorClass: 'bg-emerald-grad',
+                tags: ['作业', 'OCR', '手写', '查看'],
+                description: '查看并管理学生手写泰语作业的 OCR 识别记录。支持实时校对、错误分析及释义点查，让手写批改数字化。'
+            },
+            {
+                id: 'toolQueryWords',
+                title: '泰语查词提取工具',
+                englishTitle: 'Word Query & Extraction',
+                category: 'console',
+                path: './toolQueryWords.html',
+                icon: 'ph-file-arrow-up',
+                colorClass: 'bg-violet-grad',
+                tags: ['查词', '生词', '提取', '导出'],
+                description: '泰语查词历史管理与生词提取工具，支持按关键词和时间筛选生词、发音朗读、批量管理，并可一键复制或导出为 TXT、JSON、CSV 格式。'
+            }
+        ];
+
+        // App state variables
+        let selectedCategory = 'all';
+        let selectedTag = 'all';
+        let searchQuery = '';
+
+        // DOM elements cache
+        const appsContainer = document.getElementById('apps-container');
+        const emptyState = document.getElementById('empty-state');
+        const searchInput = document.getElementById('search-input');
+        const clearSearchBtn = document.getElementById('clear-search');
+        const tagCloudContainer = document.getElementById('tag-cloud');
+        
+        // Counter DOM Elements
+        const countAllEl = document.getElementById('count-all');
+        const countAppEl = document.getElementById('count-app');
+        const countConsoleEl = document.getElementById('count-console');
+
+        // Document Boot
+        document.addEventListener('DOMContentLoaded', () => {
+            // Restore filters from localStorage if exists
+            const savedCategory = localStorage.getItem('portal_category');
+            if (savedCategory && ['all', 'app', 'console'].includes(savedCategory)) {
+                selectedCategory = savedCategory;
+            }
+
+            // Setup Event Listeners
+            searchInput.addEventListener('input', handleSearchInput);
+            clearSearchBtn.addEventListener('click', clearSearch);
+            
+            // Initial calculations and UI rendering
+            calculateCounters();
+            generateTagCloud();
+            renderApps();
+            updateActiveTabUI();
+            
+            // Run server connection status check
+            checkServerConnection();
+            // Polling check every 15 seconds
+            setInterval(checkServerConnection, 15000);
+        });
+
+        // 1. Calculate and update stats badges
+        function calculateCounters() {
+            const allCount = apps.length;
+            const appCount = apps.filter(item => item.category === 'app').length;
+            const consoleCount = apps.filter(item => item.category === 'console').length;
+            
+            countAllEl.textContent = allCount;
+            countAppEl.textContent = appCount;
+            countConsoleEl.textContent = consoleCount;
+        }
+
+        // 2. Extract unique tags and build tag cloud
+        function generateTagCloud() {
+            const allTags = new Set();
+            apps.forEach(item => {
+                item.tags.forEach(tag => allTags.add(tag));
+            });
+
+            // Re-render tag cloud HTML
+            let html = `<span class="tag-filter-title">快捷分类过滤:</span>`;
+            html += `<button class="tag-btn ${selectedTag === 'all' ? 'active' : ''}" onclick="selectTag('all')">全部标签</button>`;
+            
+            Array.from(allTags).sort().forEach(tag => {
+                const isActive = selectedTag === tag;
+                html += `<button class="tag-btn ${isActive ? 'active' : ''}" onclick="selectTag('${tag}')">${tag}</button>`;
+            });
+
+            tagCloudContainer.innerHTML = html;
+        }
+
+        // 3. Render filtered applications list
+        function renderApps() {
+            // Remove previous app cards (keep empty state element)
+            const cards = appsContainer.querySelectorAll('.app-card');
+            cards.forEach(card => card.remove());
+
+            // Filtering logic
+            const filteredApps = apps.filter(item => {
+                // Category match
+                const categoryMatch = selectedCategory === 'all' || item.category === selectedCategory;
+                
+                // Tag match
+                const tagMatch = selectedTag === 'all' || item.tags.includes(selectedTag);
+                
+                // Search query match (Title, English Title, tags, description)
+                const s = searchQuery.toLowerCase().trim();
+                const searchMatch = !s || 
+                    item.title.toLowerCase().includes(s) || 
+                    item.englishTitle.toLowerCase().includes(s) || 
+                    item.description.toLowerCase().includes(s) ||
+                    item.tags.some(tag => tag.toLowerCase().includes(s));
+
+                return categoryMatch && tagMatch && searchMatch;
+            });
+
+            // Toggle visibility of empty state
+            if (filteredApps.length === 0) {
+                emptyState.style.display = 'flex';
+            } else {
+                emptyState.style.display = 'none';
+                
+                // Render card elements
+                filteredApps.forEach(item => {
+                    const card = document.createElement('a');
+                    card.href = item.path;
+                    card.target = '_blank';
+                    card.className = 'app-card';
+                    card.setAttribute('data-id', item.id);
+                    
+                    const tagsHtml = item.tags.map(tag => `<span class="card-tag">${tag}</span>`).join('');
+                    const badgeText = item.category === 'app' ? '学习端 App' : '管理控制台';
+                    
+                    card.innerHTML = `
+                        <div class="card-top">
+                            <div class="icon-box ${item.colorClass}">
+                                <i class="ph-fill ${item.icon}"></i>
+                            </div>
+                            <span class="badge-type ${item.category}">${badgeText}</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-title">
+                                <span>${item.title}</span>
+                            </div>
+                            <div class="card-eng-title">${item.englishTitle}</div>
+                            <p class="card-desc">${item.description}</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="card-tags">
+                                ${tagsHtml}
+                            </div>
+                            <span class="enter-btn">
+                                <span>进入</span>
+                                <i class="ph-bold ph-arrow-right"></i>
+                            </span>
+                        </div>
+                    `;
+                    
+                    // Insert before the empty state element
+                    appsContainer.insertBefore(card, emptyState);
+                });
+            }
+        }
+
+        // 4. Handle search input actions
+        function handleSearchInput(e) {
+            searchQuery = e.target.value;
+            if (searchQuery.trim().length > 0) {
+                clearSearchBtn.style.display = 'flex';
+            } else {
+                clearSearchBtn.style.display = 'none';
+            }
+            renderApps();
+        }
+
+        // 5. Clear search query
+        function clearSearch() {
+            searchInput.value = '';
+            searchQuery = '';
+            clearSearchBtn.style.display = 'none';
+            searchInput.focus();
+            renderApps();
+        }
+
+        // 6. Reset all filters to default
+        function resetFilters() {
+            searchInput.value = '';
+            searchQuery = '';
+            clearSearchBtn.style.display = 'none';
+            selectedCategory = 'all';
+            selectedTag = 'all';
+            
+            // Re-render
+            updateActiveTabUI();
+            generateTagCloud();
+            renderApps();
+        }
+
+        // 7. Change selected category tab
+        function selectTab(category) {
+            selectedCategory = category;
+            localStorage.setItem('portal_category', category);
+            
+            updateActiveTabUI();
+            renderApps();
+        }
+
+        // 8. Change selected filter tag
+        function selectTag(tag) {
+            selectedTag = tag;
+            generateTagCloud();
+            renderApps();
+        }
+
+        // 9. Update UI active states for Tabs and Stats Cards
+        function updateActiveTabUI() {
+            // Update horizontal nav buttons
+            const tabButtons = ['all', 'app', 'console'];
+            tabButtons.forEach(cat => {
+                const btn = document.getElementById(`tab-${cat}`);
+                const card = document.getElementById(`stat-${cat}`);
+                
+                if (cat === selectedCategory) {
+                    btn.classList.add('active');
+                    card.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                    card.classList.remove('active');
+                }
+            });
+        }
+
+        // 10. Check server connection (Ping endpoint)
+        async function checkServerConnection() {
+            const statusEl = document.getElementById('connection-status');
+            try {
+                // Fetch basic API endpoint to determine connection health
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout limit
+                
+                const response = await fetch('/api/courses', { signal: controller.signal });
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    statusEl.className = "connection-badge connected";
+                    statusEl.innerHTML = `<span class="status-dot"></span><span>服务器已连接 (Port 3002)</span>`;
+                } else {
+                    throw new Error("HTTP error");
+                }
+            } catch (error) {
+                statusEl.className = "connection-badge disconnected";
+                statusEl.innerHTML = `<span class="status-dot"></span><span>服务器已离线 (端口 3002)</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

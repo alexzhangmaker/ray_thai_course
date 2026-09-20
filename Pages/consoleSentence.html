@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语造句与翻译管理控制台 · Sentence & Group Admin - vCourse.ThaiNotes</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Serif+Thai:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Sarabun:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Noto Sans SC', 'sans-serif'],
+                        thai: ['Noto Serif Thai', 'Sarabun', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace']
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at 50% 0%, #151833 0%, #0c0e1e 60%, #070812 100%);
+            --glass-bg: rgba(22, 26, 54, 0.7);
+            --glass-card: rgba(27, 32, 66, 0.5);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --primary-glow: rgba(99, 102, 241, 0.25);
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            background: var(--bg-gradient);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+
+        .font-thai {
+            font-family: 'Noto Serif Thai', 'Sarabun', serif;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .glass-card {
+            background: var(--glass-card);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(99, 102, 241, 0.35);
+        }
+
+        .tab-btn {
+            position: relative;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #6366f1;
+            border-radius: 9999px;
+            box-shadow: 0 0 12px #6366f1;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.25);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.45);
+        }
+
+        .badge-a1 { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-a2 { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-b1 { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .badge-b2 { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    </style>
+</head>
+<body class="selection:bg-brand-600 selection:text-white flex flex-col min-h-screen">
+
+    <!-- Top Header -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-white/10 px-4 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <a href="./appPortal.html" class="w-10 h-10 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition">
+                <i class="ph ph-arrow-left text-lg"></i>
+            </a>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-brand-500/20 text-white font-bold text-lg">
+                    <i class="ph ph-sliders"></i>
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                        <span>泰语造句与翻译管理控制台</span>
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30">Admin Console</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">词汇分组管理 · 句子库 CRUD · JSON 批量导入导出 · SM-2 调度监控</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 sm:gap-3">
+            <!-- Student App Link -->
+            <a href="./appSentence.html" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-500 hover:to-purple-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-brand-500/20 flex items-center gap-1.5 transition">
+                <i class="ph ph-play text-base"></i>
+                <span>打开学生练习</span>
+            </a>
+
+            <!-- Batch Import Button -->
+            <button onclick="openBatchImportModal()" class="px-3.5 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5">
+                <i class="ph ph-file-arrow-up text-base"></i>
+                <span>批量导入 JSON</span>
+            </button>
+
+            <!-- New Sentence Button -->
+            <button onclick="openCreateSentenceModal()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5">
+                <i class="ph ph-plus-circle text-base"></i>
+                <span>新建单句</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Body -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Top Metrics Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="glass-card rounded-2xl p-5 border-white/5">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-slate-400 font-medium">词汇分组数</span>
+                    <i class="ph ph-folders text-brand-400 text-xl"></i>
+                </div>
+                <div id="metricGroupsCount" class="text-3xl font-extrabold text-white font-mono mt-2">0</div>
+                <div class="text-[11px] text-slate-500 mt-1">按主题或词性分组管理</div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-5 border-white/5">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-slate-400 font-medium">总练习句子容量</span>
+                    <i class="ph ph-quotes text-purple-400 text-xl"></i>
+                </div>
+                <div id="metricTotalSentences" class="text-3xl font-extrabold text-white font-mono mt-2">0</div>
+                <div class="text-[11px] text-slate-500 mt-1">含中文、参考泰语及生词注释</div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-5 border-white/5">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-slate-400 font-medium">今日到期复习项</span>
+                    <i class="ph ph-clock-countdown text-amber-400 text-xl"></i>
+                </div>
+                <div id="metricDueToday" class="text-3xl font-extrabold text-amber-300 font-mono mt-2">0</div>
+                <div class="text-[11px] text-slate-500 mt-1">基于 SM-2 遗忘曲线调度</div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-5 border-white/5">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-slate-400 font-medium">已熟练掌握句数</span>
+                    <i class="ph ph-check-circle text-emerald-400 text-xl"></i>
+                </div>
+                <div id="metricMastered" class="text-3xl font-extrabold text-emerald-400 font-mono mt-2">0</div>
+                <div class="text-[11px] text-slate-500 mt-1">连续巩固 3 次及以上</div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="flex items-center justify-between border-b border-white/10 pb-0">
+            <div class="flex items-center gap-6">
+                <button onclick="switchTab('sentences')" id="tabBtnSentences" class="tab-btn active pb-3 text-sm flex items-center gap-2 text-slate-400 hover:text-white">
+                    <i class="ph ph-list-dashes text-lg"></i>
+                    <span>句子库管理 (Sentences)</span>
+                </button>
+                <button onclick="switchTab('groups')" id="tabBtnGroups" class="tab-btn pb-3 text-sm flex items-center gap-2 text-slate-400 hover:text-white">
+                    <i class="ph ph-folder text-lg"></i>
+                    <span>单词分组管理 (Groups)</span>
+                </button>
+                <button onclick="switchTab('logs')" id="tabBtnLogs" class="tab-btn pb-3 text-sm flex items-center gap-2 text-slate-400 hover:text-white">
+                    <i class="ph ph-chart-line text-lg"></i>
+                    <span>复习日志监控 (SM-2 Logs)</span>
+                </button>
+            </div>
+
+            <!-- Tab Quick Actions -->
+            <div class="pb-2.5">
+                <button onclick="refreshCurrentTab()" title="刷新当前列表" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white border border-white/10 transition">
+                    <i class="ph ph-arrows-clockwise text-sm"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- TAB 1: SENTENCES CRUD TABLE -->
+        <div id="tabContentSentences" class="space-y-4">
+            <!-- Filter Bar -->
+            <div class="glass-card rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap items-center gap-3 flex-1 min-w-[280px]">
+                    <!-- Group filter select -->
+                    <div class="flex items-center gap-2 text-xs text-slate-400">
+                        <span>筛选分组:</span>
+                        <select id="filterGroupId" onchange="loadSentencesTable()" class="bg-slate-900/80 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                            <option value="all">全部分组</option>
+                        </select>
+                    </div>
+
+                    <!-- Search Input -->
+                    <div class="relative flex-1 max-w-md">
+                        <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-sm"></i>
+                        <input type="text" id="searchSentencesInput" oninput="debounceSearchSentences()" placeholder="搜索目标单词、中文字句、泰文或注释..." class="w-full bg-slate-900/80 border border-white/10 rounded-xl pl-9 pr-4 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500">
+                    </div>
+
+                    <!-- Due only checkbox -->
+                    <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer select-none">
+                        <input type="checkbox" id="filterDueOnly" onchange="loadSentencesTable()" class="rounded border-white/10 bg-slate-900 text-brand-600 focus:ring-0">
+                        <span>仅见到期复习项</span>
+                    </label>
+                </div>
+
+                <div class="text-xs text-slate-400 font-mono">
+                    找到 <span id="filteredSentencesCount" class="font-bold text-white">0</span> 条记录
+                </div>
+            </div>
+
+            <!-- Sentences Data Table -->
+            <div class="glass-panel rounded-2xl overflow-hidden border-white/10">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-900/90 border-b border-white/10 text-slate-400 font-medium">
+                                <th class="py-3 px-4 w-12">#</th>
+                                <th class="py-3 px-4 w-36">目标泰语词</th>
+                                <th class="py-3 px-4 min-w-[220px]">中文句子 / 参考泰语</th>
+                                <th class="py-3 px-4 w-36">所属分组</th>
+                                <th class="py-3 px-4 w-44">词汇与教学注释</th>
+                                <th class="py-3 px-4 w-40">SM-2 调度状态</th>
+                                <th class="py-3 px-4 w-28 text-right">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sentencesTableBody" class="divide-y divide-white/5">
+                            <!-- Populated dynamically via JS -->
+                            <tr>
+                                <td colspan="7" class="py-8 text-center text-slate-500">
+                                    正在加载句子数据...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: GROUPS MANAGEMENT -->
+        <div id="tabContentGroups" class="hidden space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-white">单词分组列表</h3>
+                    <p class="text-xs text-slate-400">系统按组组织句子进行单元练习，每组都有可复制的专属学生练习链接。</p>
+                </div>
+                <button onclick="openCreateGroupModal()" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-md shadow-brand-500/20">
+                    <i class="ph ph-plus"></i>
+                    <span>新建分组</span>
+                </button>
+            </div>
+
+            <div class="glass-panel rounded-2xl overflow-hidden border-white/10">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-900/90 border-b border-white/10 text-slate-400 font-medium">
+                                <th class="py-3 px-4 w-16">顺序</th>
+                                <th class="py-3 px-4 w-48">分组名称 / ID</th>
+                                <th class="py-3 px-4">描述说明</th>
+                                <th class="py-3 px-4 w-24 text-center">总句数</th>
+                                <th class="py-3 px-4 w-28 text-center">待复习</th>
+                                <th class="py-3 px-4 w-28 text-center">已掌握</th>
+                                <th class="py-3 px-4 w-64 text-right">管理操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="groupsTableBody" class="divide-y divide-white/5">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: SM-2 REVIEW LOGS -->
+        <div id="tabContentLogs" class="hidden space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-white">近期 SM-2 评分与复习调度记录</h3>
+                    <p class="text-xs text-slate-400">实时追踪辅导人员打分（0-5）及间隔天数、难度系数 EF 的演算轨迹。</p>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-2xl overflow-hidden border-white/10">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-900/90 border-b border-white/10 text-slate-400 font-medium">
+                                <th class="py-3 px-4 w-36">时间</th>
+                                <th class="py-3 px-4 w-32">目标词</th>
+                                <th class="py-3 px-4">中文句子</th>
+                                <th class="py-3 px-4 w-36">所属分组</th>
+                                <th class="py-3 px-4 w-20 text-center">得分</th>
+                                <th class="py-3 px-4 w-36">重复次数变化</th>
+                                <th class="py-3 px-4 w-36">间隔变化 (天)</th>
+                                <th class="py-3 px-4 w-32">难度因子 (EF)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTableBody" class="divide-y divide-white/5">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL 1: BATCH IMPORT JSON -->
+    <div id="modalBatchImport" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-3xl w-full border-white/10 shadow-2xl space-y-5 my-8">
+            <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 flex items-center justify-center text-lg">
+                        <i class="ph ph-file-arrow-up"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">批量导入 JSON 句子数据</h3>
+                        <p class="text-xs text-slate-400">支持单条或数组格式，系统将自动关联指定分组并初始化 SM-2 排程。</p>
+                    </div>
+                </div>
+                <button onclick="closeBatchImportModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
+                    <i class="ph ph-x text-base"></i>
+                </button>
+            </div>
+
+            <!-- Import Target Group Selection -->
+            <div class="space-y-3">
+                <label class="block text-xs font-semibold text-slate-300">目标导入分组</label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">选择现有分组</label>
+                        <select id="importTargetGroupId" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">或者新建分组导入 (留空则使用左侧选择)</label>
+                        <input type="text" id="importNewGroupName" placeholder="输入新建分组名称..." class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- JSON Input Area -->
+            <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                    <label class="text-xs font-semibold text-slate-300">JSON 数据粘贴区</label>
+                    <button onclick="fillSampleJson()" class="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1 font-medium transition">
+                        <i class="ph ph-clipboard-text"></i>
+                        <span>填入示例规范数据</span>
+                    </button>
+                </div>
+                <textarea id="importJsonTextarea" oninput="validateImportJson()" rows="10" placeholder='[
+  {
+    "thai_word": "นิสัยดี",
+    "chinese_sentence": "我的新同事是一个人很好、很友善的人。",
+    "reference_thai": "เพื่อนร่วมงานใหม่ของฉันเป็นคนนิสัยดีมาก",
+    "target_word_used": "นิสัยดี",
+    "other_vocab_notes": [
+      { "word": "เพื่อนร่วมงาน", "meaning": "同事", "level": "A2" },
+      { "word": "ใหม่", "meaning": "新的", "level": "A1" }
+    ],
+    "thai_word_count": 7,
+    "notes": "“นิสัยดี”在句中作形容词性后置定语修饰“人”（คน）。"
+  }
+]' class="w-full bg-slate-950 border border-white/10 rounded-2xl p-4 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-brand-500 custom-scrollbar"></textarea>
+            </div>
+
+            <!-- Live Validation Box -->
+            <div id="importValidationBox" class="p-3 rounded-xl bg-slate-900 border border-white/5 text-xs flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span id="importStatusDot" class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+                    <span id="importStatusText" class="text-slate-400">请输入或粘贴 JSON 数据以进行校验</span>
+                </div>
+                <span id="importCountPreview" class="font-mono text-brand-300 font-bold">0 条有效记录</span>
+            </div>
+
+            <!-- Modal Action Buttons -->
+            <div class="flex items-center justify-end gap-3 pt-2 border-t border-white/10">
+                <button onclick="closeBatchImportModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">
+                    取消
+                </button>
+                <button id="btnConfirmImport" onclick="submitBatchImport()" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-lg shadow-brand-600/30 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="ph ph-check"></i>
+                    <span>确认导入到数据库</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: SENTENCE EDIT / CREATE MODAL -->
+    <div id="modalSentenceEdit" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-3xl w-full border-white/10 shadow-2xl space-y-5 my-8">
+            <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-brand-600/30 border border-brand-500/40 text-brand-300 flex items-center justify-center text-lg">
+                        <i class="ph ph-pencil-simple"></i>
+                    </div>
+                    <div>
+                        <h3 id="sentenceModalTitle" class="text-lg font-bold text-white">编辑句子</h3>
+                        <p class="text-xs text-slate-400">配置目标词、中文原句、参考泰语翻译及详细词汇语法注释。</p>
+                    </div>
+                </div>
+                <button onclick="closeSentenceModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
+                    <i class="ph ph-x text-base"></i>
+                </button>
+            </div>
+
+            <form id="sentenceEditForm" onsubmit="saveSentence(event)" class="space-y-4">
+                <input type="hidden" id="editSentenceId">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Group Selection -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">所属词汇分组 *</label>
+                        <select id="editSentenceGroupId" required class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+
+                    <!-- Target Thai Word -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">目标泰语词 (thai_word) *</label>
+                        <input type="text" id="editThaiWord" required placeholder="如: นิสัยดี" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs font-thai text-white focus:outline-none focus:border-brand-500">
+                    </div>
+                </div>
+
+                <!-- Chinese Sentence -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">中文翻译题目 (chinese_sentence) *</label>
+                    <textarea id="editChineseSentence" required rows="2" placeholder="学生将阅读此句并在纸面上完成翻译..." class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500"></textarea>
+                </div>
+
+                <!-- Reference Thai Sentence -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">标准参考泰语 (reference_thai) *</label>
+                    <textarea id="editReferenceThai" required rows="2" placeholder="如: เพื่อนร่วมงานใหม่ของฉันเป็นคนนิสัยดีมาก" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs font-thai text-white focus:outline-none focus:border-brand-500"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Target Word Used -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">句子中使用的形式 (target_word_used)</label>
+                        <input type="text" id="editTargetWordUsed" placeholder="用于高亮标注，默认同目标词" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs font-thai text-white focus:outline-none focus:border-brand-500">
+                    </div>
+                    <!-- Thai word count -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">泰语参考词数 (thai_word_count)</label>
+                        <input type="number" id="editThaiWordCount" min="0" placeholder="如: 7" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500">
+                    </div>
+                </div>
+
+                <!-- Notes / Grammar Explanation -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">教学说明与语法注释 (notes)</label>
+                    <textarea id="editNotes" rows="2" placeholder="如: “นิสัยดี”在句中作形容词性后置定语修饰“人”（คน）..." class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500"></textarea>
+                </div>
+
+                <!-- Other Vocab Notes Dynamic Repeater -->
+                <div class="space-y-2 pt-2 border-t border-white/5">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-semibold text-slate-300">句子生词拆解列表 (other_vocab_notes)</label>
+                        <button type="button" onclick="addVocabRow()" class="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1">
+                            <i class="ph ph-plus-circle"></i>
+                            <span>添加生词</span>
+                        </button>
+                    </div>
+                    <div id="vocabRowsContainer" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
+                    <button type="button" onclick="closeSentenceModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">
+                        取消
+                    </button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-lg shadow-brand-600/30">
+                        <i class="ph ph-check"></i>
+                        <span>保存句子</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: GROUP EDIT / CREATE MODAL -->
+    <div id="modalGroupEdit" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-md w-full border-white/10 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                <h3 id="groupModalTitle" class="text-lg font-bold text-white">新建词汇分组</h3>
+                <button onclick="closeGroupModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
+                    <i class="ph ph-x text-base"></i>
+                </button>
+            </div>
+
+            <form id="groupEditForm" onsubmit="saveGroup(event)" class="space-y-4">
+                <input type="hidden" id="editGroupId">
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">分组名称 *</label>
+                    <input type="text" id="editGroupName" required placeholder="如: B1 人物性格与社交评价" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">描述说明</label>
+                    <textarea id="editGroupDesc" rows="3" placeholder="练习日常交流中评价他人性格特征、待人接物态度的高频表达..." class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">显示排序序号</label>
+                    <input type="number" id="editGroupSort" value="1" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500">
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2 border-t border-white/10">
+                    <button type="button" onclick="closeGroupModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">
+                        取消
+                    </button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-lg shadow-brand-600/30">
+                        <i class="ph ph-check"></i>
+                        <span>保存分组</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script>
+        // ============================================================================
+        // Globals & Data State
+        // ============================================================================
+        let currentTab = 'sentences';
+        let cachedGroups = [];
+        let cachedSentences = [];
+        let searchTimeout = null;
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadMetrics();
+            await loadGroupsData();
+            await loadSentencesTable();
+        });
+
+        // ============================================================================
+        // Metrics Loading
+        // ============================================================================
+        async function loadMetrics() {
+            try {
+                const res = await fetch('/api/sentence-practice/stats');
+                if (!res.ok) throw new Error('Failed to load stats');
+                const data = await res.json();
+
+                document.getElementById('metricGroupsCount').textContent = data.total_groups;
+                document.getElementById('metricTotalSentences').textContent = data.total_sentences;
+                document.getElementById('metricDueToday').textContent = data.due_today_count;
+                document.getElementById('metricMastered').textContent = data.mastered_count;
+            } catch (err) {
+                console.error('Failed to load metrics:', err);
+            }
+        }
+
+        // ============================================================================
+        // Tab Switching
+        // ============================================================================
+        function switchTab(tab) {
+            currentTab = tab;
+            ['Sentences', 'Groups', 'Logs'].forEach(t => {
+                const btn = document.getElementById(`tabBtn${t}`);
+                const content = document.getElementById(`tabContent${t}`);
+                if (t.toLowerCase() === tab.toLowerCase()) {
+                    btn.classList.add('active');
+                    content.classList.remove('hidden');
+                } else {
+                    btn.classList.remove('active');
+                    content.classList.add('hidden');
+                }
+            });
+
+            if (tab === 'sentences') loadSentencesTable();
+            else if (tab === 'groups') renderGroupsTable();
+            else if (tab === 'logs') loadLogsTable();
+        }
+
+        function refreshCurrentTab() {
+            loadMetrics();
+            if (currentTab === 'sentences') loadSentencesTable();
+            else if (currentTab === 'groups') loadGroupsData().then(renderGroupsTable);
+            else if (currentTab === 'logs') loadLogsTable();
+            showToast('数据已刷新', 'info');
+        }
+
+        // ============================================================================
+        // Groups Management & Select Dropdowns
+        // ============================================================================
+        async function loadGroupsData() {
+            try {
+                const res = await fetch('/api/sentence-groups');
+                if (!res.ok) throw new Error('Failed to fetch groups');
+                cachedGroups = await res.json();
+
+                // Populate filter select
+                const filterSelect = document.getElementById('filterGroupId');
+                const prevVal = filterSelect.value;
+                filterSelect.innerHTML = '<option value="all">全部分组</option>' + cachedGroups.map(g => `
+                    <option value="${g.id}">${escapeHtml(g.name)} (${g.total_sentences}句)</option>
+                `).join('');
+                if (prevVal) filterSelect.value = prevVal;
+
+                // Populate edit modal group select
+                const editSelect = document.getElementById('editSentenceGroupId');
+                editSelect.innerHTML = cachedGroups.map(g => `
+                    <option value="${g.id}">${escapeHtml(g.name)}</option>
+                `).join('');
+
+                // Populate import modal group select
+                const importSelect = document.getElementById('importTargetGroupId');
+                importSelect.innerHTML = cachedGroups.map(g => `
+                    <option value="${g.id}">${escapeHtml(g.name)} (${g.total_sentences}句)</option>
+                `).join('');
+
+                renderGroupsTable();
+            } catch (err) {
+                console.error('Failed to load groups data:', err);
+            }
+        }
+
+        function renderGroupsTable() {
+            const tbody = document.getElementById('groupsTableBody');
+            if (!cachedGroups || cachedGroups.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-500">暂无单词分组，点击右上角新建</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = cachedGroups.map((g, idx) => `
+                <tr class="hover:bg-white/[0.02] transition">
+                    <td class="py-3 px-4 font-mono text-slate-400">${g.sort_order || (idx + 1)}</td>
+                    <td class="py-3 px-4">
+                        <div class="font-bold text-white text-sm">${escapeHtml(g.name)}</div>
+                        <div class="font-mono text-[10px] text-slate-500 mt-0.5">${g.id}</div>
+                    </td>
+                    <td class="py-3 px-4 text-slate-300 max-w-sm leading-relaxed">
+                        ${escapeHtml(g.description || '--')}
+                    </td>
+                    <td class="py-3 px-4 text-center font-mono font-bold text-white">${g.total_sentences}</td>
+                    <td class="py-3 px-4 text-center font-mono ${g.due_count > 0 ? 'text-amber-400 font-bold' : 'text-slate-500'}">${g.due_count}</td>
+                    <td class="py-3 px-4 text-center font-mono text-emerald-400 font-bold">${g.mastered_count}</td>
+                    <td class="py-3 px-4 text-right space-x-1">
+                        <!-- Direct practice link -->
+                        <button onclick="openGroupPractice('${g.id}')" title="开启该组练习" class="p-1.5 rounded-lg bg-brand-500/20 hover:bg-brand-500/40 text-brand-300 transition">
+                            <i class="ph ph-play"></i>
+                        </button>
+                        <button onclick="copyDirectUrl('${g.id}')" title="复制直达练习链接" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                            <i class="ph ph-link-simple"></i>
+                        </button>
+                        <!-- Import to this group -->
+                        <button onclick="openBatchImportForGroup('${g.id}')" title="导入数据到本组" class="p-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 transition">
+                            <i class="ph ph-file-arrow-up"></i>
+                        </button>
+                        <!-- Export this group -->
+                        <button onclick="exportGroupSentences('${g.id}')" title="导出本组 JSON" class="p-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 transition">
+                            <i class="ph ph-export"></i>
+                        </button>
+                        <!-- Edit group -->
+                        <button onclick="openEditGroupModal('${g.id}')" title="编辑分组信息" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                            <i class="ph ph-note-pencil"></i>
+                        </button>
+                        <!-- Delete group -->
+                        <button onclick="deleteGroup('${g.id}')" title="删除分组" class="p-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 transition">
+                            <i class="ph ph-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // ============================================================================
+        // Sentences Table & Querying
+        // ============================================================================
+        function debounceSearchSentences() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                loadSentencesTable();
+            }, 300);
+        }
+
+        async function loadSentencesTable() {
+            try {
+                const groupId = document.getElementById('filterGroupId').value;
+                const search = document.getElementById('searchSentencesInput').value.trim();
+                const dueOnly = document.getElementById('filterDueOnly').checked;
+
+                let query = `/api/sentences?group_id=${encodeURIComponent(groupId)}`;
+                if (search) query += `&search=${encodeURIComponent(search)}`;
+                if (dueOnly) query += `&due_only=true`;
+
+                const res = await fetch(query);
+                if (!res.ok) throw new Error('Failed to fetch sentences');
+                const data = await res.json();
+                cachedSentences = data.sentences || [];
+
+                document.getElementById('filteredSentencesCount').textContent = data.total;
+
+                const tbody = document.getElementById('sentencesTableBody');
+                if (cachedSentences.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-500">未找到匹配的练习句子</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = cachedSentences.map((s, idx) => {
+                    const vocabCount = (s.other_vocab_notes || []).length;
+                    const isDue = new Date(s.next_review_date) <= new Date();
+
+                    return `
+                        <tr class="hover:bg-white/[0.02] transition">
+                            <td class="py-3 px-4 font-mono text-slate-500">${idx + 1}</td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="font-thai font-bold text-base text-brand-300 tracking-wide">${escapeHtml(s.thai_word)}</span>
+                                    <button onclick="window.playAudioDirect('${escapeHtml(s.thai_word)}')" title="朗读目标词" class="text-slate-400 hover:text-brand-400 transition">
+                                        <i class="ph ph-speaker-simple-high"></i>
+                                    </button>
+                                </div>
+                                <div class="text-[10px] text-slate-500 font-mono mt-0.5">${s.id}</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="font-semibold text-slate-100 text-xs mb-1">${escapeHtml(s.chinese_sentence)}</div>
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="font-thai text-slate-300 text-sm leading-relaxed">${escapeHtml(s.reference_thai)}</div>
+                                    <button onclick="window.playAudioDirect('${escapeHtml(s.reference_thai)}')" title="朗读参考句" class="text-slate-400 hover:text-brand-400 flex-shrink-0 transition">
+                                        <i class="ph ph-speaker-high"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="px-2 py-1 rounded-lg bg-slate-800 text-slate-300 border border-white/5 text-[11px] font-medium">
+                                    ${escapeHtml(s.group_name || s.group_id)}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-1.5 text-xs text-purple-300">
+                                    <i class="ph ph-tag"></i>
+                                    <span>${vocabCount} 个生词注释</span>
+                                </div>
+                                <div class="text-[11px] text-slate-400 truncate max-w-xs mt-0.5" title="${escapeHtml(s.notes || '')}">
+                                    ${escapeHtml(s.notes || '--')}
+                                </div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-2 font-mono text-[11px]">
+                                    <span class="${isDue ? 'text-amber-400 font-bold' : 'text-slate-400'}">间隔: ${s.interval_days}天</span>
+                                    <span class="text-slate-500">EF: ${s.easiness_factor}</span>
+                                </div>
+                                <div class="text-[10px] text-slate-400 mt-0.5 font-mono">
+                                    复习: ${formatDate(s.next_review_date)}
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 text-right space-x-1">
+                                <button onclick="openEditSentenceModal('${s.id}')" title="编辑句子" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                    <i class="ph ph-pencil-simple"></i>
+                                </button>
+                                <button onclick="resetSentenceSm2('${s.id}')" title="重置 SM-2 进度" class="p-1.5 rounded-lg bg-amber-950/40 hover:bg-amber-900/60 text-amber-400 transition">
+                                    <i class="ph ph-arrow-counter-clockwise"></i>
+                                </button>
+                                <button onclick="deleteSentence('${s.id}')" title="删除句子" class="p-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 transition">
+                                    <i class="ph ph-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error('Failed to load sentences:', err);
+                showToast(`加载句子数据失败: ${err.message}`, 'error');
+            }
+        }
+
+        // ============================================================================
+        // Logs Table Loading
+        // ============================================================================
+        async function loadLogsTable() {
+            try {
+                const res = await fetch('/api/sentence-practice/stats');
+                if (!res.ok) throw new Error('Failed to load logs');
+                const data = await res.json();
+                const logs = data.recent_logs || [];
+
+                const tbody = document.getElementById('logsTableBody');
+                if (logs.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-500">暂无复习打分记录</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = logs.map(l => {
+                    const scoreColor = l.score >= 4 ? 'text-emerald-400 bg-emerald-950/50 border-emerald-800/50'
+                        : (l.score === 3 ? 'text-yellow-400 bg-yellow-950/50 border-yellow-800/50'
+                        : 'text-rose-400 bg-rose-950/50 border-rose-800/50');
+
+                    return `
+                        <tr class="hover:bg-white/[0.02] transition">
+                            <td class="py-3 px-4 font-mono text-slate-400">${formatDate(l.reviewed_at)}</td>
+                            <td class="py-3 px-4 font-thai font-bold text-brand-300 text-sm">${escapeHtml(l.thai_word || '--')}</td>
+                            <td class="py-3 px-4 text-slate-200 truncate max-w-xs">${escapeHtml(l.chinese_sentence || '--')}</td>
+                            <td class="py-3 px-4 text-slate-400">${escapeHtml(l.group_name || l.group_id || '--')}</td>
+                            <td class="py-3 px-4 text-center">
+                                <span class="px-2 py-0.5 rounded border font-mono font-bold ${scoreColor}">${l.score}</span>
+                            </td>
+                            <td class="py-3 px-4 font-mono text-slate-300">${l.prev_repetition ?? 0} &rarr; <b class="text-white">${l.new_repetition}</b></td>
+                            <td class="py-3 px-4 font-mono text-slate-300">${l.prev_interval ?? 1}天 &rarr; <b class="text-indigo-400">${l.new_interval}天</b></td>
+                            <td class="py-3 px-4 font-mono text-slate-400">${l.new_easiness_factor}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error('Failed to load review logs:', err);
+            }
+        }
+
+        // ============================================================================
+        // Batch Import JSON Feature
+        // ============================================================================
+        function openBatchImportModal() {
+            document.getElementById('modalBatchImport').classList.remove('hidden');
+            validateImportJson();
+        }
+
+        function openBatchImportForGroup(groupId) {
+            document.getElementById('modalBatchImport').classList.remove('hidden');
+            document.getElementById('importTargetGroupId').value = groupId;
+            validateImportJson();
+        }
+
+        function closeBatchImportModal() {
+            document.getElementById('modalBatchImport').classList.add('hidden');
+        }
+
+        function fillSampleJson() {
+            const sample = [
+                {
+                    "thai_word": "นิสัยดี",
+                    "chinese_sentence": "我的新同事是一个人很好、很友善的人。",
+                    "reference_thai": "เพื่อนร่วมงานใหม่ของฉันเป็นคนนิสัยดีมาก",
+                    "target_word_used": "นิสัยดี",
+                    "other_vocab_notes": [
+                        { "word": "เพื่อนร่วมงาน", "meaning": "同事", "level": "A2" },
+                        { "word": "ใหม่", "meaning": "新的", "level": "A1" },
+                        { "word": "ของ", "meaning": "的", "level": "A1" },
+                        { "word": "ฉัน", "meaning": "我", "level": "A1" },
+                        { "word": "เป็น", "meaning": "是", "level": "A1" },
+                        { "word": "คน", "meaning": "人", "level": "A1" },
+                        { "word": "มาก", "meaning": "很、非常", "level": "A1" }
+                    ],
+                    "thai_word_count": 7,
+                    "notes": "“นิสัยดี”在句中作形容词性后置定语或复合词组修饰“人”（คน），是日常泰语中描述他人性格最基础、最高频的B1词汇用法。"
+                },
+                {
+                    "thai_word": "จริงใจ",
+                    "chinese_sentence": "对待朋友应该以诚相待，真心实意。",
+                    "reference_thai": "การปฏิบัติต่อเพื่อนควรมีความจริงใจและบริสุทธิ์ใจ",
+                    "target_word_used": "จริงใจ",
+                    "other_vocab_notes": [
+                        { "word": "การปฏิบัติต่อ", "meaning": "对待", "level": "B1" },
+                        { "word": "เพื่อน", "meaning": "朋友", "level": "A1" },
+                        { "word": "ควร", "meaning": "应该", "level": "A1" },
+                        { "word": "มีความจริงใจ", "meaning": "有真诚心", "level": "B1" }
+                    ],
+                    "thai_word_count": 6,
+                    "notes": "“จริงใจ”表示真诚、真实不虚，常用作形容词或与“มี”搭配构成名词短语。"
+                }
+            ];
+            document.getElementById('importJsonTextarea').value = JSON.stringify(sample, null, 2);
+            validateImportJson();
+        }
+
+        function validateImportJson() {
+            const raw = document.getElementById('importJsonTextarea').value.trim();
+            const dot = document.getElementById('importStatusDot');
+            const text = document.getElementById('importStatusText');
+            const preview = document.getElementById('importCountPreview');
+            const btn = document.getElementById('btnConfirmImport');
+
+            if (!raw) {
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-500';
+                text.textContent = '请输入或粘贴 JSON 数据以进行校验';
+                preview.textContent = '0 条记录';
+                btn.disabled = true;
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(raw);
+                let items = [];
+                if (Array.isArray(parsed)) {
+                    items = parsed;
+                } else if (parsed && typeof parsed === 'object') {
+                    if (Array.isArray(parsed.sentences)) {
+                        items = parsed.sentences;
+                    } else if (parsed.thai_word && parsed.chinese_sentence) {
+                        items = [parsed];
+                    }
+                }
+
+                const validItems = items.filter(i => i && i.thai_word && i.chinese_sentence && i.reference_thai);
+
+                if (validItems.length > 0) {
+                    dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400';
+                    text.textContent = `JSON 语法正确，已解析出符合规范的句子记录`;
+                    preview.textContent = `${validItems.length} 条有效记录`;
+                    btn.disabled = false;
+                } else {
+                    dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400';
+                    text.textContent = `JSON 格式合法，但未包含必需字段 (thai_word, chinese_sentence, reference_thai)`;
+                    preview.textContent = '0 条有效记录';
+                    btn.disabled = true;
+                }
+            } catch (err) {
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-400';
+                text.textContent = `JSON 解析错误: ${err.message}`;
+                preview.textContent = '无法解析';
+                btn.disabled = true;
+            }
+        }
+
+        async function submitBatchImport() {
+            const raw = document.getElementById('importJsonTextarea').value.trim();
+            const targetGroupId = document.getElementById('importTargetGroupId').value;
+            const newGroupName = document.getElementById('importNewGroupName').value.trim();
+
+            try {
+                const parsed = JSON.parse(raw);
+                let sentences = [];
+                if (Array.isArray(parsed)) {
+                    sentences = parsed;
+                } else if (parsed && typeof parsed === 'object') {
+                    if (Array.isArray(parsed.sentences)) {
+                        sentences = parsed.sentences;
+                    } else if (parsed.thai_word && parsed.chinese_sentence) {
+                        sentences = [parsed];
+                    }
+                }
+
+                const payload = {
+                    group_id: newGroupName ? null : targetGroupId,
+                    new_group_name: newGroupName || null,
+                    sentences: sentences
+                };
+
+                const res = await fetch('/api/sentences/batch-import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const errJson = await res.json();
+                    throw new Error(errJson.error || 'Batch import failed');
+                }
+
+                const result = await res.json();
+                showToast(`成功导入 ${result.count} 条句子！`, 'success');
+                closeBatchImportModal();
+
+                // Refresh tables and metrics
+                await loadMetrics();
+                await loadGroupsData();
+                await loadSentencesTable();
+            } catch (err) {
+                console.error('Error submitting batch import:', err);
+                showToast(`导入失败: ${err.message}`, 'error');
+            }
+        }
+
+        // ============================================================================
+        // Sentence Create & Edit Modals
+        // ============================================================================
+        function openCreateSentenceModal() {
+            document.getElementById('sentenceModalTitle').textContent = '新建单句';
+            document.getElementById('editSentenceId').value = '';
+            document.getElementById('sentenceEditForm').reset();
+            document.getElementById('vocabRowsContainer').innerHTML = '';
+            addVocabRow(); // add one empty row
+            document.getElementById('modalSentenceEdit').classList.remove('hidden');
+        }
+
+        async function openEditSentenceModal(id) {
+            try {
+                const res = await fetch(`/api/sentences/${id}`);
+                if (!res.ok) throw new Error('Failed to load sentence detail');
+                const s = await res.json();
+
+                document.getElementById('sentenceModalTitle').textContent = '编辑句子';
+                document.getElementById('editSentenceId').value = s.id;
+                document.getElementById('editSentenceGroupId').value = s.group_id;
+                document.getElementById('editThaiWord').value = s.thai_word || '';
+                document.getElementById('editChineseSentence').value = s.chinese_sentence || '';
+                document.getElementById('editReferenceThai').value = s.reference_thai || '';
+                document.getElementById('editTargetWordUsed').value = s.target_word_used || '';
+                document.getElementById('editThaiWordCount').value = s.thai_word_count || '';
+                document.getElementById('editNotes').value = s.notes || '';
+
+                // Populate vocab rows
+                const container = document.getElementById('vocabRowsContainer');
+                container.innerHTML = '';
+                const notes = s.other_vocab_notes || [];
+                if (notes.length === 0) {
+                    addVocabRow();
+                } else {
+                    notes.forEach(v => addVocabRow(v.word, v.meaning, v.level));
+                }
+
+                document.getElementById('modalSentenceEdit').classList.remove('hidden');
+            } catch (err) {
+                console.error('Failed to open edit modal:', err);
+                showToast(`加载句子详情失败: ${err.message}`, 'error');
+            }
+        }
+
+        function closeSentenceModal() {
+            document.getElementById('modalSentenceEdit').classList.add('hidden');
+        }
+
+        function addVocabRow(word = '', meaning = '', level = 'A1') {
+            const container = document.getElementById('vocabRowsContainer');
+            const row = document.createElement('div');
+            row.className = 'flex items-center gap-2 vocab-row';
+            row.innerHTML = `
+                <input type="text" placeholder="泰文词" value="${escapeHtml(word)}" class="vocab-word flex-1 bg-slate-900 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-thai text-white focus:outline-none focus:border-brand-500">
+                <input type="text" placeholder="中文释义" value="${escapeHtml(meaning)}" class="vocab-meaning flex-1 bg-slate-900 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                <select class="vocab-level w-20 bg-slate-900 border border-white/10 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                    <option value="A1" ${level === 'A1' ? 'selected' : ''}>A1</option>
+                    <option value="A2" ${level === 'A2' ? 'selected' : ''}>A2</option>
+                    <option value="B1" ${level === 'B1' ? 'selected' : ''}>B1</option>
+                    <option value="B2" ${level === 'B2' ? 'selected' : ''}>B2</option>
+                </select>
+                <button type="button" onclick="this.parentElement.remove()" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-rose-900/50 text-slate-400 hover:text-rose-300 flex items-center justify-center transition">
+                    <i class="ph ph-trash text-xs"></i>
+                </button>
+            `;
+            container.appendChild(row);
+        }
+
+        async function saveSentence(e) {
+            e.preventDefault();
+            const id = document.getElementById('editSentenceId').value;
+            const groupId = document.getElementById('editSentenceGroupId').value;
+            const thaiWord = document.getElementById('editThaiWord').value.trim();
+            const chineseSentence = document.getElementById('editChineseSentence').value.trim();
+            const referenceThai = document.getElementById('editReferenceThai').value.trim();
+            const targetWordUsed = document.getElementById('editTargetWordUsed').value.trim();
+            const countVal = document.getElementById('editThaiWordCount').value;
+            const notes = document.getElementById('editNotes').value.trim();
+
+            // Collect vocab rows
+            const vocabRows = document.querySelectorAll('.vocab-row');
+            const otherVocabNotes = [];
+            vocabRows.forEach(row => {
+                const w = row.querySelector('.vocab-word').value.trim();
+                const m = row.querySelector('.vocab-meaning').value.trim();
+                const l = row.querySelector('.vocab-level').value;
+                if (w || m) {
+                    otherVocabNotes.push({ word: w, meaning: m, level: l });
+                }
+            });
+
+            const payload = {
+                group_id: groupId,
+                thai_word: thaiWord,
+                chinese_sentence: chineseSentence,
+                reference_thai: referenceThai,
+                target_word_used: targetWordUsed || thaiWord,
+                thai_word_count: countVal ? parseInt(countVal, 10) : 0,
+                notes: notes,
+                other_vocab_notes: otherVocabNotes
+            };
+
+            try {
+                let res;
+                if (id) {
+                    // Update
+                    res = await fetch(`/api/sentences/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    // Create
+                    res = await fetch('/api/sentences', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || 'Failed to save sentence');
+                }
+
+                showToast(id ? '句子修改已保存！' : '新句子已创建！', 'success');
+                closeSentenceModal();
+                await loadMetrics();
+                await loadSentencesTable();
+            } catch (err) {
+                console.error('Error saving sentence:', err);
+                showToast(`保存失败: ${err.message}`, 'error');
+            }
+        }
+
+        async function resetSentenceSm2(id) {
+            if (!confirm('确定要重置该句子的 SM-2 复习排程吗？进度将重新归零。')) return;
+
+            try {
+                const res = await fetch(`/api/sentences/${id}/reset-sm2`, { method: 'POST' });
+                if (!res.ok) throw new Error('Failed to reset SM-2');
+                showToast('SM-2 调度进度已重置', 'success');
+                await loadMetrics();
+                await loadSentencesTable();
+            } catch (err) {
+                console.error('Failed to reset SM-2:', err);
+                showToast(`重置失败: ${err.message}`, 'error');
+            }
+        }
+
+        async function deleteSentence(id) {
+            if (!confirm('确定要删除该句子吗？此操作无法撤销。')) return;
+
+            try {
+                const res = await fetch(`/api/sentences/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Failed to delete');
+                showToast('句子已删除', 'success');
+                await loadMetrics();
+                await loadSentencesTable();
+            } catch (err) {
+                console.error('Failed to delete sentence:', err);
+                showToast(`删除失败: ${err.message}`, 'error');
+            }
+        }
+
+        // ============================================================================
+        // Group Create & Edit Modals
+        // ============================================================================
+        function openCreateGroupModal() {
+            document.getElementById('groupModalTitle').textContent = '新建词汇分组';
+            document.getElementById('editGroupId').value = '';
+            document.getElementById('editGroupName').value = '';
+            document.getElementById('editGroupDesc').value = '';
+            document.getElementById('editGroupSort').value = cachedGroups.length + 1;
+            document.getElementById('modalGroupEdit').classList.remove('hidden');
+        }
+
+        function openEditGroupModal(id) {
+            const grp = cachedGroups.find(g => g.id === id);
+            if (!grp) return;
+
+            document.getElementById('groupModalTitle').textContent = '编辑分组信息';
+            document.getElementById('editGroupId').value = grp.id;
+            document.getElementById('editGroupName').value = grp.name || '';
+            document.getElementById('editGroupDesc').value = grp.description || '';
+            document.getElementById('editGroupSort').value = grp.sort_order || 1;
+            document.getElementById('modalGroupEdit').classList.remove('hidden');
+        }
+
+        function closeGroupModal() {
+            document.getElementById('modalGroupEdit').classList.add('hidden');
+        }
+
+        async function saveGroup(e) {
+            e.preventDefault();
+            const id = document.getElementById('editGroupId').value;
+            const name = document.getElementById('editGroupName').value.trim();
+            const description = document.getElementById('editGroupDesc').value.trim();
+            const sortOrder = document.getElementById('editGroupSort').value;
+
+            const payload = {
+                name: name,
+                description: description,
+                sort_order: parseInt(sortOrder, 10)
+            };
+
+            try {
+                let res;
+                if (id) {
+                    res = await fetch(`/api/sentence-groups/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    res = await fetch('/api/sentence-groups', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || 'Failed to save group');
+                }
+
+                showToast(id ? '分组已更新' : '分组创建成功', 'success');
+                closeGroupModal();
+                await loadMetrics();
+                await loadGroupsData();
+            } catch (err) {
+                console.error('Error saving group:', err);
+                showToast(`保存分组失败: ${err.message}`, 'error');
+            }
+        }
+
+        async function deleteGroup(id) {
+            if (!confirm(`确定要删除此分组吗？该分组下的所有句子和复习日志也将被级联删除！`)) return;
+
+            try {
+                const res = await fetch(`/api/sentence-groups/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Failed to delete group');
+                showToast('分组已删除', 'success');
+                await loadMetrics();
+                await loadGroupsData();
+                await loadSentencesTable();
+            } catch (err) {
+                console.error('Failed to delete group:', err);
+                showToast(`删除分组失败: ${err.message}`, 'error');
+            }
+        }
+
+        // ============================================================================
+        // Export Group Sentences
+        // ============================================================================
+        async function exportGroupSentences(groupId) {
+            try {
+                const res = await fetch(`/api/sentence-practice/group/${groupId}`);
+                if (!res.ok) throw new Error('Failed to fetch group sentences');
+                const data = await res.json();
+
+                const cleanItems = (data.sentences || []).map(s => ({
+                    thai_word: s.thai_word,
+                    chinese_sentence: s.chinese_sentence,
+                    reference_thai: s.reference_thai,
+                    target_word_used: s.target_word_used,
+                    other_vocab_notes: s.other_vocab_notes,
+                    thai_word_count: s.thai_word_count,
+                    notes: s.notes
+                }));
+
+                const jsonStr = JSON.stringify(cleanItems, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sentences_${groupId}_${new Date().toISOString().slice(0,10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast(`已成功导出 ${cleanItems.length} 条句子 JSON 文件`, 'success');
+            } catch (err) {
+                console.error('Export failed:', err);
+                showToast(`导出失败: ${err.message}`, 'error');
+            }
+        }
+
+        // ============================================================================
+        // Utility Functions
+        // ============================================================================
+        function openGroupPractice(groupId) {
+            window.open(`./appSentence.html?group_id=${encodeURIComponent(groupId)}`, '_blank');
+        }
+
+        function copyDirectUrl(groupId) {
+            const url = `${window.location.origin}/Pages/appSentence.html?group_id=${encodeURIComponent(groupId)}`;
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('学生练习直达链接已复制到剪贴板！', 'success');
+            }).catch(() => {
+                prompt('直达练习链接:', url);
+            });
+        }
+
+        window.playAudioDirect = (text) => {
+            if (!text) return;
+            const url = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(text)}`;
+            new Audio(url).play().catch(err => console.error("Audio playback error:", err));
+        };
+
+        function speakThaiText(text) {
+            window.playAudioDirect(text);
+        }
+
+        function formatDate(isoStr) {
+            if (!isoStr) return '--';
+            try {
+                const d = new Date(isoStr);
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const date = String(d.getDate()).padStart(2, '0');
+                const hours = String(d.getHours()).padStart(2, '0');
+                const mins = String(d.getMinutes()).padStart(2, '0');
+                return `${month}-${date} ${hours}:${mins}`;
+            } catch (e) {
+                return isoStr;
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            let bgClass = 'bg-slate-800 text-slate-200 border-white/10';
+            let icon = 'ph-info';
+            if (type === 'success') {
+                bgClass = 'bg-emerald-950/90 text-emerald-200 border-emerald-500/30';
+                icon = 'ph-check-circle';
+            } else if (type === 'warning') {
+                bgClass = 'bg-amber-950/90 text-amber-200 border-amber-500/30';
+                icon = 'ph-warning';
+            } else if (type === 'error') {
+                bgClass = 'bg-rose-950/90 text-rose-200 border-rose-500/30';
+                icon = 'ph-x-circle';
+            }
+
+            toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl flex items-center gap-2.5 text-xs sm:text-sm font-medium transition transform translate-y-2 opacity-0 duration-200 backdrop-blur-md ${bgClass}`;
+            toast.innerHTML = `<i class="ph ${icon} text-base"></i><span>${escapeHtml(message)}</span>`;
+
+            container.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 200);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

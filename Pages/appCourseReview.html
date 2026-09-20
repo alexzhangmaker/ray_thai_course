@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThaiNotes - 课件知识复习与记忆工作台</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icon CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Outfit & Noto Sans SC & Noto Serif Thai -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Serif+Thai:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-outfit: 'Outfit', 'Noto Sans SC', sans-serif;
+        }
+        body {
+            font-family: var(--font-outfit);
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        /* Custom scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        /* Custom Glassmorphism */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card-light {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        /* 3D Flashcard Styling */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        /* Cloze / Masking Effect for Step 2 Memory Mode */
+        .cloze-masked {
+            background-color: #3b82f6;
+            color: transparent !important;
+            user-select: none;
+            cursor: pointer;
+            border-radius: 4px;
+            padding: 0 4px;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.2);
+        }
+        .cloze-masked:hover {
+            background-color: #60a5fa;
+        }
+        .cloze-revealed {
+            background-color: rgba(59, 130, 246, 0.15);
+            color: #93c5fd !important;
+            border-bottom: 2px dashed #3b82f6;
+            border-radius: 2px;
+            padding: 0 2px;
+        }
+
+        /* Slide layout styles */
+        .slide-container {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .noselect {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(0.98); }
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 2s infinite ease-in-out;
+        }
+    </style>
+    <!-- PDF.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body class="h-screen overflow-hidden flex flex-col bg-slate-950 text-slate-100">
+
+    <!-- 1. 顶部 Header 状态栏 (Top Navigation Header) -->
+    <header class="h-14 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md flex items-center justify-between px-4 z-30 flex-shrink-0">
+        <div class="flex items-center gap-3">
+            <!-- Sidebar Toggle -->
+            <button id="btn-toggle-sidebar" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors" title="切换课件目录">
+                <i class="fa-solid fa-bars text-sm"></i>
+            </button>
+
+            <!-- App Logo & Title -->
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md shadow-amber-500/20">
+                    <i class="fa-solid fa-brain text-sm"></i>
+                </div>
+                <div>
+                    <h1 class="text-sm font-bold text-slate-100 tracking-wide flex items-center gap-2">
+                        <span>ThaiNotes 课件复习</span>
+                        <span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-medium">知识精记 & 闪卡复习</span>
+                    </h1>
+                </div>
+            </div>
+            
+            <div class="h-4 w-px bg-slate-800 mx-1"></div>
+            
+            <!-- Open File Trigger -->
+            <label for="pdf-file-input" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-300 cursor-pointer transition-all duration-200">
+                <i class="fa-solid fa-folder-open text-amber-400"></i>
+                <span>载入本地 PDF 课件</span>
+                <input type="file" id="pdf-file-input" accept="application/pdf" class="hidden">
+            </label>
+        </div>
+
+        <!-- Current Courseware Badge -->
+        <div class="hidden md:flex items-center gap-2 bg-slate-800/80 px-3.5 py-1 rounded-full border border-slate-700/60 text-xs max-w-md overflow-hidden" id="current-doc-badge">
+            <i class="fa-solid fa-file-pdf text-rose-400 text-sm"></i>
+            <span class="text-slate-200 font-semibold truncate" id="current-doc-name">正在获取课件...</span>
+            <span class="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-1.5 rounded" id="doc-type-tag">复习课件</span>
+        </div>
+
+        <!-- Right Controls -->
+        <div class="flex items-center gap-3">
+            <!-- Courseware Selector Dropdown Trigger -->
+            <button id="btn-select-courseware" class="px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 text-xs font-semibold flex items-center gap-1.5 transition-all">
+                <i class="fa-solid fa-list-check"></i>
+                <span>选择课件</span>
+            </button>
+
+            <!-- Global Review Summary Button -->
+            <button id="btn-open-report" class="px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-1.5 transition-all">
+                <i class="fa-solid fa-trophy"></i>
+                <span>全课件复习报告</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 2. 页面与 Step 流程控制条 (Page & Step Stepper Bar) -->
+    <div id="review-stepper-bar" class="h-12 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between text-xs text-slate-400 select-none flex-shrink-0">
+        
+        <!-- Left: Page Navigator -->
+        <div class="flex items-center gap-2">
+            <button id="btn-prev-page" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-colors flex items-center justify-center" title="上一页 (←)">
+                <i class="fa-solid fa-chevron-left text-xs"></i>
+            </button>
+
+            <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 text-xs">
+                <span class="text-slate-400">Page</span>
+                <input type="number" id="input-current-page" class="w-9 h-5 text-center bg-slate-900 text-amber-400 font-bold rounded border border-slate-700 focus:outline-none focus:border-indigo-500 text-xs" value="1" min="1">
+                <span class="text-slate-500">/</span>
+                <span id="text-total-pages" class="text-slate-300 font-bold">1</span>
+            </div>
+
+            <button id="btn-next-page" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-colors flex items-center justify-center" title="下一页 (→)">
+                <i class="fa-solid fa-chevron-right text-xs"></i>
+            </button>
+        </div>
+
+        <!-- Center: Step Stepper Flow for Current Page -->
+        <div class="flex items-center gap-2 sm:gap-4 overflow-x-auto py-1">
+            <span class="font-bold text-slate-500 text-[11px] hidden lg:inline">当前页复习步骤:</span>
+
+            <!-- Step 1 Trigger -->
+            <button id="step-btn-1" onclick="app.setStep(1)" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all border border-indigo-500/40 bg-indigo-600/20 text-indigo-300 shadow-sm shadow-indigo-500/10">
+                <span class="w-4 h-4 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-[10px]" id="step-num-1">1</span>
+                <span>Step 1: 观看课件 Page</span>
+                <i id="step-check-1" class="fa-solid fa-circle-check text-emerald-400 hidden"></i>
+            </button>
+
+            <i class="fa-solid fa-angle-right text-[10px] text-slate-600"></i>
+
+            <!-- Step 2 Trigger -->
+            <button id="step-btn-2" onclick="app.setStep(2)" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all border border-slate-800 bg-slate-950 text-slate-400 hover:bg-slate-800">
+                <span class="w-4 h-4 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center font-bold text-[10px]" id="step-num-2">2</span>
+                <span>Step 2: 复习 bullet 笔记</span>
+                <i id="step-check-2" class="fa-solid fa-circle-check text-emerald-400 hidden"></i>
+            </button>
+
+            <i class="fa-solid fa-angle-right text-[10px] text-slate-600"></i>
+
+            <!-- Step 3 Trigger -->
+            <button id="step-btn-3" onclick="app.setStep(3)" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all border border-slate-800 bg-slate-950 text-slate-400 hover:bg-slate-800">
+                <span class="w-4 h-4 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center font-bold text-[10px]" id="step-num-3">3</span>
+                <span>Step 3: 随堂闪卡复习</span>
+                <i id="step-check-3" class="fa-solid fa-circle-check text-emerald-400 hidden"></i>
+            </button>
+        </div>
+
+        <!-- Right: Current Page Status Badge -->
+        <div class="hidden sm:flex items-center gap-2">
+            <span id="page-status-badge" class="px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 text-[11px] font-medium border border-slate-700 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                <span>第 <span id="badge-page-num" class="font-bold text-amber-400">1</span> 页复习进行中</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- 3. 主工作区 Container (Main Workspace) -->
+    <div class="flex flex-1 overflow-hidden relative">
+
+        <!-- 左侧课件目录与 Outline 侧边栏 (Left Sidebar) -->
+        <aside id="left-sidebar" class="w-72 -ml-72 border-r border-slate-800 bg-slate-900/95 flex flex-col flex-shrink-0 transition-all duration-300 relative z-20">
+            <!-- Sidebar Header & Search -->
+            <div class="p-3 border-b border-slate-800 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-book-bookmark text-indigo-400"></i>
+                        <span>课件与章节目录</span>
+                    </span>
+                    <span class="text-[10px] text-slate-500" id="sidebar-count">共 0 份</span>
+                </div>
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                    <input type="text" id="input-search-cw" placeholder="搜索课件/标题..." class="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-indigo-500 transition-all">
+                </div>
+            </div>
+
+            <!-- Courseware Tree -->
+            <div class="flex-1 overflow-y-auto p-2 space-y-2" id="sidebar-tree-container">
+                <!-- Tree items loaded dynamically -->
+            </div>
+
+            <!-- Current Page Index / Progress Summary inside Sidebar -->
+            <div class="p-3 border-t border-slate-800 bg-slate-950/60 space-y-2">
+                <span class="text-[11px] font-bold text-slate-400 flex items-center justify-between">
+                    <span>当前课件复习进度</span>
+                    <span id="sidebar-overall-progress" class="text-indigo-400 font-bold">0%</span>
+                </span>
+                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div id="sidebar-progress-bar" class="bg-gradient-to-r from-amber-500 to-indigo-500 h-full w-0 transition-all duration-300"></div>
+                </div>
+                <!-- Page Steps Status Grid -->
+                <div class="grid grid-cols-5 gap-1 pt-1" id="sidebar-page-grid">
+                    <!-- Page dots generated dynamically -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- 中部复习双栏主区域 (Center Dual Workspace) -->
+        <main class="flex-1 flex flex-col md:flex-row overflow-hidden bg-slate-950 relative">
+
+            <!-- A. 左/上部：课件 PDF Canvas 展示区 (PDF Viewport) -->
+            <section id="pdf-container-section" class="w-full md:w-1/2 lg:w-7/12 flex flex-col border-b md:border-b-0 md:border-r border-slate-800 bg-slate-950 relative h-1/2 md:h-full">
+                <!-- PDF Controls Bar -->
+                <div class="h-9 bg-slate-900/80 border-b border-slate-800 px-3 flex items-center justify-between text-xs text-slate-400 flex-shrink-0">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-pdf text-rose-400"></i>
+                            <span>PDF 讲义视图</span>
+                        </span>
+                        <span id="pdf-page-indicator" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded">
+                            Page 1 / 1
+                        </span>
+                    </div>
+
+                    <!-- PDF Zoom Controls -->
+                    <div class="flex items-center gap-1">
+                        <button id="btn-zoom-out" class="w-7 h-7 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors" title="缩小">
+                            <i class="fa-solid fa-minus text-xs"></i>
+                        </button>
+                        <span id="text-zoom-val" class="w-10 text-center text-[11px] font-mono text-slate-300">100%</span>
+                        <button id="btn-zoom-in" class="w-7 h-7 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors" title="放大">
+                            <i class="fa-solid fa-plus text-xs"></i>
+                        </button>
+                        <button id="btn-zoom-fit" class="w-7 h-7 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors" title="适合宽度">
+                            <i class="fa-solid fa-arrows-left-right text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PDF Viewport View -->
+                <div id="ppt-viewport" class="flex-1 overflow-auto bg-slate-950 flex items-center justify-center p-4 relative">
+                    <!-- Canvas Container -->
+                    <div id="pdf-slide-wrapper" class="slide-container relative overflow-auto max-h-full max-w-full">
+                        <canvas id="pdf-render-canvas" class="block mx-auto bg-white shadow-2xl transition-transform duration-150"></canvas>
+                    </div>
+
+                    <!-- Fallback Markdown HTML Wrapper (if PDF is not present) -->
+                    <div id="html-slide-wrapper" class="slide-container w-full max-w-3xl aspect-[16/10] bg-slate-900 text-slate-100 p-6 shadow-2xl overflow-y-auto hidden border border-slate-800">
+                        <div id="markdown-fallback-content" class="prose prose-invert max-w-none text-xs">
+                            <!-- Dynamic Markdown Content -->
+                        </div>
+                    </div>
+
+                    <!-- Manual PDF Upload Fallback Lock Screen -->
+                    <div id="pdf-lock-screen" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-10 hidden">
+                        <div class="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center mb-3 text-2xl shadow-lg">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <h3 class="text-sm font-bold text-slate-200 mb-1">提示：无法直接跨域读取本地 PDF</h3>
+                        <p class="text-xs text-slate-400 max-w-md leading-relaxed mb-4">
+                            由于浏览器安全限制，请手动选择对应的 PDF 文件进行渲染。
+                        </p>
+                        <button onclick="document.getElementById('pdf-file-input').click()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/30 flex items-center gap-2">
+                            <i class="fa-solid fa-folder-open"></i>
+                            <span>选择并载入本地 PDF 讲义</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- B. 右/下部：Page 多 Step 交互复习面板 (Step Review Interactive Panel) -->
+            <section id="step-interactive-panel" class="w-full md:w-1/2 lg:w-5/12 flex flex-col bg-slate-900/90 flex-1 overflow-hidden h-1/2 md:h-full">
+                
+                <!-- Step 1 Panel: 观看课件 PDF 的 Page 内容 -->
+                <div id="panel-step-1" class="flex-1 flex flex-col p-5 overflow-y-auto space-y-4">
+                    <!-- Step Banner -->
+                    <div class="p-4 rounded-xl bg-gradient-to-r from-indigo-900/40 to-slate-900 border border-indigo-500/30 space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-lg bg-indigo-600 text-white font-bold flex items-center justify-center text-xs shadow-md">1</span>
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-100">Step 1：观看与研读课件 Page 内容</h3>
+                                <p class="text-[11px] text-indigo-300">认真阅读左侧讲义图形与文本，在大脑中重构知识框架</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Current Page Meta Overview -->
+                    <div class="glass-card p-4 rounded-xl space-y-3">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                            <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-heading text-amber-400"></i>
+                                <span>本页主题 (Page <span id="step1-page-num">1</span>)</span>
+                            </span>
+                            <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded" id="step1-page-cn">第 1 页</span>
+                        </div>
+                        <h4 class="text-sm font-bold text-amber-300" id="step1-page-title">讲义主题载入中...</h4>
+                        <div class="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-3 rounded-lg border border-slate-800" id="step1-page-summary">
+                            -- 概要描述 --
+                        </div>
+                    </div>
+
+                    <!-- Step 1 Reading Checklist -->
+                    <div class="glass-card p-4 rounded-xl space-y-2 text-xs">
+                        <span class="font-bold text-slate-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-list-check text-indigo-400"></i>
+                            <span>Step 1 研读要领：</span>
+                        </span>
+                        <ul class="space-y-1.5 text-slate-400 list-disc list-inside text-[11px]">
+                            <li>对比查看左侧 PDF 中的原理图表与文字定义；</li>
+                            <li>在大脑中尝试复述本页阐述的核心逻辑；</li>
+                            <li>确认阅读无误后，点击下方按钮进入 Step 2 背诵核心考点。</li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-auto pt-4">
+                        <button onclick="app.completeStep1AndNext()" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all">
+                            <span>我已看完本页讲义，进入 Step 2 核心考点复习</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2 Panel: 复习记忆 bullet 笔记 (核心考点与知识点) -->
+                <div id="panel-step-2" class="flex-1 flex flex-col p-5 overflow-y-auto space-y-4 hidden">
+                    <!-- Step Banner -->
+                    <div class="p-4 rounded-xl bg-gradient-to-r from-amber-900/40 to-slate-900 border border-amber-500/30 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-xs shadow-md">2</span>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-100">Step 2：复习记忆 bullet 笔记</h3>
+                                    <p class="text-[11px] text-amber-300">强化记忆课件核心考点与要点</p>
+                                </div>
+                            </div>
+                            <!-- Cloze Mode Toggle -->
+                            <button id="btn-toggle-cloze" onclick="app.toggleClozeMode()" class="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[11px] font-semibold flex items-center gap-1 hover:bg-amber-500/30 transition-all">
+                                <i class="fa-solid fa-eye-slash"></i>
+                                <span id="text-cloze-mode">开启遮挡隐显模式</span>
+                            </button>
+                        </div>
+
+                        <!-- EXPLICIT USER REQUIREMENT PROMPT -->
+                        <div class="bg-amber-500/15 border border-amber-500/30 rounded-lg p-2.5 text-xs text-amber-200 leading-relaxed font-semibold flex items-start gap-2">
+                            <i class="fa-solid fa-lightbulb text-amber-400 text-sm mt-0.5"></i>
+                            <div>
+                                <span>屏幕提示：要求背诵记忆课件笔记中的“核心考点与知识点”（即下方 bullet 重点要点），确保准确理解掌握！</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Core Points Bullet Cards List -->
+                    <div class="space-y-3 flex-1 overflow-y-auto pr-1" id="step2-core-points-container">
+                        <!-- Bullet cards rendered dynamically -->
+                    </div>
+
+                    <!-- Step 2 Footer Control -->
+                    <div class="pt-3 border-t border-slate-800 space-y-2">
+                        <div class="flex items-center justify-between text-xs text-slate-400">
+                            <span>考点记忆进度:</span>
+                            <span class="font-bold text-amber-400" id="step2-progress-text">0 / 0 已背诵</span>
+                        </div>
+                        <button onclick="app.completeStep2AndNext()" class="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition-all">
+                            <span>核心考点已记牢，进入 Step 3 闪卡复习</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3 Panel: 课件笔记中闪卡复习 -->
+                <div id="panel-step-3" class="flex-1 flex flex-col p-5 overflow-y-auto space-y-4 hidden">
+                    <!-- Step Banner -->
+                    <div class="p-4 rounded-xl bg-gradient-to-r from-emerald-900/40 to-slate-900 border border-emerald-500/30 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-7 h-7 rounded-lg bg-emerald-500 text-slate-950 font-bold flex items-center justify-center text-xs shadow-md">3</span>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-100">Step 3：课件笔记随堂闪卡复习</h3>
+                                    <p class="text-[11px] text-emerald-300">对当前 Page 的所有闪卡进行翻卡复习与测试</p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full" id="step3-card-counter">
+                                闪卡 1 / 1
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Flashcard 3D Viewer Container -->
+                    <div id="flashcard-viewer" class="flex-1 flex flex-col items-center justify-center min-h-[220px]">
+                        <div id="flashcard-box" onclick="app.flipFlashcard()" class="perspective-1000 w-full max-w-md h-56 cursor-pointer group select-none">
+                            <div id="flashcard-inner" class="transform-style-3d relative w-full h-full rounded-2xl shadow-2xl">
+                                
+                                <!-- Card Front (Question / Prompt) -->
+                                <div class="backface-hidden absolute inset-0 glass-card p-6 rounded-2xl border-2 border-indigo-500/30 flex flex-col justify-between bg-gradient-to-br from-slate-900 via-indigo-950/40 to-slate-900 text-slate-100 group-hover:border-indigo-400 transition-colors">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                            <i class="fa-solid fa-circle-question"></i>
+                                            <span>闪卡提问 (Front)</span>
+                                        </span>
+                                        <span class="text-[10px] text-slate-400">点击卡片翻面看答案</span>
+                                    </div>
+                                    <div class="my-auto text-center px-2">
+                                        <p class="text-sm font-bold text-slate-100 leading-relaxed" id="fc-front-text">
+                                            提问加载中...
+                                        </p>
+                                    </div>
+                                    <div class="text-center">
+                                        <span class="text-[11px] text-indigo-400 font-semibold flex items-center justify-center gap-1">
+                                            <i class="fa-solid fa-arrows-rotate animate-spin-slow"></i>
+                                            <span>点击卡片翻面查看记忆答案</span>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Card Back (Answer / Solution) -->
+                                <div class="backface-hidden rotate-y-180 absolute inset-0 glass-card p-6 rounded-2xl border-2 border-emerald-500/40 flex flex-col justify-between bg-gradient-to-br from-slate-900 via-emerald-950/40 to-slate-900 text-slate-100">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                            <i class="fa-solid fa-circle-check"></i>
+                                            <span>标准答案 (Back)</span>
+                                        </span>
+                                        <span class="text-[10px] text-slate-400">解答展示</span>
+                                    </div>
+                                    <div class="my-auto text-center px-2">
+                                        <p class="text-xs font-semibold text-emerald-200 leading-relaxed" id="fc-back-text">
+                                            答案加载中...
+                                        </p>
+                                    </div>
+                                    <div class="text-center">
+                                        <span class="text-[10px] text-slate-400">评判下方掌握程度以切到下一卡片</span>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 Self-Evaluation Buttons -->
+                    <div id="step3-eval-controls" class="grid grid-cols-3 gap-2 pt-2">
+                        <button onclick="app.rateFlashcard('again')" class="py-2.5 px-2 bg-rose-950/80 hover:bg-rose-900 border border-rose-500/40 text-rose-300 rounded-xl font-semibold text-xs transition-all flex flex-col items-center justify-center gap-0.5">
+                            <i class="fa-solid fa-xmark text-sm"></i>
+                            <span>没记住 (重来)</span>
+                        </button>
+                        <button onclick="app.rateFlashcard('good')" class="py-2.5 px-2 bg-amber-950/80 hover:bg-amber-900 border border-amber-500/40 text-amber-300 rounded-xl font-semibold text-xs transition-all flex flex-col items-center justify-center gap-0.5">
+                            <i class="fa-solid fa-question text-sm"></i>
+                            <span>模糊 (再练)</span>
+                        </button>
+                        <button onclick="app.rateFlashcard('easy')" class="py-2.5 px-2 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 rounded-xl font-semibold text-xs transition-all flex flex-col items-center justify-center gap-0.5">
+                            <i class="fa-solid fa-check text-sm"></i>
+                            <span>完全掌握</span>
+                        </button>
+                    </div>
+
+                    <!-- Page Review Complete Celebration Box (shown when Step 3 finishes for current page) -->
+                    <div id="page-complete-card" class="glass-card p-5 rounded-2xl border-2 border-emerald-500/50 space-y-4 text-center hidden">
+                        <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto text-xl border border-emerald-500/30 animate-bounce">
+                            <i class="fa-solid fa-party-horn"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-emerald-300">🎉 第 <span id="complete-page-num">1</span> 页所有 Step 复习活动全部完成！</h4>
+                            <p class="text-xs text-slate-400 mt-1">您已顺利完成本页的“PDF 研读 -> 核心考点背诵 -> 随堂闪卡复习”。</p>
+                        </div>
+                        <div class="pt-2 flex flex-col sm:flex-row gap-2">
+                            <button onclick="app.restartCurrentPage()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-xs transition-all">
+                                重新复习本页
+                            </button>
+                            <button id="btn-next-page-flow" onclick="app.goToNextPageFlow()" class="flex-1 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-1.5">
+                                <span>进入下一页复习</span>
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <!-- 4. 全课件复习成果报告 Modal (Overall Courseware Summary Modal) -->
+    <div id="modal-report" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card w-full max-w-2xl max-h-[90vh] rounded-2xl border border-slate-700 flex flex-col overflow-hidden shadow-2xl">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-5 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center text-lg font-bold shadow-lg shadow-amber-500/20">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-100">全课件复习成果报告</h3>
+                        <p class="text-xs text-indigo-300" id="report-cw-title">课件标题</p>
+                    </div>
+                </div>
+                <button onclick="app.closeReportModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 overflow-y-auto space-y-6 text-xs text-slate-300">
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-center">
+                        <div class="text-[10px] text-slate-400 font-bold uppercase mb-1">完成页数</div>
+                        <div class="text-base font-bold text-amber-400" id="report-stat-pages">0 / 0 页</div>
+                    </div>
+                    <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-center">
+                        <div class="text-[10px] text-slate-400 font-bold uppercase mb-1">核心考点记忆</div>
+                        <div class="text-base font-bold text-indigo-400" id="report-stat-points">0 个</div>
+                    </div>
+                    <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-center">
+                        <div class="text-[10px] text-slate-400 font-bold uppercase mb-1">闪卡测试完成</div>
+                        <div class="text-base font-bold text-emerald-400" id="report-stat-cards">0 张</div>
+                    </div>
+                    <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-center">
+                        <div class="text-[10px] text-slate-400 font-bold uppercase mb-1">记忆掌握度</div>
+                        <div class="text-base font-bold text-rose-400" id="report-stat-mastery">100%</div>
+                    </div>
+                </div>
+
+                <!-- Detailed Breakdown per Page -->
+                <div class="space-y-3">
+                    <h4 class="font-bold text-slate-200 flex items-center gap-1.5">
+                        <i class="fa-solid fa-list-check text-indigo-400"></i>
+                        <span>各 Page 步骤复习明细记录：</span>
+                    </h4>
+                    <div id="report-page-details-container" class="space-y-2">
+                        <!-- Dynamic page status rows -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 bg-slate-900 border-t border-slate-800 flex justify-end gap-3">
+                <button onclick="app.closeReportModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-xs transition-all">
+                    关闭报告
+                </button>
+                <button onclick="app.restartWholeCourseware()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-md shadow-indigo-600/30 transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>重新整份课件复习</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. 课件 Selector Select Modal -->
+    <div id="modal-select-cw" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card w-full max-w-xl max-h-[85vh] rounded-2xl border border-slate-700 flex flex-col overflow-hidden shadow-2xl">
+            <div class="bg-slate-900 p-4 border-b border-slate-800 flex items-center justify-between">
+                <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-indigo-400"></i>
+                    <span>选择复习课件</span>
+                </h3>
+                <button onclick="app.closeCwModal()" class="w-7 h-7 rounded hover:bg-slate-800 text-slate-400 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-4 overflow-y-auto space-y-2 flex-1 text-xs" id="modal-cw-list">
+                <!-- Courseware list -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Application JavaScript Code -->
+    <script>
+        // Set PDF.js Worker
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // Application Global State Engine
+        const state = {
+            courses: [],
+            lessons: [],
+            coursewares: [],
+            activeCourseware: null,
+            activePageNotes: [], // list of page note objects from API
+            pageNum: 1,
+            totalPages: 1,
+            currentStep: 1, // Step 1, 2, or 3
+            pdfDoc: null,
+            zoom: 1.0,
+            
+            // Cloze / Masking mode state
+            isClozeMasked: false,
+
+            // Step 3 Flashcard Engine state for current page
+            flashcardQueue: [],
+            flashcardIdx: 0,
+            isFlipped: false,
+
+            // Page Completion Tracking:
+            // pageProgress[p] = { step1: bool, step2: bool, step3: bool, pointsMastered: {}, cardsMastered: {} }
+            pageProgress: {},
+
+            // DOM Cached Elements
+            sidebarOpen: false
+        };
+
+        const app = {
+            async init() {
+                this.bindEvents();
+                await this.loadDataFromApi();
+                this.parseUrlParameters();
+            },
+
+            bindEvents() {
+                // Sidebar toggle
+                document.getElementById('btn-toggle-sidebar').addEventListener('click', () => {
+                    state.sidebarOpen = !state.sidebarOpen;
+                    const sidebar = document.getElementById('left-sidebar');
+                    if (state.sidebarOpen) {
+                        sidebar.classList.remove('-ml-72');
+                    } else {
+                        sidebar.classList.add('-ml-72');
+                    }
+                });
+
+                // Page Navigation Buttons
+                document.getElementById('btn-prev-page').addEventListener('click', () => this.goToPage(state.pageNum - 1));
+                document.getElementById('btn-next-page').addEventListener('click', () => this.goToPage(state.pageNum + 1));
+                
+                document.getElementById('input-current-page').addEventListener('change', (e) => {
+                    let val = parseInt(e.target.value) || 1;
+                    this.goToPage(val);
+                });
+
+                // PDF Zoom
+                document.getElementById('btn-zoom-in').addEventListener('click', () => this.adjustZoom(0.15));
+                document.getElementById('btn-zoom-out').addEventListener('click', () => this.adjustZoom(-0.15));
+                document.getElementById('btn-zoom-fit').addEventListener('click', () => {
+                    state.zoom = 1.0;
+                    this.renderPdfPage(state.pageNum);
+                });
+
+                // PDF File Input
+                document.getElementById('pdf-file-input').addEventListener('change', (e) => {
+                    if (e.target.files && e.target.files[0]) {
+                        this.loadLocalPdfFile(e.target.files[0]);
+                    }
+                });
+
+                // Modals
+                document.getElementById('btn-select-courseware').addEventListener('click', () => this.openCwModal());
+                document.getElementById('btn-open-report').addEventListener('click', () => this.openReportModal());
+
+                // Search Box
+                document.getElementById('input-search-cw').addEventListener('input', (e) => {
+                    this.renderSidebarTree(e.target.value.trim().toLowerCase());
+                });
+            },
+
+            async loadDataFromApi() {
+                try {
+                    const [resCourses, resLessons, resCoursewares] = await Promise.all([
+                        fetch('/api/courses').then(r => r.ok ? r.json() : []),
+                        fetch('/api/lessons').then(r => r.ok ? r.json() : []),
+                        fetch('/api/coursewares').then(r => r.ok ? r.json() : [])
+                    ]);
+                    state.courses = resCourses;
+                    state.lessons = resLessons;
+                    state.coursewares = resCoursewares;
+                    
+                    document.getElementById('sidebar-count').textContent = `共 ${resCoursewares.length} 份`;
+                    this.renderSidebarTree();
+                } catch (e) {
+                    console.error("Failed to fetch data from API:", e);
+                }
+            },
+
+            parseUrlParameters() {
+                const params = new URLSearchParams(window.location.search);
+                const targetUuid = params.get('uuid') || params.get('courseware_uuid') || params.get('coursewareUuid');
+                const pageParam = parseInt(params.get('page') || params.get('pageNum')) || 1;
+                const stepParam = parseInt(params.get('step')) || 1;
+
+                if (targetUuid && state.coursewares.length > 0) {
+                    this.selectCoursewareByUuid(targetUuid, pageParam, stepParam);
+                } else if (state.coursewares.length > 0) {
+                    // Default to first courseware
+                    this.selectCoursewareByUuid(state.coursewares[0].uuid, 1, 1);
+                } else {
+                    document.getElementById('current-doc-name').textContent = "暂无数据库课件";
+                }
+            },
+
+            async selectCoursewareByUuid(uuid, targetPage = 1, targetStep = 1) {
+                const cw = state.coursewares.find(c => c.uuid === uuid);
+                if (!cw) {
+                    alert(`未找到 UUID 为 '${uuid}' 的课件数据`);
+                    return;
+                }
+                state.activeCourseware = cw;
+                state.pageNum = targetPage;
+                state.currentStep = targetStep;
+
+                // Update Header
+                document.getElementById('current-doc-name').textContent = cw.title;
+                document.getElementById('report-cw-title').textContent = cw.title;
+
+                // Update URL parameter silently without reload
+                this.updateUrlQuery(uuid, targetPage, targetStep);
+
+                // Fetch page notes from API
+                try {
+                    const res = await fetch(`/api/coursewares/${uuid}/page-notes`);
+                    if (res.ok) {
+                        state.activePageNotes = await res.json();
+                    } else {
+                        state.activePageNotes = [];
+                    }
+                } catch (e) {
+                    console.error("Failed to load page notes:", e);
+                    state.activePageNotes = [];
+                }
+
+                // Initialize page progress structures
+                state.pageProgress = {};
+
+                // Attempt to load PDF
+                this.loadCoursewarePdf(cw);
+                this.renderSidebarTree();
+            },
+
+            updateUrlQuery(uuid, page, step) {
+                const url = new URL(window.location);
+                url.searchParams.set('uuid', uuid);
+                url.searchParams.set('page', page);
+                url.searchParams.set('step', step);
+                window.history.replaceState({}, '', url);
+            },
+
+            loadCoursewarePdf(cw) {
+                const pdfUri = cw.coursewareURI;
+                if (!pdfUri) {
+                    this.showMarkdownFallback();
+                    return;
+                }
+
+                // Construct fetch path
+                let fetchPath = pdfUri;
+                if (!pdfUri.startsWith('http') && !pdfUri.startsWith('/')) {
+                    fetchPath = `/Pages/${pdfUri}`;
+                }
+
+                document.getElementById('pdf-lock-screen').classList.add('hidden');
+                document.getElementById('pdf-slide-wrapper').classList.remove('hidden');
+                document.getElementById('html-slide-wrapper').classList.add('hidden');
+
+                fetch(fetchPath)
+                    .then(res => {
+                        if (!res.ok) throw new Error("CORS or 404");
+                        return res.arrayBuffer();
+                    })
+                    .then(buffer => {
+                        pdfjsLib.getDocument(buffer).promise.then(pdf => {
+                            state.pdfDoc = pdf;
+                            state.totalPages = pdf.numPages;
+                            document.getElementById('text-total-pages').textContent = pdf.numPages;
+                            document.getElementById('input-current-page').max = pdf.numPages;
+                            
+                            if (state.pageNum > pdf.numPages) state.pageNum = 1;
+                            
+                            this.goToPage(state.pageNum, state.currentStep);
+                        });
+                    })
+                    .catch(err => {
+                        console.warn("Could not auto-fetch PDF:", err);
+                        // Show lock screen for manual load or markdown fallback
+                        document.getElementById('pdf-lock-screen').classList.remove('hidden');
+                        state.totalPages = 1;
+                        document.getElementById('text-total-pages').textContent = 1;
+                        this.setupCurrentPageReviewView();
+                    });
+            },
+
+            loadLocalPdfFile(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const typedarray = new Uint8Array(e.target.result);
+                    pdfjsLib.getDocument(typedarray).promise.then(pdf => {
+                        state.pdfDoc = pdf;
+                        state.totalPages = pdf.numPages;
+                        document.getElementById('text-total-pages').textContent = pdf.numPages;
+                        document.getElementById('input-current-page').max = pdf.numPages;
+                        document.getElementById('pdf-lock-screen').classList.add('hidden');
+                        document.getElementById('pdf-slide-wrapper').classList.remove('hidden');
+                        document.getElementById('html-slide-wrapper').classList.add('hidden');
+
+                        state.pageNum = 1;
+                        this.goToPage(1, 1);
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            },
+
+            showMarkdownFallback() {
+                document.getElementById('pdf-slide-wrapper').classList.add('hidden');
+                document.getElementById('html-slide-wrapper').classList.remove('hidden');
+                
+                const cw = state.activeCourseware;
+                let md = "-- 本页暂无 Markdown 正文 --";
+                if (cw && cw.pageMarkdowns && cw.pageMarkdowns[state.pageNum]) {
+                    md = cw.pageMarkdowns[state.pageNum];
+                }
+                document.getElementById('markdown-fallback-content').innerHTML = `<pre class="whitespace-pre-wrap">${md}</pre>`;
+            },
+
+            goToPage(p, targetStep = 1) {
+                if (p < 1) p = 1;
+                if (state.totalPages && p > state.totalPages) p = state.totalPages;
+
+                state.pageNum = p;
+                document.getElementById('input-current-page').value = p;
+                document.getElementById('pdf-page-indicator').textContent = `Page ${p} / ${state.totalPages}`;
+                document.getElementById('badge-page-num').textContent = p;
+
+                if (!state.pageProgress[p]) {
+                    state.pageProgress[p] = { step1: false, step2: false, step3: false, pointsMastered: {}, cardsMastered: {} };
+                }
+
+                if (state.pdfDoc) {
+                    this.renderPdfPage(p);
+                } else {
+                    this.showMarkdownFallback();
+                }
+
+                this.setStep(targetStep);
+                this.updateUrlQuery(state.activeCourseware ? state.activeCourseware.uuid : '', p, targetStep);
+                this.renderSidebarTree();
+            },
+
+            // High-DPI Canvas Rendering
+            renderPdfPage(num) {
+                if (!state.pdfDoc) return;
+                state.pdfDoc.getPage(num).then(page => {
+                    const canvas = document.getElementById('pdf-render-canvas');
+                    const ctx = canvas.getContext('2d');
+                    const viewportContainer = document.getElementById('ppt-viewport');
+
+                    const containerWidth = viewportContainer.clientWidth - 32;
+                    const containerHeight = viewportContainer.clientHeight - 32;
+                    
+                    let viewport = page.getViewport({ scale: state.zoom });
+
+                    if (state.zoom === 1.0) {
+                        const widthRatio = containerWidth / viewport.width;
+                        const heightRatio = containerHeight / viewport.height;
+                        const fitRatio = Math.min(widthRatio, heightRatio, 1.25);
+                        state.zoom = parseFloat(fitRatio.toFixed(2));
+                        viewport = page.getViewport({ scale: state.zoom });
+                        document.getElementById('text-zoom-val').textContent = `${Math.round(state.zoom * 100)}%`;
+                    }
+
+                    const pixelRatio = window.devicePixelRatio || 1;
+                    canvas.height = viewport.height * pixelRatio;
+                    canvas.width = viewport.width * pixelRatio;
+                    canvas.style.height = `${viewport.height}px`;
+                    canvas.style.width = `${viewport.width}px`;
+
+                    const renderContext = {
+                        canvasContext: ctx,
+                        viewport: viewport,
+                        transform: [pixelRatio, 0, 0, pixelRatio, 0, 0]
+                    };
+
+                    page.render(renderContext);
+                });
+            },
+
+            adjustZoom(delta) {
+                state.zoom = Math.max(0.4, Math.min(2.5, state.zoom + delta));
+                document.getElementById('text-zoom-val').textContent = `${Math.round(state.zoom * 100)}%`;
+                this.renderPdfPage(state.pageNum);
+            },
+
+            // Switch Active Step (1, 2, or 3) for Current Page
+            setStep(step) {
+                state.currentStep = step;
+                const p = state.pageNum;
+
+                // Update Stepper Bar buttons styling
+                [1, 2, 3].forEach(s => {
+                    const btn = document.getElementById(`step-btn-${s}`);
+                    const numSpan = document.getElementById(`step-num-${s}`);
+                    const checkIcon = document.getElementById(`step-check-${s}`);
+                    const panel = document.getElementById(`panel-step-${s}`);
+
+                    const isDone = state.pageProgress[p] && state.pageProgress[p][`step${s}`];
+
+                    if (s === step) {
+                        btn.className = "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all border border-indigo-500/80 bg-indigo-600/30 text-indigo-200 shadow-md shadow-indigo-500/20";
+                        numSpan.className = "w-4 h-4 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-[10px]";
+                        panel.classList.remove('hidden');
+                    } else {
+                        btn.className = "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all border border-slate-800 bg-slate-950 text-slate-400 hover:bg-slate-800";
+                        numSpan.className = "w-4 h-4 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center font-bold text-[10px]";
+                        panel.classList.add('hidden');
+                    }
+
+                    if (isDone) {
+                        checkIcon.classList.remove('hidden');
+                    } else {
+                        checkIcon.classList.add('hidden');
+                    }
+                });
+
+                this.setupCurrentPageReviewView();
+                this.updateUrlQuery(state.activeCourseware ? state.activeCourseware.uuid : '', p, step);
+            },
+
+            // Extract or generate page note data for current page
+            getCurrentPageNoteData() {
+                const p = state.pageNum;
+                let pageNote = state.activePageNotes.find(pn => String(pn.page_num) === String(p));
+                
+                let corePoints = [];
+                let flashcards = [];
+                let titleOriginal = `Page ${p}`;
+                let summary = "";
+
+                if (pageNote) {
+                    titleOriginal = pageNote.title_original || pageNote.title_cn || `Page ${p}`;
+                    summary = pageNote.summary || "";
+                    corePoints = Array.isArray(pageNote.core_points) ? pageNote.core_points : (typeof pageNote.core_points_json === 'string' ? JSON.parse(pageNote.core_points_json || '[]') : []);
+                    flashcards = Array.isArray(pageNote.flashcards) ? pageNote.flashcards : (typeof pageNote.flashcards_json === 'string' ? JSON.parse(pageNote.flashcards_json || '[]') : []);
+                }
+
+                // Fallback parsing from studyGuide if empty
+                const cw = state.activeCourseware;
+                if ((!corePoints || corePoints.length === 0) && cw && cw.studyGuide && cw.studyGuide.slideNotes) {
+                    const slide = cw.studyGuide.slideNotes.find(s => String(s.slide_number) === String(p));
+                    if (slide) {
+                        if (slide.core_points) corePoints = slide.core_points;
+                        if (slide.flashcards) flashcards = slide.flashcards;
+                        if (slide.summary) summary = slide.summary;
+                        if (slide.title) titleOriginal = slide.title.original || slide.title.translation_cn || titleOriginal;
+                    }
+                }
+
+                // Default Fallback Generator if empty so every page has high quality review steps
+                if (!corePoints || corePoints.length === 0) {
+                    corePoints = [
+                        `考点 1：仔细研读第 ${p} 页讲义的主要核心概念与图表表述。`,
+                        `考点 2：理解本页知识点在课程体系中的前后关联与应用场景。`
+                    ];
+                }
+                if (!flashcards || flashcards.length === 0) {
+                    flashcards = [
+                        {
+                            front: `第 ${p} 页的核心学习目标与重点是什么？`,
+                            back: corePoints[0] || `请复习第 ${p} 页的关键概念与核心要点。`
+                        }
+                    ];
+                }
+
+                return { titleOriginal, summary, corePoints, flashcards };
+            },
+
+            setupCurrentPageReviewView() {
+                const { titleOriginal, summary, corePoints, flashcards } = this.getCurrentPageNoteData();
+                const p = state.pageNum;
+
+                // --- Setup Step 1 ---
+                document.getElementById('step1-page-num').textContent = p;
+                document.getElementById('step1-page-cn').textContent = `第 ${p} 页`;
+                document.getElementById('step1-page-title').textContent = titleOriginal;
+                document.getElementById('step1-page-summary').textContent = summary || `本页包含 ${corePoints.length} 个核心考点要点与 ${flashcards.length} 张随堂复习闪卡。`;
+
+                // --- Setup Step 2 (Core Points Bullet Cards) ---
+                this.renderStep2CorePoints(corePoints);
+
+                // --- Setup Step 3 (Flashcards) ---
+                this.initStep3Flashcards(flashcards);
+            },
+
+            // Render Step 2 Bullet Cards with Masking & TTS
+            renderStep2CorePoints(corePoints) {
+                const container = document.getElementById('step2-core-points-container');
+                container.innerHTML = '';
+
+                const p = state.pageNum;
+                if (!state.pageProgress[p]) state.pageProgress[p] = { pointsMastered: {} };
+                const pointsMastered = state.pageProgress[p].pointsMastered || {};
+
+                corePoints.forEach((pointText, idx) => {
+                    const isMastered = !!pointsMastered[idx];
+                    const card = document.createElement('div');
+                    card.className = `glass-card p-4 rounded-xl space-y-2 border transition-all ${isMastered ? 'border-emerald-500/40 bg-emerald-950/20' : 'border-slate-800'}`;
+                    
+                    // Format cloze masking text
+                    let formattedText = pointText;
+                    if (state.isClozeMasked) {
+                        // Mask words in brackets or long words
+                        formattedText = pointText.replace(/([\u4e00-\u9fa5]{2,6}|[a-zA-Z]{4,})/g, (match, p1, offset) => {
+                            // Mask every 2nd target
+                            if (offset % 2 === 0) {
+                                return `<span class="cloze-masked" onclick="this.classList.toggle('cloze-revealed')">${match}</span>`;
+                            }
+                            return match;
+                        });
+                    }
+
+                    card.innerHTML = `
+                        <div class="flex items-start justify-between gap-2">
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full ${isMastered ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'} flex items-center gap-1">
+                                <i class="fa-solid fa-thumbtack"></i>
+                                <span>考点 ${idx + 1}</span>
+                            </span>
+                            <div class="flex items-center gap-1">
+                                <button onclick="app.speakText('${pointText.replace(/'/g, "\\'")}')" class="p-1.5 text-slate-400 hover:text-amber-400 transition-colors" title="朗读此考点">
+                                    <i class="fa-solid fa-volume-high text-xs"></i>
+                                </button>
+                                <button onclick="app.togglePointMastery(${idx})" class="px-2 py-0.5 rounded text-[10px] font-semibold transition-all ${isMastered ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}">
+                                    ${isMastered ? '<i class="fa-solid fa-check mr-1"></i>已掌握' : '标记已记牢'}
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-200 leading-relaxed font-medium pt-1">
+                            ${formattedText}
+                        </p>
+                    `;
+                    container.appendChild(card);
+                });
+
+                const masteredCount = Object.values(pointsMastered).filter(Boolean).length;
+                document.getElementById('step2-progress-text').textContent = `${masteredCount} / ${corePoints.length} 已标记背诵`;
+            },
+
+            toggleClozeMode() {
+                state.isClozeMasked = !state.isClozeMasked;
+                const btnText = document.getElementById('text-cloze-mode');
+                if (state.isClozeMasked) {
+                    btnText.textContent = "关闭遮挡 (显示原文)";
+                } else {
+                    btnText.textContent = "开启遮挡隐显模式";
+                }
+                const { corePoints } = this.getCurrentPageNoteData();
+                this.renderStep2CorePoints(corePoints);
+            },
+
+            togglePointMastery(idx) {
+                const p = state.pageNum;
+                if (!state.pageProgress[p].pointsMastered) state.pageProgress[p].pointsMastered = {};
+                state.pageProgress[p].pointsMastered[idx] = !state.pageProgress[p].pointsMastered[idx];
+                
+                const { corePoints } = this.getCurrentPageNoteData();
+                this.renderStep2CorePoints(corePoints);
+            },
+
+            speakText(text) {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'zh-CN';
+                    window.speechSynthesis.speak(utterance);
+                } else {
+                    alert("当前浏览器不支持 TTS 语音朗读");
+                }
+            },
+
+            completeStep1AndNext() {
+                const p = state.pageNum;
+                state.pageProgress[p].step1 = true;
+                this.setStep(2);
+            },
+
+            completeStep2AndNext() {
+                const p = state.pageNum;
+                state.pageProgress[p].step2 = true;
+                this.setStep(3);
+            },
+
+            // --- Step 3 Flashcards Logic ---
+            initStep3Flashcards(flashcards) {
+                state.flashcardQueue = [...flashcards];
+                state.flashcardIdx = 0;
+                state.isFlipped = false;
+
+                document.getElementById('flashcard-viewer').classList.remove('hidden');
+                document.getElementById('step3-eval-controls').classList.remove('hidden');
+                document.getElementById('page-complete-card').classList.add('hidden');
+
+                this.renderCurrentFlashcard();
+            },
+
+            renderCurrentFlashcard() {
+                const total = state.flashcardQueue.length;
+                if (total === 0 || state.flashcardIdx >= total) {
+                    // All flashcards for page completed!
+                    this.onPageStep3Completed();
+                    return;
+                }
+
+                document.getElementById('step3-card-counter').textContent = `闪卡 ${state.flashcardIdx + 1} / ${total}`;
+
+                const card = state.flashcardQueue[state.flashcardIdx];
+                document.getElementById('fc-front-text').textContent = card.front || card.question || "核心概念提问？";
+                document.getElementById('fc-back-text').textContent = card.back || card.answer || "标准记忆解答。";
+
+                // Reset flip angle
+                state.isFlipped = false;
+                document.getElementById('flashcard-inner').classList.remove('rotate-y-180');
+            },
+
+            flipFlashcard() {
+                state.isFlipped = !state.isFlipped;
+                const inner = document.getElementById('flashcard-inner');
+                if (state.isFlipped) {
+                    inner.classList.add('rotate-y-180');
+                } else {
+                    inner.classList.remove('rotate-y-180');
+                }
+            },
+
+            rateFlashcard(rating) {
+                if (rating === 'again') {
+                    // Move current card to end of queue for retry
+                    const currentCard = state.flashcardQueue[state.flashcardIdx];
+                    state.flashcardQueue.push(currentCard);
+                } else if (rating === 'easy') {
+                    const p = state.pageNum;
+                    if (!state.pageProgress[p].cardsMastered) state.pageProgress[p].cardsMastered = {};
+                    state.pageProgress[p].cardsMastered[state.flashcardIdx] = true;
+                }
+
+                state.flashcardIdx++;
+                this.renderCurrentFlashcard();
+            },
+
+            onPageStep3Completed() {
+                const p = state.pageNum;
+                state.pageProgress[p].step3 = true;
+
+                document.getElementById('flashcard-viewer').classList.add('hidden');
+                document.getElementById('step3-eval-controls').classList.add('hidden');
+                
+                document.getElementById('complete-page-num').textContent = p;
+                document.getElementById('page-complete-card').classList.remove('hidden');
+
+                const btnNext = document.getElementById('btn-next-page-flow');
+                if (p >= state.totalPages) {
+                    btnNext.innerHTML = `<span>查看全课件复习成果报告</span> <i class="fa-solid fa-trophy"></i>`;
+                } else {
+                    btnNext.innerHTML = `<span>进入第 ${p + 1} 页复习</span> <i class="fa-solid fa-arrow-right"></i>`;
+                }
+
+                this.setStep(3); // refresh checkmarks
+                this.renderSidebarTree();
+            },
+
+            restartCurrentPage() {
+                const p = state.pageNum;
+                state.pageProgress[p] = { step1: false, step2: false, step3: false, pointsMastered: {}, cardsMastered: {} };
+                this.goToPage(p, 1);
+            },
+
+            goToNextPageFlow() {
+                if (state.pageNum >= state.totalPages) {
+                    this.openReportModal();
+                } else {
+                    this.goToPage(state.pageNum + 1, 1);
+                }
+            },
+
+            // --- Sidebar & Navigation Tree ---
+            renderSidebarTree(filterText = '') {
+                const container = document.getElementById('sidebar-tree-container');
+                container.innerHTML = '';
+
+                let filtered = state.coursewares;
+                if (filterText) {
+                    filtered = state.coursewares.filter(c => c.title.toLowerCase().includes(filterText));
+                }
+
+                filtered.forEach(cw => {
+                    const isSelected = state.activeCourseware && state.activeCourseware.uuid === cw.uuid;
+                    const item = document.createElement('div');
+                    item.className = `p-3 rounded-xl cursor-pointer transition-all border ${isSelected ? 'bg-indigo-900/40 border-indigo-500/60 text-indigo-200' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-300'}`;
+                    item.onclick = () => this.selectCoursewareByUuid(cw.uuid, 1, 1);
+
+                    item.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-file-pdf ${isSelected ? 'text-indigo-400' : 'text-rose-400'} text-sm"></i>
+                            <span class="text-xs font-bold truncate flex-1">${cw.title}</span>
+                            ${isSelected ? '<span class="w-2 h-2 rounded-full bg-indigo-400 animate-ping"></span>' : ''}
+                        </div>
+                    `;
+                    container.appendChild(item);
+                });
+
+                // Update Page Step status dots in sidebar footer
+                const grid = document.getElementById('sidebar-page-grid');
+                grid.innerHTML = '';
+                let totalCompletedPages = 0;
+
+                for (let i = 1; i <= state.totalPages; i++) {
+                    const prog = state.pageProgress[i] || {};
+                    const isPageDone = prog.step1 && prog.step2 && prog.step3;
+                    if (isPageDone) totalCompletedPages++;
+
+                    const dot = document.createElement('button');
+                    dot.onclick = () => this.goToPage(i, 1);
+                    dot.className = `h-6 rounded text-[10px] font-bold border flex items-center justify-center transition-all ${i === state.pageNum ? 'border-amber-400 bg-amber-500/20 text-amber-300' : (isPageDone ? 'border-emerald-500/40 bg-emerald-950 text-emerald-300' : 'border-slate-800 bg-slate-900 text-slate-500 hover:border-slate-700')}`;
+                    dot.textContent = i;
+                    grid.appendChild(dot);
+                }
+
+                const pct = state.totalPages > 0 ? Math.round((totalCompletedPages / state.totalPages) * 100) : 0;
+                document.getElementById('sidebar-overall-progress').textContent = `${pct}%`;
+                document.getElementById('sidebar-progress-bar').style.width = `${pct}%`;
+            },
+
+            // --- Report Modal ---
+            openReportModal() {
+                const modal = document.getElementById('modal-report');
+                modal.classList.remove('hidden');
+
+                let totalPoints = 0;
+                let totalCards = 0;
+                let completedPages = 0;
+
+                const detailsContainer = document.getElementById('report-page-details-container');
+                detailsContainer.innerHTML = '';
+
+                for (let i = 1; i <= state.totalPages; i++) {
+                    const prog = state.pageProgress[i] || {};
+                    const isDone = prog.step1 && prog.step2 && prog.step3;
+                    if (isDone) completedPages++;
+
+                    const pointsMasteredCount = Object.values(prog.pointsMastered || {}).filter(Boolean).length;
+                    const cardsMasteredCount = Object.values(prog.cardsMastered || {}).filter(Boolean).length;
+
+                    totalPoints += pointsMasteredCount;
+                    totalCards += cardsMasteredCount;
+
+                    const row = document.createElement('div');
+                    row.className = "p-3 bg-slate-900/90 rounded-xl border border-slate-800 flex items-center justify-between";
+                    row.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-md ${isDone ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'} flex items-center justify-center font-bold text-[11px]">
+                                ${i}
+                            </span>
+                            <span class="font-bold text-slate-200">Page ${i} 复习情况</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-[11px]">
+                            <span class="${prog.step1 ? 'text-emerald-400' : 'text-slate-500'}">Step1 研读 ${prog.step1 ? '✓' : '○'}</span>
+                            <span class="${prog.step2 ? 'text-amber-400' : 'text-slate-500'}">Step2 考点 ${prog.step2 ? '✓' : '○'} (${pointsMasteredCount}个)</span>
+                            <span class="${prog.step3 ? 'text-indigo-400' : 'text-slate-500'}">Step3 闪卡 ${prog.step3 ? '✓' : '○'} (${cardsMasteredCount}张)</span>
+                        </div>
+                    `;
+                    detailsContainer.appendChild(row);
+                }
+
+                document.getElementById('report-stat-pages').textContent = `${completedPages} / ${state.totalPages} 页`;
+                document.getElementById('report-stat-points').textContent = `${totalPoints} 个`;
+                document.getElementById('report-stat-cards').textContent = `${totalCards} 张`;
+                const masteryPct = state.totalPages > 0 ? Math.round((completedPages / state.totalPages) * 100) : 100;
+                document.getElementById('report-stat-mastery').textContent = `${masteryPct}%`;
+            },
+
+            closeReportModal() {
+                document.getElementById('modal-report').classList.add('hidden');
+            },
+
+            restartWholeCourseware() {
+                this.closeReportModal();
+                state.pageProgress = {};
+                this.goToPage(1, 1);
+            },
+
+            // --- Courseware Select Modal ---
+            openCwModal() {
+                const modal = document.getElementById('modal-select-cw');
+                const list = document.getElementById('modal-cw-list');
+                list.innerHTML = '';
+
+                state.coursewares.forEach(cw => {
+                    const div = document.createElement('div');
+                    div.className = "p-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-between cursor-pointer transition-all";
+                    div.onclick = () => {
+                        this.closeCwModal();
+                        this.selectCoursewareByUuid(cw.uuid, 1, 1);
+                    };
+                    div.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-file-pdf text-rose-400 text-sm"></i>
+                            <span class="font-bold text-slate-200">${cw.title}</span>
+                        </div>
+                        <span class="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded">选择此课件</span>
+                    `;
+                    list.appendChild(div);
+                });
+
+                modal.classList.remove('hidden');
+            },
+
+            closeCwModal() {
+                document.getElementById('modal-select-cw').classList.add('hidden');
+            }
+        };
+
+        // Initialize on DOM Ready
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>
