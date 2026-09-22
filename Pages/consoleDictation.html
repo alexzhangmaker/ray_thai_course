@@ -336,11 +336,11 @@
                 <!-- Action Buttons -->
                 <div class="flex flex-wrap items-center justify-between gap-4 pt-2">
                     <div class="flex items-center gap-3">
-                        <button onclick="executeBatchImport()" class="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs shadow-lg shadow-violet-500/20 flex items-center gap-2 transition">
-                            <i class="ph-bold ph-check"></i>
-                            确认执行批量导入
+                        <button onclick="validateAndPreviewImport()" class="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs shadow-lg shadow-violet-500/20 flex items-center gap-2 transition">
+                            <i class="ph-bold ph-table"></i>
+                            <span>解析校验数据并进入词汇预览</span>
                         </button>
-                        <button onclick="document.getElementById('importJsonTextarea').value=''" class="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white text-xs transition">
+                        <button onclick="clearImportInputAndPreview()" class="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white text-xs transition">
                             清空内容
                         </button>
                     </div>
@@ -349,6 +349,88 @@
                         <i class="ph-bold ph-download-simple"></i>
                         导出全量词库 JSON
                     </button>
+                </div>
+            </div>
+
+            <!-- Batch Import Preview Section (Shown after validation) -->
+            <div id="importPreviewSection" class="glass-panel rounded-3xl p-6 sm:p-8 space-y-5 border border-violet-500/30 hidden">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-white/10">
+                    <div>
+                        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30 text-[11px] font-semibold mb-1">
+                            <i class="ph-fill ph-check-circle text-emerald-400"></i>
+                            JSON 校验通过 · 待入库生词预览
+                        </div>
+                        <h3 class="text-base font-bold text-white flex items-center gap-2">
+                            <span>待导入词汇预览与筛选</span>
+                            <span id="importPreviewBadge" class="text-xs font-mono font-medium px-2 py-0.5 rounded-full bg-white/10 text-slate-300 border border-white/10">共 0 词</span>
+                        </h3>
+                        <p class="text-xs text-slate-400">
+                            请检查以下解析出的词汇。可单击单行【删除】按钮排除单词，或多选后点击【批量删除】。排除后的单词将不会导入到系统中。
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-2.5 shrink-0">
+                        <button onclick="cancelImportPreview()" class="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-xs font-medium transition flex items-center gap-1.5">
+                            <i class="ph-bold ph-x"></i>
+                            <span>收起预览</span>
+                        </button>
+                        <button id="btnConfirmFinalImport" onclick="confirmFinalImport()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold text-xs shadow-lg shadow-violet-500/25 flex items-center gap-2 transition">
+                            <i class="ph-bold ph-check-circle"></i>
+                            <span>确认导入系统 (<span id="finalImportCountBadge">0</span> 词)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Preview Controls / Toolbar -->
+                <div class="flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div class="flex flex-wrap items-center gap-2.5 flex-1 min-w-[260px]">
+                        <!-- Search within preview -->
+                        <div class="relative flex-1 min-w-[180px] max-w-xs">
+                            <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input id="importPreviewSearchInput" type="text" placeholder="在待导入列表中检索词汇..." oninput="filterImportPreviewTable()" class="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-950 border border-white/10 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500 transition">
+                        </div>
+
+                        <!-- Batch delete button -->
+                        <button id="btnBatchDeleteImport" onclick="deleteSelectedImportWords()" disabled class="px-3.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold flex items-center gap-1.5 transition">
+                            <i class="ph-bold ph-trash"></i>
+                            <span>批量删除 (<span id="selectedImportCountBadge">0</span>)</span>
+                        </button>
+
+                        <button onclick="selectAllImportWords(true)" class="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs transition">
+                            全选
+                        </button>
+                        <button onclick="selectAllImportWords(false)" class="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs transition">
+                            取消勾选
+                        </button>
+                    </div>
+
+                    <div class="text-xs text-slate-400">
+                        已选 <span id="selectedImportCountText" class="text-violet-300 font-bold">0</span> / <span id="totalImportCountText" class="text-white font-bold">0</span> 条词汇
+                    </div>
+                </div>
+
+                <!-- Preview Table -->
+                <div class="glass-panel rounded-2xl border border-white/10 overflow-hidden">
+                    <div class="overflow-x-auto max-h-[500px] custom-scrollbar">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-white/5 text-slate-400 font-semibold border-b border-white/10 uppercase tracking-wider sticky top-0 backdrop-blur-md z-10">
+                                <tr>
+                                    <th class="py-3 px-3 w-10 text-center">
+                                        <input type="checkbox" id="selectAllImportCb" onchange="toggleSelectAllImport(this.checked)" class="rounded border-white/20 bg-white/5 text-violet-600 focus:ring-0 cursor-pointer">
+                                    </th>
+                                    <th class="py-3 px-3 w-12 text-slate-400 text-center">#</th>
+                                    <th class="py-3 px-4">泰语词 (Word)</th>
+                                    <th class="py-3 px-4">读音 (Phonetic)</th>
+                                    <th class="py-3 px-4">中文释义 (Meaning)</th>
+                                    <th class="py-3 px-4">配套例句 (Examples)</th>
+                                    <th class="py-3 px-4 text-right">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="importPreviewTableBody" class="divide-y divide-white/5">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </section>
@@ -686,6 +768,11 @@
         let collections = [];
         let words = [];
         let searchDebounceTimeout = null;
+
+        // Batch Import Preview State
+        let importPreviewWords = [];
+        let selectedImportIds = new Set();
+        let importContext = {};
 
         window.addEventListener('DOMContentLoaded', async () => {
             await loadAllStats();
@@ -1347,13 +1434,87 @@
                 document.getElementById('importJsonTextarea').value = JSON.stringify(presets[key], null, 2);
                 const title = presets[key].collectionName || (key === 'coreWords' ? '核心词库 JSON 数组' : key);
                 showToast(`已填充模板: ${title}`);
+                cancelImportPreview();
             }
         }
 
-        async function executeBatchImport() {
+        function clearImportInputAndPreview() {
+            document.getElementById('importJsonTextarea').value = '';
+            const customColInput = document.getElementById('importCustomColName');
+            if (customColInput) customColInput.value = '';
+            cancelImportPreview();
+        }
+
+        function cancelImportPreview() {
+            importPreviewWords = [];
+            selectedImportIds.clear();
+            importContext = {};
+            const previewSec = document.getElementById('importPreviewSection');
+            if (previewSec) previewSec.classList.add('hidden');
+        }
+
+        function extractWordDisplayInfo(w) {
+            const thaiWord = (w.thaiWord || w.word || w.thai_word || w.headword || '').trim();
+            const phonetic = (w.phonetic || w.ipa || w.transliteration || '').trim();
+
+            let meaning = '';
+            if (typeof w.meaning === 'string' && w.meaning.trim()) {
+                meaning = w.meaning.trim();
+            } else if (Array.isArray(w.meanings) && w.meanings.length > 0) {
+                meaning = w.meanings.map(m => {
+                    const pos = (m.part_of_speech || m.pos || '').trim();
+                    const def = (m.meaning || m.definition || '').trim();
+                    return pos ? `[${pos}] ${def}` : def;
+                }).filter(Boolean).join('；');
+            } else if (w.definition && typeof w.definition === 'string') {
+                meaning = w.definition.trim();
+            } else if (w.translation && typeof w.translation === 'string') {
+                meaning = w.translation.trim();
+            } else if (w.chinese && typeof w.chinese === 'string') {
+                meaning = w.chinese.trim();
+            }
+
+            const cleanExamples = [];
+            if (Array.isArray(w.examples)) {
+                for (const ex of w.examples) {
+                    const thai = (ex.thai || ex.sentence || '').trim();
+                    const translation = (ex.translation || ex.meaning || ex.chinese || '').trim();
+                    if (thai || translation) {
+                        cleanExamples.push({ thai, translation });
+                    }
+                }
+            }
+            if (Array.isArray(w.meanings)) {
+                for (const m of w.meanings) {
+                    if (Array.isArray(m.examples)) {
+                        for (const ex of m.examples) {
+                            const thai = (ex.thai || ex.sentence || '').trim();
+                            const translation = (ex.translation || ex.meaning || ex.chinese || '').trim();
+                            if (thai || translation) {
+                                if (!cleanExamples.some(e => e.thai === thai && e.translation === translation)) {
+                                    cleanExamples.push({ thai, translation });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            const audioUrl = (w.audioUrl || w.audio_url || '').trim();
+
+            return {
+                thaiWord,
+                phonetic,
+                meaning: meaning || thaiWord,
+                examples: cleanExamples,
+                audioUrl
+            };
+        }
+
+        function validateAndPreviewImport() {
             const text = document.getElementById('importJsonTextarea').value.trim();
             if (!text) {
-                alert('请先在文本框中粘贴 JSON 数据');
+                alert('请先在文本框中粘贴或输入 JSON 数据');
                 return;
             }
 
@@ -1370,20 +1531,296 @@
             const targetColId = (targetColSelect && targetColSelect.value !== '__NEW__') ? targetColSelect.value : null;
             const customColName = customColInput ? customColInput.value.trim() : '';
 
-            let payload;
+            let rawWords = [];
+            let colName = customColName;
+            let colDesc = '';
+            let tags = '';
+
             if (Array.isArray(parsed)) {
-                payload = {
-                    collectionName: customColName || '',
-                    targetCollectionId: targetColId,
-                    words: parsed
-                };
+                rawWords = parsed;
             } else if (parsed && typeof parsed === 'object') {
-                payload = { ...parsed };
-                if (customColName) payload.collectionName = customColName;
-                if (targetColId) payload.targetCollectionId = targetColId;
+                rawWords = Array.isArray(parsed.words) ? parsed.words : (Array.isArray(parsed.data) ? parsed.data : []);
+                if (!colName) colName = (parsed.collectionName || parsed.name || '').trim();
+                colDesc = (parsed.collectionDescription || parsed.description || '').trim();
+                tags = parsed.tags || '';
             } else {
                 alert('不支持的 JSON 数据格式，必须为 JSON 数组或包含 words 属性的对象');
                 return;
+            }
+
+            if (!Array.isArray(rawWords) || rawWords.length === 0) {
+                alert('JSON 数据中未包含有效的词汇列表 (words 数组为空)');
+                return;
+            }
+
+            const previewList = [];
+            for (let i = 0; i < rawWords.length; i++) {
+                const w = rawWords[i];
+                if (!w) continue;
+                const displayInfo = extractWordDisplayInfo(w);
+                if (!displayInfo.thaiWord) continue;
+
+                previewList.push({
+                    id: `prev_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 7)}`,
+                    thaiWord: displayInfo.thaiWord,
+                    phonetic: displayInfo.phonetic,
+                    meaning: displayInfo.meaning,
+                    examples: displayInfo.examples,
+                    audioUrl: displayInfo.audioUrl,
+                    raw: w
+                });
+            }
+
+            if (previewList.length === 0) {
+                alert('未在 JSON 中解析出有效的泰语单词（请确保每个词条包含 word 或 thaiWord 字段）');
+                return;
+            }
+
+            importPreviewWords = previewList;
+            selectedImportIds = new Set();
+            importContext = {
+                collectionName: colName,
+                collectionDescription: colDesc,
+                tags: tags,
+                targetCollectionId: targetColId
+            };
+
+            const previewSec = document.getElementById('importPreviewSection');
+            if (previewSec) previewSec.classList.remove('hidden');
+
+            const searchInput = document.getElementById('importPreviewSearchInput');
+            if (searchInput) searchInput.value = '';
+
+            renderImportPreviewTable();
+
+            if (previewSec) {
+                previewSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            showToast(`JSON 校验通过！已解析出 ${previewList.length} 条词汇，请在下方预览并筛选`, 'success');
+        }
+
+        // Backward-compatibility wrapper for direct calls
+        function executeBatchImport() {
+            validateAndPreviewImport();
+        }
+
+        function getFilteredImportPreviewWords() {
+            const searchInput = document.getElementById('importPreviewSearchInput');
+            const term = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            if (!term) return importPreviewWords;
+            return importPreviewWords.filter(item => {
+                return (item.thaiWord && item.thaiWord.toLowerCase().includes(term)) ||
+                       (item.phonetic && item.phonetic.toLowerCase().includes(term)) ||
+                       (item.meaning && item.meaning.toLowerCase().includes(term));
+            });
+        }
+
+        function filterImportPreviewTable() {
+            renderImportPreviewTable();
+        }
+
+        function renderImportPreviewTable() {
+            const tbody = document.getElementById('importPreviewTableBody');
+            if (!tbody) return;
+
+            const filtered = getFilteredImportPreviewWords();
+            const totalCount = importPreviewWords.length;
+            const filteredCount = filtered.length;
+            const selectedCount = selectedImportIds.size;
+
+            // Update badge counters
+            const badgeEl = document.getElementById('importPreviewBadge');
+            if (badgeEl) badgeEl.innerText = `共 ${totalCount} 词`;
+
+            const finalCountBadge = document.getElementById('finalImportCountBadge');
+            if (finalCountBadge) finalCountBadge.innerText = totalCount;
+
+            const totalText = document.getElementById('totalImportCountText');
+            if (totalText) totalText.innerText = totalCount;
+
+            const selectedText = document.getElementById('selectedImportCountText');
+            if (selectedText) selectedText.innerText = selectedCount;
+
+            const selectedBadge = document.getElementById('selectedImportCountBadge');
+            if (selectedBadge) selectedBadge.innerText = selectedCount;
+
+            // Batch delete button state
+            const batchDelBtn = document.getElementById('btnBatchDeleteImport');
+            if (batchDelBtn) {
+                batchDelBtn.disabled = (selectedCount === 0);
+            }
+
+            // Confirm import button state
+            const finalImportBtn = document.getElementById('btnConfirmFinalImport');
+            if (finalImportBtn) {
+                finalImportBtn.disabled = (totalCount === 0);
+                if (totalCount === 0) {
+                    finalImportBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    finalImportBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+
+            // Master select all checkbox state
+            const selectAllCb = document.getElementById('selectAllImportCb');
+            if (selectAllCb) {
+                if (filteredCount === 0) {
+                    selectAllCb.checked = false;
+                    selectAllCb.indeterminate = false;
+                } else {
+                    const allVisibleSelected = filtered.every(item => selectedImportIds.has(item.id));
+                    const someVisibleSelected = filtered.some(item => selectedImportIds.has(item.id));
+                    selectAllCb.checked = allVisibleSelected;
+                    selectAllCb.indeterminate = (!allVisibleSelected && someVisibleSelected);
+                }
+            }
+
+            if (totalCount === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="py-12 text-center text-slate-400">
+                            <i class="ph-bold ph-tray text-3xl text-slate-600 block mx-auto mb-2"></i>
+                            <p class="text-xs">所有待导入单词均已被删除，当前无任何词汇需要导入。</p>
+                            <button onclick="cancelImportPreview()" class="mt-3 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 text-xs font-medium transition">
+                                返回修改 JSON 数据
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            if (filteredCount === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="py-8 text-center text-slate-400 text-xs">
+                            未检索到匹配的生词，请尝试其他关键词。
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map((item, idx) => {
+                const isSelected = selectedImportIds.has(item.id);
+                const exCount = (item.examples || []).length;
+                let exHtml = `<span class="text-slate-500 text-[10px]">无例句</span>`;
+                if (exCount > 0) {
+                    const firstEx = item.examples[0];
+                    const tooltip = item.examples.map((e, i) => `${i+1}. ${e.thai} : ${e.translation}`).join('\n');
+                    exHtml = `
+                        <div class="space-y-0.5">
+                            <span class="px-2 py-0.5 rounded-full bg-violet-500/15 border border-violet-500/30 text-violet-300 font-semibold text-[10px]">
+                                ${exCount} 个例句
+                            </span>
+                            <div class="text-[11px] text-slate-400 truncate max-w-xs font-thai" title="${escapeHtml(tooltip)}">
+                                <span>${escapeHtml(firstEx.thai)}</span>: <span class="font-sans">${escapeHtml(firstEx.translation)}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <tr class="hover:bg-white/5 transition ${isSelected ? 'bg-violet-500/10' : ''}">
+                        <td class="py-3 px-3 text-center">
+                            <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleImportItemSelection('${item.id}', this.checked)" class="import-row-cb rounded border-white/20 bg-white/5 text-violet-600 focus:ring-0 cursor-pointer">
+                        </td>
+                        <td class="py-3 px-3 text-slate-500 text-center font-mono text-[11px]">${idx + 1}</td>
+                        <td class="py-3 px-4">
+                            <div class="flex items-center gap-2">
+                                <span class="font-thai text-base font-bold text-white">${escapeHtml(item.thaiWord)}</span>
+                                <button type="button" onclick="playSentenceVoice('${escapeJsString(item.thaiWord)}', '${escapeJsString(item.audioUrl)}')" title="播放发音" class="text-violet-400 hover:text-white transition">
+                                    <i class="ph-bold ph-speaker-high text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 font-mono text-violet-300 text-xs">${escapeHtml(item.phonetic || '--')}</td>
+                        <td class="py-3 px-4 text-slate-200 font-medium">${escapeHtml(item.meaning || '--')}</td>
+                        <td class="py-3 px-4">${exHtml}</td>
+                        <td class="py-3 px-4 text-right">
+                            <button type="button" onclick="deleteSingleImportWord('${item.id}')" title="从待导入列表中删除此词条" class="px-2.5 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 text-xs font-medium inline-flex items-center gap-1 transition">
+                                <i class="ph-bold ph-trash text-xs"></i>
+                                <span>删除</span>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function toggleImportItemSelection(id, isSelected) {
+            if (isSelected) {
+                selectedImportIds.add(id);
+            } else {
+                selectedImportIds.delete(id);
+            }
+            renderImportPreviewTable();
+        }
+
+        function selectAllImportWords(selectAll = true) {
+            const filtered = getFilteredImportPreviewWords();
+            filtered.forEach(item => {
+                if (selectAll) {
+                    selectedImportIds.add(item.id);
+                } else {
+                    selectedImportIds.delete(item.id);
+                }
+            });
+            renderImportPreviewTable();
+        }
+
+        function toggleSelectAllImport(checked) {
+            selectAllImportWords(checked);
+        }
+
+        function deleteSingleImportWord(id) {
+            const idx = importPreviewWords.findIndex(item => item.id === id);
+            if (idx === -1) return;
+            const removed = importPreviewWords[idx];
+            importPreviewWords.splice(idx, 1);
+            selectedImportIds.delete(id);
+            renderImportPreviewTable();
+            showToast(`已删除单词 “${removed.thaiWord}”（不导入系统）`, 'info');
+        }
+
+        function deleteSelectedImportWords() {
+            if (selectedImportIds.size === 0) return;
+            const count = selectedImportIds.size;
+            if (!confirm(`确定要从待导入列表中删除选中的 ${count} 个单词吗？删除后这些单词将不会导入系统。`)) return;
+
+            importPreviewWords = importPreviewWords.filter(item => !selectedImportIds.has(item.id));
+            selectedImportIds.clear();
+            renderImportPreviewTable();
+            showToast(`已批量删除 ${count} 个单词（不导入系统）`, 'info');
+        }
+
+        async function confirmFinalImport() {
+            if (importPreviewWords.length === 0) {
+                alert('当前待导入列表为空，没有可导入的单词');
+                return;
+            }
+
+            const targetColSelect = document.getElementById('importTargetCollectionSelect');
+            const customColInput = document.getElementById('importCustomColName');
+            const targetColId = (targetColSelect && targetColSelect.value !== '__NEW__') ? targetColSelect.value : null;
+            const customColName = customColInput ? customColInput.value.trim() : '';
+
+            const remainingRawWords = importPreviewWords.map(w => w.raw);
+
+            const payload = {
+                collectionName: customColName || importContext.collectionName || '',
+                collectionDescription: importContext.collectionDescription || '',
+                tags: importContext.tags || '',
+                targetCollectionId: targetColId,
+                words: remainingRawWords
+            };
+
+            const confirmBtn = document.getElementById('btnConfirmFinalImport');
+            const origHtml = confirmBtn ? confirmBtn.innerHTML : '';
+            if (confirmBtn) {
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i><span>正在导入入库...</span>`;
             }
 
             try {
@@ -1408,6 +1845,8 @@
 
                 document.getElementById('importJsonTextarea').value = '';
                 if (customColInput) customColInput.value = '';
+                cancelImportPreview();
+
                 await loadCollections();
                 await loadWordsTable();
                 await loadAllStats();
@@ -1415,6 +1854,11 @@
             } catch (err) {
                 console.error('Failed to batch import:', err);
                 alert('批量导入失败: ' + err.message);
+            } finally {
+                if (confirmBtn) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = origHtml;
+                }
             }
         }
 
