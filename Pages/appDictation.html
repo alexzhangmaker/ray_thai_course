@@ -223,9 +223,9 @@
             </div>
 
             <!-- Mode Selection Cards Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 <!-- Mode 1: Smart Review (Due Today) -->
-                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group border border-white/10 hover:border-violet-500/50">
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group border border-white/10 hover:border-amber-500/50 transition">
                     <div class="space-y-4">
                         <div class="h-12 w-12 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-2xl shadow-lg shadow-amber-500/10">
                             <i class="ph-fill ph-hourglass-high"></i>
@@ -248,8 +248,32 @@
                     </div>
                 </div>
 
-                <!-- Mode 2: Master Pool Drill -->
-                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group border border-white/10 hover:border-violet-500/50">
+                <!-- Mode 2: Today's Dictation Results (今日听写结果) -->
+                <div onclick="openTodayResultsModal()" class="glass-card rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group border border-white/10 hover:border-emerald-500/50 cursor-pointer transition">
+                    <div class="space-y-4">
+                        <div class="h-12 w-12 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/10">
+                            <i class="ph-fill ph-chart-line-up"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-lg font-bold text-white">今日听写结果</h3>
+                                <span id="badgeTodayResultCount" class="px-2 py-0.5 text-xs rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">0 词</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                                查看今日复习与新练习词条的进展，含上次时间、今日评级、下次排期与调度算法参数。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="pt-6">
+                        <button type="button" onclick="event.stopPropagation(); openTodayResultsModal();" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-sm shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition transform active:scale-95">
+                            <i class="ph-bold ph-table"></i>
+                            查看听写结果
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mode 3: Master Pool Drill (词库全量摸底) -->
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group border border-white/10 hover:border-violet-500/50 transition">
                     <div class="space-y-4">
                         <div class="h-12 w-12 rounded-2xl bg-violet-500/20 text-violet-400 border border-violet-500/30 flex items-center justify-center text-2xl shadow-lg shadow-violet-500/10">
                             <i class="ph-fill ph-shuffle"></i>
@@ -272,8 +296,8 @@
                     </div>
                 </div>
 
-                <!-- Mode 3: Add/Manage Custom Collections -->
-                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group border border-white/10 hover:border-violet-500/50">
+                <!-- Mode 4: Add/Manage Custom Collections (词集自选定制) -->
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group border border-white/10 hover:border-violet-500/50 transition">
                     <div class="space-y-4">
                         <div class="h-12 w-12 rounded-2xl bg-fuchsia-500/20 text-fuchsia-400 border border-fuchsia-500/30 flex items-center justify-center text-2xl shadow-lg shadow-fuchsia-500/10">
                             <i class="ph-fill ph-folder-notch-open"></i>
@@ -542,6 +566,10 @@
                         <i class="ph-bold ph-repeat"></i>
                         再练一遍
                     </button>
+                    <button onclick="openTodayResultsModal()" class="px-5 py-3 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 text-emerald-200 hover:text-white font-semibold text-sm flex items-center gap-2 transition">
+                        <i class="ph-bold ph-table"></i>
+                        今日听写总表
+                    </button>
                     <button onclick="returnToSelection()" class="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-slate-200 font-semibold text-sm flex items-center gap-2 transition">
                         <i class="ph-bold ph-squares-four"></i>
                         返回主列表
@@ -575,6 +603,173 @@
         </div>
 
     </main>
+
+    <!-- ================================================================= -->
+    <!-- MODAL: TODAY'S DICTATION RESULTS & SCHEDULING (今日听写结果)        -->
+    <!-- ================================================================= -->
+    <div id="modalTodayResults" onclick="if (event.target === this) closeTodayResultsModal()" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 hidden">
+        <div class="glass-panel rounded-3xl w-full max-w-6xl max-h-[92vh] flex flex-col border border-white/10 shadow-2xl overflow-hidden animate-scaleUp">
+            
+            <!-- Modal Header -->
+            <div class="px-5 py-4 border-b border-white/10 flex flex-wrap items-center justify-between gap-3 bg-white/[0.02]">
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-xl shadow-lg shadow-emerald-500/10 shrink-0">
+                        <i class="ph-fill ph-chart-line-up"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-base sm:text-lg font-bold text-white">今日听写结果与调度分析</h3>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">本地记录</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">
+                            观察新词与复习词条的上次时间、今日结果、下次排期及 SM-2 算法推算 (纯浏览器本地存储)
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Right Action Buttons in Header -->
+                <div class="flex items-center gap-2 flex-wrap">
+                    <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs text-emerald-300 font-mono">
+                        <i class="ph-bold ph-calendar"></i>
+                        <span id="todayModalDateText">--</span>
+                    </div>
+
+                    <button onclick="copyTodayResultsToClipboard()" title="复制今日表格数据到剪贴板" class="h-8 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-slate-300 hover:text-white flex items-center gap-1.5 transition">
+                        <i class="ph-bold ph-copy"></i>
+                        <span class="hidden sm:inline">复制</span>
+                    </button>
+
+                    <button onclick="exportTodayResultsCsv()" title="导出为 CSV 表格文件" class="h-8 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-slate-300 hover:text-white flex items-center gap-1.5 transition">
+                        <i class="ph-bold ph-download-simple"></i>
+                        <span class="hidden sm:inline">导出 CSV</span>
+                    </button>
+
+                    <button onclick="exportTodayResultsJson()" title="导出为 JSON 算法分析数据" class="h-8 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-slate-300 hover:text-white flex items-center gap-1.5 transition">
+                        <i class="ph-bold ph-file-code"></i>
+                        <span class="hidden sm:inline">JSON</span>
+                    </button>
+
+                    <button onclick="clearTodayDictationRecords()" title="清空今日测试记录 (不影响后台词库)" class="h-8 px-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 text-xs text-red-300 hover:text-red-200 flex items-center gap-1.5 transition">
+                        <i class="ph-bold ph-trash"></i>
+                        <span class="hidden sm:inline">清空今日</span>
+                    </button>
+
+                    <button onclick="closeTodayResultsModal()" class="h-8 w-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition">
+                        <i class="ph-bold ph-x text-base"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Metrics Summary Bar -->
+            <div class="px-5 py-3 border-b border-white/10 bg-slate-900/40 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5 text-center">
+                    <div class="text-[10px] text-slate-400">今日听写总数</div>
+                    <div id="todayMetricTotal" class="text-lg font-black text-white mt-0.5">0</div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5 text-center">
+                    <div class="text-[10px] text-slate-400">首次新词练习</div>
+                    <div id="todayMetricNew" class="text-lg font-black text-cyan-400 mt-0.5">0</div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5 text-center">
+                    <div class="text-[10px] text-slate-400">周期巩固复习</div>
+                    <div id="todayMetricReview" class="text-lg font-black text-violet-300 mt-0.5">0</div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5 text-center">
+                    <div class="text-[10px] text-slate-400">本次综合正确率</div>
+                    <div id="todayMetricAccuracy" class="text-lg font-black text-emerald-400 mt-0.5">--%</div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5 text-center">
+                    <div class="text-[10px] text-slate-400">遗忘重置需强化</div>
+                    <div id="todayMetricForgot" class="text-lg font-black text-red-400 mt-0.5">0</div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5 text-center">
+                    <div class="text-[10px] text-slate-400">当前平均 EF 因子</div>
+                    <div id="todayMetricAvgEF" class="text-lg font-black text-amber-300 mt-0.5">2.50</div>
+                </div>
+            </div>
+
+            <!-- Modal Filter & Search Toolbar -->
+            <div class="px-5 py-2.5 border-b border-white/10 bg-slate-900/20 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <!-- Filter Pills -->
+                <div class="flex items-center gap-1.5 flex-wrap" id="todayFilterGroup">
+                    <button type="button" onclick="setTodayFilter('all')" data-filter="all" class="today-filter-btn px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-medium shadow transition">
+                        全部 (<span id="filterCountAll">0</span>)
+                    </button>
+                    <button type="button" onclick="setTodayFilter('forgot')" data-filter="forgot" class="today-filter-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition">
+                        ❌ 忘记 (<span id="filterCountForgot">0</span>)
+                    </button>
+                    <button type="button" onclick="setTodayFilter('hard')" data-filter="hard" class="today-filter-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition">
+                        ⚠️ 勉强 (<span id="filterCountHard">0</span>)
+                    </button>
+                    <button type="button" onclick="setTodayFilter('correct')" data-filter="correct" class="today-filter-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition">
+                        ✅ 正确/熟练 (<span id="filterCountCorrect">0</span>)
+                    </button>
+                    <button type="button" onclick="setTodayFilter('new')" data-filter="new" class="today-filter-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition">
+                        新词练习 (<span id="filterCountNew">0</span>)
+                    </button>
+                    <button type="button" onclick="setTodayFilter('review')" data-filter="review" class="today-filter-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition">
+                        周期复习 (<span id="filterCountReview">0</span>)
+                    </button>
+                </div>
+
+                <!-- Search Input -->
+                <div class="relative w-full sm:w-60">
+                    <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input id="todaySearchInput" type="text" oninput="handleTodaySearchInput()" placeholder="搜索泰文、读音或释义..." class="w-full pl-8 pr-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition">
+                </div>
+            </div>
+
+            <!-- Table Container (Scrollable) -->
+            <div class="flex-1 overflow-auto custom-scrollbar relative min-h-[260px]">
+                <table class="w-full text-left text-xs whitespace-nowrap">
+                    <thead class="text-[11px] uppercase tracking-wider text-slate-400 bg-slate-900/80 sticky top-0 z-10 border-b border-white/10">
+                        <tr>
+                            <th class="py-3 pl-4 pr-2 font-semibold">#</th>
+                            <th class="py-3 px-3 font-semibold">听写时间</th>
+                            <th class="py-3 px-3 font-semibold">单词条目 (泰文/发音/释义)</th>
+                            <th class="py-3 px-3 font-semibold">练习类型 / 模式</th>
+                            <th class="py-3 px-3 font-semibold">上次时间</th>
+                            <th class="py-3 px-3 font-semibold text-center">今日结果</th>
+                            <th class="py-3 px-3 font-semibold">下一次时间 (排期)</th>
+                            <th class="py-3 px-3 font-semibold">SM-2 调度算法推算 (轮次 · 间隔 · EF因子)</th>
+                            <th class="py-3 pr-4 pl-2 text-center font-semibold">发音</th>
+                        </tr>
+                    </thead>
+                    <tbody id="todayResultsTableBody" class="divide-y divide-white/5">
+                        <!-- Populated dynamically via JS -->
+                    </tbody>
+                </table>
+
+                <!-- Empty State -->
+                <div id="todayResultsEmptyState" class="hidden py-16 text-center space-y-3 px-4">
+                    <div class="h-16 w-16 mx-auto rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center text-3xl text-slate-500">
+                        <i class="ph-bold ph-clipboard-text"></i>
+                    </div>
+                    <div class="space-y-1">
+                        <h4 class="text-sm font-bold text-white">暂无今日听写记录</h4>
+                        <p class="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+                            请在主界面点击“今日智能复习”或选择词集开始听写练习。完成评分后，词条的上次时间、今日评级、下一次排期及调度参数将自动记录在此处供算法分析。
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-5 py-3 border-t border-white/10 bg-slate-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs text-slate-400">
+                <div class="flex items-center gap-2">
+                    <i class="ph-fill ph-info text-violet-400 text-sm shrink-0"></i>
+                    <span><strong>SM-2 调度算法参考：</strong>熟练(5) EF+0.1 · 正确(4) EF保持 · 勉强(3) EF-0.14 · 忘记(0) 轮次归零、间隔重置为1天。</span>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                    <span id="todayResultsCountLabel" class="text-slate-400">共 0 条数据</span>
+                    <button onclick="closeTodayResultsModal()" class="px-4 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium transition">
+                        关闭
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
 
     <!-- Floating Feedback Toast -->
     <div id="toastNotification" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full bg-slate-900/90 border border-violet-500/40 text-white text-xs font-medium shadow-2xl backdrop-blur-md flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-300">
@@ -651,6 +846,457 @@
         let currentCollectionId = null;
         let sessionResults = []; // [{ word, rating, sm2 }]
 
+        // Today Dictation Results & SM-2 Observer (Local Browser Storage)
+        const LOCAL_STORAGE_DICTATION_LOGS = 'thai_dictation_daily_records';
+        let currentTodayFilter = 'all';
+        let currentTodaySearch = '';
+
+        function getTodayDateStr() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function loadLocalDictationRecords() {
+            try {
+                const raw = localStorage.getItem(LOCAL_STORAGE_DICTATION_LOGS);
+                if (!raw) return [];
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                console.warn('Failed to parse local dictation records:', e);
+                return [];
+            }
+        }
+
+        function saveLocalDictationRecords(records) {
+            try {
+                localStorage.setItem(LOCAL_STORAGE_DICTATION_LOGS, JSON.stringify(records));
+                updateTodayResultBadge();
+            } catch (e) {
+                console.error('Failed to save local dictation records:', e);
+            }
+        }
+
+        function updateTodayResultBadge() {
+            const todayStr = getTodayDateStr();
+            const allRecords = loadLocalDictationRecords();
+            const todayRecords = allRecords.filter(r => r.dateStr === todayStr);
+            const badge = document.getElementById('badgeTodayResultCount');
+            if (badge) {
+                badge.innerText = `${todayRecords.length} 词`;
+            }
+        }
+
+        function recordTodayDictation(word, rating, sm2) {
+            try {
+                const records = loadLocalDictationRecords();
+                const now = new Date();
+                const todayStr = getTodayDateStr();
+
+                // Determine previous review time
+                const prevLocal = records.find(r => r.wordId === word.id);
+                let lastTime = '首次练习 (新词)';
+                if (prevLocal && prevLocal.reviewedAt) {
+                    lastTime = prevLocal.reviewedAt;
+                } else if (word.repetition > 0 && word.updatedAt) {
+                    lastTime = word.updatedAt;
+                } else if (word.updatedAt && word.createdAt && word.updatedAt !== word.createdAt) {
+                    lastTime = word.updatedAt;
+                }
+
+                // Determine session mode display name
+                let modeName = '今日智能复习';
+                if (currentSessionMode === 'collection') {
+                    const col = collections.find(c => String(c.id) === String(currentCollectionId));
+                    modeName = col ? col.name : '词集专项练习';
+                } else if (currentSessionMode === 'all') {
+                    modeName = '词库全量摸底';
+                }
+
+                const isNew = (!word.repetition || word.repetition === 0) && (!prevLocal || prevLocal.prevRepetition === 0);
+
+                const newRec = {
+                    id: 'log_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+                    wordId: word.id,
+                    thaiWord: word.thaiWord || '',
+                    phonetic: word.phonetic || word.transliteration || '',
+                    meaning: word.meaning || '',
+                    audioUrl: word.audioUrl || '',
+                    dateStr: todayStr,
+                    reviewedAt: now.toISOString(),
+                    mode: currentSessionMode,
+                    collectionId: currentCollectionId,
+                    modeName: modeName,
+                    isNewWord: isNew,
+                    lastReviewTime: lastTime,
+                    rating: Number(rating),
+                    prevRepetition: sm2?.previous?.repetition ?? word.repetition ?? 0,
+                    newRepetition: sm2?.current?.repetition ?? 0,
+                    prevInterval: sm2?.previous?.interval ?? word.interval ?? 1,
+                    newInterval: sm2?.current?.interval ?? 1,
+                    prevEF: Number(sm2?.previous?.easinessFactor ?? word.easinessFactor ?? 2.5),
+                    newEF: Number(sm2?.current?.easinessFactor ?? 2.5),
+                    nextReviewDate: sm2?.current?.nextReviewDate || null
+                };
+
+                records.unshift(newRec);
+                if (records.length > 500) records.length = 500;
+                saveLocalDictationRecords(records);
+            } catch (e) {
+                console.error('Failed to record today dictation locally:', e);
+            }
+        }
+
+        function getFilteredTodayRecords() {
+            const todayStr = getTodayDateStr();
+            const all = loadLocalDictationRecords();
+            const todayRecords = all.filter(r => r.dateStr === todayStr);
+
+            return todayRecords.filter(r => {
+                // Filter by category
+                if (currentTodayFilter === 'forgot' && r.rating >= 3) return false;
+                if (currentTodayFilter === 'hard' && r.rating !== 3) return false;
+                if (currentTodayFilter === 'correct' && r.rating < 4) return false;
+                if (currentTodayFilter === 'new' && !r.isNewWord) return false;
+                if (currentTodayFilter === 'review' && r.isNewWord) return false;
+
+                // Search text
+                if (currentTodaySearch) {
+                    const thai = (r.thaiWord || '').toLowerCase();
+                    const phonetic = (r.phonetic || '').toLowerCase();
+                    const meaning = (r.meaning || '').toLowerCase();
+                    if (!thai.includes(currentTodaySearch) && !phonetic.includes(currentTodaySearch) && !meaning.includes(currentTodaySearch)) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+        }
+
+        function formatDateTimeStr(dateVal) {
+            if (!dateVal || dateVal === '首次练习 (新词)') return '首次练习 (新词)';
+            try {
+                const d = new Date(dateVal);
+                if (isNaN(d.getTime())) return String(dateVal);
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                const hh = String(d.getHours()).padStart(2, '0');
+                const mm = String(d.getMinutes()).padStart(2, '0');
+                const ss = String(d.getSeconds()).padStart(2, '0');
+                return `${y}-${m}-${day} ${hh}:${mm}:${ss}`;
+            } catch (e) {
+                return String(dateVal);
+            }
+        }
+
+        function formatDateOnly(dateVal) {
+            if (!dateVal) return '--';
+            try {
+                const d = new Date(dateVal);
+                if (isNaN(d.getTime())) return String(dateVal);
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            } catch (e) {
+                return String(dateVal);
+            }
+        }
+
+        function openTodayResultsModal() {
+            const modal = document.getElementById('modalTodayResults');
+            if (modal) {
+                modal.classList.remove('hidden');
+                const dateEl = document.getElementById('todayModalDateText');
+                if (dateEl) dateEl.innerText = getTodayDateStr();
+                renderTodayResultsTable();
+            }
+        }
+
+        function closeTodayResultsModal() {
+            const modal = document.getElementById('modalTodayResults');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function setTodayFilter(filterName) {
+            currentTodayFilter = filterName;
+            document.querySelectorAll('.today-filter-btn').forEach(btn => {
+                if (btn.getAttribute('data-filter') === filterName) {
+                    btn.className = 'today-filter-btn px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-medium shadow transition';
+                } else {
+                    btn.className = 'today-filter-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition';
+                }
+            });
+            renderTodayResultsTable();
+        }
+
+        function handleTodaySearchInput() {
+            const input = document.getElementById('todaySearchInput');
+            currentTodaySearch = (input?.value || '').trim().toLowerCase();
+            renderTodayResultsTable();
+        }
+
+        function renderTodayResultsTable() {
+            const todayStr = getTodayDateStr();
+            const allRecords = loadLocalDictationRecords();
+            const todayRecords = allRecords.filter(r => r.dateStr === todayStr);
+
+            // Compute metrics
+            const total = todayRecords.length;
+            const newCount = todayRecords.filter(r => r.isNewWord).length;
+            const reviewCount = todayRecords.filter(r => !r.isNewWord).length;
+            const correctCount = todayRecords.filter(r => r.rating >= 3).length;
+            const forgotCount = todayRecords.filter(r => r.rating < 3).length;
+            const hardCount = todayRecords.filter(r => r.rating === 3).length;
+            const successCount = todayRecords.filter(r => r.rating >= 4).length;
+            const accPercent = total > 0 ? Math.round((correctCount / total) * 100) : '--';
+            const avgEF = total > 0 
+                ? (todayRecords.reduce((acc, r) => acc + (Number(r.newEF) || 2.5), 0) / total).toFixed(2)
+                : '2.50';
+
+            // Update Metric Cards
+            const metricTotalEl = document.getElementById('todayMetricTotal');
+            if (metricTotalEl) metricTotalEl.innerText = total;
+            const metricNewEl = document.getElementById('todayMetricNew');
+            if (metricNewEl) metricNewEl.innerText = newCount;
+            const metricReviewEl = document.getElementById('todayMetricReview');
+            if (metricReviewEl) metricReviewEl.innerText = reviewCount;
+            const metricAccEl = document.getElementById('todayMetricAccuracy');
+            if (metricAccEl) metricAccEl.innerText = accPercent === '--' ? '--%' : `${accPercent}%`;
+            const metricForgotEl = document.getElementById('todayMetricForgot');
+            if (metricForgotEl) metricForgotEl.innerText = forgotCount;
+            const metricAvgEFEl = document.getElementById('todayMetricAvgEF');
+            if (metricAvgEFEl) metricAvgEFEl.innerText = avgEF;
+
+            // Update Filter Counts
+            const filterAllEl = document.getElementById('filterCountAll');
+            if (filterAllEl) filterAllEl.innerText = total;
+            const filterForgotEl = document.getElementById('filterCountForgot');
+            if (filterForgotEl) filterForgotEl.innerText = forgotCount;
+            const filterHardEl = document.getElementById('filterCountHard');
+            if (filterHardEl) filterHardEl.innerText = hardCount;
+            const filterCorrectEl = document.getElementById('filterCountCorrect');
+            if (filterCorrectEl) filterCorrectEl.innerText = successCount;
+            const filterNewEl = document.getElementById('filterCountNew');
+            if (filterNewEl) filterNewEl.innerText = newCount;
+            const filterReviewEl = document.getElementById('filterCountReview');
+            if (filterReviewEl) filterReviewEl.innerText = reviewCount;
+
+            // Filtered records
+            const filtered = getFilteredTodayRecords();
+            const tbody = document.getElementById('todayResultsTableBody');
+            const emptyState = document.getElementById('todayResultsEmptyState');
+            const countLabel = document.getElementById('todayResultsCountLabel');
+
+            if (countLabel) {
+                countLabel.innerText = `共 ${filtered.length} 条测试数据 (今日累计 ${total} 条)`;
+            }
+
+            if (!tbody || !emptyState) return;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            tbody.innerHTML = filtered.map((r, idx) => {
+                let ratingBadge = '';
+                if (r.rating === 0) {
+                    ratingBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-300 border border-red-500/30">❌ 忘记 (0)</span>';
+                } else if (r.rating === 3) {
+                    ratingBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">⚠️ 勉强 (3)</span>';
+                } else if (r.rating === 4) {
+                    ratingBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">✅ 正确 (4)</span>';
+                } else {
+                    ratingBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-violet-500/20 text-violet-300 border border-violet-500/30">⭐ 熟练 (5)</span>';
+                }
+
+                const timeOnly = r.reviewedAt ? new Date(r.reviewedAt).toLocaleTimeString() : '--';
+
+                const typeBadge = r.isNewWord 
+                    ? '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">首次新词</span>' 
+                    : '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-violet-500/20 text-violet-300 border border-violet-500/30">周期复习</span>';
+
+                const lastTimeDisplay = (r.isNewWord || r.lastReviewTime === '首次练习 (新词)')
+                    ? '<span class="text-slate-400 text-xs">首次练习 (新词)</span>'
+                    : `<span class="text-slate-300 font-mono text-xs">${formatDateTimeStr(r.lastReviewTime)}</span>`;
+
+                const nextDate = formatDateOnly(r.nextReviewDate);
+                const intervalDays = r.newInterval != null ? r.newInterval : 1;
+
+                const prevEF = Number(r.prevEF || 2.5);
+                const newEF = Number(r.newEF || 2.5);
+                const delta = newEF - prevEF;
+                let deltaBadge = `<span class="text-slate-400 font-normal text-[11px]">(±0.00)</span>`;
+                if (delta > 0.001) {
+                    deltaBadge = `<span class="text-emerald-400 font-semibold text-[11px]">(+${delta.toFixed(2)})</span>`;
+                } else if (delta < -0.001) {
+                    deltaBadge = `<span class="text-red-400 font-semibold text-[11px]">(${delta.toFixed(2)})</span>`;
+                }
+
+                let statusTip = '';
+                if (r.rating === 0) {
+                    statusTip = '<span class="px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 text-[10px] font-bold">轮次归零·重置</span>';
+                } else if (r.rating >= 3) {
+                    statusTip = `<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold">+${intervalDays}天排期</span>`;
+                }
+
+                return `
+                    <tr class="hover:bg-white/[0.04] transition group">
+                        <td class="py-3 pl-4 pr-2 font-mono text-slate-400">${idx + 1}</td>
+                        <td class="py-3 px-3 font-mono text-slate-300 text-xs">${timeOnly}</td>
+                        <td class="py-3 px-3">
+                            <div class="flex items-baseline gap-2">
+                                <span class="font-thai text-base font-bold text-white">${r.thaiWord}</span>
+                                <span class="text-xs font-mono text-violet-300">${r.phonetic || '--'}</span>
+                            </div>
+                            <div class="text-xs text-slate-300 truncate max-w-xs mt-0.5">${r.meaning || '--'}</div>
+                        </td>
+                        <td class="py-3 px-3">
+                            <div class="flex flex-col gap-1 items-start">
+                                ${typeBadge}
+                                <span class="text-[10px] text-slate-400 truncate max-w-[120px]">${r.modeName || '智能复习'}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-3">${lastTimeDisplay}</td>
+                        <td class="py-3 px-3 text-center">${ratingBadge}</td>
+                        <td class="py-3 px-3">
+                            <div class="font-mono text-white font-semibold text-xs">${nextDate}</div>
+                            <div class="text-[11px] text-emerald-400 font-semibold mt-0.5">${intervalDays} 天后</div>
+                        </td>
+                        <td class="py-3 px-3">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2 text-[11px] text-slate-300 font-mono">
+                                    <span>轮次: ${r.prevRepetition} ➔ <strong class="text-white">${r.newRepetition}</strong></span>
+                                    <span>·</span>
+                                    <span>间隔: ${r.prevInterval}d ➔ <strong class="text-white">${r.newInterval}d</strong></span>
+                                    ${statusTip}
+                                </div>
+                                <div class="flex items-center gap-2 text-[11px] text-slate-400 font-mono">
+                                    <span>EF: ${prevEF.toFixed(2)} ➔ <strong class="text-white">${newEF.toFixed(2)}</strong></span>
+                                    ${deltaBadge}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 pr-4 pl-2 text-center">
+                            <button onclick="window.playSentenceVoice('${escapeJsString(r.thaiWord)}', '${escapeJsString(r.audioUrl)}')" title="重听发音" class="h-8 w-8 rounded-xl bg-violet-600/30 hover:bg-violet-600 text-violet-300 hover:text-white inline-flex items-center justify-center transition">
+                                <i class="ph-bold ph-speaker-high text-xs"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function clearTodayDictationRecords() {
+            if (!confirm('确定要清空今日的听写测试结果记录吗？此操作仅影响浏览器本地存储，不修改后台词库与数据库。')) {
+                return;
+            }
+            const todayStr = getTodayDateStr();
+            const allRecords = loadLocalDictationRecords();
+            const kept = allRecords.filter(r => r.dateStr !== todayStr);
+            saveLocalDictationRecords(kept);
+            renderTodayResultsTable();
+            showToast('已清空今日本地听写测试记录');
+        }
+
+        function exportTodayResultsCsv() {
+            const list = getFilteredTodayRecords();
+            if (!list || list.length === 0) {
+                showToast('暂无记录可导出', 'warning');
+                return;
+            }
+            const headers = [
+                '序号', '听写时间', '泰文单词', '拼音音标', '中文释义', '练习类型',
+                '练习模式', '上次时间', '今日评分', '评分评价', '复习前轮次', '复习后轮次',
+                '复习前间隔(天)', '复习后间隔(天)', '复习前EF', '复习后EF', 'EF变化', '下次复习排期'
+            ];
+            const rows = list.map((r, i) => {
+                const ratingText = r.rating === 5 ? '熟练(5)' : (r.rating === 4 ? '正确(4)' : (r.rating === 3 ? '勉强(3)' : '忘记(0)'));
+                const delta = (r.newEF - r.prevEF).toFixed(2);
+                const deltaStr = Number(delta) > 0 ? `+${delta}` : delta;
+                return [
+                    i + 1,
+                    formatDateTimeStr(r.reviewedAt),
+                    `"${(r.thaiWord || '').replace(/"/g, '""')}"`,
+                    `"${(r.phonetic || '').replace(/"/g, '""')}"`,
+                    `"${(r.meaning || '').replace(/"/g, '""')}"`,
+                    r.isNewWord ? '首次练习(新词)' : '周期复习',
+                    `"${(r.modeName || '').replace(/"/g, '""')}"`,
+                    `"${formatDateTimeStr(r.lastReviewTime)}"`,
+                    r.rating,
+                    ratingText,
+                    r.prevRepetition,
+                    r.newRepetition,
+                    r.prevInterval,
+                    r.newInterval,
+                    r.prevEF.toFixed(2),
+                    r.newEF.toFixed(2),
+                    deltaStr,
+                    formatDateOnly(r.nextReviewDate)
+                ].join(',');
+            });
+            const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `thai_dictation_${getTodayDateStr()}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('已导出 CSV 听写结果');
+        }
+
+        function exportTodayResultsJson() {
+            const list = getFilteredTodayRecords();
+            if (!list || list.length === 0) {
+                showToast('暂无记录可导出', 'warning');
+                return;
+            }
+            const blob = new Blob([JSON.stringify(list, null, 2)], { type: 'application/json;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `thai_dictation_${getTodayDateStr()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('已导出 JSON 算法数据');
+        }
+
+        async function copyTodayResultsToClipboard() {
+            const list = getFilteredTodayRecords();
+            if (!list || list.length === 0) {
+                showToast('暂无记录可复制', 'warning');
+                return;
+            }
+            const lines = [
+                `今日听写结果清单 (${getTodayDateStr()}) - 共 ${list.length} 条测试数据:`,
+                `序号\t时间\t泰文\t发音\t中文\t类型\t上次时间\t今日结果\t下次排期\t轮次变化\t间隔变化\tEF变化`
+            ];
+            list.forEach((r, idx) => {
+                const ratingText = r.rating === 5 ? '熟练(5)' : (r.rating === 4 ? '正确(4)' : (r.rating === 3 ? '勉强(3)' : '忘记(0)'));
+                const delta = (r.newEF - r.prevEF).toFixed(2);
+                const deltaStr = Number(delta) > 0 ? `+${delta}` : delta;
+                lines.push(
+                    `${idx + 1}\t${formatDateTimeStr(r.reviewedAt).split(' ')[1] || ''}\t${r.thaiWord}\t${r.phonetic}\t${r.meaning}\t${r.isNewWord ? '新词' : '复习'}\t${formatDateTimeStr(r.lastReviewTime)}\t${ratingText}\t${formatDateOnly(r.nextReviewDate)} (${r.newInterval}天后)\t${r.prevRepetition}➔${r.newRepetition}\t${r.prevInterval}d➔${r.newInterval}d\t${r.prevEF.toFixed(2)}➔${r.newEF.toFixed(2)}(${deltaStr})`
+                );
+            });
+            try {
+                await navigator.clipboard.writeText(lines.join('\n'));
+                showToast('已复制表格数据至剪贴板');
+            } catch (e) {
+                showToast('复制失败，请手动导出 CSV', 'error');
+            }
+        }
+
         // User Settings
         let audioSpeed = 1.0;
         let autoPlayAudio = true;
@@ -658,6 +1304,7 @@
 
         // Initialize App
         window.addEventListener('DOMContentLoaded', async () => {
+            updateTodayResultBadge();
             await loadAppStats();
             await loadCollections();
             setupKeyboardShortcuts();
@@ -665,6 +1312,7 @@
             // 多标签页与多实例监听同步：窗口激活时若在主菜单则重新读取最新数据
             document.addEventListener('visibilitychange', () => {
                 if (!document.hidden) {
+                    updateTodayResultBadge();
                     const viewSelection = document.getElementById('viewSelection');
                     if (viewSelection && !viewSelection.classList.contains('hidden')) {
                         loadAppStats();
@@ -673,10 +1321,22 @@
                 }
             });
             window.addEventListener('focus', () => {
+                updateTodayResultBadge();
                 const viewSelection = document.getElementById('viewSelection');
                 if (viewSelection && !viewSelection.classList.contains('hidden')) {
                     loadAppStats();
                     loadCollections();
+                }
+            });
+
+            // 监听其他标签页的本地存储更新
+            window.addEventListener('storage', (e) => {
+                if (e.key === LOCAL_STORAGE_DICTATION_LOGS) {
+                    updateTodayResultBadge();
+                    const modal = document.getElementById('modalTodayResults');
+                    if (modal && !modal.classList.contains('hidden')) {
+                        renderTodayResultsTable();
+                    }
                 }
             });
 
@@ -1009,6 +1669,9 @@
                     sm2: res.sm2
                 });
 
+                // Record to local browser storage for today's results inspection
+                recordTodayDictation(currentWord, rating, res.sm2);
+
                 // Toast SM-2 Feedback
                 const nextDays = res.sm2.current.interval;
                 const ef = res.sm2.current.easinessFactor;
@@ -1080,6 +1743,7 @@
 
             // Reload background stats for dashboard
             loadAppStats();
+            updateTodayResultBadge();
         }
 
         function retryMissedWords() {
@@ -1107,6 +1771,7 @@
             document.getElementById('viewSelection').classList.remove('hidden');
             loadAppStats();
             loadCollections();
+            updateTodayResultBadge();
         }
 
         function confirmExitSession() {
@@ -1122,6 +1787,16 @@
             window.addEventListener('keydown', (e) => {
                 // If user is typing in an input, ignore
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+                // Check if today results modal is open
+                const modalToday = document.getElementById('modalTodayResults');
+                if (modalToday && !modalToday.classList.contains('hidden')) {
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        closeTodayResultsModal();
+                        return;
+                    }
+                }
 
                 const sessionVisible = !document.getElementById('viewSession').classList.contains('hidden');
                 if (!sessionVisible) return;
