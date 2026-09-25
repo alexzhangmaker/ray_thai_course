@@ -104,6 +104,119 @@
             background: rgba(139, 92, 246, 0.3);
             border-radius: 4px;
         }
+
+        /* ==================== 拼写练习工作单 (Worksheet) 打印专用与预览样式 ==================== */
+        .worksheet-word-row {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .worksheet-line-slot {
+            position: relative;
+            height: 48px;
+            border-bottom: 2px solid #1e293b;
+        }
+
+        .worksheet-line-guide {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            border-bottom: 1px dashed #cbd5e1;
+            pointer-events: none;
+        }
+
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 12mm 15mm;
+            }
+            
+            html, body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                height: auto !important;
+                min-height: auto !important;
+                overflow: visible !important;
+            }
+
+            /* 打印时隐藏主框架导航栏、常规控制台内容与弹窗控制条 */
+            body > header,
+            body > div:not(#modalPrintWorksheet),
+            body > main,
+            #modalCollection,
+            #modalWord,
+            #toastNotification,
+            .no-print {
+                display: none !important;
+            }
+
+            #modalPrintWorksheet {
+                position: static !important;
+                display: block !important;
+                background: transparent !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                z-index: auto !important;
+                height: auto !important;
+                min-height: auto !important;
+                overflow: visible !important;
+            }
+
+            #modalPrintWorksheetContent {
+                max-width: 100% !important;
+                width: 100% !important;
+                max-height: none !important;
+                height: auto !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                overflow: visible !important;
+            }
+
+            .modal-print-hide {
+                display: none !important;
+            }
+
+            #worksheetPreviewView {
+                display: block !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                max-height: none !important;
+                height: auto !important;
+                overflow: visible !important;
+                background: transparent !important;
+            }
+
+            #worksheetPreviewView > div {
+                padding: 0 !important;
+                margin: 0 !important;
+                background: transparent !important;
+                overflow: visible !important;
+            }
+
+            .worksheet-paper-preview {
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: auto !important;
+                background: white !important;
+            }
+
+            .worksheet-line-slot {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -217,10 +330,16 @@
                     <h2 class="text-lg font-bold text-white">生词主词库管理</h2>
                     <p class="text-xs text-slate-400">录入、更新、删除泰语单词，支持多例句结构与 SM-2 记忆参数精细化调节。</p>
                 </div>
-                <button onclick="openCreateWordModal()" class="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs shadow-lg shadow-violet-500/20 flex items-center gap-1.5 transition">
-                    <i class="ph-bold ph-plus"></i>
-                    录入新词条 (含例句)
-                </button>
+                <div class="flex items-center gap-2.5">
+                    <button onclick="openPrintWorksheetModal()" class="px-4 py-2 rounded-xl bg-violet-600/20 hover:bg-violet-600 border border-violet-500/40 text-violet-200 hover:text-white font-semibold text-xs flex items-center gap-1.5 transition">
+                        <i class="ph-bold ph-printer"></i>
+                        打印拼写练习 (Worksheet)
+                    </button>
+                    <button onclick="openCreateWordModal()" class="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs shadow-lg shadow-violet-500/20 flex items-center gap-1.5 transition">
+                        <i class="ph-bold ph-plus"></i>
+                        录入新词条 (含例句)
+                    </button>
+                </div>
             </div>
 
             <!-- Filter & Search Bar -->
@@ -316,10 +435,10 @@
                         </div>
                     </div>
                     <div class="space-y-1">
-                        <label class="block text-xs font-semibold text-slate-300">防重复过滤机制 (已启用):</label>
+                        <label class="block text-xs font-semibold text-slate-300">词汇透视引用机制 (已启用):</label>
                         <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-medium">
                             <i class="ph-bold ph-shield-check text-base shrink-0"></i>
-                            <span>词库已存在的单词自动忽略跳过，只增加词库中不存在的新单词</span>
+                            <span>词库已存在的单词将自动透视引用至本组（保留既有复习进度），仅当本组内已存在时去重跳过</span>
                         </div>
                     </div>
                 </div>
@@ -753,6 +872,188 @@
         </div>
     </div>
 
+    <!-- ========================================================= -->
+    <!-- MODAL: PRINT SPELLING PRACTICE WORKSHEET                  -->
+    <!-- ========================================================= -->
+    <div id="modalPrintWorksheet" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 hidden">
+        <div id="modalPrintWorksheetContent" class="glass-panel rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col border border-violet-500/30 shadow-2xl overflow-hidden transition-all duration-300">
+            
+            <!-- Modal Header (modal-print-hide) -->
+            <div id="modalPrintWorksheetHeader" class="modal-print-hide px-6 py-4 border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 bg-slate-950/40">
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/25 shrink-0">
+                        <i class="ph-bold ph-printer text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white flex items-center gap-2">
+                            <span>打印拼写练习工作单</span>
+                            <span class="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">Worksheet PDF</span>
+                        </h3>
+                        <p class="text-xs text-slate-400">选择单词单元生成练习纸，每行包含泰文词及 4 个规范书写横线供学生手写复写</p>
+                    </div>
+                </div>
+
+                <!-- Header Actions -->
+                <div class="flex items-center gap-3 shrink-0">
+                    <!-- Group selector dropdown -->
+                    <div class="flex items-center gap-1.5 text-xs">
+                        <span class="text-slate-400 hidden sm:inline">选择分组:</span>
+                        <select id="worksheetCollectionSelect" onchange="onWorksheetCollectionChanged()" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-white/15 text-slate-200 text-xs focus:outline-none focus:border-violet-500 max-w-[220px] truncate">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <!-- Print button -->
+                    <button onclick="executeWorksheetPrint()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-violet-500/25 flex items-center gap-1.5 transition active:scale-95">
+                        <i class="ph-bold ph-printer"></i>
+                        <span>打印 / 存为 PDF</span>
+                    </button>
+
+                    <!-- Close button -->
+                    <button onclick="closePrintWorksheetModal()" class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition">
+                        <i class="ph-bold ph-x text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mode Switcher Tabs (modal-print-hide) -->
+            <div id="worksheetModalTabs" class="modal-print-hide px-6 pt-3 pb-2 border-b border-white/10 flex items-center justify-between gap-4 shrink-0 bg-slate-900/30">
+                <div class="flex items-center gap-2">
+                    <button id="tabBtnWorksheetSelect" onclick="switchWorksheetModalTab('select')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 bg-violet-600 text-white transition shadow-md shadow-violet-600/20">
+                        <i class="ph-bold ph-table"></i>
+                        <span>1. 表格勾选单词 (<span id="worksheetSelectedCountBadge">0</span>)</span>
+                    </button>
+                    <button id="tabBtnWorksheetPreview" onclick="switchWorksheetModalTab('preview')" class="px-3.5 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition">
+                        <i class="ph-bold ph-eye"></i>
+                        <span>2. 打印效果预览</span>
+                    </button>
+                </div>
+
+                <!-- Quick stats indicator -->
+                <div class="text-xs text-slate-400">
+                    当前分组共 <span id="worksheetTotalCountText" class="text-white font-semibold">0</span> 词 · 已选 <span id="worksheetSelectedCountText" class="text-violet-300 font-bold">0</span> 词
+                </div>
+            </div>
+
+            <!-- View 1: Word Selection Table Panel (modal-print-hide) -->
+            <div id="worksheetSelectView" class="modal-print-hide flex-1 overflow-hidden flex flex-col p-6 space-y-4">
+                <!-- Filter Bar & Customization Options -->
+                <div class="flex flex-wrap items-center justify-between gap-3 text-xs bg-slate-950/30 p-3 rounded-2xl border border-white/5">
+                    <div class="flex flex-wrap items-center gap-2.5 flex-1 min-w-[260px]">
+                        <!-- Search input -->
+                        <div class="relative flex-1 min-w-[180px] max-w-xs">
+                            <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input id="worksheetSearchInput" type="text" placeholder="在当前分组搜索词汇..." oninput="filterWorksheetTable()" class="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500 transition">
+                        </div>
+
+                        <!-- Quick select buttons -->
+                        <button onclick="selectAllWorksheetWords(true)" class="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-medium transition">
+                            全选
+                        </button>
+                        <button onclick="invertSelectWorksheetWords()" class="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-medium transition">
+                            反选
+                        </button>
+                        <button onclick="selectAllWorksheetWords(false)" class="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-medium transition">
+                            清空勾选
+                        </button>
+                    </div>
+
+                    <!-- Worksheet Content Options -->
+                    <div class="flex flex-wrap items-center gap-3 text-xs text-slate-300">
+                        <label class="flex items-center gap-1.5 cursor-pointer select-none">
+                            <input type="checkbox" id="worksheetOptMeaning" checked onchange="updateWorksheetPreviewIfActive()" class="rounded border-white/20 bg-white/5 text-violet-600 focus:ring-0">
+                            <span>显示中文释义</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 cursor-pointer select-none">
+                            <input type="checkbox" id="worksheetOptPhonetic" checked onchange="updateWorksheetPreviewIfActive()" class="rounded border-white/20 bg-white/5 text-violet-600 focus:ring-0">
+                            <span>显示发音音标</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 cursor-pointer select-none">
+                            <input type="checkbox" id="worksheetOptHeader" checked onchange="updateWorksheetPreviewIfActive()" class="rounded border-white/20 bg-white/5 text-violet-600 focus:ring-0">
+                            <span>显示学生姓名栏</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Custom Title Input Row -->
+                <div class="flex items-center gap-3 text-xs">
+                    <span class="text-slate-400 shrink-0">练习单标题:</span>
+                    <input id="worksheetCustomTitle" type="text" placeholder="工作单标题..." oninput="updateWorksheetPreviewIfActive()" class="flex-1 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-white/10 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500">
+                </div>
+
+                <!-- Word Selection Table -->
+                <div class="glass-panel rounded-2xl border border-white/10 overflow-hidden flex-1 flex flex-col min-h-0">
+                    <div class="overflow-y-auto custom-scrollbar flex-1">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-white/5 text-slate-400 font-semibold border-b border-white/10 uppercase tracking-wider sticky top-0 backdrop-blur-md z-10">
+                                <tr>
+                                    <th class="py-3 px-3 w-10 text-center">
+                                        <input type="checkbox" id="selectAllWorksheetCb" onchange="toggleSelectAllWorksheetWords(this.checked)" class="rounded border-white/20 bg-white/5 text-violet-600 focus:ring-0 cursor-pointer">
+                                    </th>
+                                    <th class="py-3 px-3 w-12 text-slate-400 text-center">#</th>
+                                    <th class="py-3 px-4">泰语词 (Thai Word)</th>
+                                    <th class="py-3 px-4">读音 (Phonetic)</th>
+                                    <th class="py-3 px-4">中文释义 (Meaning)</th>
+                                    <th class="py-3 px-4">掌握状态</th>
+                                </tr>
+                            </thead>
+                            <tbody id="worksheetWordsTableBody" class="divide-y divide-white/5">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Footer Toolbar in Select View -->
+                <div class="flex items-center justify-between pt-2 shrink-0">
+                    <div class="text-xs text-slate-400">
+                        提示: 勾选完成需练习的单词后，可点击右侧“预览工作单”或“打印 / 存为 PDF”。
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <button onclick="closePrintWorksheetModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-medium transition">
+                            取消
+                        </button>
+                        <button onclick="switchWorksheetModalTab('preview')" class="px-5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-lg shadow-violet-500/20 flex items-center gap-1.5 transition">
+                            <i class="ph-bold ph-eye"></i>
+                            <span>预览工作单 (<span id="btnPreviewCount">0</span> 词)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View 2: Print Preview Panel -->
+            <div id="worksheetPreviewView" class="hidden flex-1 overflow-hidden flex flex-col">
+                <!-- Preview Controls Bar (modal-print-hide) -->
+                <div id="worksheetPreviewToolbar" class="modal-print-hide px-6 py-2.5 bg-slate-900/50 border-b border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
+                    <div class="flex items-center gap-2">
+                        <button onclick="switchWorksheetModalTab('select')" class="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-xs font-medium flex items-center gap-1.5 transition">
+                            <i class="ph-bold ph-arrow-left"></i>
+                            <span>返回修改选词</span>
+                        </button>
+                        <span class="text-slate-500">|</span>
+                        <span class="text-slate-300" id="previewPageEstimateText">共 0 词 · 预计 1 页</span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="executeWorksheetPrint()" class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-violet-500/20 flex items-center gap-1.5 transition">
+                            <i class="ph-bold ph-printer"></i>
+                            <span>立即打印 (Print / PDF)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Preview Scroll Area -->
+                <div class="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-950/80 custom-scrollbar flex justify-center">
+                    <!-- A4 Paper Container -->
+                    <div id="worksheetPrintContainer" class="worksheet-paper-preview bg-white text-slate-900 shadow-2xl rounded-sm w-full max-w-[210mm] min-h-[297mm] p-8 sm:p-10 font-sans">
+                        <!-- Dynamic Worksheet Content Rendered Here -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toastNotification" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full bg-slate-900/90 border border-violet-500/40 text-white text-xs font-medium shadow-2xl backdrop-blur-md flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-300">
         <i id="toastIcon" class="ph-fill ph-check-circle text-emerald-400 text-base"></i>
@@ -773,6 +1074,12 @@
         let importPreviewWords = [];
         let selectedImportIds = new Set();
         let importContext = {};
+
+        // Printable Spelling Practice Worksheet State
+        let worksheetAllWords = [];
+        let selectedWorksheetWordIds = new Set();
+        let currentWorksheetColId = null;
+        let activeWorksheetModalTab = 'select';
 
         window.addEventListener('DOMContentLoaded', async () => {
             await loadAllStats();
@@ -895,6 +1202,9 @@
                                 <button onclick="filterWordsByCollection('${col.id}')" class="flex-1 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs transition">
                                     查看包含生词
                                 </button>
+                                <button onclick="openPrintWorksheetModal('${col.id}')" title="打印拼写练习单 (Worksheet)" class="h-7 w-7 rounded-lg bg-white/5 hover:bg-violet-600/30 text-slate-300 hover:text-violet-300 flex items-center justify-center transition">
+                                    <i class="ph-bold ph-printer text-xs"></i>
+                                </button>
                                 <button onclick="openEditCollectionModal('${col.id}')" title="编辑词集" class="h-7 w-7 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 flex items-center justify-center transition">
                                     <i class="ph-bold ph-pencil-simple text-xs"></i>
                                 </button>
@@ -941,6 +1251,452 @@
                     <span class="truncate">${c.name}</span>
                 </label>
             `).join('');
+
+            // Also populate worksheet collection select
+            populateWorksheetCollectionSelect(currentWorksheetColId);
+        }
+
+        // -------------------------------------------------------------
+        // Printable Spelling Practice Worksheet (打印拼写练习工作单)
+        // -------------------------------------------------------------
+        function populateWorksheetCollectionSelect(selectedId) {
+            const sel = document.getElementById('worksheetCollectionSelect');
+            if (!sel) return;
+            let html = `<option value="">全部生词 (All Words)</option>`;
+            html += collections.map(c => `
+                <option value="${c.id}" ${c.id === selectedId ? 'selected' : ''}>
+                    ${escapeHtml(c.name)} (${c.wordCount} 词)
+                </option>
+            `).join('');
+            sel.innerHTML = html;
+            if (selectedId !== undefined && selectedId !== null) {
+                sel.value = selectedId;
+            }
+        }
+
+        async function openPrintWorksheetModal(colId = null) {
+            // If colId is not explicitly provided, check filter dropdown or default to first collection
+            if (!colId) {
+                const currentFilter = document.getElementById('wordCollectionFilter')?.value;
+                if (currentFilter) {
+                    colId = currentFilter;
+                } else if (collections.length > 0) {
+                    colId = collections[0].id;
+                } else {
+                    colId = '';
+                }
+            }
+
+            currentWorksheetColId = colId;
+            populateWorksheetCollectionSelect(currentWorksheetColId);
+
+            // Reset search input & tabs
+            const searchInput = document.getElementById('worksheetSearchInput');
+            if (searchInput) searchInput.value = '';
+            switchWorksheetModalTab('select');
+
+            // Open modal
+            document.getElementById('modalPrintWorksheet').classList.remove('hidden');
+
+            // Load words
+            await loadWorksheetWordsForCollection(currentWorksheetColId);
+        }
+
+        function closePrintWorksheetModal() {
+            document.getElementById('modalPrintWorksheet').classList.add('hidden');
+        }
+
+        async function onWorksheetCollectionChanged() {
+            const sel = document.getElementById('worksheetCollectionSelect');
+            currentWorksheetColId = sel.value;
+            const searchInput = document.getElementById('worksheetSearchInput');
+            if (searchInput) searchInput.value = '';
+            await loadWorksheetWordsForCollection(currentWorksheetColId);
+        }
+
+        async function loadWorksheetWordsForCollection(colId) {
+            const tbody = document.getElementById('worksheetWordsTableBody');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="py-10 text-center text-slate-400">
+                        <i class="ph-bold ph-spinner animate-spin text-xl text-violet-400 mb-2 block mx-auto"></i>
+                        正在读取待打印词汇列表...
+                    </td>
+                </tr>
+            `;
+
+            try {
+                let url = `/words?limit=1000`;
+                if (colId) {
+                    url += `&collectionId=${colId}`;
+                }
+                const res = await fetchApi(url);
+                worksheetAllWords = res.words || [];
+
+                // By default select all words
+                selectedWorksheetWordIds = new Set(worksheetAllWords.map(w => w.id));
+
+                // Auto-set suggested worksheet title based on collection
+                const colObj = collections.find(c => c.id === colId);
+                const colTitleName = colObj ? colObj.name : '泰语核心词汇';
+                const titleInput = document.getElementById('worksheetCustomTitle');
+                if (titleInput) {
+                    titleInput.value = `${colTitleName} · 泰语拼写练习工作单`;
+                }
+
+                renderWorksheetSelectionTable();
+                updateWorksheetCounts();
+
+                // If preview tab is currently active, re-render it
+                if (activeWorksheetModalTab === 'preview') {
+                    renderWorksheetPreview();
+                }
+            } catch (err) {
+                console.error('Failed to load worksheet words:', err);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="py-10 text-center text-rose-400">
+                            加载单词失败: ${escapeHtml(err.message)}
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function renderWorksheetSelectionTable() {
+            const tbody = document.getElementById('worksheetWordsTableBody');
+            const searchTerm = (document.getElementById('worksheetSearchInput')?.value || '').trim().toLowerCase();
+
+            let displayWords = worksheetAllWords;
+            if (searchTerm) {
+                displayWords = displayWords.filter(w => 
+                    (w.thaiWord && w.thaiWord.toLowerCase().includes(searchTerm)) ||
+                    (w.phonetic && w.phonetic.toLowerCase().includes(searchTerm)) ||
+                    (w.meaning && w.meaning.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            if (displayWords.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="py-10 text-center text-slate-400">
+                            ${searchTerm ? '未检索到匹配的单词' : '该分组下暂无可打印单词，请先录入或导入生词。'}
+                        </td>
+                    </tr>
+                `;
+                updateWorksheetCounts();
+                return;
+            }
+
+            tbody.innerHTML = displayWords.map((w, idx) => {
+                const isSelected = selectedWorksheetWordIds.has(w.id);
+
+                let statusBadge = `<span class="px-2 py-0.5 rounded bg-white/5 text-slate-400 text-[10px]">新词</span>`;
+                if (w.repetition >= 3) {
+                    statusBadge = `<span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">已熟练 (Rep: ${w.repetition})</span>`;
+                } else if (w.repetition > 0) {
+                    statusBadge = `<span class="px-2 py-0.5 rounded bg-blue-500/15 text-blue-300 border border-blue-500/30 text-[10px] font-bold">强化中 (Rep: ${w.repetition})</span>`;
+                }
+
+                return `
+                    <tr class="hover:bg-white/5 transition cursor-pointer ${isSelected ? 'bg-violet-600/5' : ''}" onclick="toggleWorksheetRow('${w.id}', event)">
+                        <td class="py-2.5 px-3 text-center" onclick="event.stopPropagation()">
+                            <input type="checkbox" data-word-id="${w.id}" ${isSelected ? 'checked' : ''} onchange="toggleWorksheetWordSelection('${w.id}', this.checked)" class="worksheet-row-cb rounded border-white/20 bg-white/5 text-violet-600 focus:ring-0 cursor-pointer">
+                        </td>
+                        <td class="py-2.5 px-3 text-center text-slate-500 font-mono text-[11px]">${idx + 1}</td>
+                        <td class="py-2.5 px-4">
+                            <div class="flex items-center gap-2">
+                                <span class="font-thai text-base font-bold text-white tracking-wide">${escapeHtml(w.thaiWord)}</span>
+                                <button type="button" onclick="event.stopPropagation(); playWordVoice('${w.id}')" title="试听发音" class="text-violet-400 hover:text-white transition">
+                                    <i class="ph-bold ph-speaker-high text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="py-2.5 px-4 font-mono text-violet-300 text-xs">${escapeHtml(w.phonetic || '--')}</td>
+                        <td class="py-2.5 px-4 text-slate-200 text-xs">${escapeHtml(w.meaning)}</td>
+                        <td class="py-2.5 px-4">${statusBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            updateWorksheetCounts();
+        }
+
+        function toggleWorksheetRow(wordId, event) {
+            const isSelected = selectedWorksheetWordIds.has(wordId);
+            toggleWorksheetWordSelection(wordId, !isSelected);
+        }
+
+        function toggleWorksheetWordSelection(wordId, isChecked) {
+            if (isChecked) {
+                selectedWorksheetWordIds.add(wordId);
+            } else {
+                selectedWorksheetWordIds.delete(wordId);
+            }
+
+            // Sync checkbox in DOM
+            const cb = document.querySelector(`.worksheet-row-cb[data-word-id="${wordId}"]`);
+            if (cb) cb.checked = isChecked;
+
+            // Highlight tr
+            const tr = cb?.closest('tr');
+            if (tr) {
+                if (isChecked) tr.classList.add('bg-violet-600/5');
+                else tr.classList.remove('bg-violet-600/5');
+            }
+
+            updateWorksheetCounts();
+            updateWorksheetPreviewIfActive();
+        }
+
+        function selectAllWorksheetWords(selectAll = true) {
+            const searchTerm = (document.getElementById('worksheetSearchInput')?.value || '').trim().toLowerCase();
+            let targetWords = worksheetAllWords;
+            if (searchTerm) {
+                targetWords = targetWords.filter(w => 
+                    (w.thaiWord && w.thaiWord.toLowerCase().includes(searchTerm)) ||
+                    (w.phonetic && w.phonetic.toLowerCase().includes(searchTerm)) ||
+                    (w.meaning && w.meaning.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            targetWords.forEach(w => {
+                if (selectAll) {
+                    selectedWorksheetWordIds.add(w.id);
+                } else {
+                    selectedWorksheetWordIds.delete(w.id);
+                }
+            });
+
+            renderWorksheetSelectionTable();
+            updateWorksheetPreviewIfActive();
+        }
+
+        function invertSelectWorksheetWords() {
+            const searchTerm = (document.getElementById('worksheetSearchInput')?.value || '').trim().toLowerCase();
+            let targetWords = worksheetAllWords;
+            if (searchTerm) {
+                targetWords = targetWords.filter(w => 
+                    (w.thaiWord && w.thaiWord.toLowerCase().includes(searchTerm)) ||
+                    (w.phonetic && w.phonetic.toLowerCase().includes(searchTerm)) ||
+                    (w.meaning && w.meaning.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            targetWords.forEach(w => {
+                if (selectedWorksheetWordIds.has(w.id)) {
+                    selectedWorksheetWordIds.delete(w.id);
+                } else {
+                    selectedWorksheetWordIds.add(w.id);
+                }
+            });
+
+            renderWorksheetSelectionTable();
+            updateWorksheetPreviewIfActive();
+        }
+
+        function toggleSelectAllWorksheetWords(checked) {
+            selectAllWorksheetWords(checked);
+        }
+
+        function filterWorksheetTable() {
+            renderWorksheetSelectionTable();
+        }
+
+        function updateWorksheetCounts() {
+            const total = worksheetAllWords.length;
+            const selected = selectedWorksheetWordIds.size;
+
+            const totalText = document.getElementById('worksheetTotalCountText');
+            if (totalText) totalText.innerText = total;
+
+            const selectedText = document.getElementById('worksheetSelectedCountText');
+            if (selectedText) selectedText.innerText = selected;
+
+            const badge = document.getElementById('worksheetSelectedCountBadge');
+            if (badge) badge.innerText = selected;
+
+            const btnPreviewCount = document.getElementById('btnPreviewCount');
+            if (btnPreviewCount) btnPreviewCount.innerText = selected;
+
+            const selectAllCb = document.getElementById('selectAllWorksheetCb');
+            if (selectAllCb) {
+                selectAllCb.checked = total > 0 && selected === total;
+                selectAllCb.indeterminate = selected > 0 && selected < total;
+            }
+        }
+
+        function switchWorksheetModalTab(tab) {
+            activeWorksheetModalTab = tab;
+            const tabSelectBtn = document.getElementById('tabBtnWorksheetSelect');
+            const tabPreviewBtn = document.getElementById('tabBtnWorksheetPreview');
+            const selectView = document.getElementById('worksheetSelectView');
+            const previewView = document.getElementById('worksheetPreviewView');
+
+            if (tab === 'preview') {
+                tabPreviewBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 bg-violet-600 text-white transition shadow-md shadow-violet-600/20";
+                tabSelectBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition";
+                selectView.classList.add('hidden');
+                previewView.classList.remove('hidden');
+                renderWorksheetPreview();
+            } else {
+                tabSelectBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 bg-violet-600 text-white transition shadow-md shadow-violet-600/20";
+                tabPreviewBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition";
+                previewView.classList.add('hidden');
+                selectView.classList.remove('hidden');
+            }
+        }
+
+        function updateWorksheetPreviewIfActive() {
+            if (activeWorksheetModalTab === 'preview') {
+                renderWorksheetPreview();
+            }
+        }
+
+        function renderWorksheetPreview() {
+            const container = document.getElementById('worksheetPrintContainer');
+            if (!container) return;
+
+            const selectedWords = worksheetAllWords.filter(w => selectedWorksheetWordIds.has(w.id));
+            const showMeaning = document.getElementById('worksheetOptMeaning')?.checked ?? true;
+            const showPhonetic = document.getElementById('worksheetOptPhonetic')?.checked ?? true;
+            const showHeader = document.getElementById('worksheetOptHeader')?.checked ?? true;
+            const customTitle = document.getElementById('worksheetCustomTitle')?.value.trim() || '泰语拼写练习工作单';
+
+            // Estimate pages (~11 words per A4 page)
+            const estPages = Math.max(1, Math.ceil(selectedWords.length / 11));
+            const estText = document.getElementById('previewPageEstimateText');
+            if (estText) {
+                estText.innerText = `共 ${selectedWords.length} 词 · 预计占用约 ${estPages} 页 A4 纸`;
+            }
+
+            if (selectedWords.length === 0) {
+                container.innerHTML = `
+                    <div class="py-24 text-center text-slate-400">
+                        <i class="ph ph-warning-circle text-4xl text-amber-500 mb-2 block mx-auto"></i>
+                        <p class="text-base font-bold text-slate-700">未选择任何单词</p>
+                        <p class="text-xs text-slate-500 mt-1">请点击上方“返回修改选词”勾选需要打印拼写的泰语单词。</p>
+                        <button onclick="switchWorksheetModalTab('select')" class="mt-4 px-4 py-2 rounded-xl bg-violet-600 text-white text-xs font-semibold">
+                            去勾选单词
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Student Meta Header
+            const studentHeaderHtml = showHeader ? `
+                <div class="flex items-center justify-between text-xs text-slate-700 mt-3 pt-2.5 border-t border-slate-200">
+                    <div>姓名 (Name): <span class="inline-block border-b border-slate-400 w-24 text-center">&nbsp;</span></div>
+                    <div>班级/学号: <span class="inline-block border-b border-slate-400 w-24 text-center">&nbsp;</span></div>
+                    <div>日期 (Date): <span class="inline-block border-b border-slate-400 w-24 text-center">&nbsp;</span></div>
+                    <div>得分 (Score): <span class="inline-block border-b border-slate-400 w-16 text-center">&nbsp;</span></div>
+                </div>
+            ` : '';
+
+            // Rows HTML
+            const rowsHtml = selectedWords.map((word, idx) => {
+                let subHint = '';
+                const parts = [];
+                if (showPhonetic && word.phonetic) {
+                    parts.push(`<span class="font-mono text-slate-600">[${escapeHtml(word.phonetic)}]</span>`);
+                }
+                if (showMeaning && word.meaning) {
+                    parts.push(`<span class="text-slate-700">${escapeHtml(word.meaning)}</span>`);
+                }
+                if (parts.length > 0) {
+                    subHint = `<div class="text-[10px] text-slate-500 mt-0.5 flex flex-wrap gap-x-2 leading-tight">${parts.join(' ')}</div>`;
+                }
+
+                return `
+                    <div class="worksheet-word-row py-3 flex items-center gap-4">
+                        <!-- Word Column (Left) -->
+                        <div class="w-48 shrink-0">
+                            <div class="flex items-baseline gap-1.5">
+                                <span class="text-xs font-bold text-slate-400 w-5 shrink-0 text-right">${idx + 1}.</span>
+                                <span class="text-lg font-bold font-thai text-slate-900 leading-tight">${escapeHtml(word.thaiWord)}</span>
+                            </div>
+                            <div class="pl-6.5">
+                                ${subHint}
+                            </div>
+                        </div>
+
+                        <!-- 4 Spaced Practice Writing Lines (Right) -->
+                        <div class="flex-1 grid grid-cols-4 gap-3.5">
+                            <div class="worksheet-line-slot">
+                                <div class="worksheet-line-guide"></div>
+                                <span class="absolute top-0 right-1 text-[9px] font-mono text-slate-400 select-none">①</span>
+                            </div>
+                            <div class="worksheet-line-slot">
+                                <div class="worksheet-line-guide"></div>
+                                <span class="absolute top-0 right-1 text-[9px] font-mono text-slate-400 select-none">②</span>
+                            </div>
+                            <div class="worksheet-line-slot">
+                                <div class="worksheet-line-guide"></div>
+                                <span class="absolute top-0 right-1 text-[9px] font-mono text-slate-400 select-none">③</span>
+                            </div>
+                            <div class="worksheet-line-slot">
+                                <div class="worksheet-line-guide"></div>
+                                <span class="absolute top-0 right-1 text-[9px] font-mono text-slate-400 select-none">④</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const nowStr = new Date().toLocaleDateString();
+
+            container.innerHTML = `
+                <div class="worksheet-sheet">
+                    <!-- Header -->
+                    <div class="worksheet-header border-b-2 border-slate-900 pb-3 mb-3">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h1 class="text-xl font-bold text-slate-900 tracking-tight leading-snug font-thai">
+                                    ${escapeHtml(customTitle)}
+                                </h1>
+                                <p class="text-[11px] text-slate-500 mt-0.5">
+                                    Thai Spelling & Handwriting Worksheet · 泰语规范拼写临摹复写练习单
+                                </p>
+                            </div>
+                            <div class="text-right shrink-0">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">ThaiNotes Worksheet</span>
+                                <span class="text-xs font-mono text-slate-600 font-semibold">共 ${selectedWords.length} 词</span>
+                            </div>
+                        </div>
+                        ${studentHeaderHtml}
+                    </div>
+
+                    <!-- Instructions banner -->
+                    <div class="text-[10px] text-slate-600 bg-slate-50 border border-slate-200 rounded px-2.5 py-1 mb-3 flex items-center justify-between">
+                        <span>【练习要求】请观察左侧标准泰语单词与音调标号，并在右侧 4 条练习横线上规范、工整地临摹复写该词。注意上下元音与辅音的高低比例。</span>
+                        <span class="font-bold text-slate-500 shrink-0 ml-2">每词复写 4 遍</span>
+                    </div>
+
+                    <!-- Rows List -->
+                    <div class="worksheet-rows divide-y divide-slate-200">
+                        ${rowsHtml}
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="worksheet-footer text-[9px] text-slate-400 text-center mt-6 pt-3 border-t border-slate-200 flex items-center justify-between">
+                        <span>vCourse.ThaiNotes 泰语拼写与听写训练系统 · 规范书写强化记忆</span>
+                        <span>打印日期: ${nowStr}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function executeWorksheetPrint() {
+            if (selectedWorksheetWordIds.size === 0) {
+                showToast('请至少勾选一个单词再进行打印', 'error');
+                return;
+            }
+            renderWorksheetPreview();
+            switchWorksheetModalTab('preview');
+            setTimeout(() => {
+                window.print();
+            }, 180);
         }
 
         function openCreateCollectionModal() {
@@ -1829,19 +2585,19 @@
                     body: JSON.stringify(payload)
                 });
 
-                let msg = `批量导入完成！`;
-                if (res.wordsImported > 0) {
-                    msg += `新增入库 ${res.wordsImported} 条生词。`;
-                }
-                if (res.wordsSkipped > 0) {
-                    msg += `已自动忽略 ${res.wordsSkipped} 条词库已存在单词。`;
-                }
-                if (res.wordsImported === 0 && res.wordsSkipped > 0) {
-                    msg = `词库已存在本次导入的全部 ${res.wordsSkipped} 条单词，已全部自动忽略跳过，未产生重复词汇。`;
+                let msg = res.message;
+                if (!msg) {
+                    msg = `批量导入完成！本分组共关联 ${res.wordsImported || 0} 个词汇`;
+                    if (res.newWordsCreated > 0 || res.existingWordsLinked > 0) {
+                        msg += `（新增生词 ${res.newWordsCreated || 0} 个，透视引用已有生词 ${res.existingWordsLinked || 0} 个）`;
+                    }
+                    if (res.wordsSkipped > 0) {
+                        msg += `，跳过本组已有 ${res.wordsSkipped} 词`;
+                    }
                 }
 
-                showToast(msg, res.wordsImported > 0 ? 'success' : 'info');
-                alert(res.message || msg);
+                showToast(msg, (res.wordsImported > 0) ? 'success' : 'info');
+                alert(msg);
 
                 document.getElementById('importJsonTextarea').value = '';
                 if (customColInput) customColInput.value = '';
@@ -1976,6 +2732,23 @@
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
         }
+
+        // Close worksheet modal on backdrop click or Escape
+        window.addEventListener('click', (e) => {
+            const modal = document.getElementById('modalPrintWorksheet');
+            if (e.target === modal) {
+                closePrintWorksheetModal();
+            }
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('modalPrintWorksheet');
+                if (modal && !modal.classList.contains('hidden')) {
+                    closePrintWorksheetModal();
+                }
+            }
+        });
     </script>
 </body>
 </html>

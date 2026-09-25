@@ -6015,13 +6015,21 @@ app.post('/api/collections/:id/words', authenticateDictationApi, async (req, res
 
     const nowIso = new Date().toISOString();
 
-    // Check if word already exists in dictation_words
-    const existingWord = await get(`SELECT * FROM dictation_words WHERE id = ?`, [wordId]);
+    // Check if word already exists in dictation_words (by ID or Thai spelling)
+    let actualWordId = wordId;
+    let existingWord = await get(`SELECT * FROM dictation_words WHERE id = ?`, [wordId]);
+    if (!existingWord) {
+      existingWord = await get(`SELECT * FROM dictation_words WHERE trim(thai_word) = ?`, [wordThai]);
+      if (existingWord) {
+        actualWordId = existingWord.id;
+      }
+    }
+
     if (!existingWord) {
       await run(
         `INSERT INTO dictation_words (id, thai_word, phonetic, meaning, audio_url, examples_json, repetition, interval_days, easiness_factor, next_review_date, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, 0, 1, 2.5, ?, ?, ?)`,
-        [wordId, wordThai, wordPhonetic, wordMeaning, wordAudio, JSON.stringify(cleanExamples), nowIso, nowIso, nowIso]
+        [actualWordId, wordThai, wordPhonetic, wordMeaning, wordAudio, JSON.stringify(cleanExamples), nowIso, nowIso, nowIso]
       );
     }
 
@@ -6032,11 +6040,11 @@ app.post('/api/collections/:id/words', authenticateDictationApi, async (req, res
     // Link to collection
     await run(
       `INSERT OR IGNORE INTO dictation_collection_words (collection_id, word_id, sort_order, created_at) VALUES (?, ?, ?, ?)`,
-      [collectionId, wordId, nextOrder, nowIso]
+      [collectionId, actualWordId, nextOrder, nowIso]
     );
 
-    const created = await get(`SELECT * FROM dictation_words WHERE id = ?`, [wordId]);
-    const colRows = await all(`SELECT collection_id FROM dictation_collection_words WHERE word_id = ?`, [wordId]);
+    const created = await get(`SELECT * FROM dictation_words WHERE id = ?`, [actualWordId]);
+    const colRows = await all(`SELECT collection_id FROM dictation_collection_words WHERE word_id = ?`, [actualWordId]);
     const colIds = colRows.map(c => c.collection_id);
 
     res.status(201).json({
@@ -6160,23 +6168,34 @@ app.post('/api/words', authenticateDictationApi, async (req, res) => {
 
     const nowIso = new Date().toISOString();
 
-    await run(
-      `INSERT INTO dictation_words (id, thai_word, phonetic, meaning, audio_url, examples_json, repetition, interval_days, easiness_factor, next_review_date, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, 0, 1, 2.5, ?, ?, ?)`,
-      [wordId, wordThai, wordPhonetic, wordMeaning, wordAudio, JSON.stringify(cleanExamples), nowIso, nowIso, nowIso]
-    );
+    let actualWordId = wordId;
+    let existingWord = await get(`SELECT * FROM dictation_words WHERE id = ?`, [wordId]);
+    if (!existingWord) {
+      existingWord = await get(`SELECT * FROM dictation_words WHERE trim(thai_word) = ?`, [wordThai]);
+      if (existingWord) {
+        actualWordId = existingWord.id;
+      }
+    }
+
+    if (!existingWord) {
+      await run(
+        `INSERT INTO dictation_words (id, thai_word, phonetic, meaning, audio_url, examples_json, repetition, interval_days, easiness_factor, next_review_date, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, 0, 1, 2.5, ?, ?, ?)`,
+        [actualWordId, wordThai, wordPhonetic, wordMeaning, wordAudio, JSON.stringify(cleanExamples), nowIso, nowIso, nowIso]
+      );
+    }
 
     if (Array.isArray(collectionIds) && collectionIds.length > 0) {
       for (const colId of collectionIds) {
         await run(
           `INSERT OR IGNORE INTO dictation_collection_words (collection_id, word_id, sort_order, created_at) VALUES (?, ?, 0, ?)`,
-          [colId, wordId, nowIso]
+          [colId, actualWordId, nowIso]
         );
       }
     }
 
-    const created = await get(`SELECT * FROM dictation_words WHERE id = ?`, [wordId]);
-    const colRows = await all(`SELECT collection_id FROM dictation_collection_words WHERE word_id = ?`, [wordId]);
+    const created = await get(`SELECT * FROM dictation_words WHERE id = ?`, [actualWordId]);
+    const colRows = await all(`SELECT collection_id FROM dictation_collection_words WHERE word_id = ?`, [actualWordId]);
 
     res.status(201).json({
       success: true,
@@ -6546,8 +6565,10 @@ app.post('/api/dictation/batch-import', authenticateDictationApi, async (req, re
     const maxOrderRow = await get(`SELECT MAX(sort_order) as max_order FROM dictation_collection_words WHERE collection_id = ?`, [colId]);
     let currentMaxOrder = (maxOrderRow?.max_order || 0);
 
-    let importedCount = 0;
-    let skippedCount = 0;
+    let importedCount = 0; // Total words linked to this collection
+    let newWordsCount = 0; // Brand new words created in global dictation_words
+    let existingWordsLinked = 0; // Existing words referenced into this collection
+    let skippedCount = 0; // Duplicates already present in this exact collection
     const skippedWords = [];
     const importedWords = [];
 
@@ -6559,80 +6580,96 @@ app.post('/api/dictation/batch-import', authenticateDictationApi, async (req, re
       const wThai = (w.word || w.thaiWord || w.thai_word || w.headword || '').trim();
       if (!wThai) continue;
 
-      // 2. CHECK IF WORD ALREADY EXISTS IN DICTATION_WORDS!
-      // "如果词库已经存在的单词需要忽略掉，只增加词库中不存在的单词"
+      // 2. CHECK IF WORD ALREADY EXISTS IN GLOBAL DICTATION_WORDS
       const existingWord = await get(
         `SELECT id, thai_word FROM dictation_words WHERE trim(thai_word) = ?`,
         [wThai]
       );
 
+      let wId;
       if (existingWord) {
-        skippedCount++;
-        skippedWords.push(wThai);
-        continue; // 彻底忽略已存在的词条，不重复插入，不重置学习进度
-      }
+        wId = existingWord.id;
 
-      // 3. Phonetic / IPA
-      const wPhonetic = (w.ipa || w.phonetic || w.transliteration || '').trim();
+        // Check if this word is ALREADY linked to this specific collection
+        const alreadyInCol = await get(
+          `SELECT 1 FROM dictation_collection_words WHERE collection_id = ? AND word_id = ?`,
+          [colId, wId]
+        );
 
-      // 4. Meaning (supports string or array of meanings)
-      let wMeaning = '';
-      if (typeof w.meaning === 'string' && w.meaning.trim()) {
-        wMeaning = w.meaning.trim();
-      } else if (Array.isArray(w.meanings) && w.meanings.length > 0) {
-        wMeaning = w.meanings.map(m => {
-          const pos = (m.part_of_speech || m.pos || '').trim();
-          const def = (m.meaning || m.definition || '').trim();
-          return pos ? `[${pos}] ${def}` : def;
-        }).filter(Boolean).join('；');
-      }
-      if (!wMeaning) wMeaning = wThai;
+        if (alreadyInCol) {
+          // Already in THIS collection -> avoid duplicate in the same collection
+          skippedCount++;
+          skippedWords.push(wThai);
+          continue;
+        }
 
-      // 5. Examples extraction (handles both w.examples and w.meanings[].examples)
-      let cleanExamples = [];
-      if (Array.isArray(w.examples)) {
-        for (const ex of w.examples) {
-          const thai = (ex.thai || ex.sentence || '').trim();
-          const translation = (ex.translation || ex.meaning || ex.chinese || '').trim();
-          if (thai || translation) {
-            cleanExamples.push({ thai, translation });
+        existingWordsLinked++;
+      } else {
+        // Word does not exist in dictation_words yet -> create as new word entity
+        // 3. Phonetic / IPA
+        const wPhonetic = (w.ipa || w.phonetic || w.transliteration || '').trim();
+
+        // 4. Meaning (supports string or array of meanings)
+        let wMeaning = '';
+        if (typeof w.meaning === 'string' && w.meaning.trim()) {
+          wMeaning = w.meaning.trim();
+        } else if (Array.isArray(w.meanings) && w.meanings.length > 0) {
+          wMeaning = w.meanings.map(m => {
+            const pos = (m.part_of_speech || m.pos || '').trim();
+            const def = (m.meaning || m.definition || '').trim();
+            return pos ? `[${pos}] ${def}` : def;
+          }).filter(Boolean).join('；');
+        }
+        if (!wMeaning) wMeaning = wThai;
+
+        // 5. Examples extraction (handles both w.examples and w.meanings[].examples)
+        let cleanExamples = [];
+        if (Array.isArray(w.examples)) {
+          for (const ex of w.examples) {
+            const thai = (ex.thai || ex.sentence || '').trim();
+            const translation = (ex.translation || ex.meaning || ex.chinese || '').trim();
+            if (thai || translation) {
+              cleanExamples.push({ thai, translation });
+            }
           }
         }
-      }
-      if (Array.isArray(w.meanings)) {
-        for (const m of w.meanings) {
-          if (Array.isArray(m.examples)) {
-            for (const ex of m.examples) {
-              const thai = (ex.thai || ex.sentence || '').trim();
-              const translation = (ex.translation || ex.meaning || ex.chinese || '').trim();
-              if (thai || translation) {
-                if (!cleanExamples.some(e => e.thai === thai && e.translation === translation)) {
-                  cleanExamples.push({ thai, translation });
+        if (Array.isArray(w.meanings)) {
+          for (const m of w.meanings) {
+            if (Array.isArray(m.examples)) {
+              for (const ex of m.examples) {
+                const thai = (ex.thai || ex.sentence || '').trim();
+                const translation = (ex.translation || ex.meaning || ex.chinese || '').trim();
+                if (thai || translation) {
+                  if (!cleanExamples.some(e => e.thai === thai && e.translation === translation)) {
+                    cleanExamples.push({ thai, translation });
+                  }
                 }
               }
             }
           }
         }
+
+        // 6. Audio
+        const wAudio = (w.audioUrl || w.audio_url || '').trim();
+
+        // 7. Word ID (ensure no primary key collision)
+        wId = w.id && w.id.trim() ? w.id.trim() : `w_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 6)}`;
+        const existingIdWord = await get(`SELECT id FROM dictation_words WHERE id = ?`, [wId]);
+        if (existingIdWord) {
+          wId = `w_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 6)}`;
+        }
+
+        // 8. Insert into dictation_words (with SM-2 default parameters)
+        await run(
+          `INSERT INTO dictation_words (id, thai_word, phonetic, meaning, audio_url, examples_json, repetition, interval_days, easiness_factor, next_review_date, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, 0, 1, 2.5, ?, ?, ?)`,
+          [wId, wThai, wPhonetic, wMeaning, wAudio, JSON.stringify(cleanExamples), nowIso, nowIso, nowIso]
+        );
+
+        newWordsCount++;
       }
 
-      // 6. Audio
-      const wAudio = (w.audioUrl || w.audio_url || '').trim();
-
-      // 7. Word ID (ensure no primary key collision)
-      let wId = w.id && w.id.trim() ? w.id.trim() : `w_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 6)}`;
-      const existingIdWord = await get(`SELECT id FROM dictation_words WHERE id = ?`, [wId]);
-      if (existingIdWord) {
-        wId = `w_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 6)}`;
-      }
-
-      // 8. Insert into dictation_words (with SM-2 default parameters)
-      await run(
-        `INSERT INTO dictation_words (id, thai_word, phonetic, meaning, audio_url, examples_json, repetition, interval_days, easiness_factor, next_review_date, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, 0, 1, 2.5, ?, ?, ?)`,
-        [wId, wThai, wPhonetic, wMeaning, wAudio, JSON.stringify(cleanExamples), nowIso, nowIso, nowIso]
-      );
-
-      // 9. Associate with collection
+      // 9. Associate word with collection (Perspective / View reference)
       currentMaxOrder++;
       await run(
         `INSERT OR IGNORE INTO dictation_collection_words (collection_id, word_id, sort_order, created_at)
@@ -6644,7 +6681,7 @@ app.post('/api/dictation/batch-import', authenticateDictationApi, async (req, re
       importedWords.push(wThai);
     }
 
-    // If all words were skipped and 0 words were added to this new collection, clean up empty collection
+    // If 0 words were added to this new collection, clean up empty collection
     if (!existingCol && importedCount === 0) {
       await run(`DELETE FROM dictation_collections WHERE id = ?`, [colId]);
       return res.status(200).json({
@@ -6652,10 +6689,24 @@ app.post('/api/dictation/batch-import', authenticateDictationApi, async (req, re
         collectionId: null,
         collectionName,
         wordsImported: 0,
+        newWordsCreated: 0,
+        existingWordsLinked: 0,
         wordsSkipped: skippedCount,
         skippedWords,
-        message: `本次导入的 ${skippedCount} 个单词均已存在于听写词库中，已全部自动忽略跳过，未产生重复词汇。`
+        message: `本次导入的 ${skippedCount} 个单词均已存在于该分组中，未重复添加。`
       });
+    }
+
+    let detailMsg = `批量导入成功！本分组共添加 ${importedCount} 个词汇`;
+    if (newWordsCount > 0 && existingWordsLinked > 0) {
+      detailMsg += `（新收录生词 ${newWordsCount} 个，透视引用已有词汇 ${existingWordsLinked} 个）`;
+    } else if (newWordsCount > 0) {
+      detailMsg += `（全部为新收录生词）`;
+    } else if (existingWordsLinked > 0) {
+      detailMsg += `（全部透视引用系统已有词库，保留既有复习进度）`;
+    }
+    if (skippedCount > 0) {
+      detailMsg += `，已忽略 ${skippedCount} 个本组已有重复单词`;
     }
 
     res.status(201).json({
@@ -6663,9 +6714,11 @@ app.post('/api/dictation/batch-import', authenticateDictationApi, async (req, re
       collectionId: colId,
       collectionName: existingCol ? existingCol.name : collectionName,
       wordsImported: importedCount,
+      newWordsCreated: newWordsCount,
+      existingWordsLinked: existingWordsLinked,
       wordsSkipped: skippedCount,
       skippedWords: skippedWords.slice(0, 15),
-      message: `批量导入成功！新增 ${importedCount} 个词汇${skippedCount > 0 ? `，自动忽略 ${skippedCount} 个已存在单词` : ''}`
+      message: detailMsg
     });
   } catch (err) {
     console.error('Failed to batch import dictation words:', err);
