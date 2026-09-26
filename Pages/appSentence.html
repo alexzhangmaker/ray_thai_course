@@ -115,6 +115,8 @@
             animation: pulse-soft 2s ease-in-out infinite;
         }
     </style>
+    <!-- Timer Styles -->
+    <link rel="stylesheet" href="./js/timer/timer.css">
 </head>
 <body class="selection:bg-brand-600 selection:text-white flex flex-col min-h-screen">
 
@@ -151,9 +153,20 @@
                 <span class="hidden sm:inline">云端播音</span>
             </div>
 
+            <!-- Timer Quick Capsule Pill -->
+            <button id="headerTimerPill" onclick="TimerPanel.toggleExpand()" title="点击展开/收起定时器" class="h-8 px-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-white/10 flex items-center gap-1.5 text-xs text-slate-300 transition timer-btn" style="display: none;">
+                <i id="headerTimerIcon" class="ph-bold ph-timer text-brand-400"></i>
+                <span id="headerTimerText" class="font-mono font-medium timer-tabular-nums">25:00</span>
+            </button>
+
+            <!-- Timer Settings Modal Button -->
+            <button id="btnOpenTimerSettings" onclick="TimerSettingsModal.open()" title="定时器偏好设置" class="h-8 w-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition timer-btn" aria-label="定时器偏好设置">
+                <i class="ph-bold ph-gear"></i>
+            </button>
+
             <!-- Console Admin Link -->
             <a href="./consoleSentence.html" target="_blank" class="px-3 py-1.5 rounded-lg bg-brand-500/10 hover:bg-brand-500/20 text-brand-300 border border-brand-500/30 text-xs sm:text-sm font-medium transition flex items-center gap-1.5">
-                <i class="ph ph-gear"></i>
+                <i class="ph ph-sliders-horizontal"></i>
                 <span class="hidden sm:inline">管理控制台</span>
             </a>
         </div>
@@ -537,7 +550,17 @@
     </main>
 
     <!-- Toast Notification Container -->
-    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+    <div id="toastContainer" class="fixed top-16 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Containers for Timer Panel & Settings Modal -->
+    <div id="timerPanelContainer"></div>
+    <div id="timerSettingsModalContainer"></div>
+
+    <!-- Timer & Settings Modules (IndexedDB, Web Audio API, Timer Panel & Modal) -->
+    <script src="./js/timer/settingsStore.js"></script>
+    <script src="./js/timer/audioNotifier.js"></script>
+    <script src="./js/timer/timerComponent.js"></script>
+    <script src="./js/timer/settingsModal.js"></script>
 
     <script>
         // ============================================================================
@@ -561,6 +584,14 @@
             initKeyboardShortcuts();
             await loadDashboardStats();
             await loadGroups();
+
+            // Initialize Timer & Settings
+            try {
+                if (window.TimerSettingsModal) TimerSettingsModal.init();
+                if (window.TimerPanel) await TimerPanel.init();
+            } catch (timerErr) {
+                console.warn('Timer initialization error:', timerErr);
+            }
 
             // Check URL query parameters
             const urlParams = new URLSearchParams(window.location.search);
@@ -1049,6 +1080,16 @@
             window.addEventListener('keydown', (e) => {
                 // Ignore shortcuts if in input/textarea
                 if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+
+                // Check if timer settings modal is open
+                const modalTimer = document.getElementById('modalTimerSettings');
+                if (modalTimer && !modalTimer.classList.contains('hidden')) {
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        if (window.TimerSettingsModal) TimerSettingsModal.close();
+                        return;
+                    }
+                }
 
                 if (document.getElementById('viewPractice').classList.contains('hidden')) return;
 

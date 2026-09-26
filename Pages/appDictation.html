@@ -122,6 +122,8 @@
             border-radius: 4px;
         }
     </style>
+    <!-- Timer Styles -->
+    <link rel="stylesheet" href="./js/timer/timer.css">
 </head>
 <body class="flex flex-col min-h-screen">
 
@@ -168,6 +170,24 @@
             <button id="btnAutoPlay" onclick="toggleAutoPlay()" title="切换切题时自动发音" class="h-8 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center gap-1.5 text-xs text-slate-300 transition">
                 <i id="iconAutoPlay" class="ph-bold ph-play-circle text-violet-400"></i>
                 <span id="textAutoPlay" class="hidden sm:inline">自动连播: 开</span>
+            </button>
+
+            <!-- Timer Quick Capsule Pill -->
+            <button id="headerTimerPill" onclick="TimerPanel.toggleExpand()" title="点击展开/收起定时器" class="h-8 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center gap-1.5 text-xs text-slate-300 transition timer-btn" style="display: none;">
+                <i id="headerTimerIcon" class="ph-bold ph-timer text-violet-400"></i>
+                <span id="headerTimerText" class="font-mono font-medium timer-tabular-nums">25:00</span>
+            </button>
+
+            <!-- Timer Settings Modal Button -->
+            <button id="btnOpenTimerSettings" onclick="TimerSettingsModal.open()" title="定时器偏好设置" class="h-8 w-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition timer-btn" aria-label="定时器偏好设置">
+                <i class="ph-bold ph-gear"></i>
+            </button>
+
+            <!-- Daily Missed Words Center Quick Button -->
+            <button onclick="openDailyMissedModal()" title="每日错词本与强化复习中心" class="h-8 px-2.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 flex items-center gap-1.5 text-xs text-rose-300 hover:text-rose-200 transition" aria-label="每日错词本与强化中心">
+                <i class="ph-bold ph-target"></i>
+                <span class="hidden sm:inline font-medium">每日错词</span>
+                <span id="navMissedPendingBadge" class="px-1.5 py-0.2 rounded-full bg-rose-500/30 text-rose-200 text-[10px] font-bold">0</span>
             </button>
 
             <!-- Console Mgt Link -->
@@ -223,7 +243,7 @@
             </div>
 
             <!-- Mode Selection Cards Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
                 <!-- Mode 1: Smart Review (Due Today) -->
                 <div class="glass-card rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group border border-white/10 hover:border-amber-500/50 transition">
                     <div class="space-y-4">
@@ -297,7 +317,7 @@
                 </div>
 
                 <!-- Mode 4: Add/Manage Custom Collections (词集自选定制) -->
-                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group border border-white/10 hover:border-violet-500/50 transition">
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group border border-white/10 hover:border-fuchsia-500/50 transition">
                     <div class="space-y-4">
                         <div class="h-12 w-12 rounded-2xl bg-fuchsia-500/20 text-fuchsia-400 border border-fuchsia-500/30 flex items-center justify-center text-2xl shadow-lg shadow-fuchsia-500/10">
                             <i class="ph-fill ph-folder-notch-open"></i>
@@ -305,7 +325,7 @@
                         <div>
                             <h3 class="text-lg font-bold text-white">词集自选定制</h3>
                             <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
-                                支持自由创建单元词集（如“日常饮食”、“问候语”、“旅游交通”），针对特定专题逐课突破。
+                                支持自由创建单元词集（如“日常饮食”、“问候语”），针对特定专题逐课突破。
                             </p>
                         </div>
                     </div>
@@ -314,6 +334,30 @@
                             <i class="ph-bold ph-plus-circle"></i>
                             管理 / 创建词集
                         </a>
+                    </div>
+                </div>
+
+                <!-- Mode 5: Daily Missed Words Reinforcement (每日错词循环强化) -->
+                <div onclick="openDailyMissedModal()" class="glass-card rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group border border-white/10 hover:border-rose-500/50 cursor-pointer transition">
+                    <div class="space-y-4">
+                        <div class="h-12 w-12 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center text-2xl shadow-lg shadow-rose-500/10">
+                            <i class="ph-fill ph-target"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-lg font-bold text-white">每日错词强化</h3>
+                                <span id="badgeMissedPendingCount" class="px-2 py-0.5 text-xs rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 font-bold">0 待消灭</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                                按日期存储每日错词，循环测验直至每个错词纠正达标 (评分 ≥ 3)，复习进展清晰可查。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="pt-6">
+                        <button type="button" onclick="event.stopPropagation(); openDailyMissedModal();" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-rose-600 to-orange-600 hover:from-rose-500 hover:to-orange-500 text-white font-semibold text-sm shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2 transition transform active:scale-95">
+                            <i class="ph-bold ph-lightning"></i>
+                            错词集与强化复习
+                        </button>
                     </div>
                 </div>
             </div>
@@ -570,6 +614,10 @@
                         <i class="ph-bold ph-table"></i>
                         今日听写总表
                     </button>
+                    <button onclick="openDailyMissedModal()" class="px-5 py-3 rounded-xl bg-rose-600/30 hover:bg-rose-600/50 border border-rose-500/40 text-rose-200 hover:text-white font-semibold text-sm flex items-center gap-2 transition">
+                        <i class="ph-bold ph-target"></i>
+                        每日错词本
+                    </button>
                     <button onclick="returnToSelection()" class="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-slate-200 font-semibold text-sm flex items-center gap-2 transition">
                         <i class="ph-bold ph-squares-four"></i>
                         返回主列表
@@ -771,11 +819,167 @@
         </div>
     </div>
 
+    <!-- ================================================================= -->
+    <!-- MODAL: DAILY MISSED WORDS & REINFORCEMENT CENTER (每日错词本与强化复习) -->
+    <!-- ================================================================= -->
+    <div id="modalDailyMissed" onclick="if (event.target === this) closeDailyMissedModal()" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 hidden">
+        <div class="glass-panel rounded-3xl w-full max-w-5xl max-h-[92vh] flex flex-col border border-white/10 shadow-2xl overflow-hidden animate-scaleUp">
+            
+            <!-- Modal Header -->
+            <div class="px-5 py-4 border-b border-white/10 flex flex-wrap items-center justify-between gap-3 bg-white/[0.02]">
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center text-xl shadow-lg shadow-rose-500/10 shrink-0">
+                        <i class="ph-fill ph-target"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-base sm:text-lg font-bold text-white">每日错词本与循环强化中心</h3>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-300 border border-rose-500/30">本地持久归档</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">
+                            按练习日期归档每日听写错词，支持选择单日或全量错词集循环复习，直到所有错词评分 ≥ 3 彻底攻克。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Right Action Buttons in Header -->
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="startReinforceDrill('all_pending')" title="将所有日期中未攻克的错词合并进行强化复习" class="h-8 px-3 rounded-xl bg-gradient-to-r from-rose-600 to-orange-600 hover:from-rose-500 hover:to-orange-500 text-xs text-white font-semibold flex items-center gap-1.5 shadow-lg shadow-rose-500/25 transition active:scale-95">
+                        <i class="ph-bold ph-lightning"></i>
+                        <span>强化全部未消灭 (<span id="missedGlobalPendingCount">0</span>)</span>
+                    </button>
+
+                    <button onclick="syncHistoricalMissedFromLogs(true)" title="扫描听写历史记录并同步错词" class="h-8 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-slate-300 hover:text-white flex items-center gap-1.5 transition">
+                        <i class="ph-bold ph-arrows-clockwise"></i>
+                        <span class="hidden sm:inline">扫描同步</span>
+                    </button>
+
+                    <button onclick="closeDailyMissedModal()" class="h-8 w-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition">
+                        <i class="ph-bold ph-x text-base"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Metrics Summary Bar -->
+            <div class="px-5 py-3 border-b border-white/10 bg-slate-900/40 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5 text-center">
+                    <div class="text-[10px] text-slate-400">累计归档错词</div>
+                    <div id="missedMetricTotal" class="text-lg font-black text-white mt-0.5">0</div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5 text-center">
+                    <div class="text-[10px] text-slate-400">已纠正攻克达标</div>
+                    <div id="missedMetricMastered" class="text-lg font-black text-emerald-400 mt-0.5">0</div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5 text-center">
+                    <div class="text-[10px] text-slate-400">尚待强化消灭</div>
+                    <div id="missedMetricPending" class="text-lg font-black text-rose-400 mt-0.5">0</div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5 text-center">
+                    <div class="text-[10px] text-slate-400">整体纠正消灭率</div>
+                    <div id="missedMetricPercent" class="text-lg font-black text-violet-300 mt-0.5">100%</div>
+                </div>
+            </div>
+
+            <!-- Filter & Search Toolbar -->
+            <div class="px-5 py-2.5 border-b border-white/10 bg-slate-900/20 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div class="flex items-center gap-1.5 flex-wrap" id="missedFilterGroup">
+                    <button type="button" onclick="setMissedFilter('all')" data-mfilter="all" class="missed-filter-btn px-2.5 py-1 rounded-lg bg-rose-600 text-white font-medium shadow transition">
+                        全部日期 (<span id="filterMissedAllCount">0</span>)
+                    </button>
+                    <button type="button" onclick="setMissedFilter('pending')" data-mfilter="pending" class="missed-filter-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition">
+                        🔥 尚有待强化 (<span id="filterMissedPendingCount">0</span>)
+                    </button>
+                    <button type="button" onclick="setMissedFilter('mastered')" data-mfilter="mastered" class="missed-filter-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition">
+                        ✅ 全部已攻克 (<span id="filterMissedMasteredCount">0</span>)
+                    </button>
+                </div>
+
+                <div class="relative w-full sm:w-64">
+                    <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input id="missedSearchInput" type="text" oninput="handleMissedSearchInput()" placeholder="搜索错词泰文、读音或释义..." class="w-full pl-8 pr-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 transition">
+                </div>
+            </div>
+
+            <!-- Daily Dates Sets Container (Scrollable) -->
+            <div class="flex-1 overflow-auto custom-scrollbar p-4 space-y-3 relative min-h-[300px]" id="dailyMissedListContainer">
+                <!-- Dynamically populated date set cards -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="dailyMissedEmptyState" class="hidden py-16 text-center space-y-3 px-4">
+                <div class="h-16 w-16 mx-auto rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center text-3xl text-emerald-400">
+                    <i class="ph-bold ph-check-circle"></i>
+                </div>
+                <div class="space-y-1">
+                    <h4 class="text-sm font-bold text-white">暂无待强化的错词记录！</h4>
+                    <p class="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+                        太棒了！当前没有任何生词遗留错词。在日常听写练习中评分被定为 0 分（忘记）的单词将自动归类到每日错词集，供在此处循环强化。
+                    </p>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-5 py-3 border-t border-white/10 bg-slate-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs text-slate-400">
+                <div class="flex items-center gap-2">
+                    <i class="ph-fill ph-info text-rose-400 text-sm shrink-0"></i>
+                    <span><strong>循环强化纠正规则：</strong>每轮练习中，只有评分 ≥ 3（勉强/正确/熟练）的单词才算纠正达标移出队列；评分 &lt; 3（忘记）的单词将自动进入下一轮，循环练习直至全部清空！</span>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                    <button onclick="closeDailyMissedModal()" class="px-4 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium transition">
+                        关闭
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MODAL: INTER-ROUND TRANSITION DIALOG (错词强化每轮过渡弹窗)           -->
+    <!-- ================================================================= -->
+    <div id="modalInterRoundTransition" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 hidden animate-fadeIn">
+        <div class="glass-panel border border-amber-500/40 rounded-3xl w-full max-w-md p-6 shadow-2xl text-center space-y-5 animate-scaleUp">
+            <div class="h-16 w-16 mx-auto rounded-3xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-3xl shadow-lg shadow-amber-500/20">
+                <i class="ph-bold ph-arrows-clockwise"></i>
+            </div>
+            <div class="space-y-1.5">
+                <h3 id="interRoundTitle" class="text-xl font-bold text-white">第 1 轮强化结束</h3>
+                <p id="interRoundSubtitle" class="text-xs text-slate-300">
+                    本轮已成功纠正攻克部分生词，仍有未达标词条，即将进入下一轮循环强化练习！
+                </p>
+            </div>
+            <!-- Remaining words preview list -->
+            <div class="space-y-1.5 text-left max-h-48 overflow-y-auto custom-scrollbar p-3 rounded-2xl bg-white/5 border border-white/5">
+                <div class="text-[11px] font-semibold text-slate-400">未达标单词（继续进入下一轮强化）：</div>
+                <div id="interRoundRemainingList" class="flex flex-wrap gap-1.5 pt-1">
+                    <!-- chips -->
+                </div>
+            </div>
+            <!-- Actions -->
+            <div class="pt-2">
+                <button onclick="continueNextReinforceRound()" class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-sm shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 transition active:scale-95">
+                    <i class="ph-bold ph-play"></i>
+                    <span id="interRoundBtnText">立即进入下一轮强化 (Enter)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Floating Feedback Toast -->
     <div id="toastNotification" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full bg-slate-900/90 border border-violet-500/40 text-white text-xs font-medium shadow-2xl backdrop-blur-md flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-300">
         <i id="toastIcon" class="ph-fill ph-check-circle text-emerald-400 text-base"></i>
         <span id="toastMessage">已更新 SM-2</span>
     </div>
+
+    <!-- Containers for Timer Panel & Settings Modal -->
+    <div id="timerPanelContainer"></div>
+    <div id="timerSettingsModalContainer"></div>
+
+    <!-- Timer & Settings Modules (IndexedDB, Web Audio API, Timer Panel & Modal) -->
+    <script src="./js/timer/settingsStore.js"></script>
+    <script src="./js/timer/audioNotifier.js"></script>
+    <script src="./js/timer/timerComponent.js"></script>
+    <script src="./js/timer/settingsModal.js"></script>
 
     <!-- Application Script -->
     <script>
@@ -1297,6 +1501,812 @@
             }
         }
 
+        // =============================================================
+        // Daily Missed Words Storage & Reinforcement Drill Controller
+        // =============================================================
+        const LOCAL_STORAGE_MISSED_WORDS = 'thai_dictation_daily_missed_words';
+        let currentMissedFilter = 'all';
+        let currentMissedSearch = '';
+        let collapsedMissedDates = new Set();
+        let reinforceState = null;
+
+        function loadDailyMissedStore() {
+            try {
+                const raw = localStorage.getItem(LOCAL_STORAGE_MISSED_WORDS);
+                if (!raw) return {};
+                const parsed = JSON.parse(raw);
+                return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
+            } catch (e) {
+                console.warn('Failed to parse daily missed words store:', e);
+                return {};
+            }
+        }
+
+        function saveDailyMissedStore(store) {
+            try {
+                localStorage.setItem(LOCAL_STORAGE_MISSED_WORDS, JSON.stringify(store));
+                updateMissedBadges();
+            } catch (e) {
+                console.error('Failed to save daily missed words store:', e);
+            }
+        }
+
+        function recordMissedWord(word, rating, dateStr = null) {
+            if (!word || !word.id) return;
+            const store = loadDailyMissedStore();
+            const targetDate = dateStr || getTodayDateStr();
+            const nowIso = new Date().toISOString();
+
+            if (!store[targetDate]) {
+                store[targetDate] = {
+                    dateStr: targetDate,
+                    createdAt: nowIso,
+                    updatedAt: nowIso,
+                    words: []
+                };
+            }
+
+            const group = store[targetDate];
+            if (!Array.isArray(group.words)) group.words = [];
+
+            const existing = group.words.find(w => String(w.id) === String(word.id));
+            if (existing) {
+                existing.lastMissedAt = nowIso;
+                existing.missCount = (existing.missCount || 1) + 1;
+                existing.mastered = false; // still unmastered because rating < 3
+                existing.lastDrillScore = Number(rating);
+                existing.lastDrillAt = nowIso;
+                if (word.thaiWord) existing.thaiWord = word.thaiWord;
+                if (word.phonetic || word.transliteration) existing.phonetic = word.phonetic || word.transliteration;
+                if (word.meaning) existing.meaning = word.meaning;
+                if (word.audioUrl) existing.audioUrl = word.audioUrl;
+                if (word.examples && word.examples.length) existing.examples = word.examples;
+            } else {
+                group.words.push({
+                    id: word.id,
+                    thaiWord: word.thaiWord || '',
+                    phonetic: word.phonetic || word.transliteration || '',
+                    meaning: word.meaning || '',
+                    audioUrl: word.audioUrl || '',
+                    examples: word.examples || [],
+                    firstMissedAt: nowIso,
+                    lastMissedAt: nowIso,
+                    missCount: 1,
+                    mastered: false,
+                    lastDrillScore: Number(rating),
+                    lastDrillAt: nowIso
+                });
+            }
+
+            group.updatedAt = nowIso;
+            saveDailyMissedStore(store);
+        }
+
+        function markMissedWordMastered(wordId, dateSource, rating) {
+            const store = loadDailyMissedStore();
+            const nowIso = new Date().toISOString();
+            let changed = false;
+
+            if (dateSource && dateSource !== 'all_pending' && dateSource !== 'custom' && store[dateSource]) {
+                const group = store[dateSource];
+                const word = (group.words || []).find(w => String(w.id) === String(wordId));
+                if (word) {
+                    word.mastered = true;
+                    word.lastDrillScore = Number(rating);
+                    word.lastDrillAt = nowIso;
+                    group.updatedAt = nowIso;
+                    changed = true;
+                }
+            } else {
+                // Multi-date or all_pending or custom: update all occurrences in store
+                Object.values(store).forEach(group => {
+                    const word = (group.words || []).find(w => String(w.id) === String(wordId));
+                    if (word) {
+                        word.mastered = true;
+                        word.lastDrillScore = Number(rating);
+                        word.lastDrillAt = nowIso;
+                        group.updatedAt = nowIso;
+                        changed = true;
+                    }
+                });
+            }
+
+            if (changed) {
+                saveDailyMissedStore(store);
+            }
+        }
+
+        function syncHistoricalMissedFromLogs(notifyUser = false) {
+            try {
+                const logs = loadLocalDictationRecords();
+                const missedLogs = logs.filter(r => Number(r.rating) < 3);
+                if (missedLogs.length === 0) {
+                    if (notifyUser) showToast('未发现历史错词记录');
+                    return 0;
+                }
+
+                const store = loadDailyMissedStore();
+                let newlyAdded = 0;
+
+                // Process oldest to newest
+                const sortedLogs = [...missedLogs].reverse();
+                sortedLogs.forEach(r => {
+                    const dateStr = r.dateStr || (r.reviewedAt ? r.reviewedAt.split('T')[0] : getTodayDateStr());
+                    if (!store[dateStr]) {
+                        store[dateStr] = {
+                            dateStr: dateStr,
+                            createdAt: r.reviewedAt || new Date().toISOString(),
+                            updatedAt: r.reviewedAt || new Date().toISOString(),
+                            words: []
+                        };
+                    }
+                    const group = store[dateStr];
+                    if (!Array.isArray(group.words)) group.words = [];
+                    const existing = group.words.find(w => String(w.id) === String(r.wordId));
+                    if (!existing) {
+                        group.words.push({
+                            id: r.wordId,
+                            thaiWord: r.thaiWord || '',
+                            phonetic: r.phonetic || '',
+                            meaning: r.meaning || '',
+                            audioUrl: r.audioUrl || '',
+                            examples: [],
+                            firstMissedAt: r.reviewedAt || new Date().toISOString(),
+                            lastMissedAt: r.reviewedAt || new Date().toISOString(),
+                            missCount: 1,
+                            mastered: false,
+                            lastDrillScore: Number(r.rating),
+                            lastDrillAt: r.reviewedAt || new Date().toISOString()
+                        });
+                        newlyAdded++;
+                    }
+                });
+
+                if (newlyAdded > 0) {
+                    saveDailyMissedStore(store);
+                }
+                updateMissedBadges();
+                if (notifyUser) {
+                    showToast(`扫描同步完成！共检测到 ${missedLogs.length} 条错词记录，新增 ${newlyAdded} 词归档`, 'success');
+                    const modal = document.getElementById('modalDailyMissed');
+                    if (modal && !modal.classList.contains('hidden')) {
+                        renderDailyMissedList();
+                    }
+                }
+                return newlyAdded;
+            } catch (e) {
+                console.error('Failed to sync historical missed words:', e);
+                if (notifyUser) showToast('扫描同步历史记录失败: ' + e.message, 'error');
+                return 0;
+            }
+        }
+
+        function getDailyMissedStats() {
+            const store = loadDailyMissedStore();
+            let totalArchived = 0;
+            let totalMastered = 0;
+            let totalPending = 0;
+
+            Object.values(store).forEach(group => {
+                (group.words || []).forEach(w => {
+                    totalArchived++;
+                    if (w.mastered) {
+                        totalMastered++;
+                    } else {
+                        totalPending++;
+                    }
+                });
+            });
+
+            const percent = totalArchived > 0 ? Math.round((totalMastered / totalArchived) * 100) : 100;
+            return { totalArchived, totalMastered, totalPending, percent };
+        }
+
+        function updateMissedBadges() {
+            const { totalPending } = getDailyMissedStats();
+
+            const navBadge = document.getElementById('navMissedPendingBadge');
+            if (navBadge) {
+                navBadge.innerText = totalPending;
+            }
+
+            const cardBadge = document.getElementById('badgeMissedPendingCount');
+            if (cardBadge) {
+                cardBadge.innerText = `${totalPending} 待消灭`;
+            }
+
+            const globalBtnPending = document.getElementById('missedGlobalPendingCount');
+            if (globalBtnPending) {
+                globalBtnPending.innerText = totalPending;
+            }
+        }
+
+        function openDailyMissedModal() {
+            const modal = document.getElementById('modalDailyMissed');
+            if (modal) {
+                modal.classList.remove('hidden');
+                renderDailyMissedList();
+            }
+        }
+
+        function closeDailyMissedModal() {
+            const modal = document.getElementById('modalDailyMissed');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function setMissedFilter(filterName) {
+            currentMissedFilter = filterName;
+            document.querySelectorAll('.missed-filter-btn').forEach(btn => {
+                if (btn.getAttribute('data-mfilter') === filterName) {
+                    btn.className = 'missed-filter-btn px-2.5 py-1 rounded-lg bg-rose-600 text-white font-medium shadow transition';
+                } else {
+                    btn.className = 'missed-filter-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition';
+                }
+            });
+            renderDailyMissedList();
+        }
+
+        function handleMissedSearchInput() {
+            const input = document.getElementById('missedSearchInput');
+            currentMissedSearch = (input?.value || '').trim().toLowerCase();
+            renderDailyMissedList();
+        }
+
+        function toggleMissedDateDetails(dateStr) {
+            if (collapsedMissedDates.has(dateStr)) {
+                collapsedMissedDates.delete(dateStr);
+            } else {
+                collapsedMissedDates.add(dateStr);
+            }
+            renderDailyMissedList();
+        }
+
+        function resetDateMissedWords(dateStr) {
+            if (!confirm(`确定要将 [${dateStr}] 的所有错词重置为“未攻克”状态吗？这将方便您从头再次进行该日期的强化循环练习。`)) {
+                return;
+            }
+            const store = loadDailyMissedStore();
+            if (store[dateStr] && Array.isArray(store[dateStr].words)) {
+                store[dateStr].words.forEach(w => {
+                    w.mastered = false;
+                    w.lastDrillScore = null;
+                });
+                store[dateStr].updatedAt = new Date().toISOString();
+                saveDailyMissedStore(store);
+                renderDailyMissedList();
+                showToast(`已重置 [${dateStr}] 的错词攻克状态`, 'info');
+            }
+        }
+
+        function deleteDateMissedWords(dateStr) {
+            if (!confirm(`确定要删除 [${dateStr}] 的每日错词归档记录吗？删除后此日期的错词集将从错词本中移除。`)) {
+                return;
+            }
+            const store = loadDailyMissedStore();
+            if (store[dateStr]) {
+                delete store[dateStr];
+                saveDailyMissedStore(store);
+                renderDailyMissedList();
+                showToast(`已删除 [${dateStr}] 的错词记录`);
+            }
+        }
+
+        function formatRelativeDateTag(dateStr) {
+            const today = getTodayDateStr();
+            if (dateStr === today) return '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">今天</span>';
+
+            const d = new Date();
+            d.setDate(d.getDate() - 1);
+            const yYear = d.getFullYear();
+            const yMonth = String(d.getMonth() + 1).padStart(2, '0');
+            const yDay = String(d.getDate()).padStart(2, '0');
+            const yesterday = `${yYear}-${yMonth}-${yDay}`;
+            if (dateStr === yesterday) return '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-white/10 text-slate-300">昨天</span>';
+
+            return '';
+        }
+
+        function renderDailyMissedList() {
+            const store = loadDailyMissedStore();
+            const container = document.getElementById('dailyMissedListContainer');
+            const emptyState = document.getElementById('dailyMissedEmptyState');
+            if (!container) return;
+
+            // 1. Calculate global metrics
+            const dateKeys = Object.keys(store).sort().reverse();
+            let totalArchived = 0;
+            let totalMastered = 0;
+            let totalPending = 0;
+
+            let allDateStats = {};
+            let pendingDateCount = 0;
+            let masteredDateCount = 0;
+
+            dateKeys.forEach(dateStr => {
+                const group = store[dateStr];
+                const words = Array.isArray(group.words) ? group.words : [];
+                const dTotal = words.length;
+                const dMastered = words.filter(w => w.mastered).length;
+                const dPending = dTotal - dMastered;
+
+                totalArchived += dTotal;
+                totalMastered += dMastered;
+                totalPending += dPending;
+
+                allDateStats[dateStr] = {
+                    total: dTotal,
+                    mastered: dMastered,
+                    pending: dPending,
+                    percent: dTotal > 0 ? Math.round((dMastered / dTotal) * 100) : 100
+                };
+
+                if (dPending > 0) pendingDateCount++;
+                else if (dTotal > 0) masteredDateCount++;
+            });
+
+            const percent = totalArchived > 0 ? Math.round((totalMastered / totalArchived) * 100) : 100;
+
+            // Update Metrics in UI
+            const mTotal = document.getElementById('missedMetricTotal');
+            if (mTotal) mTotal.innerText = totalArchived;
+            const mMastered = document.getElementById('missedMetricMastered');
+            if (mMastered) mMastered.innerText = totalMastered;
+            const mPending = document.getElementById('missedMetricPending');
+            if (mPending) mPending.innerText = totalPending;
+            const mPercent = document.getElementById('missedMetricPercent');
+            if (mPercent) mPercent.innerText = `${percent}%`;
+
+            const gPending = document.getElementById('missedGlobalPendingCount');
+            if (gPending) gPending.innerText = totalPending;
+
+            // Update filter count labels
+            const fAll = document.getElementById('filterMissedAllCount');
+            if (fAll) fAll.innerText = dateKeys.length;
+            const fPending = document.getElementById('filterMissedPendingCount');
+            if (fPending) fPending.innerText = pendingDateCount;
+            const fMastered = document.getElementById('filterMissedMasteredCount');
+            if (fMastered) fMastered.innerText = masteredDateCount;
+
+            // 2. Filter dates by currentMissedFilter
+            let filteredDateKeys = dateKeys.filter(dateStr => {
+                const stats = allDateStats[dateStr];
+                if (currentMissedFilter === 'pending') return stats.pending > 0;
+                if (currentMissedFilter === 'mastered') return stats.pending === 0 && stats.total > 0;
+                return true;
+            });
+
+            // 3. Filter by search query
+            let wordsPerDate = {};
+            if (currentMissedSearch) {
+                filteredDateKeys = filteredDateKeys.filter(dateStr => {
+                    const group = store[dateStr];
+                    const words = Array.isArray(group.words) ? group.words : [];
+                    const matchedWords = words.filter(w => {
+                        const thai = (w.thaiWord || '').toLowerCase();
+                        const phonetic = (w.phonetic || '').toLowerCase();
+                        const meaning = (w.meaning || '').toLowerCase();
+                        return thai.includes(currentMissedSearch) || 
+                               phonetic.includes(currentMissedSearch) || 
+                               meaning.includes(currentMissedSearch);
+                    });
+                    wordsPerDate[dateStr] = matchedWords;
+                    return matchedWords.length > 0;
+                });
+            } else {
+                filteredDateKeys.forEach(dateStr => {
+                    wordsPerDate[dateStr] = store[dateStr].words || [];
+                });
+            }
+
+            // 4. Handle empty state
+            if (filteredDateKeys.length === 0) {
+                container.innerHTML = '';
+                if (emptyState) emptyState.classList.remove('hidden');
+                return;
+            }
+
+            if (emptyState) emptyState.classList.add('hidden');
+
+            // 5. Render date cards
+            container.innerHTML = filteredDateKeys.map(dateStr => {
+                const stats = allDateStats[dateStr];
+                const words = wordsPerDate[dateStr] || [];
+                const isCollapsed = collapsedMissedDates.has(dateStr);
+                const relTag = formatRelativeDateTag(dateStr);
+
+                let statusBadge = '';
+                if (stats.pending === 0 && stats.total > 0) {
+                    statusBadge = `
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                            <i class="ph-bold ph-check-circle"></i>
+                            全部已攻克 100%
+                        </span>
+                    `;
+                } else {
+                    statusBadge = `
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1">
+                            <i class="ph-bold ph-fire"></i>
+                            待消灭 ${stats.pending} / ${stats.total} 词
+                        </span>
+                    `;
+                }
+
+                // Render Word Rows inside table
+                const wordRows = words.map((w, wIdx) => {
+                    const isMastered = !!w.mastered;
+                    let masteryChip = isMastered
+                        ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                             <i class="ph-bold ph-check"></i> 已攻克 (评分 ${w.lastDrillScore != null ? w.lastDrillScore : '≥3'})
+                           </span>`
+                        : `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                             <i class="ph-bold ph-hourglass-high"></i> 待强化 (需 ≥ 3 分)
+                           </span>`;
+
+                    const missBadge = (w.missCount && w.missCount > 1) 
+                        ? `<span class="text-[10px] text-rose-400 font-mono">失误 ${w.missCount} 次</span>`
+                        : `<span class="text-[10px] text-slate-400 font-mono">失误 1 次</span>`;
+
+                    const lastTime = w.lastMissedAt ? new Date(w.lastMissedAt).toLocaleTimeString() : '--';
+
+                    return `
+                        <tr class="hover:bg-white/[0.04] transition group">
+                            <td class="py-2.5 pl-3 pr-2 font-mono text-xs text-slate-500">${wIdx + 1}</td>
+                            <td class="py-2.5 px-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-thai text-base font-bold text-white">${w.thaiWord}</span>
+                                    <button onclick="window.playSentenceVoice('${escapeJsString(w.thaiWord)}', '${escapeJsString(w.audioUrl)}')" title="播放发音" class="h-6 w-6 rounded-lg bg-violet-600/30 hover:bg-violet-600 text-violet-300 hover:text-white flex items-center justify-center transition">
+                                        <i class="ph-bold ph-speaker-high text-xs"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <td class="py-2.5 px-3 font-mono text-xs text-violet-300">${w.phonetic || '--'}</td>
+                            <td class="py-2.5 px-3 text-xs text-slate-300">${w.meaning || '--'}</td>
+                            <td class="py-2.5 px-3">
+                                <div class="flex flex-col">
+                                    ${missBadge}
+                                    <span class="text-[10px] text-slate-500">${lastTime}</span>
+                                </div>
+                            </td>
+                            <td class="py-2.5 px-3 text-center">
+                                ${masteryChip}
+                            </td>
+                            <td class="py-2.5 pr-3 pl-2 text-right">
+                                <button onclick="startSingleWordReinforce('${dateStr}', '${w.id}')" title="单独对此单词进行循环强化" class="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-300 hover:text-rose-200 text-xs font-semibold inline-flex items-center gap-1 transition">
+                                    <i class="ph-bold ph-play"></i>
+                                    突击
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="glass-card rounded-2xl border border-white/10 hover:border-white/20 overflow-hidden transition shadow-lg">
+                        <!-- Date Card Header -->
+                        <div class="p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3 bg-white/[0.02]">
+                            <div class="flex items-center gap-3">
+                                <div class="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 shrink-0">
+                                    <i class="ph-bold ph-calendar-blank text-base"></i>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono text-sm sm:text-base font-bold text-white">${dateStr}</span>
+                                        ${relTag}
+                                        ${statusBadge}
+                                    </div>
+                                    <div class="flex items-center gap-3 text-xs text-slate-400 mt-0.5">
+                                        <span>错词总数: <strong class="text-white">${stats.total}</strong></span>
+                                        <span>·</span>
+                                        <span>已达标: <strong class="text-emerald-400">${stats.mastered}</strong></span>
+                                        <span>·</span>
+                                        <span>待消灭: <strong class="text-rose-400">${stats.pending}</strong></span>
+                                        <span>·</span>
+                                        <span>达标率: <strong class="text-violet-300">${stats.percent}%</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action buttons on card header -->
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <button onclick="startReinforceDrill('${dateStr}')" title="对该日期的错词进行循环强化练习，直到全部评分 ≥ 3" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-orange-600 hover:from-rose-500 hover:to-orange-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-rose-500/20 transition active:scale-95">
+                                    <i class="ph-bold ph-lightning"></i>
+                                    <span>强化复习 (${stats.pending > 0 ? stats.pending + ' 待消灭' : '全组 ' + stats.total})</span>
+                                </button>
+
+                                <button onclick="toggleMissedDateDetails('${dateStr}')" title="${isCollapsed ? '展开单词列表' : '折叠单词列表'}" class="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-slate-300 hover:text-white flex items-center gap-1 transition">
+                                    <i class="ph-bold ${isCollapsed ? 'ph-caret-down' : 'ph-caret-up'}"></i>
+                                    <span class="hidden sm:inline">${isCollapsed ? '展开清单' : '收起清单'}</span>
+                                </button>
+
+                                <button onclick="resetDateMissedWords('${dateStr}')" title="将该日期所有错词标记为未攻克，以便从头练习" class="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-slate-400 hover:text-white transition">
+                                    <i class="ph-bold ph-arrow-counter-clockwise"></i>
+                                </button>
+
+                                <button onclick="deleteDateMissedWords('${dateStr}')" title="删除该日期的错词归档" class="px-2.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-xs text-rose-400 hover:text-rose-300 transition">
+                                    <i class="ph-bold ph-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-white/5 h-1.5 overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-rose-500 via-amber-500 to-emerald-500 transition-all duration-500" style="width: ${stats.percent}%;"></div>
+                        </div>
+
+                        <!-- Collapsible Word List Table -->
+                        <div class="${isCollapsed ? 'hidden' : 'block'} border-t border-white/5 bg-slate-900/30 overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr class="border-b border-white/5 text-[11px] text-slate-400 bg-white/[0.01]">
+                                        <th class="py-2 pl-3 pr-2 w-8">#</th>
+                                        <th class="py-2 px-3">泰文单词</th>
+                                        <th class="py-2 px-3">拼音音标</th>
+                                        <th class="py-2 px-3">中文释义</th>
+                                        <th class="py-2 px-3">失误记录</th>
+                                        <th class="py-2 px-3 text-center">攻克状态</th>
+                                        <th class="py-2 pr-3 pl-2 text-right">单词突击</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-white/5">
+                                    ${wordRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // -------------------------------------------------------------
+        // Reinforcement Drill Session Controller
+        // -------------------------------------------------------------
+        function startReinforceDrill(dateKey) {
+            const store = loadDailyMissedStore();
+            let wordsToDrill = [];
+            let title = '';
+
+            if (dateKey === 'all_pending') {
+                const seenIds = new Set();
+                Object.values(store).forEach(group => {
+                    (group.words || []).forEach(w => {
+                        if (!w.mastered && !seenIds.has(w.id)) {
+                            seenIds.add(w.id);
+                            wordsToDrill.push(w);
+                        }
+                    });
+                });
+                if (wordsToDrill.length === 0) {
+                    showToast('太棒了！当前没有任何未消灭的错词，所有错词均已达标！', 'success');
+                    return;
+                }
+                title = `全部未消灭错词循环强化`;
+            } else {
+                const group = store[dateKey];
+                if (!group || !group.words || group.words.length === 0) {
+                    showToast('未找到该日期的错词记录', 'warning');
+                    return;
+                }
+                const unmastered = group.words.filter(w => !w.mastered);
+                wordsToDrill = unmastered.length > 0 ? unmastered : [...group.words];
+                title = `${dateKey} 错词循环强化`;
+            }
+
+            startReinforceDrillWithWords(wordsToDrill, title, dateKey);
+        }
+
+        function startSingleWordReinforce(dateStr, wordId) {
+            const store = loadDailyMissedStore();
+            const group = store[dateStr];
+            if (!group || !Array.isArray(group.words)) return;
+            const word = group.words.find(w => String(w.id) === String(wordId));
+            if (!word) return;
+            startReinforceDrillWithWords([word], `[${word.thaiWord}] 单词循环突击`, dateStr);
+        }
+
+        function startReinforceDrillWithWords(words, title, dateSource = null) {
+            if (!words || words.length === 0) {
+                showToast('没有可强化的单词', 'warning');
+                return;
+            }
+            closeDailyMissedModal();
+            const modalToday = document.getElementById('modalTodayResults');
+            if (modalToday) modalToday.classList.add('hidden');
+
+            currentSessionMode = 'reinforce_missed';
+            currentCollectionId = null;
+            currentIndex = 0;
+            sessionResults = [];
+
+            reinforceState = {
+                targetDateStr: dateSource || 'custom',
+                sessionTitle: title,
+                roundNum: 1,
+                roundInitialWords: [...words],
+                roundPassedWords: [],
+                roundFailedWords: [],
+                masteredSoFar: new Set(),
+                totalUniqueWords: words.length,
+                allInitialWords: [...words]
+            };
+
+            activeQueue = [...words];
+
+            // Switch view to session
+            document.getElementById('viewSelection').classList.add('hidden');
+            document.getElementById('viewSummary').classList.add('hidden');
+            document.getElementById('viewSession').classList.remove('hidden');
+
+            updateReinforceSessionHeader();
+            renderCurrentCard();
+        }
+
+        function updateReinforceSessionHeader() {
+            const modeBadge = document.getElementById('sessionModeBadge');
+            if (modeBadge && currentSessionMode === 'reinforce_missed' && reinforceState) {
+                const remaining = reinforceState.totalUniqueWords - reinforceState.masteredSoFar.size;
+                modeBadge.innerHTML = `
+                    <span class="inline-flex items-center gap-1.5 text-rose-300 font-bold">
+                        <i class="ph-bold ph-lightning"></i>
+                        ${reinforceState.sessionTitle} · 第 ${reinforceState.roundNum} 轮
+                        <span class="px-1.5 py-0.2 rounded-full bg-rose-500/20 text-[10px] text-rose-200">
+                            剩 ${remaining} 词未达标
+                        </span>
+                    </span>
+                `;
+            }
+        }
+
+        function handleReinforceWordResult(word, rating, sm2) {
+            if (!reinforceState) return;
+
+            if (rating >= 3) {
+                // Conquered!
+                reinforceState.roundPassedWords.push(word);
+                reinforceState.masteredSoFar.add(word.id);
+                markMissedWordMastered(word.id, reinforceState.targetDateStr, rating);
+                const nextDays = sm2?.current?.interval || 1;
+                showToast(`攻克达标 (评分 ${rating})！下次排期: ${nextDays} 天后`, 'success');
+            } else {
+                // Failed (< 3), repeat next round!
+                reinforceState.roundFailedWords.push(word);
+                recordMissedWord(word, rating, reinforceState.targetDateStr === 'all_pending' ? null : reinforceState.targetDateStr);
+                showToast(`评分 ${rating} (< 3 忘记)，本词将自动进入下一轮强化练习！`, 'warning');
+            }
+
+            updateReinforceSessionHeader();
+        }
+
+        function handleReinforceRoundEnd() {
+            if (!reinforceState) {
+                finishSession();
+                return;
+            }
+
+            // Check if any word failed in this round (< 3)
+            if (reinforceState.roundFailedWords.length === 0) {
+                // All words conquered!
+                finishReinforceSession();
+                return;
+            }
+
+            // Unconquered words remain, show inter-round dialog
+            const modal = document.getElementById('modalInterRoundTransition');
+            if (!modal) {
+                continueNextReinforceRound();
+                return;
+            }
+
+            const titleEl = document.getElementById('interRoundTitle');
+            const subEl = document.getElementById('interRoundSubtitle');
+            const listEl = document.getElementById('interRoundRemainingList');
+            const btnText = document.getElementById('interRoundBtnText');
+
+            const round = reinforceState.roundNum;
+            const passed = reinforceState.roundPassedWords.length;
+            const failed = reinforceState.roundFailedWords.length;
+
+            if (titleEl) titleEl.innerText = `第 ${round} 轮强化结束`;
+            if (subEl) {
+                subEl.innerHTML = `本轮已成功纠正攻克 <strong class="text-emerald-400 font-bold">${passed}</strong> 词，仍有 <strong class="text-rose-400 font-bold">${failed}</strong> 词评分 &lt; 3 需继续强化。<br>即将开启第 <strong>${round + 1}</strong> 轮循环练习！`;
+            }
+            if (listEl) {
+                listEl.innerHTML = reinforceState.roundFailedWords.map(w => `
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-rose-500/20 text-rose-200 border border-rose-500/30 text-xs font-thai font-medium">
+                        <span class="font-bold">${w.thaiWord}</span>
+                        <span class="text-[10px] text-slate-300 font-sans font-normal truncate max-w-[120px]">(${w.meaning || ''})</span>
+                    </span>
+                `).join('');
+            }
+            if (btnText) {
+                btnText.innerText = `立即进入第 ${round + 1} 轮强化 (${failed} 词) (Enter)`;
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function continueNextReinforceRound() {
+            const modal = document.getElementById('modalInterRoundTransition');
+            if (modal) modal.classList.add('hidden');
+
+            if (!reinforceState) return;
+
+            reinforceState.roundNum++;
+            activeQueue = [...reinforceState.roundFailedWords];
+            reinforceState.roundInitialWords = [...reinforceState.roundFailedWords];
+            reinforceState.roundPassedWords = [];
+            reinforceState.roundFailedWords = [];
+            currentIndex = 0;
+
+            updateReinforceSessionHeader();
+            renderCurrentCard();
+            showToast(`已开启第 ${reinforceState.roundNum} 轮强化练习！`, 'info');
+        }
+
+        function finishReinforceSession() {
+            document.getElementById('viewSession').classList.add('hidden');
+            document.getElementById('viewSummary').classList.remove('hidden');
+
+            const modal = document.getElementById('modalInterRoundTransition');
+            if (modal) modal.classList.add('hidden');
+
+            const totalUnique = reinforceState ? reinforceState.totalUniqueWords : sessionResults.length;
+            const totalRounds = reinforceState ? reinforceState.roundNum : 1;
+
+            // Update Summary metrics
+            document.getElementById('summaryTotalCount').innerText = totalUnique;
+            document.getElementById('summaryCorrectCount').innerText = totalUnique;
+            document.getElementById('summaryForgotCount').innerText = 0;
+            document.getElementById('summaryAccuracy').innerText = '100%';
+
+            // Hide retry missed button since 0 missed!
+            document.getElementById('btnRetryMissed').style.display = 'none';
+
+            // Summary Table: group by word id, showing final attempt
+            const tbody = document.getElementById('summaryTableBody');
+            if (tbody) {
+                const finalMap = new Map();
+                sessionResults.forEach(r => {
+                    finalMap.set(r.word.id, r);
+                });
+                const list = Array.from(finalMap.values());
+                tbody.innerHTML = list.map(res => `
+                    <tr class="hover:bg-white/5 transition">
+                        <td class="py-3 pl-2 font-thai text-base font-bold text-white">${res.word.thaiWord}</td>
+                        <td class="py-3 text-xs font-mono text-violet-300">${res.word.phonetic || '--'}</td>
+                        <td class="py-3 text-xs text-slate-300">${res.word.meaning}</td>
+                        <td class="py-3 text-center">
+                            <span class="inline-block px-2.5 py-0.5 rounded-full border text-xs font-semibold bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+                                ✅ 强化纠正攻克达标 (第${res.round || 1}轮 · 评分 ${res.rating})
+                            </span>
+                        </td>
+                        <td class="py-3 text-right pr-2 text-xs text-slate-300">
+                            ${res.sm2?.current?.interval || 1} 天后 (${formatDateOnly(res.sm2?.current?.nextReviewDate)})
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            showToast(`🎉 错词强化圆满成功！历经 ${totalRounds} 轮，${totalUnique} 个错词已全部纠正攻克达标 (评分 ≥ 3)！`, 'success');
+            loadAppStats();
+            updateTodayResultBadge();
+            updateMissedBadges();
+        }
+
+        window.openDailyMissedModal = openDailyMissedModal;
+        window.closeDailyMissedModal = closeDailyMissedModal;
+        window.startReinforceDrill = startReinforceDrill;
+        window.startReinforceDrillWithWords = startReinforceDrillWithWords;
+        window.startSingleWordReinforce = startSingleWordReinforce;
+        window.continueNextReinforceRound = continueNextReinforceRound;
+        window.syncHistoricalMissedFromLogs = syncHistoricalMissedFromLogs;
+        window.setMissedFilter = setMissedFilter;
+        window.handleMissedSearchInput = handleMissedSearchInput;
+        window.toggleMissedDateDetails = toggleMissedDateDetails;
+        window.resetDateMissedWords = resetDateMissedWords;
+        window.deleteDateMissedWords = deleteDateMissedWords;
+
         // User Settings
         let audioSpeed = 1.0;
         let autoPlayAudio = true;
@@ -1305,14 +2315,25 @@
         // Initialize App
         window.addEventListener('DOMContentLoaded', async () => {
             updateTodayResultBadge();
+            syncHistoricalMissedFromLogs();
+            updateMissedBadges();
             await loadAppStats();
             await loadCollections();
             setupKeyboardShortcuts();
+
+            // Initialize Timer & Settings
+            try {
+                if (window.TimerSettingsModal) TimerSettingsModal.init();
+                if (window.TimerPanel) await TimerPanel.init();
+            } catch (timerErr) {
+                console.warn('Timer initialization error:', timerErr);
+            }
 
             // 多标签页与多实例监听同步：窗口激活时若在主菜单则重新读取最新数据
             document.addEventListener('visibilitychange', () => {
                 if (!document.hidden) {
                     updateTodayResultBadge();
+                    updateMissedBadges();
                     const viewSelection = document.getElementById('viewSelection');
                     if (viewSelection && !viewSelection.classList.contains('hidden')) {
                         loadAppStats();
@@ -1322,6 +2343,7 @@
             });
             window.addEventListener('focus', () => {
                 updateTodayResultBadge();
+                updateMissedBadges();
                 const viewSelection = document.getElementById('viewSelection');
                 if (viewSelection && !viewSelection.classList.contains('hidden')) {
                     loadAppStats();
@@ -1336,6 +2358,12 @@
                     const modal = document.getElementById('modalTodayResults');
                     if (modal && !modal.classList.contains('hidden')) {
                         renderTodayResultsTable();
+                    }
+                } else if (e.key === LOCAL_STORAGE_MISSED_WORDS) {
+                    updateMissedBadges();
+                    const modal = document.getElementById('modalDailyMissed');
+                    if (modal && !modal.classList.contains('hidden')) {
+                        renderDailyMissedList();
                     }
                 }
             });
@@ -1569,7 +2597,11 @@
 
         function renderCurrentCard() {
             if (!activeQueue || currentIndex >= activeQueue.length) {
-                finishSession();
+                if (currentSessionMode === 'reinforce_missed') {
+                    handleReinforceRoundEnd();
+                } else {
+                    finishSession();
+                }
                 return;
             }
 
@@ -1578,17 +2610,28 @@
             document.getElementById('replayCountBadge').innerText = '1次';
 
             // Progress Header
-            document.getElementById('sessionProgressText').innerText = `第 ${currentIndex + 1} / ${activeQueue.length} 词`;
-            const progressPercent = Math.round((currentIndex / activeQueue.length) * 100);
-            document.getElementById('sessionProgressBar').style.width = `${progressPercent}%`;
+            if (currentSessionMode === 'reinforce_missed' && reinforceState) {
+                document.getElementById('sessionProgressText').innerText = `第 ${reinforceState.roundNum} 轮 · ${currentIndex + 1} / ${activeQueue.length} 词`;
+                const progressPercent = Math.round((currentIndex / activeQueue.length) * 100);
+                document.getElementById('sessionProgressBar').style.width = `${progressPercent}%`;
 
-            // Accuracy so far
-            if (sessionResults.length > 0) {
-                const correct = sessionResults.filter(r => r.rating >= 3).length;
-                const acc = Math.round((correct / sessionResults.length) * 100);
-                document.getElementById('sessionAccuracyText').innerText = `${acc}%`;
+                const mastered = reinforceState.masteredSoFar.size;
+                const total = reinforceState.totalUniqueWords;
+                const acc = total > 0 ? Math.round((mastered / total) * 100) : 0;
+                document.getElementById('sessionAccuracyText').innerText = `${acc}% (已攻克 ${mastered}/${total})`;
             } else {
-                document.getElementById('sessionAccuracyText').innerText = `100%`;
+                document.getElementById('sessionProgressText').innerText = `第 ${currentIndex + 1} / ${activeQueue.length} 词`;
+                const progressPercent = Math.round((currentIndex / activeQueue.length) * 100);
+                document.getElementById('sessionProgressBar').style.width = `${progressPercent}%`;
+
+                // Accuracy so far
+                if (sessionResults.length > 0) {
+                    const correct = sessionResults.filter(r => r.rating >= 3).length;
+                    const acc = Math.round((correct / sessionResults.length) * 100);
+                    document.getElementById('sessionAccuracyText').innerText = `${acc}%`;
+                } else {
+                    document.getElementById('sessionAccuracyText').innerText = `100%`;
+                }
             }
 
             // Reset Card Phases: show writing phase, hide revealed phase
@@ -1666,16 +2709,24 @@
                 sessionResults.push({
                     word: currentWord,
                     rating: rating,
-                    sm2: res.sm2
+                    sm2: res.sm2,
+                    round: reinforceState ? reinforceState.roundNum : 1
                 });
 
                 // Record to local browser storage for today's results inspection
                 recordTodayDictation(currentWord, rating, res.sm2);
 
-                // Toast SM-2 Feedback
-                const nextDays = res.sm2.current.interval;
-                const ef = res.sm2.current.easinessFactor;
-                showToast(`评分已录入! 下次复习: ${nextDays} 天后 (EF: ${ef})`, rating >= 3 ? 'success' : 'warning');
+                if (currentSessionMode === 'reinforce_missed') {
+                    handleReinforceWordResult(currentWord, rating, res.sm2);
+                } else {
+                    if (rating < 3) {
+                        recordMissedWord(currentWord, rating);
+                    }
+                    // Toast SM-2 Feedback
+                    const nextDays = res.sm2.current.interval;
+                    const ef = res.sm2.current.easinessFactor;
+                    showToast(`评分已录入! 下次复习: ${nextDays} 天后 (EF: ${ef})`, rating >= 3 ? 'success' : 'warning');
+                }
 
                 // Move to next card
                 currentIndex++;
@@ -1744,6 +2795,7 @@
             // Reload background stats for dashboard
             loadAppStats();
             updateTodayResultBadge();
+            updateMissedBadges();
         }
 
         function retryMissedWords() {
@@ -1752,17 +2804,18 @@
                 showToast('本轮没有错词！太棒了！', 'success');
                 return;
             }
-            activeQueue = missedWords;
-            currentIndex = 0;
-            sessionResults = [];
-            document.getElementById('viewSummary').classList.add('hidden');
-            document.getElementById('viewSession').classList.remove('hidden');
-            document.getElementById('sessionModeBadge').innerText = '错词强化突击';
-            renderCurrentCard();
+            const uniqueMap = new Map();
+            missedWords.forEach(w => uniqueMap.set(w.id, w));
+            const uniqueWords = Array.from(uniqueMap.values());
+            startReinforceDrillWithWords(uniqueWords, '本轮错词循环强化', getTodayDateStr());
         }
 
         function restartCurrentSession() {
-            startDictationSession(currentSessionMode, currentCollectionId);
+            if (currentSessionMode === 'reinforce_missed' && reinforceState && reinforceState.allInitialWords) {
+                startReinforceDrillWithWords(reinforceState.allInitialWords, reinforceState.sessionTitle, reinforceState.targetDateStr);
+            } else {
+                startDictationSession(currentSessionMode, currentCollectionId);
+            }
         }
 
         function returnToSelection() {
@@ -1772,6 +2825,7 @@
             loadAppStats();
             loadCollections();
             updateTodayResultBadge();
+            updateMissedBadges();
         }
 
         function confirmExitSession() {
@@ -1794,6 +2848,36 @@
                     if (e.key === 'Escape') {
                         e.preventDefault();
                         closeTodayResultsModal();
+                        return;
+                    }
+                }
+
+                // Check if daily missed modal is open
+                const modalMissed = document.getElementById('modalDailyMissed');
+                if (modalMissed && !modalMissed.classList.contains('hidden')) {
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        closeDailyMissedModal();
+                        return;
+                    }
+                }
+
+                // Check if inter-round transition modal is open
+                const modalInterRound = document.getElementById('modalInterRoundTransition');
+                if (modalInterRound && !modalInterRound.classList.contains('hidden')) {
+                    if (e.key === 'Enter' || e.code === 'Space') {
+                        e.preventDefault();
+                        continueNextReinforceRound();
+                        return;
+                    }
+                }
+
+                // Check if timer settings modal is open
+                const modalTimer = document.getElementById('modalTimerSettings');
+                if (modalTimer && !modalTimer.classList.contains('hidden')) {
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        if (window.TimerSettingsModal) TimerSettingsModal.close();
                         return;
                     }
                 }

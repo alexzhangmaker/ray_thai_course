@@ -1,0 +1,49 @@
+/**
+ * @file timer.css
+ * @description 定时器与番茄钟组件的专属样式与动画
+ */
+
+/* 番茄圆环 SVG 动画 */
+.timer-svg-ring {
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+}
+
+.timer-svg-progress {
+    transition: stroke-dashoffset 0.35s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.3s ease;
+    stroke-linecap: round;
+}
+
+/* 完成时的高亮脉冲动画 */
+@keyframes timerCompletePulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7);
+        border-color: rgba(139, 92, 246, 0.8);
+    }
+    50% {
+        box-shadow: 0 0 35px 8px rgba(139, 92, 246, 0.6);
+        border-color: rgba(217, 70, 239, 0.9);
+        transform: scale(1.02);
+    }
+}
+
+.timer-alert-pulse {
+    animation: timerCompletePulse 1.2s ease-in-out 3;
+}
+
+/* 展开与收起平滑过渡 */
+.timer-panel-transition {
+    transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 数字等宽对齐 */
+.timer-tabular-nums {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+}
+
+/* 焦点环无障碍指示 */
+.timer-btn:focus-visible {
+    outline: 2px solid #a78bfa;
+    outline-offset: 2px;
+}
