@@ -5791,6 +5791,7 @@ const formatDictationCollection = (row, stats = {}) => {
     wordCount: Number(stats.wordCount || 0),
     dueCount: Number(stats.dueCount || 0),
     masteredCount: Number(stats.masteredCount || 0),
+    lastReviewedAt: stats.lastReviewedAt || row.last_reviewed_at || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -5804,7 +5805,8 @@ app.get('/api/collections', authenticateDictationApi, async (req, res) => {
       SELECT c.*,
              COUNT(cw.word_id) as word_count,
              SUM(CASE WHEN datetime(w.next_review_date) <= datetime('now') THEN 1 ELSE 0 END) as due_count,
-             SUM(CASE WHEN w.repetition >= 3 THEN 1 ELSE 0 END) as mastered_count
+             SUM(CASE WHEN w.repetition >= 3 THEN 1 ELSE 0 END) as mastered_count,
+             (SELECT MAX(reviewed_at) FROM dictation_review_logs WHERE collection_id = c.id) as last_reviewed_at
       FROM dictation_collections c
       LEFT JOIN dictation_collection_words cw ON c.id = cw.collection_id
       LEFT JOIN dictation_words w ON cw.word_id = w.id
@@ -5821,7 +5823,8 @@ app.get('/api/collections', authenticateDictationApi, async (req, res) => {
     const collections = rows.map(r => formatDictationCollection(r, {
       wordCount: r.word_count,
       dueCount: r.due_count,
-      masteredCount: r.mastered_count
+      masteredCount: r.mastered_count,
+      lastReviewedAt: r.last_reviewed_at
     }));
 
     res.json({

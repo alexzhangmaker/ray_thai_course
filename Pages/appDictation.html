@@ -364,12 +364,30 @@
 
             <!-- Collection List Cards Section -->
             <div class="space-y-3 pt-2">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-base font-bold text-white flex items-center gap-2">
-                        <i class="ph-bold ph-books text-violet-400"></i>
-                        按词集单元针对练习
-                    </h3>
-                    <span id="collectionCountText" class="text-xs text-slate-400">正在加载词集...</span>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div>
+                        <h3 class="text-base font-bold text-white flex items-center gap-2">
+                            <i class="ph-bold ph-books text-violet-400"></i>
+                            按词集单元针对练习
+                        </h3>
+                        <span id="collectionCountText" class="text-xs text-slate-400">正在加载词集...</span>
+                    </div>
+
+                    <!-- Status Filter Tabs: 全部 / 未复习 / 正在复习 / 已经完成 -->
+                    <div class="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 text-xs overflow-x-auto shrink-0">
+                        <button type="button" onclick="setCollectionStatusFilter('all')" data-status="all" class="col-filter-btn px-2.5 py-1 rounded-lg text-white font-medium bg-violet-600 transition">
+                            全部 (<span id="colCountAll">0</span>)
+                        </button>
+                        <button type="button" onclick="setCollectionStatusFilter('not_reviewed')" data-status="not_reviewed" class="col-filter-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition">
+                            未复习 (<span id="colCountNotReviewed">0</span>)
+                        </button>
+                        <button type="button" onclick="setCollectionStatusFilter('in_progress')" data-status="in_progress" class="col-filter-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition">
+                            正在复习 (<span id="colCountInProgress">0</span>)
+                        </button>
+                        <button type="button" onclick="setCollectionStatusFilter('completed')" data-status="completed" class="col-filter-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition">
+                            已经完成 (<span id="colCountCompleted">0</span>)
+                        </button>
+                    </div>
                 </div>
 
                 <div id="collectionsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -393,6 +411,9 @@
                             <span id="sessionModeBadge" class="text-xs font-semibold text-violet-300">智能复习</span>
                             <span class="text-slate-500 text-xs">·</span>
                             <span id="sessionProgressText" class="text-xs text-slate-300 font-medium">第 1 / 15 词</span>
+                            <span id="sessionAutoSaveBadge" class="opacity-0 pointer-events-none transition-opacity duration-300 text-[10px] text-cyan-300 bg-cyan-500/15 border border-cyan-500/25 px-1.5 py-0.5 rounded flex items-center gap-1 font-mono">
+                                <i class="ph-bold ph-floppy-disk text-cyan-400"></i>进度已存
+                            </span>
                         </div>
                         <!-- Micro Progress Bar -->
                         <div class="w-32 sm:w-48 h-1.5 bg-white/10 rounded-full mt-1.5 overflow-hidden">
@@ -1049,6 +1070,199 @@
         let currentSessionMode = 'smart_due'; // 'smart_due' | 'collection' | 'all'
         let currentCollectionId = null;
         let sessionResults = []; // [{ word, rating, sm2 }]
+
+        // =============================================================
+        // IndexedDB: Collection Review Progress Persistence (词集单元复习断点续学)
+        // =============================================================
+        const DICTATION_PROGRESS_DB_NAME = 'ThaiDictationReviewDB';
+        const DICTATION_PROGRESS_DB_VERSION = 1;
+        const DICTATION_PROGRESS_STORE_NAME = 'collectionProgress';
+        let savedCollectionProgressMap = {};
+
+        function initDictationProgressDB() {
+            return new Promise((resolve, reject) => {
+                if (typeof indexedDB === 'undefined') {
+                    return reject(new Error('IndexedDB is not supported in this browser.'));
+                }
+                const request = indexedDB.open(DICTATION_PROGRESS_DB_NAME, DICTATION_PROGRESS_DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(DICTATION_PROGRESS_STORE_NAME)) {
+                        db.createObjectStore(DICTATION_PROGRESS_STORE_NAME, { keyPath: 'collectionId' });
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function saveCollectionProgress(record) {
+            if (!record || !record.collectionId) return false;
+            try {
+                const db = await initDictationProgressDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction([DICTATION_PROGRESS_STORE_NAME], 'readwrite');
+                    const store = tx.objectStore(DICTATION_PROGRESS_STORE_NAME);
+                    const req = store.put(record);
+                    req.onsuccess = () => resolve(true);
+                    req.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to save collection review progress to IndexedDB:', err);
+                return false;
+            }
+        }
+
+        async function getCollectionProgress(collectionId) {
+            if (!collectionId) return null;
+            try {
+                const db = await initDictationProgressDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction([DICTATION_PROGRESS_STORE_NAME], 'readonly');
+                    const store = tx.objectStore(DICTATION_PROGRESS_STORE_NAME);
+                    const req = store.get(String(collectionId));
+                    req.onsuccess = (e) => resolve(e.target.result || null);
+                    req.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to get collection review progress from IndexedDB:', err);
+                return null;
+            }
+        }
+
+        async function getAllCollectionProgresses() {
+            try {
+                const db = await initDictationProgressDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction([DICTATION_PROGRESS_STORE_NAME], 'readonly');
+                    const store = tx.objectStore(DICTATION_PROGRESS_STORE_NAME);
+                    const req = store.getAll();
+                    req.onsuccess = (e) => resolve(e.target.result || []);
+                    req.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to get all collection review progresses from IndexedDB:', err);
+                return [];
+            }
+        }
+
+        async function getAllCollectionProgressMap() {
+            try {
+                const list = await getAllCollectionProgresses();
+                const map = {};
+                for (const item of list) {
+                    if (item && item.collectionId) {
+                        map[String(item.collectionId)] = item;
+                    }
+                }
+                return map;
+            } catch (e) {
+                console.error('Failed to build collection progress map:', e);
+                return {};
+            }
+        }
+
+        async function deleteCollectionProgress(collectionId) {
+            if (!collectionId) return false;
+            try {
+                const db = await initDictationProgressDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction([DICTATION_PROGRESS_STORE_NAME], 'readwrite');
+                    const store = tx.objectStore(DICTATION_PROGRESS_STORE_NAME);
+                    const req = store.delete(String(collectionId));
+                    req.onsuccess = () => resolve(true);
+                    req.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Failed to delete collection review progress from IndexedDB:', err);
+                return false;
+            }
+        }
+
+        function flashAutoSaveIndicator() {
+            const badge = document.getElementById('sessionAutoSaveBadge');
+            if (!badge) return;
+            badge.classList.remove('opacity-0');
+            badge.classList.add('opacity-100');
+            if (window._autoSaveTimer) clearTimeout(window._autoSaveTimer);
+            window._autoSaveTimer = setTimeout(() => {
+                badge.classList.remove('opacity-100');
+                badge.classList.add('opacity-0');
+            }, 1800);
+        }
+
+        async function saveCurrentCollectionProgress() {
+            if (currentSessionMode !== 'collection' || !currentCollectionId) return;
+            if (!activeQueue || activeQueue.length === 0) return;
+            if (currentIndex <= 0 || currentIndex >= activeQueue.length) return;
+
+            const matchedCol = collections.find(c => String(c.id) === String(currentCollectionId));
+            const collectionName = matchedCol ? matchedCol.name : '词集专项练习';
+
+            const record = {
+                collectionId: String(currentCollectionId),
+                collectionName: collectionName,
+                status: 'in_progress',
+                currentIndex: currentIndex,
+                totalWords: activeQueue.length,
+                activeQueue: activeQueue,
+                sessionResults: sessionResults || [],
+                updatedAt: Date.now()
+            };
+
+            await saveCollectionProgress(record);
+            if (!savedCollectionProgressMap) savedCollectionProgressMap = {};
+            savedCollectionProgressMap[String(currentCollectionId)] = record;
+            flashAutoSaveIndicator();
+        }
+
+        async function resumeCollectionReview(collectionId, cachedProgress = null) {
+            try {
+                const progress = cachedProgress || await getCollectionProgress(collectionId);
+                const totalWords = progress ? (progress.totalWords || (progress.activeQueue ? progress.activeQueue.length : 0)) : 0;
+                if (!progress || progress.status === 'completed' || !progress.activeQueue || progress.activeQueue.length === 0 || progress.currentIndex >= totalWords) {
+                    showToast('未检测到有效未完成进度，从第一词开始复习', 'info');
+                    await deleteCollectionProgress(collectionId);
+                    return startDictationSession('collection', collectionId, true);
+                }
+
+                currentSessionMode = 'collection';
+                currentCollectionId = String(collectionId);
+                reinforceState = null;
+                activeQueue = progress.activeQueue;
+                currentIndex = progress.currentIndex;
+                sessionResults = Array.isArray(progress.sessionResults) ? progress.sessionResults : [];
+
+                // Switch View to Session
+                document.getElementById('viewSelection').classList.add('hidden');
+                document.getElementById('viewSummary').classList.add('hidden');
+                document.getElementById('viewSession').classList.remove('hidden');
+
+                // Update session header badge
+                const modeBadge = document.getElementById('sessionModeBadge');
+                const matchedCol = collections.find(c => String(c.id) === String(collectionId));
+                const colTitle = matchedCol ? matchedCol.name : (progress.collectionName || '词集专项练习');
+                modeBadge.innerText = `${colTitle} (继续上次进度)`;
+
+                renderCurrentCard();
+                flashAutoSaveIndicator();
+                showToast(`已恢复进度：从第 ${currentIndex + 1} / ${activeQueue.length} 词继续复习`, 'success');
+            } catch (err) {
+                console.error('Failed to resume collection review:', err);
+                showToast('恢复进度失败，将从头开始: ' + err.message, 'error');
+                startDictationSession('collection', collectionId, true);
+            }
+        }
+
+        async function restartCollectionReview(collectionId) {
+            if (confirm('确定要放弃该词集上次的未完成进度，从第 1 词重新开始听写复习吗？')) {
+                await deleteCollectionProgress(collectionId);
+                if (savedCollectionProgressMap) {
+                    delete savedCollectionProgressMap[String(collectionId)];
+                }
+                await startDictationSession('collection', collectionId, true);
+            }
+        }
 
         // Today Dictation Results & SM-2 Observer (Local Browser Storage)
         const LOCAL_STORAGE_DICTATION_LOGS = 'thai_dictation_daily_records';
@@ -2497,8 +2711,12 @@
 
         async function loadCollections() {
             try {
-                const data = await fetchApi('/collections');
+                const [data, progressMap] = await Promise.all([
+                    fetchApi('/collections'),
+                    getAllCollectionProgressMap()
+                ]);
                 collections = data.collections || [];
+                savedCollectionProgressMap = progressMap || {};
                 document.getElementById('collectionCountText').innerText = `共 ${collections.length} 个词集单元`;
                 renderCollectionsGrid();
             } catch (err) {
@@ -2506,6 +2724,21 @@
                 document.getElementById('collectionCountText').innerText = '加载词集失败';
             }
         }
+
+        let currentCollectionStatusFilter = 'all'; // 'all' | 'not_reviewed' | 'in_progress' | 'completed'
+
+        function setCollectionStatusFilter(filterStatus) {
+            currentCollectionStatusFilter = filterStatus;
+            document.querySelectorAll('.col-filter-btn').forEach(btn => {
+                if (btn.dataset.status === filterStatus) {
+                    btn.className = 'col-filter-btn px-2.5 py-1 rounded-lg text-white font-medium bg-violet-600 transition';
+                } else {
+                    btn.className = 'col-filter-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition';
+                }
+            });
+            renderCollectionsGrid();
+        }
+        window.setCollectionStatusFilter = setCollectionStatusFilter;
 
         function renderCollectionsGrid() {
             const container = document.getElementById('collectionsGrid');
@@ -2518,31 +2751,197 @@
                 return;
             }
 
-            container.innerHTML = collections.map(col => {
+            let countNotReviewed = 0;
+            let countInProgress = 0;
+            let countCompleted = 0;
+
+            const itemsWithStatus = collections.map(col => {
+                const saved = savedCollectionProgressMap && savedCollectionProgressMap[String(col.id)];
+                const totalWords = saved ? (saved.totalWords || (saved.activeQueue ? saved.activeQueue.length : 0)) : (col.wordCount || 0);
+                const isInProgress = Boolean(saved && (saved.status === 'in_progress' || !saved.status) && saved.currentIndex > 0 && saved.currentIndex < totalWords);
+
+                let reviewStatus = 'not_reviewed';
+                let reviewStatusLabel = '未复习';
+                let lastReviewDateStr = '未复习';
+
+                if (isInProgress) {
+                    reviewStatus = 'in_progress';
+                    reviewStatusLabel = '正在复习';
+                    countInProgress++;
+                    const dateVal = (saved && saved.updatedAt) || col.lastReviewedAt;
+                    lastReviewDateStr = formatDateOnly(dateVal);
+                } else if ((saved && saved.status === 'completed') || col.lastReviewedAt) {
+                    reviewStatus = 'completed';
+                    reviewStatusLabel = '已经完成';
+                    countCompleted++;
+                    const dateVal = (saved && (saved.lastCompletedAt || saved.lastReviewedAt)) || col.lastReviewedAt;
+                    lastReviewDateStr = formatDateOnly(dateVal);
+                } else {
+                    reviewStatus = 'not_reviewed';
+                    reviewStatusLabel = '未复习';
+                    countNotReviewed++;
+                    lastReviewDateStr = '未复习';
+                }
+
+                return {
+                    col,
+                    saved,
+                    totalWords,
+                    isInProgress,
+                    reviewStatus,
+                    reviewStatusLabel,
+                    lastReviewDateStr
+                };
+            });
+
+            // Update badge counts in filter buttons
+            const elAll = document.getElementById('colCountAll');
+            if (elAll) elAll.innerText = itemsWithStatus.length;
+            const elNot = document.getElementById('colCountNotReviewed');
+            if (elNot) elNot.innerText = countNotReviewed;
+            const elIn = document.getElementById('colCountInProgress');
+            if (elIn) elIn.innerText = countInProgress;
+            const elComp = document.getElementById('colCountCompleted');
+            if (elComp) elComp.innerText = countCompleted;
+
+            // Filter items by status
+            let displayedItems = itemsWithStatus;
+            if (currentCollectionStatusFilter !== 'all') {
+                displayedItems = itemsWithStatus.filter(it => it.reviewStatus === currentCollectionStatusFilter);
+            }
+
+            if (displayedItems.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full p-8 text-center glass-card rounded-2xl text-slate-400 text-sm">
+                        当前筛选分类下无符合条件的词集单元。
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = displayedItems.map(({ col, saved, totalWords, isInProgress, reviewStatus, reviewStatusLabel, lastReviewDateStr }) => {
                 const tagsBadges = (col.tags || []).map(t => 
                     `<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-white/5 text-slate-300 border border-white/10">${t}</span>`
                 ).join('');
 
+                const progressPercent = isInProgress ? Math.round((saved.currentIndex / totalWords) * 100) : (reviewStatus === 'completed' ? 100 : 0);
+
+                let statusBadgeHtml = '';
+                let statusDotClass = 'text-slate-500';
+                let statusTextColor = 'text-slate-400';
+
+                if (reviewStatus === 'in_progress') {
+                    statusBadgeHtml = `
+                        <span class="text-[10px] font-bold text-amber-300 bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                            正在复习 (${saved.currentIndex}/${totalWords})
+                        </span>
+                    `;
+                    statusDotClass = 'text-amber-400 animate-pulse';
+                    statusTextColor = 'text-amber-300 font-semibold';
+                } else if (reviewStatus === 'completed') {
+                    statusBadgeHtml = `
+                        <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/25 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <i class="ph-bold ph-check-circle text-emerald-400"></i>
+                            已经完成
+                        </span>
+                    `;
+                    statusDotClass = 'text-emerald-400';
+                    statusTextColor = 'text-emerald-400 font-semibold';
+                } else {
+                    statusBadgeHtml = `
+                        <span class="text-[10px] font-medium text-slate-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                            未复习
+                        </span>
+                    `;
+                    statusDotClass = 'text-slate-500';
+                    statusTextColor = 'text-slate-400';
+                }
+
+                // Action button HTML
+                let actionButtonsHtml = '';
+                if (col.wordCount === 0) {
+                    actionButtonsHtml = `
+                        <button disabled class="w-full py-2.5 px-3 rounded-xl bg-white/5 border border-white/5 text-slate-500 text-xs font-medium flex items-center justify-center gap-1.5 cursor-not-allowed">
+                            <i class="ph-bold ph-prohibit"></i>
+                            词集暂无单词
+                        </button>
+                    `;
+                } else if (reviewStatus === 'in_progress') {
+                    actionButtonsHtml = `
+                        <div class="space-y-2 pt-1">
+                            <div class="flex items-center justify-between text-[11px] text-slate-400">
+                                <span class="flex items-center gap-1 text-cyan-300">
+                                    <i class="ph-bold ph-bookmarks"></i>未完成进度
+                                </span>
+                                <span class="text-cyan-300 font-semibold font-mono">${progressPercent}% (${saved.currentIndex}/${totalWords})</span>
+                            </div>
+                            <div class="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-gradient-to-r from-cyan-500 to-violet-500 h-full rounded-full transition-all duration-300" style="width: ${progressPercent}%"></div>
+                            </div>
+                            <div class="flex items-center gap-2 pt-1">
+                                <button onclick="resumeCollectionReview('${col.id}')" class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-600 to-violet-600 hover:from-cyan-500 hover:to-violet-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-cyan-500/20 transition active:scale-95">
+                                    <i class="ph-bold ph-play"></i>
+                                    继续复习 (第 ${saved.currentIndex + 1} 词)
+                                </button>
+                                <button onclick="restartCollectionReview('${col.id}')" title="放弃上次进度，从第 1 词重新开始" class="h-9 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-rose-500/30 text-slate-400 hover:text-rose-300 text-xs font-medium flex items-center justify-center gap-1 transition">
+                                    <i class="ph-bold ph-arrow-counter-clockwise"></i>
+                                    <span>重练</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else if (reviewStatus === 'completed') {
+                    actionButtonsHtml = `
+                        <button onclick="startDictationSession('collection', '${col.id}', true)" class="w-full py-2.5 px-3 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 border border-emerald-500/30 hover:border-emerald-500 text-emerald-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                            <i class="ph-bold ph-arrow-counter-clockwise"></i>
+                            再次复习此词集
+                        </button>
+                    `;
+                } else {
+                    actionButtonsHtml = `
+                        <button onclick="startDictationSession('collection', '${col.id}')" class="w-full py-2.5 px-3 rounded-xl bg-violet-600/30 hover:bg-violet-600 border border-violet-500/40 hover:border-violet-500 text-violet-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                            <i class="ph-bold ph-play"></i>
+                            开始复习此词集
+                        </button>
+                    `;
+                }
+
                 return `
                     <div class="glass-card rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-violet-500/40 transition group">
                         <div class="space-y-2.5">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[11px] font-bold text-violet-400 bg-violet-500/15 border border-violet-500/25 px-2 py-0.5 rounded-md">
-                                    ${col.wordCount} 词条
-                                </span>
-                                ${col.dueCount > 0 ? `<span class="text-[10px] font-bold text-amber-300 bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 rounded-md">${col.dueCount} 词待复习</span>` : ''}
+                            <div class="flex items-center justify-between flex-wrap gap-1.5">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[11px] font-bold text-violet-400 bg-violet-500/15 border border-violet-500/25 px-2 py-0.5 rounded-md">
+                                        ${col.wordCount} 词条
+                                    </span>
+                                    ${col.dueCount > 0 ? `<span class="text-[10px] font-bold text-amber-300 bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 rounded-md">${col.dueCount} 词待复习</span>` : ''}
+                                </div>
+                                ${statusBadgeHtml}
                             </div>
+
                             <h4 class="font-bold text-white text-base group-hover:text-violet-300 transition line-clamp-1">${col.name}</h4>
                             <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">${col.description || '暂无描述'}</p>
                             <div class="flex flex-wrap gap-1.5 pt-1">
                                 ${tagsBadges}
                             </div>
+
+                            <!-- Review Status & Last Review Date Row -->
+                            <div class="pt-2.5 pb-0.5 border-t border-white/5 flex items-center justify-between text-[11px]">
+                                <div class="flex items-center gap-1.5 text-slate-400">
+                                    <i class="ph-bold ph-calendar-blank text-slate-500"></i>
+                                    <span>最近复习:</span>
+                                    <span class="${lastReviewDateStr === '未复习' ? 'text-slate-500 italic' : 'text-slate-200 font-mono font-medium'}">${lastReviewDateStr}</span>
+                                </div>
+                                <div class="flex items-center gap-1.5 ${statusTextColor}">
+                                    <i class="${statusDotClass.includes('ph-') ? statusDotClass : 'ph-fill ph-circle text-[8px] ' + statusDotClass}"></i>
+                                    <span>${reviewStatusLabel}</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <button onclick="startDictationSession('collection', '${col.id}')" class="w-full py-2.5 px-3 rounded-xl bg-violet-600/30 hover:bg-violet-600 border border-violet-500/40 hover:border-violet-500 text-violet-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition">
-                            <i class="ph-bold ph-play"></i>
-                            进入此词集听写
-                        </button>
+                        ${actionButtonsHtml}
                     </div>
                 `;
             }).join('');
@@ -2551,15 +2950,34 @@
         // -------------------------------------------------------------
         // Dictation Session Controller
         // -------------------------------------------------------------
-        async function startDictationSession(mode, collectionId = null) {
+        async function startDictationSession(mode, collectionId = null, forceRestart = false) {
             currentSessionMode = mode;
-            currentCollectionId = collectionId;
+            currentCollectionId = collectionId ? String(collectionId) : null;
+            reinforceState = null;
+
+            if (mode === 'collection' && currentCollectionId && !forceRestart) {
+                const saved = await getCollectionProgress(currentCollectionId);
+                const totalWords = saved ? (saved.totalWords || (saved.activeQueue ? saved.activeQueue.length : 0)) : 0;
+                if (saved && (saved.status === 'in_progress' || !saved.status) && saved.currentIndex > 0 && saved.currentIndex < totalWords) {
+                    const shouldResume = confirm(`检测到词集【${saved.collectionName || '当前词集'}】存在上次未完成的复习进度（上次进行至第 ${saved.currentIndex + 1} / ${totalWords} 词）。\n\n点击【确定】从上次位置继续复习\n点击【取消】重新开始复习`);
+                    if (shouldResume) {
+                        await resumeCollectionReview(currentCollectionId, saved);
+                        return;
+                    } else {
+                        await deleteCollectionProgress(currentCollectionId);
+                        if (savedCollectionProgressMap) {
+                            delete savedCollectionProgressMap[String(currentCollectionId)];
+                        }
+                    }
+                }
+            }
+
             currentIndex = 0;
             sessionResults = [];
 
             let queueUrl = `/dictation/queue?type=${mode}&limit=50`;
-            if (mode === 'collection' && collectionId) {
-                queueUrl += `&collectionId=${collectionId}`;
+            if (mode === 'collection' && currentCollectionId) {
+                queueUrl += `&collectionId=${currentCollectionId}`;
             }
 
             try {
@@ -2582,7 +3000,7 @@
                 if (mode === 'smart_due') {
                     modeBadge.innerText = '今日智能复习 (Due Today)';
                 } else if (mode === 'collection') {
-                    const matchedCol = collections.find(c => c.id === collectionId);
+                    const matchedCol = collections.find(c => String(c.id) === String(currentCollectionId));
                     modeBadge.innerText = matchedCol ? matchedCol.name : '词集专项练习';
                 } else {
                     modeBadge.innerText = '词库全量摸底';
@@ -2730,6 +3148,12 @@
 
                 // Move to next card
                 currentIndex++;
+
+                // Save review progress to IndexedDB for collection review sessions
+                if (currentSessionMode === 'collection' && currentCollectionId) {
+                    await saveCurrentCollectionProgress();
+                }
+
                 renderCurrentCard();
             } catch (err) {
                 console.error('Failed to submit rating:', err);
@@ -2737,7 +3161,29 @@
             }
         }
 
-        function finishSession() {
+        async function finishSession() {
+            // When collection review completes, mark it as completed in IndexedDB
+            if (currentSessionMode === 'collection' && currentCollectionId) {
+                const matchedCol = collections.find(c => String(c.id) === String(currentCollectionId));
+                const collectionName = matchedCol ? matchedCol.name : '词集专项练习';
+                const completedRecord = {
+                    collectionId: String(currentCollectionId),
+                    collectionName: collectionName,
+                    status: 'completed',
+                    currentIndex: activeQueue ? activeQueue.length : 0,
+                    totalWords: activeQueue ? activeQueue.length : 0,
+                    lastCompletedAt: Date.now(),
+                    lastReviewedAt: Date.now(),
+                    updatedAt: Date.now(),
+                    activeQueue: [],
+                    sessionResults: []
+                };
+                await saveCollectionProgress(completedRecord);
+                if (savedCollectionProgressMap) {
+                    savedCollectionProgressMap[String(currentCollectionId)] = completedRecord;
+                }
+            }
+
             document.getElementById('viewSession').classList.add('hidden');
             document.getElementById('viewSummary').classList.remove('hidden');
 
@@ -2814,7 +3260,7 @@
             if (currentSessionMode === 'reinforce_missed' && reinforceState && reinforceState.allInitialWords) {
                 startReinforceDrillWithWords(reinforceState.allInitialWords, reinforceState.sessionTitle, reinforceState.targetDateStr);
             } else {
-                startDictationSession(currentSessionMode, currentCollectionId);
+                startDictationSession(currentSessionMode, currentCollectionId, true);
             }
         }
 
@@ -2828,8 +3274,15 @@
             updateMissedBadges();
         }
 
-        function confirmExitSession() {
-            if (confirm('确定要中断当前听写练习返回主菜单吗？')) {
+        async function confirmExitSession() {
+            let msg = '确定要中断当前听写练习返回主菜单吗？';
+            if (currentSessionMode === 'collection' && activeQueue && activeQueue.length > 0 && currentIndex < activeQueue.length) {
+                msg = `确定要中断当前听写练习返回主菜单吗？\n当前词集复习进度（第 ${currentIndex + 1} / ${activeQueue.length} 词）已自动保存至本地 IndexedDB，下次进入可继续复习。`;
+            }
+            if (confirm(msg)) {
+                if (currentSessionMode === 'collection' && currentCollectionId && currentIndex > 0 && currentIndex < activeQueue.length) {
+                    await saveCurrentCollectionProgress();
+                }
                 returnToSelection();
             }
         }
@@ -2884,6 +3337,12 @@
 
                 const sessionVisible = !document.getElementById('viewSession').classList.contains('hidden');
                 if (!sessionVisible) return;
+
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    confirmExitSession();
+                    return;
+                }
 
                 const isWritingPhase = !document.getElementById('phaseWriting').classList.contains('hidden');
                 const isRevealedPhase = !document.getElementById('phaseRevealed').classList.contains('hidden');
@@ -2945,6 +3404,11 @@
         function escapeJsString(str) {
             return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
         }
+
+        // Expose functions globally for HTML event attributes
+        window.resumeCollectionReview = resumeCollectionReview;
+        window.restartCollectionReview = restartCollectionReview;
+        window.confirmExitSession = confirmExitSession;
     </script>
 </body>
 </html>
