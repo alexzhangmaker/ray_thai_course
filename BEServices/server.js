@@ -4277,6 +4277,22 @@ app.delete('/api/core-wordsets/:id', async (req, res) => {
   }
 });
 
+// 6. DELETE /api/core-wordsets/:id/words - Clear all words belonging to a wordset
+app.delete('/api/core-wordsets/:id/words', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const existing = await get(`SELECT * FROM tblCoreWordsets WHERE id = ?`, [id]);
+    if (!existing) {
+      return res.status(404).json({ error: "Core wordset not found" });
+    }
+    await run(`DELETE FROM tblCoreWords WHERE set_id = ?`, [id]);
+    res.json({ message: "All words in core wordset cleared successfully", setId: id });
+  } catch (err) {
+    console.error('Failed to clear words in core wordset:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // tblCoreWords API
 const formatCoreWordRow = (row) => {
   if (!row) return null;
@@ -4441,6 +4457,22 @@ app.delete('/api/core-words/:id', async (req, res) => {
     res.json({ message: "Core word deleted successfully", id });
   } catch (err) {
     console.error('Failed to delete core-word:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 5.1 POST /api/core-words/batch-delete - Batch delete core words
+app.post('/api/core-words/batch-delete', async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: "No word IDs provided for deletion" });
+    }
+    const placeholders = ids.map(() => '?').join(',');
+    await run(`DELETE FROM tblCoreWords WHERE id IN (${placeholders})`, ids);
+    res.json({ message: `Successfully deleted ${ids.length} core words`, count: ids.length, ids });
+  } catch (err) {
+    console.error('Failed to batch delete core-words:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -6742,7 +6774,8 @@ app.get('/api/sentence-groups', async (req, res) => {
         g.*,
         COUNT(s.id) AS total_sentences,
         SUM(CASE WHEN datetime(s.next_review_date) <= datetime('now', 'localtime') THEN 1 ELSE 0 END) AS due_count,
-        SUM(CASE WHEN s.repetition >= 3 THEN 1 ELSE 0 END) AS mastered_count
+        SUM(CASE WHEN s.repetition >= 3 THEN 1 ELSE 0 END) AS mastered_count,
+        MAX(s.last_reviewed_at) AS last_reviewed_at
       FROM sentence_groups g
       LEFT JOIN sentence_items s ON g.id = s.group_id
     `;
@@ -6758,7 +6791,8 @@ app.get('/api/sentence-groups', async (req, res) => {
       ...g,
       total_sentences: Number(g.total_sentences || 0),
       due_count: Number(g.due_count || 0),
-      mastered_count: Number(g.mastered_count || 0)
+      mastered_count: Number(g.mastered_count || 0),
+      last_reviewed_at: g.last_reviewed_at || null
     })));
   } catch (err) {
     console.error('Failed to get sentence groups:', err);

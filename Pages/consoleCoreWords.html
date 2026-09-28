@@ -200,7 +200,11 @@
                                 <i class="ph ph-pencil-simple"></i>
                                 <span>编辑</span>
                             </button>
-                            <button onclick="deleteCurrentWordset()" type="button" id="btn-delete-wordset" class="text-[10px] text-rose-400 hover:text-rose-300 hidden items-center gap-0.5 transition" title="删除当前词集">
+                            <button onclick="clearCurrentWordsetWords()" type="button" id="btn-clear-wordset-words" class="text-[10px] text-amber-400 hover:text-amber-300 hidden items-center gap-0.5 transition" title="清空当前词集中的所有单词 (保留词集本身)">
+                                <i class="ph ph-trash-simple"></i>
+                                <span>清空词</span>
+                            </button>
+                            <button onclick="deleteCurrentWordset()" type="button" id="btn-delete-wordset" class="text-[10px] text-rose-400 hover:text-rose-300 hidden items-center gap-0.5 transition" title="删除当前词集及所有词汇">
                                 <i class="ph ph-trash"></i>
                             </button>
                         </div>
