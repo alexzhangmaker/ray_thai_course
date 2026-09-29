@@ -1696,7 +1696,66 @@
             deckUserId: DEFAULT_DECK_USER_ID
         };
         let appSettingsLoaded = false;
-        let cachedRemoteDecks = [];
+        const SETTINGS_CACHED_DECKS_KEY = 'ThaiCoreWords_cachedRemoteDecks_v1';
+
+        function loadCachedRemoteDecksFromStorage() {
+            try {
+                const raw = localStorage.getItem(SETTINGS_CACHED_DECKS_KEY);
+                if (!raw) return [];
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveCachedRemoteDecksToStorage(decks) {
+            if (!Array.isArray(decks)) return;
+            try {
+                localStorage.setItem(SETTINGS_CACHED_DECKS_KEY, JSON.stringify(decks));
+            } catch (e) {}
+        }
+
+        function isRemoteDecksInColdStartInitialState(decks) {
+            if (!Array.isArray(decks)) return false;
+            // 典型特征：只返回1个生词本，且为系统默认演示生词本 deck-market-food 或名称包含“夜市”
+            if (decks.length === 1) {
+                const first = decks[0];
+                if (first && (first.id === 'deck-market-food' || (first.name && first.name.includes('泰国夜市')))) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function mergeRemoteDecksWithCache(newDecks) {
+            const currentCache = cachedRemoteDecks && cachedRemoteDecks.length > 0 
+                ? cachedRemoteDecks 
+                : loadCachedRemoteDecksFromStorage();
+            
+            // 如果新抓取的只是冷启动默认1个生词本，而本地缓存有更丰富的已保存生词本，则保留本地缓存为主
+            if (isRemoteDecksInColdStartInitialState(newDecks) && currentCache.length > 1) {
+                console.warn('[Deck Sync] 识别到远程生词本服务处于冷启动初态，保留本地已缓存的', currentCache.length, '个生词本');
+                const map = new Map();
+                currentCache.forEach(d => { if (d && d.id) map.set(d.id, d); });
+                newDecks.forEach(d => { if (d && d.id) map.set(d.id, d); });
+                const merged = Array.from(map.values());
+                return merged;
+            }
+
+            if (Array.isArray(newDecks) && newDecks.length > 0) {
+                const map = new Map();
+                currentCache.forEach(d => { if (d && d.id) map.set(d.id, d); });
+                newDecks.forEach(d => { if (d && d.id) map.set(d.id, d); });
+                const merged = Array.from(map.values());
+                saveCachedRemoteDecksToStorage(merged);
+                return merged;
+            }
+
+            return currentCache;
+        }
+
+        let cachedRemoteDecks = loadCachedRemoteDecksFromStorage();
         const deckSyncingWords = new Set();
 
         function escapeHtml(str) {
@@ -2090,12 +2149,19 @@
             } catch (err) {
                 const errMsg = String(err?.message || '');
                 const isNotFound = errMsg.includes('404') || errMsg.toLowerCase().includes('not found');
+                const isLikelyColdStart = isNotFound && (
+                    isRemoteDecksInColdStartInitialState(cachedRemoteDecks) ||
+                    (cachedRemoteDecks.length === 1 && cachedRemoteDecks[0]?.id === 'deck-market-food')
+                );
                 return {
                     ok: false,
                     cleanedId: cleaned,
                     isNotFound,
+                    isLikelyColdStart,
                     message: isNotFound
-                        ? '404 生词本不存在或无访问权限（请核对 ID 是否正确，以及用户识别码 x-user-id 是否一致）'
+                        ? (isLikelyColdStart
+                            ? '404 生词本未加载（外部服务可能刚冷启动未同步云端数据，可点击“一键唤醒并同步”）'
+                            : '404 生词本不存在或无访问权限（请核对 ID 是否正确，以及用户识别码 x-user-id 是否一致）')
                         : (errMsg || '网络请求失败')
                 };
             }
@@ -2445,10 +2511,14 @@
                 } catch (e1) {
                     res = await callDeckApi('', options);
                 }
+                let rawDecks = [];
                 if (res && res.success && Array.isArray(res.data)) {
-                    cachedRemoteDecks = res.data;
+                    rawDecks = res.data;
                 } else if (Array.isArray(res)) {
-                    cachedRemoteDecks = res;
+                    rawDecks = res;
+                }
+                if (rawDecks.length > 0) {
+                    cachedRemoteDecks = mergeRemoteDecksWithCache(rawDecks);
                 }
             } catch (e) {
                 console.warn("Fetch remote decks warning:", e);
@@ -2528,22 +2598,47 @@
                 } catch (e1) {
                     res = await callDeckApi('', { useModalInputs: true });
                 }
-                let decks = [];
+                let rawDecks = [];
                 if (res && res.success && Array.isArray(res.data)) {
-                    decks = res.data;
+                    rawDecks = res.data;
                 } else if (Array.isArray(res)) {
-                    decks = res;
+                    rawDecks = res;
                 }
-                cachedRemoteDecks = decks;
+
+                const isColdStart = isRemoteDecksInColdStartInitialState(rawDecks);
+                cachedRemoteDecks = mergeRemoteDecksWithCache(rawDecks);
                 updateAvailableDecksBanner();
                 updateCourseSelectDropdowns();
 
                 if (statusEl) {
-                    if (decks.length > 0) {
+                    if (isColdStart) {
+                        statusEl.innerHTML = `
+                            <div class="p-2.5 rounded-xl bg-amber-50/90 border border-amber-200 text-slate-700 space-y-1.5 mt-1">
+                                <div class="text-amber-800 font-semibold flex items-center gap-1.5 text-xs">
+                                    <i class="ph-bold ph-warning-circle text-amber-600 text-sm shrink-0"></i>
+                                    <span>服务连通成功，但处于「冷启动初态」（仅返回 1 个内置生词本）</span>
+                                </div>
+                                <div class="text-[11px] text-slate-600 leading-relaxed">
+                                    外部生词本服务托管在 Google Cloud，因闲置缩容重新冷启动后，后端内存仅含有系统内置示例「${escapeHtml(rawDecks[0]?.name || '泰国夜市与地道美食')}」，您保存于云端的自定义生词本尚未同步至后端。
+                                    ${cachedRemoteDecks.length > 1 ? `<div class="text-emerald-700 font-medium mt-0.5">✅ 本地已保留先前缓存的 <b>${cachedRemoteDecks.length}</b> 个生词本，各科目下拉绑定不受影响。</div>` : ''}
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-amber-200/60">
+                                    <button type="button" onclick="wakeupAndSyncRemoteDecks()" class="px-2.5 py-1 text-[11px] bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium shadow-sm transition flex items-center gap-1 cursor-pointer">
+                                        <i class="ph-bold ph-lightning text-xs"></i>
+                                        <span>一键快速唤醒并同步</span>
+                                    </button>
+                                    <a href="${escapeHtml(apiUrl || DEFAULT_DECK_API_BASE_URL)}" target="_blank" class="px-2.5 py-1 text-[11px] bg-white hover:bg-slate-100 text-slate-700 rounded-lg font-medium border border-slate-300 transition inline-flex items-center gap-1">
+                                        <i class="ph-bold ph-arrow-square-out text-xs"></i>
+                                        <span>在浏览器独立标签页打开生词本 ↗</span>
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                    } else if (cachedRemoteDecks.length > 0) {
                         statusEl.innerHTML = `
                             <div class="text-emerald-700 font-semibold flex items-center gap-1">
                                 <i class="ph-bold ph-check-circle text-xs text-emerald-600"></i>
-                                <span>连接成功！该用户账号下已检索到 ${decks.length} 个生词本</span>
+                                <span>连接成功！已检索到 ${cachedRemoteDecks.length} 个生词本</span>
                             </div>
                             <div class="text-[10px] text-slate-500 mt-0.5">
                                 可在下方各科目行通过下拉菜单直接快速绑定这些生词本。
@@ -2580,6 +2675,63 @@
                     btn.innerHTML = '<i class="ph-bold ph-plugs-connected text-xs"></i><span>测试连接并检索我的生词本</span>';
                 }
             }
+        }
+
+        async function wakeupAndSyncRemoteDecks() {
+            const btn = document.getElementById('btnTestUserConn');
+            const statusEl = document.getElementById('userConnTestStatus');
+            const apiUrlInput = document.getElementById('setting-deck-api-url');
+            const targetUrl = (apiUrlInput?.value?.trim() || appSettings.deckApiBaseUrl || DEFAULT_DECK_API_BASE_URL).replace(/\/+$/, '');
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="ph ph-circle-notch animate-spin text-xs"></i><span>正在唤醒...</span>';
+            }
+            if (statusEl) {
+                statusEl.innerHTML = `
+                    <div class="p-2.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-800 space-y-1 mt-1">
+                        <div class="font-semibold flex items-center gap-1.5 text-xs">
+                            <i class="ph ph-circle-notch animate-spin text-indigo-600 text-sm shrink-0"></i>
+                            <span>正在后台唤醒外部生词本 Web 应用并触发云端全量同步...</span>
+                        </div>
+                        <div class="text-[10px] text-indigo-600/80 leading-relaxed">
+                            正在利用浏览器现有登录凭证初始化并执行 batchSync 同步，倒计时约 3 秒后将自动刷新生词本列表...
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 1. 无痕 iframe 静默唤醒尝试
+            let iframe = document.getElementById('deckWakeupSilentIframe');
+            if (iframe) iframe.remove();
+            iframe = document.createElement('iframe');
+            iframe.id = 'deckWakeupSilentIframe';
+            iframe.style.display = 'none';
+            iframe.style.width = '0px';
+            iframe.style.height = '0px';
+            iframe.src = targetUrl + '/';
+            document.body.appendChild(iframe);
+
+            // 2. 双重保险：弹出一个自闭小窗口（突破跨域存储分区限制，使 Firebase Auth 能够完整读取顶级域 IndexedDB/Cookie）
+            let syncWin = null;
+            try {
+                syncWin = window.open(targetUrl + '/', 'ThaiVocabWakeupWin', 'width=380,height=280,left=120,top=120');
+            } catch (e) {
+                console.warn('Popup blocked, relying on iframe:', e);
+            }
+
+            setTimeout(async () => {
+                try {
+                    if (syncWin && !syncWin.closed) {
+                        syncWin.close();
+                    }
+                } catch (e) {}
+                if (iframe) {
+                    iframe.remove();
+                }
+                // 再次测试检索
+                await testUserConnection();
+            }, 3600);
         }
 
         async function testDeckIdForCourse(courseId) {
@@ -2629,7 +2781,8 @@
                     error: result.message
                 };
                 if (statusEl) {
-                    statusEl.innerHTML = `<span class="text-rose-600 font-medium text-[10px] flex items-center gap-1 leading-snug"><i class="ph-bold ph-x-circle text-xs shrink-0"></i> ${escapeHtml(result.message)}</span>`;
+                    statusEl.innerHTML = `<span class="text-rose-600 font-medium text-[10px] flex items-center gap-1 leading-snug"><i class="ph-bold ph-x-circle text-xs shrink-0"></i> ${escapeHtml(result.message)}</span>` +
+                        (result.isLikelyColdStart ? `<div class="mt-1 flex items-center gap-1.5"><button type="button" onclick="wakeupAndSyncRemoteDecks()" class="text-[10px] text-indigo-600 font-medium hover:text-indigo-800 underline cursor-pointer flex items-center gap-0.5"><i class="ph-bold ph-lightning text-[10px]"></i>一键唤醒同步</button><span class="text-[10px] text-slate-400">（完成后再重试）</span></div>` : '');
                 }
                 input.classList.add('border-rose-400', 'ring-1', 'ring-rose-200');
             }
@@ -4256,6 +4409,7 @@
         window.testDeckAvailability = testDeckAvailability;
         window.testDeckIdForCourse = testDeckIdForCourse;
         window.testUserConnection = testUserConnection;
+        window.wakeupAndSyncRemoteDecks = wakeupAndSyncRemoteDecks;
         window.callDeckApi = callDeckApi;
         window.buildDeckWordPayload = buildDeckWordPayload;
         window.enqueueDeckSync = enqueueDeckSync;
