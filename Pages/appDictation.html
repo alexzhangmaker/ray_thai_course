@@ -183,6 +183,13 @@
                 <i class="ph-bold ph-gear"></i>
             </button>
 
+            <!-- SideApp Companion Screen Quick Capsule Pill -->
+            <button id="btnSideAppPill" onclick="SideAppPairingPanel.open()" title="手机伴侣屏联动 (第二屏幕被动同步)" class="h-8 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center gap-1.5 text-xs text-slate-300 transition">
+                <span id="sideAppStatusDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+                <i class="ph-bold ph-device-mobile text-violet-400"></i>
+                <span id="sideAppStatusText" class="hidden sm:inline">伴侣屏</span>
+            </button>
+
             <!-- Daily Missed Words Center Quick Button -->
             <button onclick="openDailyMissedModal()" title="每日错词本与强化复习中心" class="h-8 px-2.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 flex items-center gap-1.5 text-xs text-rose-300 hover:text-rose-200 transition" aria-label="每日错词本与强化中心">
                 <i class="ph-bold ph-target"></i>
@@ -1002,6 +1009,11 @@
     <script src="./js/timer/timerComponent.js"></script>
     <script src="./js/timer/settingsModal.js"></script>
 
+    <!-- SideApp Second Screen Companion Modules -->
+    <script src="./js/sideapp/qrcode.min.js"></script>
+    <script src="./js/sideapp/bridge.js"></script>
+    <script src="./js/sideapp/pairingPanel.js"></script>
+
     <!-- Application Script -->
     <script>
         // API Configuration
@@ -1070,6 +1082,91 @@
         let currentSessionMode = 'smart_due'; // 'smart_due' | 'collection' | 'all'
         let currentCollectionId = null;
         let sessionResults = []; // [{ word, rating, sm2 }]
+
+        // =============================================================
+        // SideApp Companion Screen State Synchronization
+        // =============================================================
+        function syncSideAppState(viewName, forceFull = false) {
+            if (!window.sideAppBridge || !window.sideAppBridge.enabled) return;
+
+            try {
+                if (!viewName) {
+                    const isSelection = !document.getElementById('viewSelection')?.classList.contains('hidden');
+                    const isSession = !document.getElementById('viewSession')?.classList.contains('hidden');
+                    const isSummary = !document.getElementById('viewSummary')?.classList.contains('hidden');
+                    if (isSession) viewName = 'viewSession';
+                    else if (isSummary) viewName = 'viewSummary';
+                    else viewName = 'viewSelection';
+                }
+
+                if (viewName === 'viewSelection') {
+                    const due = document.getElementById('statDueCount')?.innerText || '--';
+                    const total = document.getElementById('statTotalWords')?.innerText || '--';
+                    const mastered = document.getElementById('statMasteredCount')?.innerText || '--';
+                    window.sideAppBridge.pushState('viewSelection', {
+                        dueCount: due,
+                        totalWords: total,
+                        masteredCount: mastered,
+                        statusText: '就绪 · 等待主机开始听写'
+                    }, forceFull);
+                } else if (viewName === 'viewSession') {
+                    if (!activeQueue || currentIndex >= activeQueue.length) return;
+                    const currentWord = activeQueue[currentIndex];
+                    const isRevealed = !document.getElementById('phaseRevealed')?.classList.contains('hidden');
+                    const progressText = document.getElementById('sessionProgressText')?.innerText || '';
+                    const accuracyText = document.getElementById('sessionAccuracyText')?.innerText || '100%';
+                    const progressPercent = Math.round((currentIndex / activeQueue.length) * 100);
+
+                    const state = {
+                        phase: isRevealed ? 'revealed' : 'writing',
+                        mode: currentSessionMode,
+                        progressText: progressText,
+                        progressPercent: progressPercent,
+                        accuracyText: accuracyText,
+                        currentIndex: currentIndex + 1,
+                        totalWords: activeQueue.length,
+                        replayCount: replayCount || 1,
+                        history: {
+                            repetition: currentWord.repetition || 0,
+                            interval: currentWord.interval || 0
+                        }
+                    };
+
+                    if (isRevealed) {
+                        state.thaiWord = currentWord.thaiWord;
+                        state.phonetic = currentWord.phonetic || currentWord.transliteration || '';
+                        state.meaning = currentWord.meaning;
+                        state.examples = currentWord.examples || [];
+                    }
+
+                    window.sideAppBridge.pushState('viewSession', state, forceFull);
+                } else if (viewName === 'viewSummary') {
+                    const total = document.getElementById('summaryTotalCount')?.innerText || sessionResults.length;
+                    const correct = document.getElementById('summaryCorrectCount')?.innerText || 0;
+                    const accuracy = document.getElementById('summaryAccuracy')?.innerText || '100%';
+                    const forgot = document.getElementById('summaryForgotCount')?.innerText || 0;
+
+                    const results = (sessionResults || []).map(r => ({
+                        thaiWord: r.word?.thaiWord || '',
+                        phonetic: r.word?.phonetic || '',
+                        meaning: r.word?.meaning || '',
+                        rating: r.rating,
+                        interval: r.sm2?.current?.interval || 1
+                    }));
+
+                    window.sideAppBridge.pushState('viewSummary', {
+                        totalCount: total,
+                        correctCount: correct,
+                        accuracy: accuracy,
+                        forgotCount: forgot,
+                        results: results
+                    }, forceFull);
+                }
+            } catch (err) {
+                console.warn('[SideApp syncSideAppState error]:', err);
+            }
+        }
+        window.syncSideAppState = syncSideAppState;
 
         // =============================================================
         // IndexedDB: Collection Review Progress Persistence (词集单元复习断点续学)
@@ -2474,6 +2571,9 @@
             document.getElementById('summaryForgotCount').innerText = 0;
             document.getElementById('summaryAccuracy').innerText = '100%';
 
+            // Sync to SideApp companion screen
+            syncSideAppState('viewSummary');
+
             // Hide retry missed button since 0 missed!
             document.getElementById('btnRetryMissed').style.display = 'none';
 
@@ -2541,6 +2641,15 @@
                 if (window.TimerPanel) await TimerPanel.init();
             } catch (timerErr) {
                 console.warn('Timer initialization error:', timerErr);
+            }
+
+            // SideApp: Sync active view immediately when companion device connects
+            if (window.sideAppBridge) {
+                window.sideAppBridge.onStatusChange((status) => {
+                    if (status.enabled && status.clientCount > 0) {
+                        syncSideAppState(null, true);
+                    }
+                });
             }
 
             // 多标签页与多实例监听同步：窗口激活时若在主菜单则重新读取最新数据
@@ -2635,6 +2744,11 @@
                 }, 1200);
             }
 
+            // Sync sound effect to SideApp companion screen
+            if (window.sideAppBridge && window.sideAppBridge.enabled) {
+                window.sideAppBridge.playEffect('audio-playing', '#btnMainPlay', 1500);
+            }
+
             window.playSentenceVoice(currentWord.thaiWord, currentWord.audioUrl);
         }
 
@@ -2704,6 +2818,7 @@
                 document.getElementById('statTotalWords').innerText = appStats.totalWords;
                 document.getElementById('statMasteredCount').innerText = appStats.masteredCount;
                 document.getElementById('badgeDueCount').innerText = `${appStats.dueCount} 词`;
+                syncSideAppState('viewSelection');
             } catch (err) {
                 console.error('Failed to load stats:', err);
             }
@@ -3094,6 +3209,9 @@
                 <span>当前间隔: <strong class="text-white">${word.interval}天</strong></span>
             `;
 
+            // Sync state to SideApp companion screen
+            syncSideAppState('viewSession');
+
             // Auto Play Audio if enabled
             if (autoPlayAudio) {
                 setTimeout(() => {
@@ -3106,6 +3224,9 @@
             document.getElementById('phaseWriting').classList.add('hidden');
             document.getElementById('phaseRevealed').classList.remove('hidden');
             document.getElementById('cardStepLabel').innerText = '步骤 2/2: 核对纸面并完成评分 (Grade & SM-2)';
+
+            // Sync state to SideApp companion screen
+            syncSideAppState('viewSession');
         }
 
         async function submitGrade(rating) {
@@ -3197,6 +3318,9 @@
             document.getElementById('summaryAccuracy').innerText = `${accuracy}%`;
             document.getElementById('summaryForgotCount').innerText = forgot;
 
+            // Sync to SideApp companion screen
+            syncSideAppState('viewSummary');
+
             // Show / Hide Retry Missed button
             document.getElementById('btnRetryMissed').style.display = forgot > 0 ? 'inline-flex' : 'none';
 
@@ -3272,6 +3396,7 @@
             loadCollections();
             updateTodayResultBadge();
             updateMissedBadges();
+            syncSideAppState('viewSelection');
         }
 
         async function confirmExitSession() {

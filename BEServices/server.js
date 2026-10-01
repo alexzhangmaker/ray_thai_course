@@ -1,10 +1,12 @@
 import express from 'express';
+import http from 'http';
 import fs from 'fs/promises';
 import fsSync from 'fs';
 import cors from 'cors';
 import path from 'path';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
+import { initSideApp } from './sideapp/index.js';
 import {
   initDb,
   run,
@@ -7567,7 +7569,9 @@ app.get('/', (req, res) => {
 
 // Initialize DB and start listening
 initDb().then(() => {
-  app.listen(PORT, () => {
+  const server = http.createServer(app);
+  initSideApp(app, server, PORT);
+  server.listen(PORT, () => {
     console.log(`ThaiNotes Backend Server running on http://localhost:${PORT}`);
   });
 }).catch(err => {

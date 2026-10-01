@@ -86,3 +86,26 @@
 - [x] Register new apps into system navigation portal (`Pages/appPortal.html`)
 - [x] Verify complete end-to-end integration and API test suite
 
+## Phase 9: SideApp Companion Screen (第二屏哑终端) for appDictation (Completed)
+- [x] Implement backend SideApp module in `BEServices/sideapp/`:
+  - `protocol.js`: Protocol v1.0, Envelope utilities, JSON patch diff & setByPath
+  - `sessionStore.js`: Session lifecycle, 4-char pairing code, multi-token auth, client tracking & snapshot cache
+  - `wsHub.js`: WebSocket pool, welcome handshake, ping/pong heartbeat, one-way instruction broadcasting
+  - `index.js`: Express router (`POST /sideapp/session`, `GET /sideapp/pair/:code`, `POST /sideapp/broadcast`, etc.) and LAN IP auto-discovery
+- [x] Integrate SideApp upgrade handler and router into `BEServices/server.js`
+- [x] Write comprehensive unit & integration tests (`BEServices/sideapp/tests/sideapp.test.js`)
+- [x] Implement Master App Bridge & Pairing Panel (`Pages/js/sideapp/`):
+  - `bridge.js`: State capture, diff calculation, snapshot maintenance, and instruction broadcast
+  - `pairingPanel.js`: Modal with local offline QR code, 4-digit pairing code, direct URL copy, and live device monitor
+  - `qrcode.min.js`: Zero-dependency client-side QR code generator
+- [x] Enhance `Pages/appDictation.html`:
+  - Header companion screen pill button with real-time status indicator
+  - Hook state synchronization into `loadAppStats`, `renderCurrentCard`, `playCurrentWordAudio`, `revealAnswer`, `finishSession`, and `returnToSelection`
+  - Zero-overhead feature toggle
+- [x] Build mobile-first SideApp client (`Pages/sideapp/`):
+  - `index.html`: Responsive layout tailored for iPhone / mobile second screen
+  - `wsClient.js`: Connection manager with exponential backoff reconnect and heartbeat
+  - `renderer.js`: Passive view renderer for writing phase (sound waves & prompt), revealed phase (large typography & example sentences), and summary
+- [x] Verify live PM2 service restart and end-to-end communication on port 3002
+
+
