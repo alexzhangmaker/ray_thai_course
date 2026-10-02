@@ -90,6 +90,13 @@
             transform: translateY(-2px);
         }
 
+        .glass-panel {
+            background: rgba(26, 22, 48, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
         .lesson-nav-btn {
             transition: all 0.2s ease;
         }
@@ -309,6 +316,13 @@
             <button onclick="openApiTestModal()" type="button" id="apiTestModalBtn" class="px-3.5 py-1.5 text-xs text-amber-800 hover:text-amber-950 bg-amber-50 hover:bg-amber-100 rounded-xl transition duration-150 flex items-center gap-1.5 border border-amber-200/80 font-bold shadow-sm cursor-pointer" title="生词本 API 全链路调用测试与观测">
                 <i class="ph-bold ph-terminal-window text-sm text-amber-600"></i>
                 <span>API 调试测试</span>
+            </button>
+
+            <!-- SideApp Companion Screen Quick Capsule Pill -->
+            <button id="btnSideAppPill" onclick="SideAppPairingPanel.open()" title="手机伴侣屏联动 (第二屏幕被动同步)" class="px-3.5 py-1.5 text-xs text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 rounded-xl transition duration-150 flex items-center gap-1.5 border border-slate-200 font-medium shadow-sm cursor-pointer">
+                <span id="sideAppStatusDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+                <i class="ph-bold ph-device-mobile text-indigo-500"></i>
+                <span id="sideAppStatusText" class="hidden sm:inline">伴侣屏</span>
             </button>
 
             <!-- Global Setting Button -->
@@ -1240,6 +1254,11 @@
         </button>
     </div>
 
+    <!-- SideApp Second Screen Companion Modules -->
+    <script src="./js/sideapp/qrcode.min.js"></script>
+    <script src="./js/sideapp/bridge.js"></script>
+    <script src="./js/sideapp/pairingPanel.js"></script>
+
     <!-- Script Block -->
     <script>
         const userId = "default_user";
@@ -1266,6 +1285,160 @@
 
         // Text Selection
         let selectedWordText = '';
+
+        // =============================================================
+        // SideApp Companion Screen State Synchronization (第二屏幕联动)
+        // =============================================================
+        let isSideAppDetailRevealed = false;
+
+        function syncSideAppState(viewName, forceFull = false, overrides = {}) {
+            if (!window.sideAppBridge || !window.sideAppBridge.enabled) return;
+
+            try {
+                if (!viewName) {
+                    const isExerciseActive = !document.getElementById('viewExercise')?.classList.contains('hidden');
+                    const isSummaryActive = isExerciseActive && 
+                        (document.getElementById('exerciseContent')?.innerHTML.includes('核心词汇复习已全部完成') ||
+                         document.getElementById('exerciseContent')?.innerHTML.includes('复习词汇总量'));
+                    if (isExerciseActive) {
+                        viewName = isSummaryActive ? 'viewCoreWordsSummary' : 'viewCoreWordsSession';
+                    } else {
+                        viewName = 'viewCoreWordsSelection';
+                    }
+                }
+
+                if (viewName === 'viewCoreWordsSelection') {
+                    const lesson = lessons.find(l => l.id === activeLessonId);
+                    const course = lesson ? courses.find(c => c.id === lesson.course_id) : null;
+                    const currentWs = activeWordsetId ? allWordsets.find(ws => ws.id === activeWordsetId) : null;
+                    const vocabs = typeof getCurrentLessonVocabs === 'function' ? getCurrentLessonVocabs() : [];
+                    const reviewed = vocabs.filter(w => coreWordsProgressMap[w.id]?.status === 'reviewed').length;
+                    const pending = vocabs.length - reviewed;
+
+                    window.sideAppBridge.pushState('viewCoreWordsSelection', {
+                        appType: 'core_words',
+                        courseName: course ? course.name : '全部科目',
+                        lessonTitle: lesson ? lesson.title : '课时核心词集',
+                        wordsetTitle: currentWs ? currentWs.title : (lesson ? `${lesson.title} 核心词` : '全部词集'),
+                        totalWords: vocabs.length,
+                        reviewedCount: reviewed,
+                        pendingCount: pending,
+                        statusText: '就绪 · 等待主机开始核心词复习自测'
+                    }, forceFull, {
+                        title: 'ThaiNotes 伴侣屏 · 核心词汇复习'
+                    });
+                } else if (viewName === 'viewCoreWordsSession') {
+                    if (!currentWord) return;
+                    const total = batchWordsQueue.length || 1;
+                    const lesson = lessons.find(l => l.id === (currentWord.lessonId || activeLessonId));
+                    const currentWs = currentWord.setId ? allWordsets.find(ws => ws.id === currentWord.setId) : (activeWordsetId ? allWordsets.find(ws => ws.id === activeWordsetId) : null);
+                    const course = lesson ? courses.find(c => c.id === lesson.course_id) : null;
+                    const progressPercent = Math.round(((currentWordIndex + 1) / total) * 100);
+
+                    const detailRevealed = overrides.detailRevealed !== undefined ? overrides.detailRevealed : isSideAppDetailRevealed;
+
+                    const state = {
+                        appType: 'core_words',
+                        mode: 'core_words_review',
+                        courseName: course ? course.name : '',
+                        lessonTitle: lesson ? lesson.title : '',
+                        wordsetTitle: currentWs ? currentWs.title : (lesson ? lesson.title : '核心词集'),
+                        currentIndex: currentWordIndex + 1,
+                        totalWords: total,
+                        progressPercent: progressPercent,
+                        progressText: `进度: ${currentWordIndex + 1} / ${total}`,
+                        detailRevealed: detailRevealed,
+                        word: {
+                            id: currentWord.id,
+                            word: currentWord.word || currentWord.headword || '',
+                            ipa: currentWord.ipa || '',
+                            pos: currentWord.pos || '',
+                            meaning: currentWord.meaning || '',
+                            meanings: Array.isArray(currentWord.meanings) ? currentWord.meanings.map(m => ({
+                                part_of_speech: m.part_of_speech || '',
+                                meaning: m.meaning || '',
+                                examples: Array.isArray(m.examples) ? m.examples.map(ex => ({
+                                    sentence: ex.sentence || '',
+                                    meaning: ex.meaning || ''
+                                })) : []
+                            })) : []
+                        },
+                        masteryScore: coreWordsProgressMap[currentWord.id]?.masteryScore ?? null
+                    };
+
+                    window.sideAppBridge.pushState('viewCoreWordsSession', state, forceFull, {
+                        title: 'ThaiNotes 伴侣屏 · 核心词汇复习'
+                    });
+                } else if (viewName === 'viewCoreWordsSummary') {
+                    const total = batchWordsQueue.length || 0;
+                    const reviewedWords = batchWordsQueue.filter(w => coreWordsProgressMap[w.id]?.status === 'reviewed');
+                    const totalScore = batchWordsQueue.reduce((sum, w) => sum + (coreWordsProgressMap[w.id]?.masteryScore || 0), 0);
+                    const avgScore = reviewedWords.length > 0 ? (totalScore / reviewedWords.length).toFixed(1) : '0.0';
+                    const currentWs = activeWordsetId ? allWordsets.find(ws => ws.id === activeWordsetId) : null;
+                    const lesson = lessons.find(l => l.id === activeLessonId);
+
+                    window.sideAppBridge.pushState('viewCoreWordsSummary', {
+                        appType: 'core_words',
+                        wordsetTitle: currentWs ? currentWs.title : (lesson ? lesson.title : '核心词集'),
+                        totalCount: total,
+                        reviewedCount: reviewedWords.length,
+                        avgScore: avgScore,
+                        masteredCount: reviewedWords.filter(w => (coreWordsProgressMap[w.id]?.masteryScore || 0) >= 4).length
+                    }, forceFull, {
+                        title: 'ThaiNotes 伴侣屏 · 核心词汇复习'
+                    });
+                }
+            } catch (err) {
+                console.warn('[SideApp syncSideAppState error]:', err);
+            }
+        }
+        window.syncSideAppState = syncSideAppState;
+
+        function revealSideAppDetail() {
+            isSideAppDetailRevealed = true;
+            syncSideAppState('viewCoreWordsSession', false, { detailRevealed: true });
+            if (window.sideAppBridge && window.sideAppBridge.enabled) {
+                window.sideAppBridge.playEffect('detail-revealed', '#sideCoreWordRevealed', 800);
+            }
+            updateRevealSideAppButtonUI(true);
+        }
+        window.revealSideAppDetail = revealSideAppDetail;
+
+        function updateRevealSideAppButtonUI(isRevealed) {
+            const btnCard = document.getElementById('btnRevealSideAppDetail');
+            const btnSide = document.getElementById('btnRevealSideAppDetailSide');
+            const syncBadge = document.getElementById('sideAppCardSyncStatus');
+
+            if (btnCard) {
+                if (isRevealed) {
+                    btnCard.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-500/20 active:scale-95 cursor-pointer';
+                    btnCard.innerHTML = '<i class="ph-bold ph-check-circle text-sm"></i><span>伴侣屏已展示解释 (点击重发)</span>';
+                } else {
+                    btnCard.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-500/20 active:scale-95 cursor-pointer';
+                    btnCard.innerHTML = '<i class="ph-bold ph-eye text-sm"></i><span>展示解释与例句 (发送到伴侣屏)</span>';
+                }
+            }
+
+            if (btnSide) {
+                if (isRevealed) {
+                    btnSide.className = 'w-full py-2.5 px-3 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer';
+                    btnSide.innerHTML = '<i class="ph-bold ph-check-circle text-emerald-600"></i><span>伴侣屏已揭晓释义 (点击重发)</span>';
+                } else {
+                    btnSide.className = 'w-full py-2.5 px-3 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer';
+                    btnSide.innerHTML = '<i class="ph-bold ph-device-mobile text-indigo-500"></i><span>展示解释与例句 (伴侣屏 R)</span>';
+                }
+            }
+
+            if (syncBadge) {
+                if (isRevealed) {
+                    syncBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold border border-emerald-200';
+                    syncBadge.innerText = '伴侣屏：已展示解释与例句';
+                } else {
+                    syncBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-mono font-bold border border-amber-200';
+                    syncBadge.innerText = '伴侣屏：仅显示泰语单词';
+                }
+            }
+        }
 
         // ==========================================
         // IndexedDB Progress Database Manager (复习进度)
@@ -4515,6 +4688,19 @@
             await fetchDueReviews();
             await updateDictDrawerView();
             renderLessons();
+
+            // SideApp Companion Screen Status Listener
+            if (window.sideAppBridge) {
+                window.sideAppBridge.setAppTitle('ThaiNotes 伴侣屏 · 核心词汇复习');
+                let lastClientCount = 0;
+                window.sideAppBridge.onStatusChange((status) => {
+                    if (status.enabled && status.clientCount > lastClientCount) {
+                        syncSideAppState(null, true);
+                    }
+                    lastClientCount = status.clientCount || 0;
+                });
+            }
+            syncSideAppState('viewCoreWordsSelection');
         }
 
         async function loadStreakStats() {
@@ -5177,6 +5363,9 @@
                 `;
                 container.appendChild(card);
             });
+
+            // Sync selection state to SideApp companion screen
+            syncSideAppState('viewCoreWordsSelection');
         }
 
         // ==========================================
@@ -5184,6 +5373,9 @@
         // ==========================================
         window.playAudioDirect = (text) => {
             if (!text) return;
+            if (window.sideAppBridge && window.sideAppBridge.enabled) {
+                window.sideAppBridge.playEffect('audio-playing', '', 1200);
+            }
             const cleanText = text.replace(/“|”/g, '').trim();
             const url = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(cleanText || text)}`;
             new Audio(url).play().catch(err => {
@@ -5251,6 +5443,10 @@
             currentWord = word;
             currentInteractionIndex = 0;
             attemptsLog = [];
+
+            // Reset companion screen reveal state for new word
+            isSideAppDetailRevealed = false;
+            syncSideAppState('viewCoreWordsSession', true, { detailRevealed: false });
 
             document.getElementById('viewSelection').classList.add('hidden');
             document.getElementById('viewSelectionActions').classList.add('hidden');
@@ -5368,6 +5564,23 @@
                     </button>
                 </div>
 
+                <!-- Companion Screen Remote Reveal Toolbar -->
+                <div class="flex items-center justify-between bg-indigo-50/70 border border-indigo-100 rounded-2xl px-4 py-2.5 shadow-xs">
+                    <div class="flex items-center gap-2 text-xs font-semibold text-indigo-900">
+                        <i class="ph-bold ph-device-mobile text-indigo-600 text-base"></i>
+                        <span>手机伴侣屏联动</span>
+                        <span id="sideAppCardSyncStatus" class="text-[10px] px-2 py-0.5 rounded-full ${isSideAppDetailRevealed ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-amber-100 text-amber-800 border border-amber-200'} font-mono font-bold">
+                            ${isSideAppDetailRevealed ? '伴侣屏：已展示解释与例句' : '伴侣屏：仅显示泰语单词'}
+                        </span>
+                    </div>
+                    <button id="btnRevealSideAppDetail" onclick="revealSideAppDetail()" type="button" 
+                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer ${isSideAppDetailRevealed ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-500/20 active:scale-95' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-500/20 active:scale-95'}"
+                        title="向手机伴侣屏发送指令，揭示词汇的解释与例句 (快捷键: R；此操作不影响主屏)">
+                        <i class="ph-bold ${isSideAppDetailRevealed ? 'ph-check-circle' : 'ph-eye'} text-sm"></i>
+                        <span>${isSideAppDetailRevealed ? '伴侣屏已展示解释 (点击重发)' : '展示解释与例句 (发送到伴侣屏)'}</span>
+                    </button>
+                </div>
+
                 <div class="space-y-4">
                     ${meaningsHtml}
                 </div>
@@ -5408,6 +5621,14 @@
                                     <span>掌握 (熟练通过)</span>
                                 </span>
                                 <span class="text-[11px] px-2 py-0.5 rounded-md font-mono ${currentScore === 5 ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-700 font-semibold'}">5分</span>
+                            </button>
+                        </div>
+
+                        <!-- SideApp Remote Control Button in Rating Side Panel -->
+                        <div class="pt-3 border-t border-slate-100">
+                            <button id="btnRevealSideAppDetailSide" onclick="revealSideAppDetail()" type="button" class="w-full py-2.5 px-3 rounded-xl border ${isSideAppDetailRevealed ? 'border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800' : 'border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700'} font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer" title="向手机伴侣屏发送指令，揭示词汇的中文解释和例句 (快捷键: R)">
+                                <i class="ph-bold ${isSideAppDetailRevealed ? 'ph-check-circle text-emerald-600' : 'ph-device-mobile text-indigo-500'}"></i>
+                                <span>${isSideAppDetailRevealed ? '伴侣屏已揭晓释义 (点击重发)' : '展示解释与例句 (伴侣屏 R)'}</span>
                             </button>
                         </div>
 
@@ -5500,6 +5721,7 @@
             } catch (err) {}
 
             renderWordStudyDetail(currentWord, score);
+            syncSideAppState('viewCoreWordsSession', false);
         }
 
         function navigateWordReview(direction) {
@@ -5514,6 +5736,7 @@
 
         function showReviewCompletionModal() {
             hideExerciseRatingPanel();
+            syncSideAppState('viewCoreWordsSummary');
             const total = batchWordsQueue.length;
             const reviewedWords = batchWordsQueue.filter(w => coreWordsProgressMap[w.id]?.status === 'reviewed');
             const totalScore = batchWordsQueue.reduce((sum, w) => sum + (coreWordsProgressMap[w.id]?.masteryScore || 0), 0);
@@ -5574,6 +5797,9 @@
                     if (currentWord) {
                         playAudioDirect(currentWord.word || currentWord.headword || '');
                     }
+                } else if (e.key === 'r' || e.key === 'R') {
+                    e.preventDefault();
+                    revealSideAppDetail();
                 } else if (['1', '2', '3', '4', '5'].includes(e.key)) {
                     const score = parseInt(e.key);
                     submitDirectStudyRating(score);
@@ -5870,6 +6096,7 @@
             document.getElementById('viewSelection').classList.remove('hidden');
             document.getElementById('viewSelectionActions').classList.remove('hidden');
             renderLessons();
+            syncSideAppState('viewCoreWordsSelection');
         }
 
         // ==========================================

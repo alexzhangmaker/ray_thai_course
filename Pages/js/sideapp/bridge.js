@@ -70,8 +70,17 @@
       this.clientCount = 0;
       this.connectedClients = [];
       this.seq = 0;
+      this.appTitle = null;
       this.statusPollTimer = null;
       this.statusListeners = new Set();
+    }
+
+    /**
+     * Sets custom application title for companion screen.
+     * @param {string} title 
+     */
+    setAppTitle(title) {
+      this.appTitle = title;
     }
 
     /**
@@ -141,8 +150,9 @@
      * @param {string} view 
      * @param {object} state 
      * @param {boolean} [forceFull=false] 
+     * @param {object} [meta=null]
      */
-    pushState(view, state, forceFull = false) {
+    pushState(view, state, forceFull = false, meta = null) {
       if (!this.enabled || !this.sessionId) {
         // Cache snapshot even when disabled so if enabled later, it can sync immediately
         this.lastSnapshot = { view, state: JSON.parse(JSON.stringify(state || {})) };
@@ -158,10 +168,10 @@
           payload: {
             view: view,
             state: cleanState,
-            meta: {
-              title: 'ThaiNotes 听写助手',
+            meta: Object.assign({
+              title: this.appTitle || 'ThaiNotes 听写助手',
               pushedAt: Date.now()
-            }
+            }, meta || {})
           }
         };
         this.broadcast(msg);
@@ -265,9 +275,17 @@
           const res = await fetch(`/sideapp/session/${this.sessionId}/status`);
           if (res.ok) {
             const data = await res.json();
-            this.clientCount = data.clientCount || 0;
-            this.connectedClients = data.clients || [];
-            this.notifyListeners();
+            const newCount = data.clientCount || 0;
+            const newClients = data.clients || [];
+            const changed = this.clientCount !== newCount ||
+              this.connectedClients.length !== newClients.length ||
+              JSON.stringify(this.connectedClients) !== JSON.stringify(newClients);
+
+            this.clientCount = newCount;
+            this.connectedClients = newClients;
+            if (changed) {
+              this.notifyListeners();
+            }
           } else if (res.status === 404) {
             // Session expired on server, re-create
             await this.start();

@@ -5,6 +5,17 @@
  */
 
 (function (window) {
+  // Simple HTML escaper
+  function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   // Simple path setter matching protocol spec
   function setByPath(target, path, value) {
     if (!path || !target) return target;
@@ -44,6 +55,10 @@
       this.effectTimer = null;
     }
 
+    escape(str) {
+      return escapeHtml(str);
+    }
+
     init() {
       this.containerEl = document.getElementById('sideAppRoot');
     }
@@ -54,8 +69,35 @@
      */
     renderFull(payload) {
       if (!payload || !payload.view) return;
+
+      // Update header subheader & badge dynamically
+      if (payload.meta && payload.meta.title) {
+        const subheader = document.getElementById('sideAppSubheader');
+        if (subheader) subheader.innerText = payload.meta.title;
+      }
+      const isCoreWords = (payload.view && payload.view.startsWith('viewCoreWords')) ||
+                          (payload.state && payload.state.appType === 'core_words');
+      const badge = document.getElementById('sideAppBadge');
+      if (badge) {
+        if (isCoreWords) {
+          badge.innerText = 'CoreWords';
+          badge.className = 'text-[9px] uppercase font-bold px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
+        } else {
+          badge.innerText = 'Dictation';
+          badge.className = 'text-[9px] uppercase font-bold px-1.5 py-0.2 rounded bg-violet-500/20 text-violet-300 border border-violet-500/30';
+        }
+      }
+
+      const isSameView = this.currentView === payload.view;
+      const isSameState = isSameView && JSON.stringify(this.localState) === JSON.stringify(payload.state || {});
+
       this.currentView = payload.view;
       this.localState = JSON.parse(JSON.stringify(payload.state || {}));
+
+      // If view and state are identical and DOM is already mounted, skip redraw to avoid screen flickering
+      if (isSameState && this.containerEl && this.containerEl.children.length > 0) {
+        return;
+      }
 
       this.mountCurrentView();
     }
@@ -95,8 +137,8 @@
       if (!payload || !payload.name) return;
 
       if (payload.name === 'audio-playing') {
-        const waveBox = document.getElementById('sideAppSoundWave');
-        const playRing = document.getElementById('sideAppPlayRing');
+        const waveBox = document.getElementById('sideCoreSoundWave') || document.getElementById('sideAppSoundWave');
+        const playRing = document.getElementById('sideCorePlayRing') || document.getElementById('sideAppPlayRing');
         if (waveBox) {
           waveBox.classList.remove('opacity-30', 'scale-90');
           waveBox.classList.add('opacity-100', 'scale-110');
@@ -115,6 +157,14 @@
             playRing.classList.remove('pulse-ring-active');
           }
         }, payload.duration || 1200);
+      } else if (payload.name === 'detail-revealed') {
+        const revealed = document.getElementById('sideCoreWordRevealed');
+        if (revealed) {
+          revealed.classList.add('ring-2', 'ring-indigo-400/60');
+          setTimeout(() => {
+            revealed.classList.remove('ring-2', 'ring-indigo-400/60');
+          }, payload.duration || 800);
+        }
       }
     }
 
@@ -130,10 +180,30 @@
           this.renderSelectionView();
           break;
         case 'viewSession':
-          this.renderSessionView();
+          if (this.localState && this.localState.appType === 'core_words') {
+            this.renderCoreWordsSessionView();
+          } else {
+            this.renderSessionView();
+          }
+          break;
+        case 'viewReinforceTransition':
+          this.renderReinforceTransitionView();
           break;
         case 'viewSummary':
-          this.renderSummaryView();
+          if (this.localState && this.localState.appType === 'core_words') {
+            this.renderCoreWordsSummaryView();
+          } else {
+            this.renderSummaryView();
+          }
+          break;
+        case 'viewCoreWordsSelection':
+          this.renderCoreWordsSelectionView();
+          break;
+        case 'viewCoreWordsSession':
+          this.renderCoreWordsSessionView();
+          break;
+        case 'viewCoreWordsSummary':
+          this.renderCoreWordsSummaryView();
           break;
         default:
           // Unknown view: silently ignore or preserve
@@ -201,24 +271,27 @@
       const s = this.localState || {};
       const isWriting = s.phase === 'writing';
       const isRevealed = s.phase === 'revealed';
+      const isReinforce = s.mode === 'reinforce_missed';
 
       this.containerEl.innerHTML = `
         <div class="space-y-4 animate-fadeIn">
           <!-- Session Header Bar -->
           <div class="glass-panel rounded-2xl px-4 py-3 flex items-center justify-between border border-white/10">
             <div class="flex items-center gap-2">
-              <span class="text-xs font-bold text-violet-300">${s.mode === 'reinforce_missed' ? '⚡ 强化练习' : '🎧 智能听写'}</span>
+              <span class="text-xs font-bold ${isReinforce ? 'text-rose-300 bg-rose-500/20 px-2.5 py-0.5 rounded-full border border-rose-500/30' : 'text-violet-300'}">
+                ${isReinforce ? '⚡ ' + (s.reinforceTitle || '错词强化') + ' · 第 ' + (s.roundNum || 1) + ' 轮' : '🎧 智能听写'}
+              </span>
               <span class="text-slate-500 text-xs">·</span>
               <span id="sideSessionProgressText" class="text-xs text-slate-300 font-medium">${s.progressText || ''}</span>
             </div>
-            <div class="text-xs font-bold text-emerald-400" id="sideSessionAccuracyText">
+            <div class="text-xs font-bold ${isReinforce ? 'text-rose-300' : 'text-emerald-400'}" id="sideSessionAccuracyText">
               ${s.accuracyText || '100%'}
             </div>
           </div>
 
           <!-- Progress Bar -->
           <div class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden -mt-2">
-            <div id="sideSessionProgressBar" class="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full transition-all duration-300" style="width: ${s.progressPercent || 0}%"></div>
+            <div id="sideSessionProgressBar" class="h-full ${isReinforce ? 'bg-gradient-to-r from-rose-500 via-amber-500 to-emerald-500' : 'bg-gradient-to-r from-violet-500 to-fuchsia-500'} rounded-full transition-all duration-300" style="width: ${s.progressPercent || 0}%"></div>
           </div>
 
           <!-- Main Interactive Display Card -->
@@ -230,8 +303,10 @@
                 <span class="w-2 h-2 rounded-full ${isWriting ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}"></span>
                 <span id="sideCardStepLabel" class="font-medium">${isWriting ? '步骤 1/2: 听音并在纸上书写' : '步骤 2/2: 翻开答案核对精读'}</span>
               </div>
-              <div class="text-[11px] text-slate-500 font-mono" id="sideCardHistory">
-                ${s.history ? `复习:${s.history.repetition || 0}次 · 间隔:${s.history.interval || 0}天` : ''}
+              <div class="text-[11px] text-slate-400 font-mono flex items-center gap-1.5" id="sideCardHistory">
+                ${isReinforce 
+                  ? `<span class="text-rose-400 font-semibold"><i class="ph-bold ph-lightning"></i> 失误:${s.history?.missCount || 1}次</span><span>·</span><span>复习:${s.history?.repetition != null ? s.history.repetition : 0}次</span><span>·</span><span>间隔:${s.history?.interval != null ? s.history.interval : 1}天</span>` 
+                  : (s.history ? `复习:${s.history.repetition != null ? s.history.repetition : 0}次 · 间隔:${s.history.interval != null ? s.history.interval : 1}天` : '')}
               </div>
             </div>
 
@@ -252,10 +327,12 @@
                 <div class="sound-bar"></div>
               </div>
 
-              <div class="max-w-xs mx-auto p-4 rounded-2xl bg-violet-950/40 border border-violet-500/30 space-y-1">
-                <div class="text-sm font-semibold text-violet-200">请在纸上默写此泰语词</div>
+              <div class="max-w-xs mx-auto p-4 rounded-2xl ${isReinforce ? 'bg-rose-950/40 border border-rose-500/30' : 'bg-violet-950/40 border border-violet-500/30'} space-y-1">
+                <div class="text-sm font-semibold ${isReinforce ? 'text-rose-200' : 'text-violet-200'}">
+                  ${isReinforce ? '错词循环强化 · 纸面默写' : '请在纸上默写此泰语词'}
+                </div>
                 <p class="text-xs text-slate-400">
-                  原词拼写与释义已自动遮蔽，导师翻开答案后将同步展现。
+                  ${isReinforce ? '听写完成后由导师评定；评分 ≥ 3 即彻底攻克，< 3 自动进入下一轮。' : '原词拼写与释义已自动遮蔽，导师翻开答案后将同步展现。'}
                 </p>
               </div>
 
@@ -267,6 +344,13 @@
 
             <!-- Content: Revealed Phase -->
             <div id="sidePhaseRevealed" class="${isRevealed ? '' : 'hidden'} py-4 space-y-5">
+              ${isReinforce ? `
+                <div class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300 text-center font-medium flex items-center justify-center gap-1.5">
+                  <i class="ph-bold ph-lightning"></i>
+                  <span>攻克达标规则：评分 ≥ 3 彻底达标移出；评分 &lt; 3 自动进入下一轮强化循环</span>
+                </div>
+              ` : ''}
+
               <!-- Big Thai Word Card -->
               <div class="p-5 rounded-2xl bg-white/5 border border-white/10 text-center space-y-2">
                 <div id="sideRevealedThai" class="font-thai text-4xl sm:text-5xl font-black text-white tracking-wider py-1 select-all">
@@ -318,11 +402,156 @@
     }
 
     // =========================================================================
+    // View 2.5: Reinforce Round Transition View
+    // =========================================================================
+    renderReinforceTransitionView() {
+      const s = this.localState || {};
+      const failedWords = s.failedWords || [];
+      const roundNum = s.roundNum || 1;
+      const nextRound = s.nextRoundNum || (roundNum + 1);
+
+      this.containerEl.innerHTML = `
+        <div class="space-y-4 animate-fadeIn">
+          <!-- Transition Header Card -->
+          <div class="glass-panel rounded-3xl p-6 text-center space-y-4 border border-amber-500/30 shadow-2xl relative overflow-hidden">
+            <div class="inline-flex h-16 w-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 items-center justify-center text-3xl shadow-xl shadow-amber-500/25">
+              <i class="ph-bold ph-arrows-clockwise animate-spin" style="animation-duration: 4s;"></i>
+            </div>
+            
+            <div class="space-y-1.5">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold">
+                <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                第 ${roundNum} 轮强化结束
+              </div>
+              <h2 class="text-xl sm:text-2xl font-bold text-white pt-1">准备进入第 ${nextRound} 轮循环</h2>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                本轮已成功纠正攻克 <strong class="text-emerald-400 font-bold">${s.passedCount || 0}</strong> 词，仍有 <strong class="text-rose-400 font-bold">${s.failedCount || failedWords.length}</strong> 词评分 &lt; 3 需继续强化。<br>即将开启第 <strong>${nextRound}</strong> 轮循环练习！
+              </p>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="grid grid-cols-2 gap-3 pt-1">
+              <div class="glass-card rounded-2xl p-3 border border-emerald-500/20 bg-emerald-500/5">
+                <div class="text-2xl font-bold text-emerald-400">${s.passedCount || 0}</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">本轮攻克达标</div>
+              </div>
+              <div class="glass-card rounded-2xl p-3 border border-rose-500/20 bg-rose-500/5">
+                <div class="text-2xl font-bold text-rose-400">${s.failedCount || failedWords.length}</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">继续循环强化</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pending Words Preview -->
+          <div class="glass-panel rounded-3xl p-4 sm:p-5 border border-white/10 space-y-3">
+            <div class="text-xs font-semibold text-slate-300 flex items-center justify-between">
+              <span class="flex items-center gap-1.5 text-rose-300 font-bold">
+                <i class="ph-bold ph-target"></i> 下一轮待强化单词:
+              </span>
+              <span class="text-slate-400 text-xs">${failedWords.length} 词</span>
+            </div>
+
+            <div class="space-y-2 max-h-56 overflow-y-auto">
+              ${failedWords.map(w => `
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between gap-3 text-xs">
+                  <div class="space-y-0.5">
+                    <div class="font-thai font-bold text-white text-base">${w.thaiWord || '--'}</div>
+                    <div class="text-[11px] text-slate-400">${w.meaning || '--'} · <span class="font-mono text-violet-300">${w.phonetic || ''}</span></div>
+                  </div>
+                  <div class="text-right">
+                    <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                      待强化
+                    </span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Footer Status -->
+          <div class="p-3 rounded-2xl bg-white/5 border border-white/5 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+            <i class="ph-bold ph-hourglass text-amber-400 animate-spin"></i>
+            <span>请在 iMac 主机操作台按回车键开启第 ${nextRound} 轮</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
     // View 3: Session Summary View
     // =========================================================================
     renderSummaryView() {
       const s = this.localState || {};
       const results = s.results || [];
+      const isReinforce = s.isReinforce || s.mode === 'reinforce_missed';
+
+      if (isReinforce) {
+        this.containerEl.innerHTML = `
+          <div class="space-y-5 animate-fadeIn">
+            <!-- Celebration Header -->
+            <div class="glass-panel rounded-3xl p-6 text-center space-y-3 border border-emerald-500/30 shadow-2xl relative overflow-hidden">
+              <div class="inline-flex h-16 w-16 rounded-2xl bg-gradient-to-tr from-rose-500 via-amber-500 to-emerald-500 items-center justify-center text-3xl shadow-xl shadow-emerald-500/25">
+                🎉
+              </div>
+              <div class="space-y-1">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  错词循环强化圆满成功
+                </span>
+                <h2 class="text-xl sm:text-2xl font-black text-white pt-1">全量错词已全部攻克达标！</h2>
+                <p class="text-xs text-slate-300">
+                  历经 <strong>${s.totalRounds || 1}</strong> 轮强化循环，所有错词已达到评分 ≥ 3 分达标线。
+                </p>
+              </div>
+
+              <!-- Metrics Grid -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2">
+                <div class="glass-card rounded-2xl p-3">
+                  <div class="text-xs text-slate-400">攻克词数</div>
+                  <div class="text-xl font-bold text-white mt-0.5">${s.totalCount || results.length}</div>
+                </div>
+                <div class="glass-card rounded-2xl p-3">
+                  <div class="text-xs text-slate-400">循环轮次</div>
+                  <div class="text-xl font-bold text-violet-300 mt-0.5">${s.totalRounds || 1} 轮</div>
+                </div>
+                <div class="glass-card rounded-2xl p-3">
+                  <div class="text-xs text-slate-400">攻克达标率</div>
+                  <div class="text-xl font-bold text-emerald-400 mt-0.5">100%</div>
+                </div>
+                <div class="glass-card rounded-2xl p-3">
+                  <div class="text-xs text-slate-400">遗留错词</div>
+                  <div class="text-xl font-bold text-emerald-400 mt-0.5">0</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Words Breakdown List -->
+            <div class="glass-panel rounded-3xl p-4 sm:p-5 border border-white/10 space-y-3">
+              <div class="text-xs font-semibold text-slate-300 flex items-center justify-between">
+                <span>强化攻克单词明细:</span>
+                <span class="text-slate-400">${results.length} 词</span>
+              </div>
+
+              <div class="space-y-2 max-h-64 overflow-y-auto">
+                ${results.map(r => `
+                  <div class="p-2.5 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between gap-3 text-xs">
+                    <div class="space-y-0.5">
+                      <div class="font-thai font-bold text-white text-sm">${r.thaiWord || '--'}</div>
+                      <div class="text-[11px] text-slate-400">${r.meaning || '--'} · <span class="font-mono text-violet-300">${r.phonetic || ''}</span></div>
+                    </div>
+                    <div class="text-right">
+                      <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        ✅ 攻克达标 (第${r.round || 1}轮 · 评分 ${r.rating})
+                      </span>
+                      <div class="text-[10px] text-slate-500 mt-0.5">${r.interval || 1} 天后复习</div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
 
       this.containerEl.innerHTML = `
         <div class="space-y-5 animate-fadeIn">
@@ -430,8 +659,300 @@
 
       const histEl = document.getElementById('sideCardHistory');
       if (histEl && s.history) {
-        histEl.innerText = `复习:${s.history.repetition || 0}次 · 间隔:${s.history.interval || 0}天`;
+        if (s.mode === 'reinforce_missed') {
+          histEl.innerHTML = `<span class="text-rose-400 font-semibold"><i class="ph-bold ph-lightning"></i> 失误:${s.history.missCount || 1}次</span><span>·</span><span>复习:${s.history.repetition != null ? s.history.repetition : 0}次</span><span>·</span><span>间隔:${s.history.interval != null ? s.history.interval : 1}天</span>`;
+        } else {
+          histEl.innerText = `复习:${s.history.repetition != null ? s.history.repetition : 0}次 · 间隔:${s.history.interval != null ? s.history.interval : 1}天`;
+        }
       }
+
+      // ==========================================
+      // Incremental patch handling for Core Words
+      // ==========================================
+      if (this.currentView === 'viewCoreWordsSession' || (s.appType === 'core_words' && this.currentView === 'viewSession')) {
+        const shrouded = document.getElementById('sideCoreWordShrouded');
+        const revealed = document.getElementById('sideCoreWordRevealed');
+        const stepDot = document.getElementById('sideCoreStepDot');
+        const stepLabel = document.getElementById('sideCoreStepLabel');
+
+        if (shrouded && revealed && s.detailRevealed !== undefined) {
+          if (s.detailRevealed) {
+            shrouded.classList.add('hidden');
+            revealed.classList.remove('hidden');
+            if (stepDot) stepDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+            if (stepLabel) stepLabel.innerText = '步骤 2/2: 已翻开释义与例句精读';
+          } else {
+            shrouded.classList.remove('hidden');
+            revealed.classList.add('hidden');
+            if (stepDot) stepDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+            if (stepLabel) stepLabel.innerText = '步骤 1/2: 认读泰语单词 (释义遮蔽中)';
+          }
+        }
+
+        const thaiEl = document.getElementById('sideCoreThaiWord');
+        if (thaiEl && s.word?.word) thaiEl.innerText = s.word.word;
+
+        const ipaEl = document.getElementById('sideCoreIpa');
+        if (ipaEl && s.word?.ipa) {
+          ipaEl.innerText = s.word.ipa;
+          ipaEl.classList.remove('hidden');
+        }
+
+        const progText = document.getElementById('sideCoreProgressText');
+        if (progText && s.progressText) progText.innerText = s.progressText;
+
+        const progBar = document.getElementById('sideCoreProgressBar');
+        if (progBar && s.progressPercent !== undefined) progBar.style.width = `${s.progressPercent}%`;
+
+        const progPct = document.getElementById('sideCoreProgressPct');
+        if (progPct && s.progressPercent !== undefined) progPct.innerText = `${s.progressPercent}%`;
+
+        const wordIdx = document.getElementById('sideCoreWordIndex');
+        if (wordIdx && s.currentIndex && s.totalWords) wordIdx.innerText = `#${s.currentIndex} / ${s.totalWords}`;
+
+        const meaningsList = document.getElementById('sideCoreMeaningsList');
+        if (meaningsList && s.word) {
+          meaningsList.innerHTML = this.renderCoreWordMeaningsHtml(s.word);
+        }
+      }
+    }
+
+    // =========================================================================
+    // View 4: Core Words Selection & Dashboard View
+    // =========================================================================
+    renderCoreWordsSelectionView() {
+      const s = this.localState || {};
+      this.containerEl.innerHTML = `
+        <div class="space-y-5 animate-fadeIn">
+          <!-- Standby Hero Card -->
+          <div class="glass-panel rounded-3xl p-6 sm:p-8 text-center space-y-4 border border-white/10 shadow-2xl relative overflow-hidden">
+            <div class="inline-flex h-16 w-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 items-center justify-center text-3xl shadow-xl shadow-indigo-500/25">
+              <i class="ph-bold ph-book-open"></i>
+            </div>
+            <div class="space-y-1">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                伴侣屏已就绪 · 核心词汇模式
+              </div>
+              <h2 class="text-xl sm:text-2xl font-bold text-white pt-2">${s.wordsetTitle ? `已选「${this.escape(s.wordsetTitle)}」` : (s.lessonTitle ? this.escape(s.lessonTitle) : '等待主机开始自测')}</h2>
+              <p class="text-xs sm:text-sm text-slate-400">
+                ${s.courseName ? `${this.escape(s.courseName)} · ` : ''}在 iMac 操作台开启自测后，单词卡片将同步在此屏展现。
+              </p>
+            </div>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="grid grid-cols-3 gap-3">
+            <div class="glass-card rounded-2xl p-4 text-center">
+              <div class="text-2xl sm:text-3xl font-black text-indigo-300">${s.totalWords != null ? s.totalWords : '--'}</div>
+              <div class="text-[11px] text-slate-400 mt-1">词集总词数</div>
+            </div>
+            <div class="glass-card rounded-2xl p-4 text-center">
+              <div class="text-2xl sm:text-3xl font-black text-emerald-400">${s.reviewedCount != null ? s.reviewedCount : '--'}</div>
+              <div class="text-[11px] text-slate-400 mt-1">已完成复习</div>
+            </div>
+            <div class="glass-card rounded-2xl p-4 text-center">
+              <div class="text-2xl sm:text-3xl font-black text-amber-400">${s.pendingCount != null ? s.pendingCount : '--'}</div>
+              <div class="text-[11px] text-slate-400 mt-1">待复习自测</div>
+            </div>
+          </div>
+
+          <!-- Passive Tip Card -->
+          <div class="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center shrink-0 text-lg">
+              <i class="ph-bold ph-lightbulb-filament"></i>
+            </div>
+            <div class="text-xs text-slate-400 leading-relaxed">
+              自测开始后，伴侣屏将首先显示泰语原词供认读回忆；待导师在主操作台点击「展示解释与例句」后，完整释义与例句精讲将同步揭晓。
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // View 5: Core Words Active Flashcard Session View
+    // =========================================================================
+    renderCoreWordsSessionView() {
+      const s = this.localState || {};
+      const w = s.word || {};
+      const isRevealed = Boolean(s.detailRevealed);
+
+      this.containerEl.innerHTML = `
+        <div class="space-y-4 animate-fadeIn">
+          <!-- Session Header Bar -->
+          <div class="glass-panel rounded-2xl px-4 py-3 flex items-center justify-between border border-white/10">
+            <div class="flex items-center gap-2 truncate">
+              <span class="text-xs font-bold text-indigo-300 bg-indigo-500/20 px-2.5 py-0.5 rounded-full border border-indigo-500/30 truncate">
+                📖 ${this.escape(s.wordsetTitle || s.lessonTitle || '核心词自测')}
+              </span>
+              <span class="text-slate-500 text-xs">·</span>
+              <span id="sideCoreProgressText" class="text-xs text-slate-300 font-medium whitespace-nowrap">${s.progressText || `进度: ${s.currentIndex || 1} / ${s.totalWords || 1}`}</span>
+            </div>
+            <div class="text-xs font-bold text-indigo-400 font-mono shrink-0" id="sideCoreProgressPct">
+              ${s.progressPercent != null ? s.progressPercent + '%' : ''}
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden -mt-2">
+            <div id="sideCoreProgressBar" class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full transition-all duration-300" style="width: ${s.progressPercent || 0}%"></div>
+          </div>
+
+          <!-- Main Interactive Display Card -->
+          <div class="glass-panel rounded-3xl p-5 sm:p-7 border border-white/10 shadow-2xl min-h-[380px] flex flex-col justify-between relative overflow-hidden">
+            
+            <!-- Header Step Indicator -->
+            <div class="flex items-center justify-between text-xs text-slate-400 pb-2 border-b border-white/5">
+              <div class="flex items-center gap-2">
+                <span id="sideCoreStepDot" class="w-2 h-2 rounded-full ${isRevealed ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'}"></span>
+                <span id="sideCoreStepLabel" class="font-medium">${isRevealed ? '步骤 2/2: 已翻开释义与例句精读' : '步骤 1/2: 认读泰语单词 (释义遮蔽中)'}</span>
+              </div>
+              <div class="text-[11px] text-slate-400 font-mono" id="sideCoreWordIndex">
+                #${s.currentIndex || 1} / ${s.totalWords || 1}
+              </div>
+            </div>
+
+            <!-- Thai Word Display Section (Always visible) -->
+            <div class="py-4 text-center space-y-3">
+              <div id="sideCoreThaiWord" class="font-thai text-4xl sm:text-5xl font-black text-white tracking-wider py-1 select-all transition-all duration-300">
+                ${this.escape(w.word || '--')}
+              </div>
+              <div class="flex items-center justify-center gap-2 flex-wrap">
+                ${w.ipa ? `
+                  <span id="sideCoreIpa" class="px-3 py-1 rounded-xl bg-indigo-500/20 text-indigo-300 font-mono text-xs font-semibold border border-indigo-500/30">
+                    ${this.escape(w.ipa)}
+                  </span>
+                ` : '<span id="sideCoreIpa" class="hidden"></span>'}
+                <span id="sideCoreSoundWave" class="sound-wave opacity-30 scale-90 transition-all duration-300">
+                  <span class="sound-bar"></span>
+                  <span class="sound-bar"></span>
+                  <span class="sound-bar"></span>
+                  <span class="sound-bar"></span>
+                  <span class="sound-bar"></span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Shrouded Placeholder Section (When detailRevealed is false) -->
+            <div id="sideCoreWordShrouded" class="${isRevealed ? 'hidden' : ''} py-5 flex flex-col items-center justify-center text-center space-y-4">
+              <div class="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-2xl text-amber-400 shadow-inner">
+                <i class="ph-bold ph-eye-slash"></i>
+              </div>
+              <div class="max-w-xs mx-auto p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/20 space-y-1.5">
+                <div class="text-sm font-bold text-indigo-200 flex items-center justify-center gap-1.5">
+                  <i class="ph-bold ph-lock-key"></i>
+                  <span>词汇释义与例句遮蔽中</span>
+                </div>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                  请先在脑海中回忆该词词义、词性及搭配。<br>导师在主屏点击<strong>「展示解释与例句」</strong>后将同步揭晓。
+                </p>
+              </div>
+              <div class="text-[11px] text-slate-500 flex items-center gap-1.5">
+                <i class="ph-bold ph-hourglass-high text-amber-400 animate-spin"></i>
+                <span>等待主操作台指令...</span>
+              </div>
+            </div>
+
+            <!-- Revealed Meanings & Examples Section (When detailRevealed is true) -->
+            <div id="sideCoreWordRevealed" class="${isRevealed ? '' : 'hidden'} py-2 space-y-4 animate-fadeIn">
+              <div id="sideCoreMeaningsList" class="space-y-3 max-h-64 sm:max-h-72 overflow-y-auto pr-1">
+                ${this.renderCoreWordMeaningsHtml(w)}
+              </div>
+            </div>
+
+            <!-- Footer Status -->
+            <div class="pt-3 text-center text-[11px] text-slate-500 border-t border-white/5 flex items-center justify-center gap-1">
+              <i class="ph-bold ph-device-mobile text-indigo-400"></i>
+              <span>第二屏幕被动同步中 · 所有操作由 iMac 主机控制</span>
+            </div>
+
+          </div>
+        </div>
+      `;
+    }
+
+    renderCoreWordMeaningsHtml(word) {
+      if (!word) return `<div class="p-3 rounded-xl bg-white/5 text-xs text-slate-400 text-center">暂无释义</div>`;
+
+      if (Array.isArray(word.meanings) && word.meanings.length > 0) {
+        return word.meanings.map((m) => `
+          <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2.5">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold px-2 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono">
+                ${this.escape(m.part_of_speech || '词性')}
+              </span>
+              <span class="text-sm font-bold text-white">${this.escape(m.meaning || '')}</span>
+            </div>
+            ${Array.isArray(m.examples) && m.examples.length > 0 ? `
+              <div class="border-t border-white/5 pt-2 space-y-1.5">
+                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                  <i class="ph-bold ph-chat-centered-text text-indigo-400"></i>
+                  <span>对照例句</span>
+                </div>
+                ${m.examples.map(ex => `
+                  <div class="p-2 rounded-xl bg-white/5 border border-white/5 space-y-0.5">
+                    <div class="font-thai text-sm text-indigo-200 font-medium">${this.escape(ex.sentence || '')}</div>
+                    <div class="text-xs text-slate-300">${this.escape(ex.meaning || '')}</div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+          </div>
+        `).join('');
+      } else {
+        return `
+          <div class="p-4 rounded-2xl bg-white/5 border border-white/10 text-center space-y-1">
+            ${word.pos ? `<span class="text-xs font-mono text-indigo-300 font-bold">[${this.escape(word.pos)}]</span>` : ''}
+            <div class="text-base font-bold text-white">${this.escape(word.meaning || '暂无释义')}</div>
+          </div>
+        `;
+      }
+    }
+
+    // =========================================================================
+    // View 6: Core Words Summary View
+    // =========================================================================
+    renderCoreWordsSummaryView() {
+      const s = this.localState || {};
+      this.containerEl.innerHTML = `
+        <div class="space-y-5 animate-fadeIn">
+          <!-- Celebration Header -->
+          <div class="glass-panel rounded-3xl p-6 text-center space-y-3 border border-white/10 shadow-2xl">
+            <div class="inline-flex h-16 w-16 rounded-2xl bg-gradient-to-tr from-indigo-500 to-emerald-500 items-center justify-center text-3xl shadow-xl shadow-indigo-500/25">
+              🎉
+            </div>
+            <h2 class="text-xl sm:text-2xl font-black text-white">核心词汇自测已顺利完成！</h2>
+            <p class="text-xs text-slate-400">${s.wordsetTitle ? `「${this.escape(s.wordsetTitle)}」` : ''}复习结果与熟练度已保存至本地数据库</p>
+
+            <!-- Metrics Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-2">
+              <div class="glass-card rounded-2xl p-3">
+                <div class="text-xs text-slate-400">自测词数</div>
+                <div class="text-xl font-bold text-white mt-0.5">${s.totalCount != null ? s.totalCount : '--'}</div>
+              </div>
+              <div class="glass-card rounded-2xl p-3">
+                <div class="text-xs text-slate-400">平均评分</div>
+                <div class="text-xl font-bold text-emerald-400 mt-0.5">${s.avgScore != null ? s.avgScore : '--'}</div>
+              </div>
+              <div class="glass-card rounded-2xl p-3 col-span-2 sm:col-span-1">
+                <div class="text-xs text-slate-400">复习完成率</div>
+                <div class="text-xl font-bold text-indigo-300 mt-0.5">100%</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Passive Tip Card -->
+          <div class="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center shrink-0 text-lg">
+              <i class="ph-bold ph-check-circle"></i>
+            </div>
+            <div class="text-xs text-slate-400 leading-relaxed">
+              导师在主操作台可选择再次从头复习或返回课时词汇列表，伴侣屏将继续实时同步。
+            </div>
+          </div>
+        </div>
+      `;
     }
   }
 

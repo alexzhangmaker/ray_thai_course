@@ -278,6 +278,63 @@ test('SideApp Integration: HTTP APIs, WS Connect, Broadcast, Reconnect and Maste
     assert.ok(patchMsg);
     assert.equal(patchMsg.payload.ops[0].path, 'phase');
 
+    // 5.5 Test Core Words session broadcast & detailRevealed incremental patch
+    const initialCoreState = {
+      appType: 'core_words',
+      currentIndex: 1,
+      totalWords: 10,
+      detailRevealed: false,
+      word: { id: 'cw_001', word: 'ภูมิฐาน', ipa: '/pʰuːm˧.tʰaːn˩˩˦/' }
+    };
+
+    await fetch(`http://127.0.0.1:${TEST_PORT}/sideapp/broadcast`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: sessRes.sessionId,
+        message: {
+          type: 'render.full',
+          payload: {
+            view: 'viewCoreWordsSession',
+            state: initialCoreState,
+            meta: { title: 'ThaiNotes 伴侣屏 · 核心词汇复习' }
+          }
+        }
+      })
+    });
+
+    await new Promise(r => setTimeout(r, 80));
+    const coreFullMsg = receivedMessages.filter(m => m.type === 'render.full').pop();
+    assert.ok(coreFullMsg);
+    assert.equal(coreFullMsg.payload.view, 'viewCoreWordsSession');
+    assert.equal(coreFullMsg.payload.state.detailRevealed, false);
+    assert.equal(coreFullMsg.payload.state.word.word, 'ภูมิฐาน');
+
+    // Reveal command from master UI
+    const revealedCoreState = { ...initialCoreState, detailRevealed: true };
+    const corePatchOps = computePatch(initialCoreState, revealedCoreState);
+    assert.equal(corePatchOps.length, 1);
+    assert.equal(corePatchOps[0].path, 'detailRevealed');
+    assert.equal(corePatchOps[0].value, true);
+
+    await fetch(`http://127.0.0.1:${TEST_PORT}/sideapp/broadcast`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: sessRes.sessionId,
+        message: {
+          type: 'render.patch',
+          payload: { ops: corePatchOps }
+        }
+      })
+    });
+
+    await new Promise(r => setTimeout(r, 80));
+    const corePatchMsg = receivedMessages.filter(m => m.type === 'render.patch').pop();
+    assert.ok(corePatchMsg);
+    assert.equal(corePatchMsg.payload.ops[0].path, 'detailRevealed');
+    assert.equal(corePatchMsg.payload.ops[0].value, true);
+
     // 6. Test unauthorized connection rejection
     const badWs = new WebSocket(`ws://127.0.0.1:${TEST_PORT}/sideapp/ws?session=${sessRes.sessionId}&token=fake_token`);
     let badWsRejected = false;

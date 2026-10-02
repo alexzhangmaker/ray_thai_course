@@ -1091,10 +1091,12 @@
 
             try {
                 if (!viewName) {
+                    const isTransition = !document.getElementById('modalInterRoundTransition')?.classList.contains('hidden');
                     const isSelection = !document.getElementById('viewSelection')?.classList.contains('hidden');
                     const isSession = !document.getElementById('viewSession')?.classList.contains('hidden');
                     const isSummary = !document.getElementById('viewSummary')?.classList.contains('hidden');
-                    if (isSession) viewName = 'viewSession';
+                    if (isTransition) viewName = 'viewReinforceTransition';
+                    else if (isSession) viewName = 'viewSession';
                     else if (isSummary) viewName = 'viewSummary';
                     else viewName = 'viewSelection';
                 }
@@ -1103,10 +1105,13 @@
                     const due = document.getElementById('statDueCount')?.innerText || '--';
                     const total = document.getElementById('statTotalWords')?.innerText || '--';
                     const mastered = document.getElementById('statMasteredCount')?.innerText || '--';
+                    const missedStats = typeof getDailyMissedStats === 'function' ? getDailyMissedStats() : null;
+                    const pendingMissed = missedStats ? missedStats.totalPending : 0;
                     window.sideAppBridge.pushState('viewSelection', {
                         dueCount: due,
                         totalWords: total,
                         masteredCount: mastered,
+                        pendingMissedCount: pendingMissed,
                         statusText: '就绪 · 等待主机开始听写'
                     }, forceFull);
                 } else if (viewName === 'viewSession') {
@@ -1117,9 +1122,20 @@
                     const accuracyText = document.getElementById('sessionAccuracyText')?.innerText || '100%';
                     const progressPercent = Math.round((currentIndex / activeQueue.length) * 100);
 
+                    const isReinforce = currentSessionMode === 'reinforce_missed';
+                    const rep = currentWord.repetition != null ? Number(currentWord.repetition) : 0;
+                    const intv = currentWord.interval != null ? Number(currentWord.interval) : (currentWord.intervalDays != null ? Number(currentWord.intervalDays) : 1);
+                    const missCount = currentWord.missCount || 1;
+
                     const state = {
                         phase: isRevealed ? 'revealed' : 'writing',
                         mode: currentSessionMode,
+                        isReinforce: isReinforce,
+                        reinforceTitle: reinforceState ? reinforceState.sessionTitle : '错词循环强化',
+                        roundNum: reinforceState ? reinforceState.roundNum : 1,
+                        remainingWords: reinforceState ? (reinforceState.totalUniqueWords - reinforceState.masteredSoFar.size) : 0,
+                        totalUniqueWords: reinforceState ? reinforceState.totalUniqueWords : activeQueue.length,
+                        masteredCount: reinforceState ? reinforceState.masteredSoFar.size : 0,
                         progressText: progressText,
                         progressPercent: progressPercent,
                         accuracyText: accuracyText,
@@ -1127,8 +1143,10 @@
                         totalWords: activeQueue.length,
                         replayCount: replayCount || 1,
                         history: {
-                            repetition: currentWord.repetition || 0,
-                            interval: currentWord.interval || 0
+                            repetition: rep,
+                            interval: intv,
+                            missCount: missCount,
+                            lastDrillScore: currentWord.lastDrillScore
                         }
                     };
 
@@ -1140,21 +1158,67 @@
                     }
 
                     window.sideAppBridge.pushState('viewSession', state, forceFull);
+                } else if (viewName === 'viewReinforceTransition') {
+                    if (!reinforceState) return;
+                    const round = reinforceState.roundNum;
+                    const passed = reinforceState.roundPassedWords.length;
+                    const failed = reinforceState.roundFailedWords.length;
+                    const failedWords = (reinforceState.roundFailedWords || []).map(w => ({
+                        thaiWord: w.thaiWord || '',
+                        phonetic: w.phonetic || w.transliteration || '',
+                        meaning: w.meaning || '',
+                        missCount: w.missCount || 1
+                    }));
+
+                    window.sideAppBridge.pushState('viewReinforceTransition', {
+                        title: `第 ${round} 轮强化结束`,
+                        roundNum: round,
+                        nextRoundNum: round + 1,
+                        passedCount: passed,
+                        failedCount: failed,
+                        failedWords: failedWords,
+                        sessionTitle: reinforceState.sessionTitle || '错词强化循环',
+                        statusText: `等待主机开启第 ${round + 1} 轮循环...`
+                    }, forceFull);
                 } else if (viewName === 'viewSummary') {
                     const total = document.getElementById('summaryTotalCount')?.innerText || sessionResults.length;
                     const correct = document.getElementById('summaryCorrectCount')?.innerText || 0;
                     const accuracy = document.getElementById('summaryAccuracy')?.innerText || '100%';
                     const forgot = document.getElementById('summaryForgotCount')?.innerText || 0;
 
-                    const results = (sessionResults || []).map(r => ({
-                        thaiWord: r.word?.thaiWord || '',
-                        phonetic: r.word?.phonetic || '',
-                        meaning: r.word?.meaning || '',
-                        rating: r.rating,
-                        interval: r.sm2?.current?.interval || 1
-                    }));
+                    const isReinforce = currentSessionMode === 'reinforce_missed';
+                    let results = [];
+
+                    if (isReinforce) {
+                        const finalMap = new Map();
+                        (sessionResults || []).forEach(r => {
+                            if (r.word && r.word.id) finalMap.set(r.word.id, r);
+                        });
+                        results = Array.from(finalMap.values()).map(r => ({
+                            thaiWord: r.word?.thaiWord || '',
+                            phonetic: r.word?.phonetic || r.word?.transliteration || '',
+                            meaning: r.word?.meaning || '',
+                            rating: r.rating,
+                            round: r.round || 1,
+                            conquered: true,
+                            interval: r.sm2?.current?.interval || 1,
+                            nextReviewDate: r.sm2?.current?.nextReviewDate || null
+                        }));
+                    } else {
+                        results = (sessionResults || []).map(r => ({
+                            thaiWord: r.word?.thaiWord || '',
+                            phonetic: r.word?.phonetic || r.word?.transliteration || '',
+                            meaning: r.word?.meaning || '',
+                            rating: r.rating,
+                            interval: r.sm2?.current?.interval || 1
+                        }));
+                    }
 
                     window.sideAppBridge.pushState('viewSummary', {
+                        mode: currentSessionMode,
+                        isReinforce: isReinforce,
+                        reinforceTitle: reinforceState?.sessionTitle || '错词循环强化',
+                        totalRounds: reinforceState ? reinforceState.roundNum : 1,
                         totalCount: total,
                         correctCount: correct,
                         accuracy: accuracy,
@@ -1872,6 +1936,10 @@
                 if (word.meaning) existing.meaning = word.meaning;
                 if (word.audioUrl) existing.audioUrl = word.audioUrl;
                 if (word.examples && word.examples.length) existing.examples = word.examples;
+                if (word.repetition != null) existing.repetition = Number(word.repetition);
+                if (word.interval != null) existing.interval = Number(word.interval);
+                else if (word.intervalDays != null) existing.interval = Number(word.intervalDays);
+                if (word.easinessFactor != null) existing.easinessFactor = Number(word.easinessFactor);
             } else {
                 group.words.push({
                     id: word.id,
@@ -1880,6 +1948,9 @@
                     meaning: word.meaning || '',
                     audioUrl: word.audioUrl || '',
                     examples: word.examples || [],
+                    repetition: word.repetition != null ? Number(word.repetition) : 0,
+                    interval: word.interval != null ? Number(word.interval) : (word.intervalDays != null ? Number(word.intervalDays) : 1),
+                    easinessFactor: word.easinessFactor != null ? Number(word.easinessFactor) : 2.5,
                     firstMissedAt: nowIso,
                     lastMissedAt: nowIso,
                     missCount: 1,
@@ -1962,6 +2033,9 @@
                             meaning: r.meaning || '',
                             audioUrl: r.audioUrl || '',
                             examples: [],
+                            repetition: r.newRepetition ?? r.prevRepetition ?? 0,
+                            interval: r.newInterval ?? r.prevInterval ?? 1,
+                            easinessFactor: r.newEF ?? r.prevEF ?? 2.5,
                             firstMissedAt: r.reviewedAt || new Date().toISOString(),
                             lastMissedAt: r.reviewedAt || new Date().toISOString(),
                             missCount: 1,
@@ -2430,19 +2504,28 @@
             currentIndex = 0;
             sessionResults = [];
 
+            // Sanitize words so repetition/interval/missCount are strictly numbers
+            const sanitizedWords = words.map(w => ({
+                ...w,
+                repetition: w.repetition != null ? Number(w.repetition) : 0,
+                interval: w.interval != null ? Number(w.interval) : (w.intervalDays != null ? Number(w.intervalDays) : 1),
+                easinessFactor: w.easinessFactor != null ? Number(w.easinessFactor) : 2.5,
+                missCount: w.missCount != null ? Number(w.missCount) : 1
+            }));
+
             reinforceState = {
                 targetDateStr: dateSource || 'custom',
                 sessionTitle: title,
                 roundNum: 1,
-                roundInitialWords: [...words],
+                roundInitialWords: [...sanitizedWords],
                 roundPassedWords: [],
                 roundFailedWords: [],
                 masteredSoFar: new Set(),
-                totalUniqueWords: words.length,
-                allInitialWords: [...words]
+                totalUniqueWords: sanitizedWords.length,
+                allInitialWords: [...sanitizedWords]
             };
 
-            activeQueue = [...words];
+            activeQueue = [...sanitizedWords];
 
             // Switch view to session
             document.getElementById('viewSelection').classList.add('hidden');
@@ -2472,6 +2555,13 @@
         function handleReinforceWordResult(word, rating, sm2) {
             if (!reinforceState) return;
 
+            if (sm2?.current) {
+                word.repetition = sm2.current.repetition != null ? Number(sm2.current.repetition) : (word.repetition || 0);
+                word.interval = sm2.current.interval != null ? Number(sm2.current.interval) : (word.interval || 1);
+                word.easinessFactor = sm2.current.easinessFactor != null ? Number(sm2.current.easinessFactor) : (word.easinessFactor || 2.5);
+            }
+            word.lastDrillScore = Number(rating);
+
             if (rating >= 3) {
                 // Conquered!
                 reinforceState.roundPassedWords.push(word);
@@ -2481,6 +2571,7 @@
                 showToast(`攻克达标 (评分 ${rating})！下次排期: ${nextDays} 天后`, 'success');
             } else {
                 // Failed (< 3), repeat next round!
+                word.missCount = (word.missCount || 1) + 1;
                 reinforceState.roundFailedWords.push(word);
                 recordMissedWord(word, rating, reinforceState.targetDateStr === 'all_pending' ? null : reinforceState.targetDateStr);
                 showToast(`评分 ${rating} (< 3 忘记)，本词将自动进入下一轮强化练习！`, 'warning');
@@ -2535,6 +2626,9 @@
             }
 
             modal.classList.remove('hidden');
+
+            // Sync inter-round transition to SideApp companion screen
+            syncSideAppState('viewReinforceTransition');
         }
 
         function continueNextReinforceRound() {
@@ -2643,12 +2737,14 @@
                 console.warn('Timer initialization error:', timerErr);
             }
 
-            // SideApp: Sync active view immediately when companion device connects
+            // SideApp: Sync active view only when a NEW companion device connects (not on every polling tick)
             if (window.sideAppBridge) {
+                let lastClientCount = 0;
                 window.sideAppBridge.onStatusChange((status) => {
-                    if (status.enabled && status.clientCount > 0) {
+                    if (status.enabled && status.clientCount > lastClientCount) {
                         syncSideAppState(null, true);
                     }
+                    lastClientCount = status.clientCount || 0;
                 });
             }
 
@@ -3203,11 +3299,28 @@
             }
 
             // Word History Stats in header
-            document.getElementById('cardHistoryStats').innerHTML = `
-                <span>复习次数: <strong class="text-white">${word.repetition}</strong></span>
-                <span>·</span>
-                <span>当前间隔: <strong class="text-white">${word.interval}天</strong></span>
-            `;
+            const repetition = word.repetition != null ? Number(word.repetition) : 0;
+            const interval = word.interval != null ? Number(word.interval) : (word.intervalDays != null ? Number(word.intervalDays) : 1);
+
+            if (currentSessionMode === 'reinforce_missed') {
+                const missCount = word.missCount || 1;
+                document.getElementById('cardHistoryStats').innerHTML = `
+                    <span class="inline-flex items-center gap-1 text-rose-400 font-semibold">
+                        <i class="ph-bold ph-lightning"></i>
+                        失误: <strong>${missCount}次</strong>
+                    </span>
+                    <span class="text-slate-600">·</span>
+                    <span>复习次数: <strong class="text-white">${repetition}</strong></span>
+                    <span class="text-slate-600">·</span>
+                    <span>当前间隔: <strong class="text-white">${interval}天</strong></span>
+                `;
+            } else {
+                document.getElementById('cardHistoryStats').innerHTML = `
+                    <span>复习次数: <strong class="text-white">${repetition}</strong></span>
+                    <span>·</span>
+                    <span>当前间隔: <strong class="text-white">${interval}天</strong></span>
+                `;
+            }
 
             // Sync state to SideApp companion screen
             syncSideAppState('viewSession');
@@ -3389,6 +3502,8 @@
         }
 
         function returnToSelection() {
+            const modalTransition = document.getElementById('modalInterRoundTransition');
+            if (modalTransition) modalTransition.classList.add('hidden');
             document.getElementById('viewSession').classList.add('hidden');
             document.getElementById('viewSummary').classList.add('hidden');
             document.getElementById('viewSelection').classList.remove('hidden');
@@ -3446,6 +3561,13 @@
                     if (e.key === 'Enter' || e.code === 'Space') {
                         e.preventDefault();
                         continueNextReinforceRound();
+                        return;
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        if (confirm('确定要中断错词强化练习并返回主界面吗？')) {
+                            modalInterRound.classList.add('hidden');
+                            returnToSelection();
+                        }
                         return;
                     }
                 }

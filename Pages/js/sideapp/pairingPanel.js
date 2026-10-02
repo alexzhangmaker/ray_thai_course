@@ -21,8 +21,25 @@
     }
 
     setup() {
+      this.ensureStyles();
       this.renderModal();
       this.bindBridge();
+    }
+
+    ensureStyles() {
+      if (!document.getElementById('sideAppPairingStyles')) {
+        const style = document.createElement('style');
+        style.id = 'sideAppPairingStyles';
+        style.textContent = `
+          .glass-panel {
+            background: rgba(26, 22, 48, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+          }
+        `;
+        document.head.appendChild(style);
+      }
     }
 
     bindBridge() {

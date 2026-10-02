@@ -45,6 +45,27 @@
             padding-right: env(safe-area-inset-right, 0px);
         }
 
+        /* Fullscreen & pseudo-fullscreen styling */
+        html, html:fullscreen, html:-webkit-full-screen, body:fullscreen, body:-webkit-full-screen {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+        }
+
+        ::backdrop {
+            background: #07060d;
+        }
+
+        body.sideapp-pseudo-fullscreen {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            z-index: 40;
+            overflow-y: auto;
+        }
+
         .font-thai {
             font-family: 'Noto Serif Thai', 'Sarabun', serif;
         }
@@ -109,7 +130,7 @@
 <body class="flex flex-col justify-between selection:bg-violet-500 selection:text-white">
 
     <!-- Top Connection / Status Bar -->
-    <header class="w-full max-w-lg mx-auto px-4 py-3 flex items-center justify-between border-b border-white/10 shrink-0">
+    <header class="w-full max-w-lg mx-auto px-4 py-3 flex items-center justify-between border-b border-white/10 shrink-0 select-none">
         <div class="flex items-center gap-2.5">
             <div class="h-8 w-8 rounded-xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 flex items-center justify-center text-white text-base shadow-md">
                 <i class="ph-bold ph-device-mobile"></i>
@@ -117,9 +138,9 @@
             <div>
                 <h1 class="text-sm font-bold text-white leading-tight flex items-center gap-1.5">
                     ThaiNotes 伴侣屏
-                    <span class="text-[9px] uppercase font-bold px-1.5 py-0.2 rounded bg-violet-500/20 text-violet-300 border border-violet-500/30">SideApp</span>
+                    <span id="sideAppBadge" class="text-[9px] uppercase font-bold px-1.5 py-0.2 rounded bg-violet-500/20 text-violet-300 border border-violet-500/30">SideApp</span>
                 </h1>
-                <p class="text-[10px] text-slate-400">第二屏幕 · 被动呈现</p>
+                <p id="sideAppSubheader" class="text-[10px] text-slate-400">第二屏幕 · 被动呈现</p>
             </div>
         </div>
 
@@ -129,6 +150,11 @@
                 <span id="sideAppHeaderDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
                 <span id="sideAppHeaderText" class="text-[11px] font-medium">连接中...</span>
             </div>
+
+            <!-- Fullscreen Toggle button -->
+            <button id="sideAppFullscreenBtn" onclick="toggleSideAppFullscreen()" title="全屏显示 (快捷键 F)" aria-label="全屏显示" class="h-7 w-7 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition">
+                <i id="sideAppFullscreenIcon" class="ph-bold ph-arrows-out text-xs"></i>
+            </button>
 
             <!-- Manual Pairing Code button -->
             <button onclick="window.sideAppWsClient.showPairingInputScreen()" title="重新配对" class="h-7 w-7 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition">
@@ -141,6 +167,12 @@
     <div id="sideAppStatusBanner" class="fixed top-3 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-violet-600/90 text-white text-xs font-semibold shadow-lg backdrop-blur-md hidden items-center gap-2 border border-violet-400/30">
         <i class="ph-bold ph-arrows-clockwise animate-spin text-sm"></i>
         <span id="sideAppStatusBannerText">正在连接主屏...</span>
+    </div>
+
+    <!-- Floating Toast Notification -->
+    <div id="sideAppToast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-slate-900/90 text-white text-xs font-medium shadow-xl backdrop-blur-md pointer-events-none transition-all duration-300 opacity-0 translate-y-2 border border-white/10 flex items-center gap-2">
+        <i id="sideAppToastIcon" class="ph-bold ph-arrows-out text-violet-400"></i>
+        <span id="sideAppToastText"></span>
     </div>
 
     <!-- Main Dynamic Content Container -->
@@ -158,8 +190,10 @@
     </main>
 
     <!-- Bottom Footer Tip -->
-    <footer class="w-full max-w-lg mx-auto px-4 py-2.5 text-center text-[10px] text-slate-500 shrink-0">
-        ThaiNotes SideApp v1.0 · 单向无状态渲染器
+    <footer class="w-full max-w-lg mx-auto px-4 py-2.5 text-center text-[10px] text-slate-500 shrink-0 flex items-center justify-center gap-2">
+        <span>ThaiNotes SideApp v1.0 · 单向无状态渲染器</span>
+        <span>·</span>
+        <button onclick="toggleSideAppFullscreen()" class="hover:text-slate-300 transition underline underline-offset-2">切换全屏</button>
     </footer>
 
     <!-- Manual Pairing Code Modal -->
@@ -199,9 +233,162 @@
             window.sideAppWsClient.pairWithCode(code);
         }
 
+        // =========================================================================
+        // Fullscreen Toggle & Viewport Handling
+        // =========================================================================
+        let toastTimeout = null;
+        function showFullscreenToast(message, iconClass = 'ph-arrows-out') {
+            const toast = document.getElementById('sideAppToast');
+            const toastText = document.getElementById('sideAppToastText');
+            const toastIcon = document.getElementById('sideAppToastIcon');
+            if (!toast || !toastText) return;
+
+            toastText.textContent = message;
+            if (toastIcon) {
+                toastIcon.className = `ph-bold ${iconClass} text-violet-400`;
+            }
+
+            toast.classList.remove('opacity-0', 'translate-y-2', 'pointer-events-none');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-2', 'pointer-events-none');
+            }, 2200);
+        }
+
+        function isSideAppFullscreen() {
+            return !!(
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement ||
+                document.body.classList.contains('sideapp-pseudo-fullscreen')
+            );
+        }
+
+        function updateFullscreenUI(forceState) {
+            const isFs = typeof forceState === 'boolean' ? forceState : isSideAppFullscreen();
+            const btn = document.getElementById('sideAppFullscreenBtn');
+            const icon = document.getElementById('sideAppFullscreenIcon');
+            if (!btn || !icon) return;
+
+            if (isFs) {
+                btn.title = '退出全屏 (快捷键 F)';
+                btn.setAttribute('aria-label', '退出全屏');
+                icon.className = 'ph-bold ph-arrows-in text-xs';
+                btn.classList.add('bg-violet-600/30', 'text-violet-300', 'border-violet-500/40');
+                btn.classList.remove('bg-white/5', 'text-slate-400');
+            } else {
+                btn.title = '全屏显示 (快捷键 F)';
+                btn.setAttribute('aria-label', '全屏显示');
+                icon.className = 'ph-bold ph-arrows-out text-xs';
+                btn.classList.remove('bg-violet-600/30', 'text-violet-300', 'border-violet-500/40');
+                btn.classList.add('bg-white/5', 'text-slate-400');
+            }
+        }
+
+        async function toggleSideAppFullscreen() {
+            const isNativeFs = !!(
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement
+            );
+            const isPseudoFs = document.body.classList.contains('sideapp-pseudo-fullscreen');
+
+            if (isNativeFs || isPseudoFs) {
+                // Exit Fullscreen
+                if (isNativeFs) {
+                    try {
+                        if (document.exitFullscreen) {
+                            await document.exitFullscreen();
+                        } else if (document.webkitExitFullscreen) {
+                            await document.webkitExitFullscreen();
+                        } else if (document.mozCancelFullScreen) {
+                            await document.mozCancelFullScreen();
+                        } else if (document.msExitFullscreen) {
+                            await document.msExitFullscreen();
+                        }
+                    } catch (err) {
+                        console.warn('[SideApp] Exit fullscreen error:', err);
+                    }
+                }
+                if (isPseudoFs) {
+                    document.body.classList.remove('sideapp-pseudo-fullscreen');
+                }
+                updateFullscreenUI(false);
+                showFullscreenToast('已退出全屏模式', 'ph-arrows-out');
+            } else {
+                // Enter Fullscreen
+                const docEl = document.documentElement;
+                let entered = false;
+                try {
+                    if (docEl.requestFullscreen) {
+                        await docEl.requestFullscreen();
+                        entered = true;
+                    } else if (docEl.webkitRequestFullscreen) {
+                        await docEl.webkitRequestFullscreen();
+                        entered = true;
+                    } else if (docEl.mozRequestFullScreen) {
+                        await docEl.mozRequestFullScreen();
+                        entered = true;
+                    } else if (docEl.msRequestFullscreen) {
+                        await docEl.msRequestFullscreen();
+                        entered = true;
+                    }
+                } catch (err) {
+                    console.warn('[SideApp] requestFullscreen failed, using pseudo-fullscreen fallback:', err);
+                }
+
+                if (entered) {
+                    updateFullscreenUI(true);
+                    showFullscreenToast('已进入全屏显示', 'ph-arrows-in');
+                } else {
+                    // Fallback for iOS Safari or restricted browser contexts
+                    document.body.classList.add('sideapp-pseudo-fullscreen');
+                    window.scrollTo(0, 1);
+                    updateFullscreenUI(true);
+                    showFullscreenToast('已开启沉浸模式（iOS可添加至主屏幕实现原生全屏）', 'ph-arrows-in');
+                }
+            }
+        }
+
+        window.toggleSideAppFullscreen = toggleSideAppFullscreen;
+
         document.addEventListener('DOMContentLoaded', () => {
             window.sideAppRenderer.init();
             window.sideAppWsClient.init();
+
+            // Listen for native browser fullscreen changes
+            ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
+                document.addEventListener(evt, () => updateFullscreenUI());
+            });
+
+            // Keyboard shortcut: F to toggle fullscreen, Esc to exit pseudo fullscreen
+            document.addEventListener('keydown', (e) => {
+                if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) {
+                    return;
+                }
+                if (e.key === 'f' || e.key === 'F') {
+                    e.preventDefault();
+                    toggleSideAppFullscreen();
+                } else if (e.key === 'Escape' && document.body.classList.contains('sideapp-pseudo-fullscreen')) {
+                    document.body.classList.remove('sideapp-pseudo-fullscreen');
+                    updateFullscreenUI(false);
+                    showFullscreenToast('已退出全屏模式', 'ph-arrows-out');
+                }
+            });
+
+            // Double click header background to toggle fullscreen
+            const header = document.querySelector('header');
+            if (header) {
+                header.addEventListener('dblclick', (e) => {
+                    if (e.target.closest('button, input, a')) return;
+                    toggleSideAppFullscreen();
+                });
+            }
         });
     </script>
 </body>
