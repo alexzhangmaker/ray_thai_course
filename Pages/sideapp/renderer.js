@@ -77,9 +77,14 @@
       }
       const isCoreWords = (payload.view && payload.view.startsWith('viewCoreWords')) ||
                           (payload.state && payload.state.appType === 'core_words');
+      const isTranslate = (payload.view && payload.view.startsWith('viewTranslate')) ||
+                          (payload.state && payload.state.appType === 'translate');
       const badge = document.getElementById('sideAppBadge');
       if (badge) {
-        if (isCoreWords) {
+        if (isTranslate) {
+          badge.innerText = 'Translate';
+          badge.className = 'text-[9px] uppercase font-bold px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30';
+        } else if (isCoreWords) {
           badge.innerText = 'CoreWords';
           badge.className = 'text-[9px] uppercase font-bold px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
         } else {
@@ -137,8 +142,8 @@
       if (!payload || !payload.name) return;
 
       if (payload.name === 'audio-playing') {
-        const waveBox = document.getElementById('sideCoreSoundWave') || document.getElementById('sideAppSoundWave');
-        const playRing = document.getElementById('sideCorePlayRing') || document.getElementById('sideAppPlayRing');
+        const waveBox = document.getElementById('sideTranslateSoundWave') || document.getElementById('sideCoreSoundWave') || document.getElementById('sideAppSoundWave');
+        const playRing = document.getElementById('sideTranslatePlayRing') || document.getElementById('sideCorePlayRing') || document.getElementById('sideAppPlayRing');
         if (waveBox) {
           waveBox.classList.remove('opacity-30', 'scale-90');
           waveBox.classList.add('opacity-100', 'scale-110');
@@ -158,11 +163,11 @@
           }
         }, payload.duration || 1200);
       } else if (payload.name === 'detail-revealed') {
-        const revealed = document.getElementById('sideCoreWordRevealed');
+        const revealed = document.getElementById('sideTranslateAnswerRevealed') || document.getElementById('sideCoreWordRevealed');
         if (revealed) {
-          revealed.classList.add('ring-2', 'ring-indigo-400/60');
+          revealed.classList.add('ring-2', 'ring-sky-400/60');
           setTimeout(() => {
-            revealed.classList.remove('ring-2', 'ring-indigo-400/60');
+            revealed.classList.remove('ring-2', 'ring-sky-400/60');
           }, payload.duration || 800);
         }
       }
@@ -182,6 +187,8 @@
         case 'viewSession':
           if (this.localState && this.localState.appType === 'core_words') {
             this.renderCoreWordsSessionView();
+          } else if (this.localState && this.localState.appType === 'translate') {
+            this.renderTranslateSessionView();
           } else {
             this.renderSessionView();
           }
@@ -204,6 +211,12 @@
           break;
         case 'viewCoreWordsSummary':
           this.renderCoreWordsSummaryView();
+          break;
+        case 'viewTranslateSession':
+          this.renderTranslateSessionView();
+          break;
+        case 'viewTranslateList':
+          this.renderTranslateListView();
           break;
         default:
           // Unknown view: silently ignore or preserve
@@ -715,6 +728,64 @@
           meaningsList.innerHTML = this.renderCoreWordMeaningsHtml(s.word);
         }
       }
+
+      // ==========================================
+      // Incremental patch handling for Translate Practice
+      // ==========================================
+      if (this.currentView === 'viewTranslateSession' || (s.appType === 'translate' && this.currentView === 'viewSession')) {
+        const shrouded = document.getElementById('sideTranslateAnswerShrouded');
+        const revealed = document.getElementById('sideTranslateAnswerRevealed');
+        const stepDot = document.getElementById('sideTranslateStepDot');
+        const stepLabel = document.getElementById('sideTranslateStepLabel');
+
+        const isZh2Th = (s.mode === 'zh2th' || s.currentStep === 2);
+
+        if (shrouded && revealed && s.answerRevealed !== undefined) {
+          if (s.answerRevealed) {
+            shrouded.classList.add('hidden');
+            revealed.classList.remove('hidden');
+            if (stepDot) stepDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+            if (stepLabel) stepLabel.innerText = '步骤：已揭晓参考答案与词汇解析';
+          } else {
+            shrouded.classList.remove('hidden');
+            revealed.classList.add('hidden');
+            if (stepDot) stepDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+            if (stepLabel) stepLabel.innerText = isZh2Th ? '练习：请将下方中文翻译为泰语 (答案遮蔽中)' : '练习：请将下方泰语翻译为中文 (答案遮蔽中)';
+          }
+        }
+
+        const questionEl = document.getElementById('sideTranslateQuestionText');
+        if (questionEl && s.sentence) {
+          questionEl.innerText = isZh2Th ? (s.sentence.chinese || '') : (s.sentence.thai || '');
+        }
+
+        const progText = document.getElementById('sideTranslateProgressText');
+        if (progText && s.progressText) progText.innerText = s.progressText;
+
+        const progBar = document.getElementById('sideTranslateProgressBar');
+        if (progBar && s.progressPercent !== undefined) progBar.style.width = `${s.progressPercent}%`;
+
+        const progPct = document.getElementById('sideTranslateProgressPct');
+        if (progPct && s.progressPercent !== undefined) progPct.innerText = `${s.progressPercent}%`;
+
+        const sentenceIdx = document.getElementById('sideTranslateSentenceIndex');
+        if (sentenceIdx && s.currentIndex && s.totalCount) sentenceIdx.innerText = `#${s.currentIndex} / ${s.totalCount}`;
+
+        const answerTextEl = document.getElementById('sideTranslateAnswerText');
+        if (answerTextEl && s.sentence) {
+          answerTextEl.innerText = isZh2Th ? (s.sentence.thai || '') : (s.sentence.chinese || '');
+        }
+
+        const englishEl = document.getElementById('sideTranslateEnglishText');
+        if (englishEl && s.sentence?.english) {
+          englishEl.innerText = s.sentence.english;
+        }
+
+        const glossaryList = document.getElementById('sideTranslateGlossaryList');
+        if (glossaryList && s.sentence) {
+          glossaryList.innerHTML = this.renderTranslateGlossaryHtml(s.sentence.glossary || s.sentence.tokens);
+        }
+      }
     }
 
     // =========================================================================
@@ -949,6 +1020,196 @@
             </div>
             <div class="text-xs text-slate-400 leading-relaxed">
               导师在主操作台可选择再次从头复习或返回课时词汇列表，伴侣屏将继续实时同步。
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // View 7: Translate Practice Session View
+    // =========================================================================
+    renderTranslateSessionView() {
+      const s = this.localState || {};
+      const sent = s.sentence || {};
+      const isRevealed = Boolean(s.answerRevealed);
+      const isZh2Th = (s.mode === 'zh2th' || s.currentStep === 2);
+      const isQuiz = (s.currentStep === 3);
+
+      let stepBadgeHtml = '';
+      if (isQuiz) {
+        stepBadgeHtml = `<span class="text-xs font-bold text-purple-300 bg-purple-500/20 px-2.5 py-0.5 rounded-full border border-purple-500/30">Step 3: Quiz 自测</span>`;
+      } else if (isZh2Th) {
+        stepBadgeHtml = `<span class="text-xs font-bold text-emerald-300 bg-emerald-500/20 px-2.5 py-0.5 rounded-full border border-emerald-500/30">Step 2: 中 ➔ 泰</span>`;
+      } else {
+        stepBadgeHtml = `<span class="text-xs font-bold text-sky-300 bg-sky-500/20 px-2.5 py-0.5 rounded-full border border-sky-500/30">Step 1: 泰 ➔ 中</span>`;
+      }
+
+      this.containerEl.innerHTML = `
+        <div class="space-y-4 animate-fadeIn">
+          <!-- Session Header Bar -->
+          <div class="glass-panel rounded-2xl px-4 py-3 flex items-center justify-between border border-white/10">
+            <div class="flex items-center gap-2 truncate">
+              <span class="text-xs font-bold text-sky-300 bg-sky-500/20 px-2.5 py-0.5 rounded-full border border-sky-500/30 truncate">
+                📖 ${this.escape(s.scopeTitle || s.lessonTitle || s.category || '翻译练习')}
+              </span>
+              ${stepBadgeHtml}
+              <span class="text-slate-500 text-xs">·</span>
+              <span id="sideTranslateProgressText" class="text-xs text-slate-300 font-medium whitespace-nowrap">${s.progressText || `进度: ${s.currentIndex || 1} / ${s.totalCount || 1}`}</span>
+            </div>
+            <div class="text-xs font-bold text-sky-400 font-mono shrink-0" id="sideTranslateProgressPct">
+              ${s.progressPercent != null ? s.progressPercent + '%' : ''}
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden -mt-2">
+            <div id="sideTranslateProgressBar" class="h-full bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-500 rounded-full transition-all duration-300" style="width: ${s.progressPercent || 0}%"></div>
+          </div>
+
+          <!-- Main Interactive Display Card -->
+          <div class="glass-panel rounded-3xl p-5 sm:p-7 border border-white/10 shadow-2xl min-h-[380px] flex flex-col justify-between relative overflow-hidden">
+            
+            <!-- Header Step Indicator -->
+            <div class="flex items-center justify-between text-xs text-slate-400 pb-2 border-b border-white/5">
+              <div class="flex items-center gap-2">
+                <span id="sideTranslateStepDot" class="w-2 h-2 rounded-full ${isRevealed ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'}"></span>
+                <span id="sideTranslateStepLabel" class="font-medium">${isRevealed ? '步骤：已揭晓参考答案与词汇解析' : (isZh2Th ? '练习：请将下方中文翻译为泰语 (答案遮蔽中)' : '练习：请将下方泰语翻译为中文 (答案遮蔽中)')}</span>
+              </div>
+              <div class="text-[11px] text-slate-400 font-mono" id="sideTranslateSentenceIndex">
+                #${s.currentIndex || 1} / ${s.totalCount || 1}
+              </div>
+            </div>
+
+            <!-- Question Display Section (Always visible) -->
+            <div class="py-4 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs uppercase font-bold px-2 py-0.5 rounded-lg ${isZh2Th ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-sky-500/20 text-sky-300 border border-sky-500/30'}">
+                  ${isZh2Th ? '待翻译中文原句' : '待认读泰语原句'}
+                </span>
+                <span id="sideTranslateSoundWave" class="sound-wave opacity-30 scale-90 transition-all duration-300">
+                  <span class="sound-bar"></span>
+                  <span class="sound-bar"></span>
+                  <span class="sound-bar"></span>
+                  <span class="sound-bar"></span>
+                  <span class="sound-bar"></span>
+                </span>
+              </div>
+              <div id="sideTranslateQuestionText" class="${isZh2Th ? 'text-xl sm:text-2xl font-bold text-white tracking-wide' : 'font-thai text-2xl sm:text-3xl font-bold text-white tracking-wider'} py-1 select-all leading-relaxed transition-all duration-300">
+                ${this.escape(isZh2Th ? (sent.chinese || '--') : (sent.thai || '--'))}
+              </div>
+            </div>
+
+            <!-- Shrouded Placeholder Section (When answerRevealed is false) -->
+            <div id="sideTranslateAnswerShrouded" class="${isRevealed ? 'hidden' : ''} py-5 flex flex-col items-center justify-center text-center space-y-4">
+              <div class="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-2xl text-amber-400 shadow-inner">
+                <i class="ph-bold ph-lock-key"></i>
+              </div>
+              <div class="max-w-xs mx-auto p-4 rounded-2xl bg-sky-950/40 border border-sky-500/20 space-y-1.5">
+                <div class="text-sm font-bold text-sky-200 flex items-center justify-center gap-1.5">
+                  <i class="ph-bold ph-eye-slash"></i>
+                  <span>参考翻译与解析遮蔽中</span>
+                </div>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                  请先在心中或草稿纸上完成对应翻译。<br>导师在主屏点击<strong>「副屏显示答案」</strong>后将同步揭晓。
+                </p>
+              </div>
+              <div class="text-[11px] text-slate-500 flex items-center gap-1.5">
+                <i class="ph-bold ph-hourglass-high text-amber-400 animate-spin"></i>
+                <span>等待主操作台指令...</span>
+              </div>
+            </div>
+
+            <!-- Revealed Answer Section (When answerRevealed is true) -->
+            <div id="sideTranslateAnswerRevealed" class="${isRevealed ? '' : 'hidden'} py-2 space-y-3 animate-fadeIn">
+              <!-- Target Translation Card -->
+              <div class="p-3.5 sm:p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div class="text-[11px] font-bold text-sky-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <i class="ph-bold ph-check-circle text-emerald-400 text-sm"></i>
+                  <span>${isZh2Th ? '泰语参考答案' : '中文参考翻译'}</span>
+                </div>
+                <div id="sideTranslateAnswerText" class="${isZh2Th ? 'font-thai text-xl sm:text-2xl text-emerald-300 font-bold' : 'text-lg sm:text-xl text-emerald-200 font-semibold'} leading-relaxed select-all">
+                  ${this.escape(isZh2Th ? (sent.thai || '--') : (sent.chinese || '--'))}
+                </div>
+                ${(sent.thai_spaced && isZh2Th) ? `
+                  <div class="font-thai text-xs sm:text-sm text-slate-400 pt-1.5 border-t border-white/5">
+                    分词参考: <span class="text-emerald-200/90">${this.escape(sent.thai_spaced)}</span>
+                  </div>
+                ` : ''}
+                ${sent.english ? `
+                  <div class="text-xs text-slate-400 italic pt-1.5 border-t border-white/5 flex items-center gap-1.5">
+                    <span>💡</span>
+                    <span id="sideTranslateEnglishText">${this.escape(sent.english)}</span>
+                  </div>
+                ` : ''}
+              </div>
+
+              <!-- Keywords / Glossary Section -->
+              ${((sent.glossary && sent.glossary.length > 0) || (sent.tokens && sent.tokens.length > 0)) ? `
+                <div class="space-y-1.5 pt-1">
+                  <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                    <i class="ph-bold ph-translate text-sky-400"></i>
+                    <span>重点词汇与解析</span>
+                  </div>
+                  <div id="sideTranslateGlossaryList" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-1">
+                    ${this.renderTranslateGlossaryHtml(sent.glossary || sent.tokens)}
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Footer Status -->
+            <div class="pt-3 text-center text-[11px] text-slate-500 border-t border-white/5 flex items-center justify-center gap-1">
+              <i class="ph-bold ph-device-mobile text-sky-400"></i>
+              <span>第二屏幕被动同步中 · 所有操作由主机控制</span>
+            </div>
+
+          </div>
+        </div>
+      `;
+    }
+
+    renderTranslateGlossaryHtml(glossary) {
+      if (!glossary || !glossary.length) return `<div class="text-xs text-slate-500">无重点词汇</div>`;
+      return glossary.map(g => `
+        <div class="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 flex items-center gap-1.5 text-xs">
+          <span class="font-thai font-medium text-sky-200">${this.escape(g.thai || '')}</span>
+          <span class="text-slate-500">·</span>
+          <span class="text-slate-300">${this.escape(g.meaning || '')}</span>
+        </div>
+      `).join('');
+    }
+
+    renderTranslateListView() {
+      const s = this.localState || {};
+      this.containerEl.innerHTML = `
+        <div class="space-y-5 animate-fadeIn">
+          <div class="glass-panel rounded-3xl p-6 sm:p-8 text-center space-y-4 border border-white/10 shadow-2xl relative overflow-hidden">
+            <div class="inline-flex h-16 w-16 rounded-2xl bg-gradient-to-tr from-sky-600 to-indigo-600 items-center justify-center text-3xl shadow-xl shadow-sky-500/25">
+              <i class="ph-bold ph-cards"></i>
+            </div>
+            <div class="space-y-1">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                伴侣屏已就绪
+              </div>
+              <h2 class="text-2xl font-extrabold text-white tracking-tight">翻译练习卡片浏览</h2>
+              <div class="text-xs sm:text-sm text-slate-300 max-w-sm mx-auto font-medium">
+                ${this.escape(s.scopeTitle ? `当前范围: ${s.scopeTitle}` : '全部科目 · 全部语料')}
+              </div>
+              <p class="text-xs text-slate-400 max-w-sm mx-auto">
+                主操作台正在浏览练习题目卡片。选择题目后将自动同步至本屏。
+              </p>
+            </div>
+            <div class="pt-4 border-t border-white/10 grid grid-cols-2 gap-3 text-left">
+              <div class="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
+                <div class="text-[11px] text-slate-400 font-medium">题目总数</div>
+                <div class="text-lg font-bold text-white font-mono">${s.totalCount || 0} 题</div>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
+                <div class="text-[11px] text-slate-400 font-medium">当前选中</div>
+                <div class="text-lg font-bold text-sky-400 font-mono">第 ${s.currentIndex || 1} 题</div>
+              </div>
             </div>
           </div>
         </div>

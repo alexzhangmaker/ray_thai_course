@@ -3,7 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>翻译练习 · 泰语 / 中文</title>
+    <!-- Tailwind CSS (Preflight disabled to protect existing custom styling) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            corePlugins: {
+                preflight: false
+            }
+        }
+    </script>
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
@@ -1051,6 +1059,22 @@
             padding: 2px 8px;
             border-radius: 6px;
         }
+        .card-course-badge {
+            font-size: 11px;
+            font-weight: 600;
+            color: #4338ca;
+            background: #eef2ff;
+            border: 1px solid #c7d2fe;
+            padding: 2px 8px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            max-width: 220px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
         .difficulty-badge {
             color: #f59e0b;
             font-size: 11px;
@@ -1163,6 +1187,7 @@
                 <span>📚 翻译练习</span>
             </h1>
             <small id="headerInfo" style="font-size: 14px; font-weight: 400; color: #64748b; background: #eef2f6; border: 1px solid #e2e8f0; padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px; vertical-align: middle;">
+                <span id="headerScopeTag" style="font-weight: 700; color: #1e40af; background: #dbeafe; padding: 2px 8px; border-radius: 12px; font-size: 12px;">全部科目</span>
                 <span style="font-weight: 600; color: #334155;">泰 · 中</span>
                 <span style="color: #cbd5e1; font-weight: 300;">|</span>
                 <span id="cardProgressText" style="font-weight: 500; color: #64748b;">共 -- 张 · 待复习 -- 张</span>
@@ -1183,6 +1208,12 @@
         </div>
 
         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <!-- SideApp Companion Screen Quick Capsule Pill -->
+            <button id="btnSideAppPill" onclick="SideAppPairingPanel.open()" title="手机伴侣屏联动 (第二屏幕被动同步)" class="btn btn-outline" style="padding: 8px 14px; border-radius: 12px; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                <span id="sideAppStatusDot" class="w-2 h-2 rounded-full bg-slate-400" style="width: 8px; height: 8px; border-radius: 50%; background-color: #94a3b8; display: inline-block;"></span>
+                <i class="ph-bold ph-device-mobile text-indigo-500"></i>
+                <span id="sideAppStatusText">伴侣屏</span>
+            </button>
             <button class="btn btn-outline" id="historyBtn" style="padding: 8px 14px; border-radius: 12px; font-size: 14px; font-weight: 600;" title="查看 Quiz 记录">
                 <i class="ph ph-activity text-lg"></i>
                 <span>复习记录</span>
@@ -1200,12 +1231,37 @@
 
     <!-- 视图 1: 顺序逐步复习视图 -->
     <div id="sequentialViewContainer">
+        <!-- 顺序复习范围选择栏 -->
+        <div id="seqScopeBar" style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 10px 18px; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span style="font-size: 13px; font-weight: 700; color: #334155; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="ph-bold ph-graduation-cap text-indigo-600 text-base"></i>
+                    <span>复习范围:</span>
+                </span>
+                <select id="seqCourseSelect" onchange="onSeqCourseChange(this.value)" style="padding: 6px 12px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 13px; font-weight: 600; background: white; color: #1e293b; outline: none; cursor: pointer;">
+                    <option value="">全部科目 (All Courses)</option>
+                </select>
+                <select id="seqLessonSelect" onchange="onSeqLessonChange(this.value)" style="padding: 6px 12px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 13px; font-weight: 600; background: white; color: #1e293b; outline: none; cursor: pointer;">
+                    <option value="">全部课时 (All Lessons)</option>
+                </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span id="seqScopeSummary" style="font-size: 13px; font-weight: 600; color: #64748b;">
+                    当前范围共 <strong id="seqScopeTotal" style="color: #2563eb;">0</strong> 题
+                </span>
+                <button type="button" onclick="switchView('list')" style="background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: 0.15s;" title="转到卡片列表查看并筛选题目">
+                    <i class="ph ph-squares-four"></i>
+                    <span>卡片列表</span>
+                </button>
+            </div>
+        </div>
+
         <div class="control-bar">
             <div id="stepProgressIndicator" style="display: flex; gap: 8px; flex-grow: 1; max-width: 480px; align-items: center; font-size: 13px; font-weight: 600;">
                 <div id="step1Indicator" class="step-badge active">
                     Step 1: 泰 ➔ 中
                 </div>
-                <i class="ph ph-caret-right text-slate-400"></i>
+                <i id="step2Caret" class="ph ph-caret-right text-slate-400"></i>
                 <div id="step2Indicator" class="step-badge">
                     Step 2: 中 ➔ 泰
                 </div>
@@ -1250,8 +1306,29 @@
             </div>
         </div>
 
+        <!-- Companion Screen Remote Reveal Toolbar -->
+        <div id="sideAppRevealToolbar" style="display: flex; align-items: center; justify-content: space-between; background: #eef2ff; border: 1px solid #e0e7ff; border-radius: 16px; padding: 10px 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #312e81;">
+                <i class="ph-bold ph-device-mobile" style="color: #4f46e5; font-size: 18px;"></i>
+                <span>手机伴侣屏联动</span>
+                <span id="sideAppCardSyncStatus" style="font-size: 11px; padding: 2px 8px; border-radius: 9999px; background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-family: monospace; font-weight: 700;">
+                    伴侣屏：仅显示待翻译句子
+                </span>
+            </div>
+            <button id="btnRevealSideAppAnswer" onclick="revealSideAppAnswer()" type="button" 
+                class="btn" style="padding: 6px 14px; border-radius: 12px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; background: #4f46e5; color: white; border: none; cursor: pointer; transition: 0.15s; box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);"
+                title="向手机伴侣屏发送指令，揭示本句的参考翻译与词汇解析 (快捷键: R；此操作不影响主屏)">
+                <i class="ph-bold ph-eye" style="font-size: 14px;"></i>
+                <span>副屏显示答案</span>
+            </button>
+        </div>
+
         <div class="action-row">
             <button class="btn btn-outline" id="revealBtn">👁️ 显示答案</button>
+            <button class="btn" id="btnRevealSideAppActionRow" onclick="revealSideAppAnswer()" style="border: 1px solid #c7d2fe; background: #e0e7ff; color: #3730a3; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border-radius: 20px; padding: 10px 22px; font-size: 15px; cursor: pointer; transition: all 0.15s;" title="在副屏揭示答案 (快捷键: R)">
+                <i class="ph-bold ph-device-mobile"></i>
+                <span id="btnRevealSideAppActionRowText">副屏显示答案 (R)</span>
+            </button>
             <button class="btn btn-primary" id="nextBtn">⏩ 下一题</button>
         </div>
 
@@ -1270,6 +1347,24 @@
                 </button>
             </div>
 
+            <!-- 科目与课时范围筛选 -->
+            <div class="scope-filter-controls" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span style="font-size: 13px; font-weight: 700; color: #475569; display: inline-flex; align-items: center; gap: 5px;">
+                    <i class="ph-bold ph-graduation-cap text-indigo-600 text-base"></i>
+                    <span>科目:</span>
+                </span>
+                <select id="cardListCourseSelect" onchange="onCardListCourseChange(this.value)" style="padding: 7px 12px; border-radius: 14px; border: 1px solid #cbd5e1; font-size: 13px; font-weight: 600; background: white; color: #1e293b; outline: none; cursor: pointer; max-width: 200px;">
+                    <option value="">全部科目 (All Courses)</option>
+                </select>
+                <span style="font-size: 13px; font-weight: 700; color: #475569; display: inline-flex; align-items: center; gap: 5px; margin-left: 4px;">
+                    <i class="ph-bold ph-book-open text-indigo-600 text-base"></i>
+                    <span>课时:</span>
+                </span>
+                <select id="cardListLessonSelect" onchange="onCardListLessonChange(this.value)" style="padding: 7px 12px; border-radius: 14px; border: 1px solid #cbd5e1; font-size: 13px; font-weight: 600; background: white; color: #1e293b; outline: none; cursor: pointer; max-width: 240px;">
+                    <option value="">全部课时 (All Lessons)</option>
+                </select>
+            </div>
+
             <div class="filter-controls-group">
                 <div id="categoryFilterContainer" class="category-filter-tags">
                     <!-- 分类筛选标签动态插入 -->
@@ -1282,17 +1377,30 @@
             </div>
         </div>
 
-        <!-- 统计状态信息 -->
+        <!-- 统计状态信息与整体顺序复习操作 -->
         <div class="card-list-stats-bar">
-            <div class="stats-text">
-                <span>当前练习共 <strong id="listStatsTotal">0</strong> 道题</span>
+            <div class="stats-text" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span id="listScopeBadge" style="display: inline-flex; align-items: center; gap: 6px; background: #e0e7ff; color: #3730a3; padding: 4px 12px; border-radius: 14px; font-size: 12px; font-weight: 700; border: 1px solid #c7d2fe;">
+                    <i class="ph-bold ph-graduation-cap"></i>
+                    <span id="listScopeBadgeText">全部科目 · 全部课时</span>
+                </span>
+                <span class="stats-divider">·</span>
+                <span>当前范围共 <strong id="listStatsTotal">0</strong> 道题</span>
                 <span class="stats-divider">·</span>
                 <span>当前进度：第 <strong id="listStatsCurrent" style="color: #2563eb;">1</strong> 题</span>
                 <span id="listStatsFilterNote" class="hidden" style="color: #059669; font-weight: 600; margin-left: 8px;">(筛选出 <span id="listStatsFiltered">0</span> 题)</span>
             </div>
-            <div class="stats-hint">
-                <i class="ph ph-info"></i>
-                <span>点击任意卡片或「从这题开始复习」即可从此题开始复习</span>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <button type="button" id="btnStartScopeSequential" onclick="startSequentialReviewForCurrentScope()" 
+                    class="btn btn-primary" style="padding: 7px 18px; border-radius: 14px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(37,99,235,0.25); cursor: pointer;"
+                    title="从第 1 题开始顺序复习当前选定科目/课时范围的所有题目">
+                    <i class="ph-bold ph-play"></i>
+                    <span>顺序复习此范围</span>
+                </button>
+                <div class="stats-hint">
+                    <i class="ph ph-info"></i>
+                    <span>点击任意卡片也可从该题开始</span>
+                </div>
             </div>
         </div>
 
@@ -1368,6 +1476,23 @@
                 <!-- Premium Toggle Switch -->
                 <label class="toggle-switch" style="position: relative; display: inline-block; width: 50px; height: 26px; flex-shrink: 0; cursor: pointer;">
                     <input type="checkbox" id="settingsAssistModeToggle" style="opacity: 0; width: 0; height: 0;">
+                    <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
+                </label>
+            </div>
+
+            <div style="height: 1px; background: #f1f5f9;"></div>
+
+            <!-- 开启 Step 2 Switch -->
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="padding-right: 16px;">
+                    <div style="font-weight: 600; font-size: 15px; color: #1e293b; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                        <span>开启 Step 2 练习 (中➔泰)</span>
+                    </div>
+                    <div style="font-size: 13px; color: #64748b; line-height: 1.4;">关闭后跳过中➔泰拼写翻译练习，Step 1 结束后直接进入下一个句子翻译练习。</div>
+                </div>
+                <!-- Premium Toggle Switch -->
+                <label class="toggle-switch" style="position: relative; display: inline-block; width: 50px; height: 26px; flex-shrink: 0; cursor: pointer;">
+                    <input type="checkbox" id="settingsDoStep2Toggle" checked style="opacity: 0; width: 0; height: 0;">
                     <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
                 </label>
             </div>
@@ -1452,11 +1577,19 @@
     </button>
 </div>
 
+<!-- SideApp Companion Screen SDK -->
+<script src="./js/sideapp/qrcode.min.js"></script>
+<script src="./js/sideapp/bridge.js"></script>
+<script src="./js/sideapp/pairingPanel.js"></script>
+
 <script>
     (function() {
         // ---------- TTS Audio Player ----------
         window.playAudioDirect = (text) => {
             if (!text) return;
+            if (window.sideAppBridge && window.sideAppBridge.enabled) {
+                window.sideAppBridge.playEffect('audio-playing', '', 1200);
+            }
             const url = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(text)}`;
             new Audio(url).play().catch(err => console.error("Audio playback error:", err));
         };
@@ -1569,7 +1702,14 @@
 
         // ---------- 状态 ----------
         const urlParams = new URLSearchParams(window.location.search);
-        let lessonID = urlParams.get('lessonID');
+        let lessonID = urlParams.get('lessonId') || urlParams.get('lesson_id') || urlParams.get('lessonID');
+        let initialCourseId = urlParams.get('courseId') || urlParams.get('course_id') || '';
+
+        let coursesData = [];
+        let lessonsData = [];
+        let allRawSentences = [];
+        let activeCourseId = '';
+        let activeLessonId = '';
 
         let currentIndex = 0;
         let currentMode = 'th2zh';
@@ -1583,6 +1723,7 @@
         let selectedCardCategory = 'all';
 
         let appSettings = {
+            doStep2: true,
             doQuiz: true,
             assistMode: false
         };
@@ -1594,6 +1735,188 @@
                 appSettings = Object.assign(appSettings, JSON.parse(savedSettings));
             } catch (e) {
                 console.error('Failed to parse translate_settings:', e);
+            }
+        }
+        if (appSettings.doStep2 === undefined) {
+            appSettings.doStep2 = true;
+        }
+
+        // Scope helper methods
+        function getActiveCourseName() {
+            if (!activeCourseId) return '全部科目';
+            const c = coursesData.find(item => item.id === activeCourseId);
+            return c ? (c.name || c.id) : '全部科目';
+        }
+        window.getActiveCourseName = getActiveCourseName;
+
+        function getActiveLessonTitle() {
+            if (!activeLessonId) return '全部课时';
+            const l = lessonsData.find(item => item.id === activeLessonId);
+            return l ? (l.title || l.id) : '全部课时';
+        }
+        window.getActiveLessonTitle = getActiveLessonTitle;
+
+        function getActiveScopeTitle() {
+            if (!activeCourseId && !activeLessonId) {
+                return '全部科目 · 全部课时';
+            }
+            const cName = getActiveCourseName();
+            const lTitle = getActiveLessonTitle();
+            if (activeCourseId && activeLessonId) {
+                return `${cName} · ${lTitle}`;
+            }
+            if (activeCourseId) {
+                return `${cName} · 全部课时`;
+            }
+            return lTitle;
+        }
+        window.getActiveScopeTitle = getActiveScopeTitle;
+
+        // =============================================================
+        // SideApp Companion Screen State Synchronization (第二屏幕联动)
+        // =============================================================
+        let isSideAppAnswerRevealed = false;
+
+        function syncSideAppState(viewName, forceFull = false, overrides = {}) {
+            if (!window.sideAppBridge || !window.sideAppBridge.enabled) return;
+
+            try {
+                if (!viewName) {
+                    viewName = (currentView === 'list') ? 'viewTranslateList' : 'viewTranslateSession';
+                }
+
+                const scopeTitle = getActiveScopeTitle();
+                const courseName = getActiveCourseName();
+                const lessonTitle = getActiveLessonTitle();
+
+                if (viewName === 'viewTranslateList') {
+                    window.sideAppBridge.pushState('viewTranslateList', {
+                        appType: 'translate',
+                        totalCount: sentencesList ? sentencesList.length : 0,
+                        currentIndex: currentIndex + 1,
+                        scopeTitle: scopeTitle,
+                        courseName: courseName,
+                        lessonTitle: lessonTitle,
+                        statusText: `卡片列表浏览中 · ${scopeTitle} · 共 ${sentencesList ? sentencesList.length : 0} 题`
+                    }, forceFull, {
+                        title: 'ThaiNotes 伴侣屏 · 翻译练习'
+                    });
+                } else if (viewName === 'viewTranslateSession') {
+                    if (!sentencesList || sentencesList.length === 0) return;
+                    const currentSentence = sentencesList[currentIndex];
+                    if (!currentSentence) return;
+
+                    const total = sentencesList.length || 1;
+                    const progressPercent = Math.round(((currentIndex + 1) / total) * 100);
+                    const isRevealed = overrides.answerRevealed !== undefined ? overrides.answerRevealed : isSideAppAnswerRevealed;
+
+                    const state = {
+                        appType: 'translate',
+                        mode: currentMode,
+                        currentStep: currentStep,
+                        currentIndex: currentIndex + 1,
+                        totalCount: total,
+                        progressPercent: progressPercent,
+                        progressText: `进度: ${currentIndex + 1} / ${total}`,
+                        answerRevealed: isRevealed,
+                        displayMode: displayMode,
+                        category: currentSentence.category || '综合练习',
+                        difficulty: currentSentence.difficulty || 1,
+                        lessonId: activeLessonId || lessonID || '',
+                        scopeTitle: scopeTitle,
+                        courseName: courseName,
+                        lessonTitle: lessonTitle,
+                        // 完整的待翻译练习句子 JSON 结构推送到 sideApp
+                        sentence: {
+                            id: currentSentence.id,
+                            chinese: currentSentence.chinese || '',
+                            thai: currentSentence.thai || '',
+                            thai_spaced: currentSentence.thai_spaced || '',
+                            english: currentSentence.english || '',
+                            direction: currentSentence.direction || currentMode,
+                            category: currentSentence.category || '',
+                            difficulty: currentSentence.difficulty || 1,
+                            tokens: Array.isArray(currentSentence.tokens) ? currentSentence.tokens.map(t => ({
+                                thai: t.thai || '',
+                                meaning: t.meaning || '',
+                                start: t.start,
+                                end: t.end,
+                                importance: t.importance
+                            })) : [],
+                            glossary: Array.isArray(currentSentence.glossary) ? currentSentence.glossary.map(g => ({
+                                thai: g.thai || '',
+                                meaning: g.meaning || '',
+                                importance: g.importance
+                            })) : []
+                        }
+                    };
+
+                    window.sideAppBridge.pushState('viewTranslateSession', state, forceFull, {
+                        title: 'ThaiNotes 伴侣屏 · 翻译练习'
+                    });
+                }
+            } catch (err) {
+                console.warn('[SideApp syncSideAppState error]:', err);
+            }
+        }
+        window.syncSideAppState = syncSideAppState;
+
+        function revealSideAppAnswer() {
+            isSideAppAnswerRevealed = true;
+            syncSideAppState('viewTranslateSession', false, { answerRevealed: true });
+            if (window.sideAppBridge && window.sideAppBridge.enabled) {
+                window.sideAppBridge.playEffect('detail-revealed', '#sideTranslateAnswerRevealed', 800);
+            }
+            updateRevealSideAppButtonUI(true);
+        }
+        window.revealSideAppAnswer = revealSideAppAnswer;
+
+        function updateRevealSideAppButtonUI(isRevealed) {
+            const btnToolbar = document.getElementById('btnRevealSideAppAnswer');
+            const btnActionRow = document.getElementById('btnRevealSideAppActionRow');
+            const btnActionRowText = document.getElementById('btnRevealSideAppActionRowText');
+            const syncBadge = document.getElementById('sideAppCardSyncStatus');
+
+            if (btnToolbar) {
+                if (isRevealed) {
+                    btnToolbar.style.background = '#059669';
+                    btnToolbar.style.color = '#ffffff';
+                    btnToolbar.style.boxShadow = '0 2px 6px rgba(5, 150, 105, 0.25)';
+                    btnToolbar.innerHTML = '<i class="ph-bold ph-check-circle" style="font-size:14px;"></i><span>副屏已显示答案 (点击重发)</span>';
+                } else {
+                    btnToolbar.style.background = '#4f46e5';
+                    btnToolbar.style.color = '#ffffff';
+                    btnToolbar.style.boxShadow = '0 2px 6px rgba(79, 70, 229, 0.25)';
+                    btnToolbar.innerHTML = '<i class="ph-bold ph-eye" style="font-size:14px;"></i><span>副屏显示答案</span>';
+                }
+            }
+
+            if (btnActionRow && btnActionRowText) {
+                if (isRevealed) {
+                    btnActionRow.style.background = '#d1fae5';
+                    btnActionRow.style.borderColor = '#6ee7b7';
+                    btnActionRow.style.color = '#065f46';
+                    btnActionRowText.innerText = '副屏已显示答案 (R)';
+                } else {
+                    btnActionRow.style.background = '#e0e7ff';
+                    btnActionRow.style.borderColor = '#c7d2fe';
+                    btnActionRow.style.color = '#3730a3';
+                    btnActionRowText.innerText = '副屏显示答案 (R)';
+                }
+            }
+
+            if (syncBadge) {
+                if (isRevealed) {
+                    syncBadge.style.background = '#d1fae5';
+                    syncBadge.style.color = '#065f46';
+                    syncBadge.style.borderColor = '#a7f3d0';
+                    syncBadge.innerText = '伴侣屏：已展示参考答案与词汇';
+                } else {
+                    syncBadge.style.background = '#fef3c7';
+                    syncBadge.style.color = '#92400e';
+                    syncBadge.style.borderColor = '#fde68a';
+                    syncBadge.innerText = '伴侣屏：仅显示待翻译句子';
+                }
             }
         }
 
@@ -1740,7 +2063,8 @@
             const currentSentence = sentencesList[currentIndex];
             const progress = {
                 id: "active_progress",
-                lessonID: lessonID || null,
+                courseId: activeCourseId || null,
+                lessonID: activeLessonId || lessonID || null,
                 totalCount: sentencesList.length,
                 currentIndex: currentIndex,
                 currentSentenceId: currentSentence ? currentSentence.id : null,
@@ -1758,6 +2082,224 @@
             });
         }
 
+        // ==========================================
+        // 科目与课时范围联动与下拉框初始化
+        // ==========================================
+        function populateCourseAndLessonDropdowns() {
+            const seqCourseSel = document.getElementById('seqCourseSelect');
+            const cardListCourseSel = document.getElementById('cardListCourseSelect');
+            
+            const totalCount = allRawSentences.length;
+            const courseOptionsHtml = [`<option value="">全部科目 (All Courses) (${totalCount}题)</option>`];
+            
+            const sortedCourses = [...coursesData].sort((a, b) => {
+                const countA = allRawSentences.filter(s => Array.isArray(s.courses) && s.courses.some(c => c.courseId === a.id)).length;
+                const countB = allRawSentences.filter(s => Array.isArray(s.courses) && s.courses.some(c => c.courseId === b.id)).length;
+                if (countA > 0 && countB === 0) return -1;
+                if (countA === 0 && countB > 0) return 1;
+                return (a.name || '').localeCompare(b.name || '');
+            });
+
+            sortedCourses.forEach(c => {
+                const count = allRawSentences.filter(s => Array.isArray(s.courses) && s.courses.some(item => item.courseId === c.id)).length;
+                if (count > 0) {
+                    courseOptionsHtml.push(`<option value="${c.id}">${c.name || c.id} (${count}题)</option>`);
+                }
+            });
+
+            const fullCourseHtml = courseOptionsHtml.join('');
+            if (seqCourseSel) seqCourseSel.innerHTML = fullCourseHtml;
+            if (cardListCourseSel) cardListCourseSel.innerHTML = fullCourseHtml;
+
+            populateLessonDropdowns(activeCourseId);
+        }
+
+        function populateLessonDropdowns(courseId) {
+            const seqLessonSel = document.getElementById('seqLessonSelect');
+            const cardListLessonSel = document.getElementById('cardListLessonSelect');
+
+            let relevantSentences = allRawSentences;
+            if (courseId) {
+                relevantSentences = allRawSentences.filter(s => Array.isArray(s.courses) && s.courses.some(c => c.courseId === courseId));
+            }
+
+            const lessonOptionsHtml = [`<option value="">全部课时 (All Lessons) (${relevantSentences.length}题)</option>`];
+
+            let relevantLessons = lessonsData;
+            if (courseId) {
+                relevantLessons = lessonsData.filter(l => l.course_id === courseId);
+            }
+            relevantLessons = [...relevantLessons].sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0));
+
+            relevantLessons.forEach(l => {
+                let count = 0;
+                if (courseId) {
+                    count = allRawSentences.filter(s => Array.isArray(s.courses) && s.courses.some(c => c.courseId === courseId && c.lessonId === l.id)).length;
+                } else {
+                    count = allRawSentences.filter(s => Array.isArray(s.courses) && s.courses.some(c => c.lessonId === l.id)).length;
+                }
+                if (count > 0) {
+                    lessonOptionsHtml.push(`<option value="${l.id}">${l.title || l.id} (${count}题)</option>`);
+                }
+            });
+
+            const fullLessonHtml = lessonOptionsHtml.join('');
+            if (seqLessonSel) seqLessonSel.innerHTML = fullLessonHtml;
+            if (cardListLessonSel) cardListLessonSel.innerHTML = fullLessonHtml;
+        }
+
+        function syncScopeDropdowns() {
+            const seqCourseSel = document.getElementById('seqCourseSelect');
+            const cardListCourseSel = document.getElementById('cardListCourseSelect');
+            const seqLessonSel = document.getElementById('seqLessonSelect');
+            const cardListLessonSel = document.getElementById('cardListLessonSelect');
+
+            if (seqCourseSel) seqCourseSel.value = activeCourseId || '';
+            if (cardListCourseSel) cardListCourseSel.value = activeCourseId || '';
+            if (seqLessonSel) seqLessonSel.value = activeLessonId || '';
+            if (cardListLessonSel) cardListLessonSel.value = activeLessonId || '';
+        }
+
+        function updateScopeDisplay() {
+            const scopeTitle = getActiveScopeTitle();
+
+            const headerTag = document.getElementById('headerScopeTag');
+            if (headerTag) headerTag.textContent = scopeTitle;
+
+            const seqTotal = document.getElementById('seqScopeTotal');
+            if (seqTotal) seqTotal.textContent = sentencesList.length;
+
+            const listBadgeText = document.getElementById('listScopeBadgeText');
+            if (listBadgeText) listBadgeText.textContent = scopeTitle;
+
+            updateHeaderProgress();
+        }
+
+        function applyReviewScope(courseId, lessonId, resetToStart = true, savedProgress = null) {
+            activeCourseId = courseId || '';
+            activeLessonId = lessonId || '';
+            lessonID = activeLessonId || null;
+
+            if (!activeCourseId && !activeLessonId) {
+                sentencesList = [...allRawSentences];
+            } else if (activeCourseId && !activeLessonId) {
+                sentencesList = allRawSentences.filter(s =>
+                    Array.isArray(s.courses) && s.courses.some(c => c.courseId === activeCourseId)
+                );
+            } else if (activeCourseId && activeLessonId) {
+                sentencesList = allRawSentences.filter(s =>
+                    Array.isArray(s.courses) && s.courses.some(c => c.courseId === activeCourseId && c.lessonId === activeLessonId)
+                );
+            } else {
+                sentencesList = allRawSentences.filter(s =>
+                    Array.isArray(s.courses) && s.courses.some(c => c.lessonId === activeLessonId)
+                );
+            }
+
+            if (sentencesList.length === 0) {
+                if (allRawSentences.length > 0) {
+                    console.warn(`Scope ${activeCourseId}/${activeLessonId} is empty, falling back to all sentences`);
+                    sentencesList = [...allRawSentences];
+                    activeCourseId = '';
+                    activeLessonId = '';
+                    lessonID = null;
+                } else {
+                    sentencesList = DEFAULT_SENTENCES;
+                }
+            }
+
+            // 保持科目/课时内按 order 升序排列
+            sentencesList.sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+
+            // 处理复习卡片指针
+            if (savedProgress) {
+                const foundIdx = sentencesList.findIndex(s => s.id === savedProgress.currentSentenceId);
+                if (foundIdx !== -1) {
+                    currentIndex = foundIdx;
+                } else if (savedProgress.currentIndex < sentencesList.length) {
+                    currentIndex = savedProgress.currentIndex;
+                } else {
+                    currentIndex = 0;
+                }
+            } else if (resetToStart) {
+                currentIndex = 0;
+                currentStep = 1;
+                revealed = Boolean(appSettings.assistMode);
+                quizSubmitted = false;
+                isSideAppAnswerRevealed = false;
+                updateRevealSideAppButtonUI(false);
+            } else {
+                if (currentIndex >= sentencesList.length) {
+                    currentIndex = 0;
+                }
+            }
+
+            syncScopeDropdowns();
+            updateScopeDisplay();
+            renderStepFlow();
+
+            if (currentView === 'list') {
+                renderCardList();
+            }
+
+            saveProgressToIndexedDB();
+            syncSideAppState(null, true);
+        }
+        window.applyReviewScope = applyReviewScope;
+
+        function onSeqCourseChange(courseId) {
+            populateLessonDropdowns(courseId);
+            applyReviewScope(courseId, '', true);
+            showToast(`已切换复习范围：${getActiveScopeTitle()}（共 ${sentencesList.length} 题）`);
+        }
+        window.onSeqCourseChange = onSeqCourseChange;
+
+        function onSeqLessonChange(lessonId) {
+            applyReviewScope(activeCourseId, lessonId, true);
+            showToast(`已切换复习课时：${getActiveLessonTitle()}（共 ${sentencesList.length} 题）`);
+        }
+        window.onSeqLessonChange = onSeqLessonChange;
+
+        function onCardListCourseChange(courseId) {
+            populateLessonDropdowns(courseId);
+            applyReviewScope(courseId, '', true);
+            renderCardList();
+            showToast(`卡片列表筛选：${getActiveScopeTitle()}（共 ${sentencesList.length} 题）`);
+        }
+        window.onCardListCourseChange = onCardListCourseChange;
+
+        function onCardListLessonChange(lessonId) {
+            applyReviewScope(activeCourseId, lessonId, true);
+            renderCardList();
+            showToast(`卡片列表筛选：${getActiveLessonTitle()}（共 ${sentencesList.length} 题）`);
+        }
+        window.onCardListLessonChange = onCardListLessonChange;
+
+        function startSequentialReviewForCurrentScope() {
+            if (!sentencesList || sentencesList.length === 0) {
+                showToast('当前筛选范围内暂无练习题目');
+                return;
+            }
+            currentIndex = 0;
+            currentStep = 1;
+            revealed = Boolean(appSettings.assistMode);
+            quizSubmitted = false;
+            isSideAppAnswerRevealed = false;
+            updateRevealSideAppButtonUI(false);
+
+            switchView('sequential');
+            renderStepFlow();
+            saveProgressToIndexedDB();
+            syncSideAppState('viewTranslateSession', true, { answerRevealed: false });
+
+            const appEl = document.getElementById('app');
+            if (appEl) {
+                appEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            showToast(`已开始整体顺序复习：${getActiveScopeTitle()}（共 ${sentencesList.length} 题）`);
+        }
+        window.startSequentialReviewForCurrentScope = startSequentialReviewForCurrentScope;
+
         async function loadSentences() {
             try {
                 await initQuizDB();
@@ -1769,80 +2311,86 @@
             try {
                 const rec = await getProgressRecord();
                 if (rec) {
-                    if (lessonID) {
-                        if (rec.lessonID === lessonID && rec.currentIndex < rec.totalCount) {
-                            savedProgress = rec;
-                        }
-                    } else {
-                        if (rec.currentIndex < rec.totalCount) {
-                            savedProgress = rec;
-                            if (rec.lessonID) {
-                                lessonID = rec.lessonID;
-                            }
-                        }
-                    }
-                    if (savedProgress) {
-                        console.log("Restoring active progress from IndexedDB:", savedProgress);
-                    }
+                    savedProgress = rec;
+                    console.log("Found saved progress from IndexedDB:", savedProgress);
                 }
             } catch (e) {
                 console.error("Failed to get saved progress:", e);
             }
 
             try {
-                let fetchUrl = '/api/translate_sentences';
-                if (lessonID) {
-                    fetchUrl += `?lessonId=${encodeURIComponent(lessonID)}`;
+                const [resCourses, resLessons, resSentences] = await Promise.all([
+                    fetch('/api/courses'),
+                    fetch('/api/lessons'),
+                    fetch('/api/translate_sentences')
+                ]);
+
+                if (resCourses.ok) {
+                    coursesData = await resCourses.json();
                 }
-                const res = await fetch(fetchUrl);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && data.length > 0) {
-                        sentencesList = data.map(item => item.jsonContent);
-                        sentencesList.sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+                if (resLessons.ok) {
+                    lessonsData = await resLessons.json();
+                }
+                if (resSentences.ok) {
+                    const rawData = await resSentences.json();
+                    if (Array.isArray(rawData) && rawData.length > 0) {
+                        allRawSentences = rawData.map(item => {
+                            const s = Object.assign({}, item.jsonContent || item);
+                            s.uuid = item.uuid || s.id;
+                            s.courses = item.courses || [];
+                            s.tags = item.tags || [];
+                            return s;
+                        });
+                        allRawSentences.sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
                     }
                 }
             } catch (err) {
-                console.error("Failed to load sentences from server, using fallback", err);
+                console.error("Failed to fetch courses/lessons/sentences from server:", err);
             }
 
-            if (lessonID && sentencesList.length === 0) {
-                console.warn(`No sentences found for lessonID: ${lessonID}. Falling back to all sentences.`);
-                lessonID = null;
-                savedProgress = null;
-                try {
-                    const fallbackRes = await fetch('/api/translate_sentences');
-                    if (fallbackRes.ok) {
-                        const data = await fallbackRes.json();
-                        if (data && data.length > 0) {
-                            sentencesList = data.map(item => item.jsonContent);
-                            sentencesList.sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
-                        }
-                    }
-                } catch (fallbackErr) {
-                    console.error("Fallback fetch failed:", fallbackErr);
+            if (allRawSentences.length === 0) {
+                allRawSentences = DEFAULT_SENTENCES.map(s => {
+                    const copy = Object.assign({}, s);
+                    copy.courses = [];
+                    return copy;
+                });
+            }
+
+            populateCourseAndLessonDropdowns();
+
+            // 确定目标范围 (URL 参数优先，其次为上次保存的范围)
+            let targetCourseId = initialCourseId || '';
+            let targetLessonId = lessonID || '';
+
+            if (!targetCourseId && !targetLessonId && savedProgress) {
+                if (savedProgress.courseId) {
+                    targetCourseId = savedProgress.courseId;
+                }
+                if (savedProgress.lessonID || savedProgress.lessonId) {
+                    targetLessonId = savedProgress.lessonID || savedProgress.lessonId;
                 }
             }
-            
-            if (sentencesList.length === 0) {
-                sentencesList = DEFAULT_SENTENCES;
+
+            // 若仅指定了 lessonId，自动反查其所属 courseId
+            if (targetLessonId && !targetCourseId && lessonsData.length > 0) {
+                const matchedLesson = lessonsData.find(l => l.id === targetLessonId);
+                if (matchedLesson && matchedLesson.course_id) {
+                    targetCourseId = matchedLesson.course_id;
+                }
             }
-            
+
+            populateLessonDropdowns(targetCourseId);
+            applyReviewScope(targetCourseId, targetLessonId, false, savedProgress);
+
             if (savedProgress) {
-                const foundIdx = sentencesList.findIndex(s => s.id === savedProgress.currentSentenceId);
-                if (foundIdx !== -1) {
-                    currentIndex = foundIdx;
-                    if (currentIndex > 0) {
-                        showToast(`已为你自动恢复至上次的学习进度：第 ${currentIndex + 1} / ${sentencesList.length} 张卡片`);
-                    }
-                } else {
-                    // 当前课时未匹配到上次记录的句子（例如新导入或重新导入了句子），严格从第 1 张卡片开始
-                    currentIndex = 0;
-                }
                 currentStep = savedProgress.currentStep || 1;
-                if (!appSettings.doQuiz && currentStep === 3) {
+                if (!appSettings.doStep2 && currentStep > 1) {
                     currentStep = 1;
-                    revealed = false;
+                    revealed = Boolean(appSettings.assistMode);
+                    quizSubmitted = false;
+                } else if (!appSettings.doQuiz && currentStep === 3) {
+                    currentStep = 1;
+                    revealed = Boolean(appSettings.assistMode);
                     quizSubmitted = false;
                 }
                 revealed = savedProgress.revealed || false;
@@ -1877,6 +2425,7 @@
                 renderCardList();
             }
             saveProgressToIndexedDB();
+            syncSideAppState(null, true);
         }
 
         // DOM
@@ -1914,6 +2463,7 @@
             const s1 = document.getElementById('step1Indicator');
             const s2 = document.getElementById('step2Indicator');
             const s3 = document.getElementById('step3Indicator');
+            const c2 = document.getElementById('step2Caret');
             const c3 = document.getElementById('step3Caret');
             
             if (s1 && s2 && s3) {
@@ -1921,13 +2471,22 @@
                 s2.className = 'step-badge ' + (currentStep === 2 ? 'active' : (currentStep > 2 ? 'completed' : ''));
                 s3.className = 'step-badge ' + (currentStep === 3 ? 'active' : '');
                 
-                if (c3) {
-                    if (appSettings.doQuiz) {
-                        s3.classList.remove('hidden');
-                        c3.classList.remove('hidden');
-                    } else {
-                        s3.classList.add('hidden');
-                        c3.classList.add('hidden');
+                if (appSettings.doStep2 === false) {
+                    s2.classList.add('hidden');
+                    if (c2) c2.classList.add('hidden');
+                    s3.classList.add('hidden');
+                    if (c3) c3.classList.add('hidden');
+                } else {
+                    s2.classList.remove('hidden');
+                    if (c2) c2.classList.remove('hidden');
+                    if (c3) {
+                        if (appSettings.doQuiz) {
+                            s3.classList.remove('hidden');
+                            c3.classList.remove('hidden');
+                        } else {
+                            s3.classList.add('hidden');
+                            c3.classList.add('hidden');
+                        }
                     }
                 }
             }
@@ -1987,7 +2546,11 @@
                     if (nextBtn) {
                         nextBtn.classList.remove('hidden');
                         if (currentStep === 1) {
-                            nextBtn.textContent = '👉 下一步：拼写翻译 (中➔泰)';
+                            if (appSettings.doStep2 === false) {
+                                nextBtn.textContent = '⏩ 下一题';
+                            } else {
+                                nextBtn.textContent = '👉 下一步：拼写翻译 (中➔泰)';
+                            }
                         } else if (currentStep === 2) {
                             nextBtn.textContent = appSettings.doQuiz ? '👉 下一步：Quiz 检查' : '⏩ 下一题';
                         }
@@ -1999,9 +2562,16 @@
             if (footerNote) {
                 if (appSettings.assistMode && currentStep === 1) {
                     footerNote.innerHTML = '⚡ <strong style="color:#10b981;">辅助模式已开启</strong>：已自动呈现中文翻译，点击“下一题”或按空格键快速进入下一题';
+                } else if (appSettings.doStep2 === false) {
+                    footerNote.innerHTML = '🔹 当前仅练习：泰➔中（Step 2 拼写练习已关闭，完成后直接进入下一题）';
                 } else {
                     footerNote.innerHTML = '🔹 卡片自测包含：泰➔中、中➔泰及自测Quiz三步流程';
                 }
+            }
+
+            // Sync companion screen state
+            if (currentView === 'sequential') {
+                syncSideAppState('viewTranslateSession', false);
             }
         }
 
@@ -2048,8 +2618,8 @@
 
         function handleNextClick() {
             if (currentStep === 1) {
-                if (appSettings.assistMode) {
-                    // 辅助模式下 Step 1 直接进入下一题
+                if (appSettings.assistMode || appSettings.doStep2 === false) {
+                    // 辅助模式下或关闭 Step 2 时，Step 1 结束后直接进入下一个句子翻译练习
                     if (currentIndex === sentencesList.length - 1) {
                         clearProgressRecord();
                         alert("🎉 恭喜你，已完成本次翻译复习！");
@@ -2061,14 +2631,20 @@
                 }
                 currentStep = 2;
                 revealed = false;
+                isSideAppAnswerRevealed = false;
+                updateRevealSideAppButtonUI(false);
                 renderStepFlow();
                 saveProgressToIndexedDB();
+                syncSideAppState('viewTranslateSession', true, { answerRevealed: false });
             } else if (currentStep === 2) {
                 if (appSettings.doQuiz) {
                     currentStep = 3;
                     quizSubmitted = false;
+                    isSideAppAnswerRevealed = false;
+                    updateRevealSideAppButtonUI(false);
                     renderStepFlow();
                     saveProgressToIndexedDB();
+                    syncSideAppState('viewTranslateSession', true, { answerRevealed: false });
                 } else {
                     if (currentIndex === sentencesList.length - 1) {
                         clearProgressRecord();
@@ -2270,6 +2846,10 @@
             const modal = document.getElementById('appSettingsModal');
             if (modal) modal.classList.remove('hidden');
             
+            const step2Toggle = document.getElementById('settingsDoStep2Toggle');
+            if (step2Toggle) {
+                step2Toggle.checked = (appSettings.doStep2 !== false);
+            }
             const quizToggle = document.getElementById('settingsDoQuizToggle');
             if (quizToggle) {
                 quizToggle.checked = appSettings.doQuiz;
@@ -2281,9 +2861,19 @@
         }
 
         function closeAppSettingsModal() {
+            const step2Toggle = document.getElementById('settingsDoStep2Toggle');
             const quizToggle = document.getElementById('settingsDoQuizToggle');
             const assistToggle = document.getElementById('settingsAssistModeToggle');
             let hasChanged = false;
+
+            if (step2Toggle && (appSettings.doStep2 !== false) !== step2Toggle.checked) {
+                appSettings.doStep2 = step2Toggle.checked;
+                hasChanged = true;
+                if (!appSettings.doStep2 && currentStep === 2) {
+                    currentStep = 1;
+                    revealed = Boolean(appSettings.assistMode);
+                }
+            }
 
             if (quizToggle && appSettings.doQuiz !== quizToggle.checked) {
                 appSettings.doQuiz = quizToggle.checked;
@@ -2505,11 +3095,14 @@
             revealed = false;
             currentStep = 1;
             quizSubmitted = false;
+            isSideAppAnswerRevealed = false;
+            updateRevealSideAppButtonUI(false);
             renderStepFlow();
             if (currentView === 'list') {
                 renderCardList();
             }
             saveProgressToIndexedDB();
+            syncSideAppState('viewTranslateSession', true, { answerRevealed: false });
         }
 
         function revealAnswer() {
@@ -2528,11 +3121,14 @@
             revealed = false;
             quizSubmitted = false;
             currentMode = 'th2zh';
+            isSideAppAnswerRevealed = false;
+            updateRevealSideAppButtonUI(false);
             renderStepFlow();
             if (currentView === 'list') {
                 renderCardList();
             }
             saveProgressToIndexedDB();
+            syncSideAppState('viewTranslateSession', true, { answerRevealed: false });
             showToast("复习进度已重置，已从第一句开始！");
         }
 
@@ -2552,12 +3148,14 @@
                 if (seqBtn) seqBtn.classList.remove('active');
                 if (listBtn) listBtn.classList.add('active');
                 renderCardList();
+                syncSideAppState('viewTranslateList', true);
             } else {
                 if (listContainer) listContainer.classList.add('hidden');
                 if (seqContainer) seqContainer.classList.remove('hidden');
                 if (listBtn) listBtn.classList.remove('active');
                 if (seqBtn) seqBtn.classList.add('active');
                 renderStepFlow();
+                syncSideAppState('viewTranslateSession', true);
             }
         }
         window.switchView = switchView;
@@ -2569,6 +3167,8 @@
             currentStep = 1;
             revealed = Boolean(appSettings.assistMode);
             quizSubmitted = false;
+            isSideAppAnswerRevealed = false;
+            updateRevealSideAppButtonUI(false);
 
             // Switch to sequential view
             switchView('sequential');
@@ -2576,6 +3176,7 @@
             // Render and save
             renderStepFlow();
             saveProgressToIndexedDB();
+            syncSideAppState('viewTranslateSession', true, { answerRevealed: false });
 
             // Scroll to app container top smoothly
             const appEl = document.getElementById('app');
@@ -2734,6 +3335,33 @@
                 const isPast = (originalIndex < currentIndex);
                 const safeThai = (item.thai || '').replace(/'/g, "\\'");
 
+                // Course and lesson badge on card
+                let courseLessonBadgeHtml = '';
+                if (Array.isArray(item.courses) && item.courses.length > 0) {
+                    const tagParts = [];
+                    for (const assoc of item.courses) {
+                        const c = coursesData.find(x => x.id === assoc.courseId);
+                        const l = lessonsData.find(x => x.id === assoc.lessonId);
+                        const cName = c ? c.name : '';
+                        const lName = l ? l.title : '';
+                        if (cName && lName) {
+                            tagParts.push(`${cName} · ${lName}`);
+                        } else if (cName || lName) {
+                            tagParts.push(cName || lName);
+                        }
+                    }
+                    if (tagParts.length > 0) {
+                        const firstTag = tagParts[0];
+                        const moreCount = tagParts.length - 1;
+                        courseLessonBadgeHtml = `
+                            <span class="card-course-badge" title="${tagParts.join(' | ')}">
+                                <i class="ph-bold ph-graduation-cap"></i>
+                                <span>${firstTag}${moreCount > 0 ? ` (+${moreCount})` : ''}</span>
+                            </span>
+                        `;
+                    }
+                }
+
                 // Glossary tags
                 let glossaryHtml = '';
                 if (item.glossary && item.glossary.length > 0) {
@@ -2765,6 +3393,7 @@
                         <div class="exercise-card-header">
                             <div class="header-left">
                                 <span class="exercise-num-badge">第 ${originalIndex + 1} 题</span>
+                                ${courseLessonBadgeHtml}
                                 ${isCurrent ? `<span class="badge-current"><i class="ph-fill ph-play-circle"></i> 当前进度</span>` : ''}
                                 ${isPast ? `<span class="badge-past"><i class="ph-bold ph-check"></i> 已学</span>` : ''}
                             </div>
@@ -3304,6 +3933,18 @@
                 });
             }
 
+            // SideApp Companion Screen Status Listener
+            if (window.sideAppBridge) {
+                window.sideAppBridge.setAppTitle('ThaiNotes 伴侣屏 · 翻译练习');
+                let lastClientCount = 0;
+                window.sideAppBridge.onStatusChange((status) => {
+                    if (status.enabled && status.clientCount > lastClientCount) {
+                        syncSideAppState(null, true);
+                    }
+                    lastClientCount = status.clientCount || 0;
+                });
+            }
+
             document.addEventListener('keydown', (e) => {
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
@@ -3315,7 +3956,10 @@
                     return;
                 }
 
-                if (e.key === ' ' || e.key === 'Enter') {
+                if (e.key === 'r' || e.key === 'R') {
+                    e.preventDefault();
+                    revealSideAppAnswer();
+                } else if (e.key === ' ' || e.key === 'Enter') {
                     e.preventDefault();
                     if (currentStep < 3 && !revealed) {
                         revealAnswer();
