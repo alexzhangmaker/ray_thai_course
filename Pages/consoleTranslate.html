@@ -118,6 +118,10 @@
                     <i class="ph ph-download-simple"></i>
                     <span>导入 JSON 数组</span>
                 </button>
+                <button type="button" id="btn-header-export" onclick="exportCurrentLessonSentencesJSON()" class="px-4 py-2 text-sm text-emerald-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-emerald-500/20" title="导出当前科目/课时的所有句子为 JSON 数组并拷贝到剪贴板">
+                    <i class="ph ph-export"></i>
+                    <span>导出 JSON 数组</span>
+                </button>
                 <button type="button" onclick="openPromptModal()" class="px-4 py-2 text-sm text-amber-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-amber-500/20">
                     <i class="ph ph-note"></i>
                     <span>Prompt 配置</span>
@@ -153,29 +157,41 @@
                 <!-- Course Filter Dropdowns -->
                 <div class="grid grid-cols-2 gap-2 font-sans">
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">按科目筛选</label>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">按科目筛选</label>
+                        </div>
                         <select id="filter-course" onchange="onFilterCourseChange()"
                             class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-slate-305 focus:outline-none focus:border-emerald-500 transition duration-200">
                             <option value="">全部科目</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">按课时/章节</label>
-                        <select id="filter-lesson" onchange="renderList()"
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">按课时/章节</label>
+                            <button type="button" id="btn-quick-export" onclick="exportCurrentLessonSentencesJSON()" class="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-0.5 transition" title="导出当前科目/课时的所有句子为 JSON 数组并拷贝到剪贴板">
+                                <i class="ph ph-export"></i>
+                                <span>导出</span>
+                            </button>
+                        </div>
+                        <select id="filter-lesson" onchange="renderList(); updateExportButtonTooltip();"
                             class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-slate-305 focus:outline-none focus:border-emerald-500 transition duration-200" disabled>
                             <option value="">全部课时</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2 font-sans">
-                    <button type="button" onclick="initNewSentence()" class="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl text-xs font-semibold hover:opacity-95 shadow-md shadow-emerald-500/10 transition duration-200 flex items-center justify-center gap-1.5">
+                <div class="grid grid-cols-3 gap-2 font-sans">
+                    <button type="button" onclick="initNewSentence()" class="py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl text-xs font-semibold hover:opacity-95 shadow-md shadow-emerald-500/10 transition duration-200 flex items-center justify-center gap-1">
                         <i class="ph-bold ph-plus-circle text-sm"></i>
                         <span>新增句子</span>
                     </button>
-                    <button type="button" onclick="openImportModal()" class="w-full py-2.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 hover:text-white hover:bg-emerald-500/25 rounded-xl text-xs font-semibold shadow-md shadow-emerald-500/10 transition duration-200 flex items-center justify-center gap-1.5">
+                    <button type="button" onclick="openImportModal()" class="py-2.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 hover:text-white hover:bg-emerald-500/25 rounded-xl text-xs font-semibold shadow-md shadow-emerald-500/10 transition duration-200 flex items-center justify-center gap-1">
                         <i class="ph-bold ph-download-simple text-sm"></i>
                         <span>导入 JSON</span>
+                    </button>
+                    <button type="button" id="btn-sidebar-export" onclick="exportCurrentLessonSentencesJSON()" class="py-2.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 hover:text-white hover:bg-emerald-500/25 rounded-xl text-xs font-semibold shadow-md shadow-emerald-500/10 transition duration-200 flex items-center justify-center gap-1" title="导出当前科目/课时的所有句子为 JSON 数组并拷贝到剪贴板">
+                        <i class="ph-bold ph-export text-sm"></i>
+                        <span>导出 JSON</span>
                     </button>
                 </div>
             </div>
@@ -206,6 +222,10 @@
                     <button type="button" onclick="openImportModal()" class="px-4 py-2 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 hover:text-white hover:bg-emerald-500/25 rounded-xl text-xs font-semibold shadow-md shadow-emerald-500/10 transition duration-200 flex items-center gap-1.5">
                         <i class="ph-bold ph-download-simple text-sm"></i>
                         <span>导入 JSON 数组</span>
+                    </button>
+                    <button type="button" id="btn-empty-export" onclick="exportCurrentLessonSentencesJSON()" class="px-4 py-2 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 hover:text-white hover:bg-emerald-500/25 rounded-xl text-xs font-semibold shadow-md shadow-emerald-500/10 transition duration-200 flex items-center gap-1.5" title="导出当前科目/课时的所有句子为 JSON 数组并拷贝到剪贴板">
+                        <i class="ph-bold ph-export text-sm"></i>
+                        <span>导出 JSON 数组</span>
                     </button>
                 </div>
                 
@@ -535,6 +555,7 @@
                 if (filterCourse) filterCourse.appendChild(opt.cloneNode(true));
                 if (assocCourse) assocCourse.appendChild(opt);
             });
+            updateExportButtonTooltip();
         }
 
         function openAppTranslateWithLesson() {
@@ -566,6 +587,7 @@
                 });
             }
             renderList();
+            updateExportButtonTooltip();
         }
 
         function onAssocCourseChange() {
@@ -1553,6 +1575,185 @@
                 showToast("网络连接失败，无法布置任务", "error");
                 alert("网络连接失败，无法布置任务");
             }
+        }
+
+        // ==========================================
+        // Clipboard & Export JSON Logic
+        // ==========================================
+        function copyTextToClipboard(text, onSuccess, onError) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    if (onSuccess) onSuccess();
+                }).catch(err => {
+                    console.warn("navigator.clipboard copy failed, trying fallback...", err);
+                    fallbackCopyText(text, onSuccess, onError);
+                });
+            } else {
+                fallbackCopyText(text, onSuccess, onError);
+            }
+        }
+
+        function fallbackCopyText(text, onSuccess, onError) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.opacity = "0";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                const successful = document.execCommand('copy');
+                document.body.removeChild(textArea);
+                if (successful && onSuccess) {
+                    onSuccess();
+                } else if (!successful && onError) {
+                    onError(new Error("execCommand failed"));
+                }
+            } catch (err) {
+                document.body.removeChild(textArea);
+                if (onError) onError(err);
+            }
+        }
+
+        function updateExportButtonTooltip() {
+            const filterCourse = document.getElementById('filter-course');
+            const filterLesson = document.getElementById('filter-lesson');
+            const courseId = filterCourse ? filterCourse.value : '';
+            const lessonId = filterLesson ? filterLesson.value : '';
+
+            let tooltip = "导出当前选定科目/课时下的所有句子为 JSON 数组并拷贝到剪贴板";
+            if (courseId) {
+                const cName = getCourseName(courseId);
+                if (lessonId) {
+                    const lName = getLessonName(courseId, lessonId);
+                    tooltip = `导出「${cName} / ${lName}」的所有句子为 JSON 数组并拷贝到剪贴板`;
+                } else {
+                    tooltip = `导出「${cName} (全部课时)」的所有句子为 JSON 数组并拷贝到剪贴板`;
+                }
+            }
+
+            ['btn-quick-export', 'btn-sidebar-export', 'btn-header-export', 'btn-empty-export'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.title = tooltip;
+            });
+        }
+
+        async function exportCurrentLessonSentencesJSON(targetCourseId, targetLessonId) {
+            let courseId = targetCourseId;
+            let lessonId = targetLessonId;
+
+            const filterCourse = document.getElementById('filter-course');
+            const filterLesson = document.getElementById('filter-lesson');
+
+            if (courseId === undefined) {
+                courseId = filterCourse ? filterCourse.value : '';
+            }
+            if (lessonId === undefined) {
+                lessonId = filterLesson ? filterLesson.value : '';
+            }
+
+            // Fallback: 如果未在筛选下拉框中选择，尝试采用当前正在编辑的句子所属的科目/课时
+            if (!courseId) {
+                if (activeSentence && activeSentence.courses && activeSentence.courses.length > 0) {
+                    const assoc = activeSentence.courses[0];
+                    courseId = assoc.courseId;
+                    if (filterCourse) {
+                        filterCourse.value = courseId;
+                        onFilterCourseChange();
+                    }
+                    if (!lessonId && assoc.lessonId) {
+                        lessonId = assoc.lessonId;
+                        if (filterLesson) {
+                            filterLesson.value = lessonId;
+                            renderList();
+                        }
+                    }
+                }
+            }
+
+            if (!courseId) {
+                alert("请先在左侧筛选栏中选择要导出的科目！");
+                if (filterCourse) filterCourse.focus();
+                return;
+            }
+
+            if (!sentences || sentences.length === 0) {
+                await fetchData();
+            }
+
+            const courseName = getCourseName(courseId);
+            const lessonName = lessonId ? getLessonName(courseId, lessonId) : '全部课时';
+            const scopeTitle = lessonId ? `${courseName} / ${lessonName}` : `${courseName} (全部课时)`;
+
+            const targetSentences = sentences.filter(item => {
+                if (!item.courses || !Array.isArray(item.courses)) return false;
+                if (courseId && lessonId) {
+                    return item.courses.some(c => c.courseId === courseId && c.lessonId === lessonId);
+                }
+                if (courseId) {
+                    return item.courses.some(c => c.courseId === courseId);
+                }
+                if (lessonId) {
+                    return item.courses.some(c => c.lessonId === lessonId);
+                }
+                return true;
+            });
+
+            if (targetSentences.length === 0) {
+                alert(`当前「${scopeTitle}」下未包含任何翻译句子！`);
+                return;
+            }
+
+            // 保持与展示顺序及序号一致（按 order 升序）
+            targetSentences.sort((a, b) => {
+                const orderA = (a.jsonContent && a.jsonContent.order !== undefined) ? Number(a.jsonContent.order) : 0;
+                const orderB = (b.jsonContent && b.jsonContent.order !== undefined) ? Number(b.jsonContent.order) : 0;
+                if (orderA && orderB && orderA !== orderB) return orderA - orderB;
+                return (a.uuid || '').localeCompare(b.uuid || '');
+            });
+
+            const cleanArray = targetSentences.map((item, idx) => {
+                const c = item.jsonContent || {};
+                const tags = (Array.isArray(item.tags) && item.tags.length > 0)
+                    ? item.tags
+                    : (Array.isArray(c.tags) ? c.tags : []);
+
+                const cleanObj = {
+                    id: item.uuid || c.id || `s_${idx + 1}`,
+                    order: (c.order !== undefined && c.order !== null) ? Number(c.order) : (idx + 1),
+                    chinese: (c.chinese || '').trim(),
+                    thai: (c.thai || '').trim(),
+                    thai_spaced: (c.thai_spaced || '').trim(),
+                    english: (c.english || '').trim(),
+                    direction: c.direction || 'zh2th',
+                    tokens: Array.isArray(c.tokens) ? c.tokens : [],
+                    glossary: Array.isArray(c.glossary) ? c.glossary : [],
+                    category: c.category || '日常生活',
+                    difficulty: c.difficulty !== undefined ? Number(c.difficulty) : 3,
+                    tags: tags
+                };
+
+                // 保留 jsonContent 中可能存在的其它扩展属性
+                Object.keys(c).forEach(key => {
+                    if (!(key in cleanObj)) {
+                        cleanObj[key] = c[key];
+                    }
+                });
+
+                return cleanObj;
+            });
+
+            const jsonStr = JSON.stringify(cleanArray, null, 2);
+
+            copyTextToClipboard(jsonStr, () => {
+                showToast(`已成功导出「${scopeTitle}」下的 ${cleanArray.length} 条句子 JSON 数组并复制到剪贴板！`, "success");
+                alert(`已成功将「${scopeTitle}」下的 ${cleanArray.length} 条句子导出为 JSON 数组，并已拷贝到剪贴板！可以直接粘贴使用。`);
+            }, (err) => {
+                console.warn("copyTextToClipboard failed:", err);
+                window.prompt(`自动拷贝失败，请按 Ctrl+C 手动复制「${scopeTitle}」的句子 JSON 数组数据:`, jsonStr);
+            });
         }
 
         // ==========================================
