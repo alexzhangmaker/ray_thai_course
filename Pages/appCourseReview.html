@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icon CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Phosphor Icons for SideApp Companion Screen -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <!-- Google Fonts: Outfit & Noto Sans SC & Noto Serif Thai -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Serif+Thai:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -154,6 +156,13 @@
 
         <!-- Right Controls -->
         <div class="flex items-center gap-3">
+            <!-- SideApp Companion Screen Quick Capsule Pill -->
+            <button id="btnSideAppPill" onclick="SideAppPairingPanel.open()" title="手机伴侣屏联动 (第二屏幕同步查看课件讲义)" class="px-3 py-1.5 text-xs text-slate-300 hover:text-indigo-300 bg-slate-800 hover:bg-slate-700/80 rounded-lg transition-all duration-150 flex items-center gap-1.5 border border-slate-700 font-medium shadow-sm cursor-pointer">
+                <span id="sideAppStatusDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+                <i class="ph-bold ph-device-mobile text-indigo-400"></i>
+                <span id="sideAppStatusText">伴侣屏</span>
+            </button>
+
             <!-- Courseware Selector Dropdown Trigger -->
             <button id="btn-select-courseware" class="px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 text-xs font-semibold flex items-center gap-1.5 transition-all">
                 <i class="fa-solid fa-list-check"></i>
@@ -623,6 +632,11 @@
         </div>
     </div>
 
+    <!-- SideApp Second Screen Companion Modules -->
+    <script src="./js/sideapp/qrcode.min.js"></script>
+    <script src="./js/sideapp/bridge.js"></script>
+    <script src="./js/sideapp/pairingPanel.js"></script>
+
     <!-- Application JavaScript Code -->
     <script>
         // Set PDF.js Worker
@@ -645,6 +659,10 @@
             // Cloze / Masking mode state
             isClozeMasked: false,
 
+            // Local uploaded PDF file state
+            localPdfDataUrl: null,
+            localFileName: null,
+
             // Step 3 Flashcard Engine state for current page
             flashcardQueue: [],
             flashcardIdx: 0,
@@ -658,11 +676,79 @@
             sidebarOpen: false
         };
 
+        // =============================================================
+        // SideApp Companion Screen State Synchronization (第二屏幕联动)
+        // =============================================================
+        function getCoursewarePdfUrl() {
+            if (state.localPdfDataUrl) {
+                return state.localPdfDataUrl;
+            }
+            const cw = state.activeCourseware;
+            if (cw && cw.coursewareURI) {
+                let uri = cw.coursewareURI;
+                if (!uri.startsWith('http') && !uri.startsWith('/')) {
+                    uri = `/Pages/${uri}`;
+                }
+                return uri;
+            }
+            return '';
+        }
+
+        function syncSideAppState(viewName = 'viewCourseReviewPdf', forceFull = false, overrides = {}) {
+            if (!window.sideAppBridge || !window.sideAppBridge.enabled) return;
+
+            try {
+                const cw = state.activeCourseware;
+                const pageData = (typeof app !== 'undefined' && typeof app.getCurrentPageNoteData === 'function')
+                    ? app.getCurrentPageNoteData()
+                    : { titleOriginal: `Page ${state.pageNum}`, summary: '', corePoints: [], flashcards: [] };
+
+                const pdfUrl = getCoursewarePdfUrl();
+
+                const sideState = {
+                    appType: 'course_review',
+                    coursewareUuid: cw ? cw.uuid : 'local',
+                    coursewareTitle: cw ? cw.title : (state.localFileName || '本地课件'),
+                    pdfUrl: pdfUrl,
+                    pageNum: state.pageNum || 1,
+                    totalPages: state.totalPages || 1,
+                    currentStep: state.currentStep || 1,
+                    stepName: state.currentStep === 1 ? 'Step 1: 观看课件 Page' : (state.currentStep === 2 ? 'Step 2: 复习 bullet 笔记' : 'Step 3: 随堂闪卡复习'),
+                    pageTitle: pageData.titleOriginal || `第 ${state.pageNum} 页`,
+                    pageSummary: pageData.summary || '',
+                    corePointsCount: pageData.corePoints ? pageData.corePoints.length : 0,
+                    flashcardsCount: pageData.flashcards ? pageData.flashcards.length : 0,
+                    ...overrides
+                };
+
+                window.sideAppBridge.pushState(viewName, sideState, forceFull, {
+                    title: `ThaiNotes 伴侣屏 · ${cw ? cw.title : '课件知识复习'}`
+                });
+            } catch (err) {
+                console.warn('[SideApp syncSideAppState error]:', err);
+            }
+        }
+        window.syncSideAppState = syncSideAppState;
+
         const app = {
             async init() {
                 this.bindEvents();
+                this.initSideApp();
                 await this.loadDataFromApi();
                 this.parseUrlParameters();
+            },
+
+            initSideApp() {
+                if (window.sideAppBridge) {
+                    window.sideAppBridge.setAppTitle('ThaiNotes 伴侣屏 · 课件知识复习');
+                    let lastClientCount = 0;
+                    window.sideAppBridge.onStatusChange((status) => {
+                        if (status.enabled && status.clientCount > lastClientCount) {
+                            syncSideAppState('viewCourseReviewPdf', true);
+                        }
+                        lastClientCount = status.clientCount || 0;
+                    });
+                }
             },
 
             bindEvents() {
@@ -684,6 +770,19 @@
                 document.getElementById('input-current-page').addEventListener('change', (e) => {
                     let val = parseInt(e.target.value) || 1;
                     this.goToPage(val);
+                });
+
+                // Keyboard Navigation for Page Navigation
+                window.addEventListener('keydown', (e) => {
+                    const tag = (e.target.tagName || '').toLowerCase();
+                    if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+                    if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                        e.preventDefault();
+                        this.goToPage(state.pageNum - 1);
+                    } else if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+                        e.preventDefault();
+                        this.goToPage(state.pageNum + 1);
+                    }
                 });
 
                 // PDF Zoom
@@ -752,6 +851,8 @@
                     return;
                 }
                 state.activeCourseware = cw;
+                state.localPdfDataUrl = null;
+                state.localFileName = null;
                 state.pageNum = targetPage;
                 state.currentStep = targetStep;
 
@@ -795,6 +896,7 @@
                 const pdfUri = cw.coursewareURI;
                 if (!pdfUri) {
                     this.showMarkdownFallback();
+                    syncSideAppState('viewCourseReviewPdf', true);
                     return;
                 }
 
@@ -823,6 +925,8 @@
                             if (state.pageNum > pdf.numPages) state.pageNum = 1;
                             
                             this.goToPage(state.pageNum, state.currentStep);
+                            // Notify SideApp to read courseware PDF document content and display!
+                            syncSideAppState('viewCourseReviewPdf', true);
                         });
                     })
                     .catch(err => {
@@ -832,6 +936,7 @@
                         state.totalPages = 1;
                         document.getElementById('text-total-pages').textContent = 1;
                         this.setupCurrentPageReviewView();
+                        syncSideAppState('viewCourseReviewPdf', true);
                     });
             },
 
@@ -839,9 +944,23 @@
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const typedarray = new Uint8Array(e.target.result);
+                    state.localFileName = file.name;
+                    state.activeCourseware = null;
+                    if (file.size <= 25 * 1024 * 1024) {
+                        let binary = '';
+                        const len = typedarray.byteLength;
+                        for (let i = 0; i < len; i += 8192) {
+                            binary += String.fromCharCode.apply(null, typedarray.subarray(i, Math.min(i + 8192, len)));
+                        }
+                        state.localPdfDataUrl = 'data:application/pdf;base64,' + btoa(binary);
+                    } else {
+                        state.localPdfDataUrl = null;
+                    }
+
                     pdfjsLib.getDocument(typedarray).promise.then(pdf => {
                         state.pdfDoc = pdf;
                         state.totalPages = pdf.numPages;
+                        document.getElementById('current-doc-name').textContent = file.name;
                         document.getElementById('text-total-pages').textContent = pdf.numPages;
                         document.getElementById('input-current-page').max = pdf.numPages;
                         document.getElementById('pdf-lock-screen').classList.add('hidden');
@@ -850,6 +969,8 @@
 
                         state.pageNum = 1;
                         this.goToPage(1, 1);
+                        // Notify SideApp to read local courseware PDF document content and display!
+                        syncSideAppState('viewCourseReviewPdf', true);
                     });
                 };
                 reader.readAsArrayBuffer(file);
@@ -889,6 +1010,9 @@
                 this.setStep(targetStep);
                 this.updateUrlQuery(state.activeCourseware ? state.activeCourseware.uuid : '', p, targetStep);
                 this.renderSidebarTree();
+
+                // Synchronously designate sideApp to switch to the corresponding PDF page
+                syncSideAppState('viewCourseReviewPdf', false);
             },
 
             // High-DPI Canvas Rendering
@@ -968,6 +1092,8 @@
 
                 this.setupCurrentPageReviewView();
                 this.updateUrlQuery(state.activeCourseware ? state.activeCourseware.uuid : '', p, step);
+                // Sync step update to sideApp
+                syncSideAppState('viewCourseReviewPdf', false);
             },
 
             // Extract or generate page note data for current page

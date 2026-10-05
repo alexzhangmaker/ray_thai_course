@@ -335,6 +335,83 @@ test('SideApp Integration: HTTP APIs, WS Connect, Broadcast, Reconnect and Maste
     assert.equal(corePatchMsg.payload.ops[0].path, 'detailRevealed');
     assert.equal(corePatchMsg.payload.ops[0].value, true);
 
+    // 5b. Test Course Review PDF loading notification and page flip sync
+    const initialCourseReviewState = {
+      appType: 'course_review',
+      coursewareUuid: 'cw_test_123',
+      coursewareTitle: '泰北画卷:地理、自然与人文的交织',
+      pdfUrl: '/Pages/coursewares/Ch7-Northern_Thailand_Visual_Atlas.pdf',
+      pageNum: 1,
+      totalPages: 18,
+      currentStep: 1,
+      stepName: 'Step 1: 观看课件 Page'
+    };
+
+    // Master app loads courseware: sends render.full
+    await fetch(`http://127.0.0.1:${TEST_PORT}/sideapp/broadcast`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: sessRes.sessionId,
+        message: {
+          type: 'render.full',
+          payload: {
+            view: 'viewCourseReviewPdf',
+            state: initialCourseReviewState
+          }
+        }
+      })
+    });
+
+    await new Promise(r => setTimeout(r, 80));
+    const crFullMsg = receivedMessages.filter(m => m.type === 'render.full').pop();
+    assert.ok(crFullMsg);
+    assert.equal(crFullMsg.payload.view, 'viewCourseReviewPdf');
+    assert.equal(crFullMsg.payload.state.pdfUrl, '/Pages/coursewares/Ch7-Northern_Thailand_Visual_Atlas.pdf');
+    assert.equal(crFullMsg.payload.state.pageNum, 1);
+    assert.equal(crFullMsg.payload.state.totalPages, 18);
+
+    // Master app flips/jumps page to page 5
+    const updatedCourseReviewState = {
+      ...initialCourseReviewState,
+      pageNum: 5,
+      currentStep: 2,
+      stepName: 'Step 2: 复习 bullet 笔记'
+    };
+    const pageFlipPatchOps = computePatch(initialCourseReviewState, updatedCourseReviewState);
+    assert.ok(pageFlipPatchOps.length >= 1);
+    const pageNumOp = pageFlipPatchOps.find(o => o.path === 'pageNum');
+    assert.ok(pageNumOp);
+    assert.equal(pageNumOp.value, 5);
+
+    // Master broadcasts page change patch
+    await fetch(`http://127.0.0.1:${TEST_PORT}/sideapp/broadcast`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: sessRes.sessionId,
+        message: {
+          type: 'render.patch',
+          payload: { ops: pageFlipPatchOps }
+        }
+      })
+    });
+
+    await new Promise(r => setTimeout(r, 80));
+    const pageFlipMsg = receivedMessages.filter(m => m.type === 'render.patch').pop();
+    assert.ok(pageFlipMsg);
+    const receivedPageNumOp = pageFlipMsg.payload.ops.find(o => o.path === 'pageNum');
+    assert.ok(receivedPageNumOp);
+    assert.equal(receivedPageNumOp.value, 5);
+
+    // Verify client state mutation
+    let clientStateCopy = JSON.parse(JSON.stringify(initialCourseReviewState));
+    for (const op of pageFlipMsg.payload.ops) {
+      setByPath(clientStateCopy, op.path, op.value);
+    }
+    assert.equal(clientStateCopy.pageNum, 5);
+    assert.equal(clientStateCopy.currentStep, 2);
+
     // 6. Test unauthorized connection rejection
     const badWs = new WebSocket(`ws://127.0.0.1:${TEST_PORT}/sideapp/ws?session=${sessRes.sessionId}&token=fake_token`);
     let badWsRejected = false;

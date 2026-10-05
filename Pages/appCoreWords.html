@@ -1444,12 +1444,74 @@
         // IndexedDB Progress Database Manager (复习进度)
         // ==========================================
         const PROGRESS_DB_NAME = 'ThaiCoreWordsReviewDB';
-        const PROGRESS_DB_VERSION = 3;
         const PROGRESS_STORE_NAME = 'coreWordProgress';
+        const PROGRESS_STORAGE_BACKUP_KEY = 'vcourse_thai_corewords_progress_backup';
 
+        let cachedProgressDB = null;
+
+        // --- 容灾兜底：LocalStorage 双写与自愈修复 ---
+        function backupProgressToLocalStorage(progressMap) {
+            try {
+                if (!progressMap || typeof progressMap !== 'object') return;
+                localStorage.setItem(PROGRESS_STORAGE_BACKUP_KEY, JSON.stringify(progressMap));
+            } catch (err) {
+                console.warn("[Progress] Failed to backup progress to localStorage:", err);
+            }
+        }
+
+        function getProgressFromLocalStorageBackup() {
+            try {
+                const raw = localStorage.getItem(PROGRESS_STORAGE_BACKUP_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && typeof parsed === 'object') {
+                        return parsed;
+                    }
+                }
+            } catch (err) {
+                console.warn("[Progress] Failed to read progress backup from localStorage:", err);
+            }
+            return null;
+        }
+
+        async function repairIndexedDBFromMap(map) {
+            if (!map || Object.keys(map).length === 0) return;
+            try {
+                const db = await initProgressDB();
+                if (!db || !db.objectStoreNames.contains(PROGRESS_STORE_NAME)) return;
+                const tx = db.transaction([PROGRESS_STORE_NAME], 'readwrite');
+                const store = tx.objectStore(PROGRESS_STORE_NAME);
+                for (const rec of Object.values(map)) {
+                    if (rec && rec.wordId) {
+                        store.put(rec);
+                    }
+                }
+            } catch (e) {
+                console.warn("[Progress] Failed to repair IndexedDB from map:", e);
+            }
+        }
+
+        function broadcastProgressUpdate(wordId, record) {
+            if (appSyncBroadcastChannel) {
+                try {
+                    appSyncBroadcastChannel.postMessage({
+                        type: 'PROGRESS_UPDATED',
+                        senderId: TAB_INSTANCE_ID,
+                        wordId,
+                        record
+                    });
+                } catch (e) {}
+            }
+        }
+
+        // --- 核心改造：自适应版本打开，彻底避免 VersionError，连接复用与及时释放 ---
         function openProgressDB(version) {
             return new Promise((resolve, reject) => {
-                const request = indexedDB.open(PROGRESS_DB_NAME, version);
+                // 不传版本号时，浏览器自适应打开当前实际版本，彻底避免 VersionError
+                const request = version !== undefined 
+                    ? indexedDB.open(PROGRESS_DB_NAME, version) 
+                    : indexedDB.open(PROGRESS_DB_NAME);
+
                 request.onupgradeneeded = (e) => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains(PROGRESS_STORE_NAME)) {
@@ -1462,49 +1524,115 @@
                 request.onsuccess = (e) => resolve(e.target.result);
                 request.onerror = (e) => reject(e.target.error);
                 request.onblocked = () => {
-                    console.warn("IndexedDB upgrade blocked, please close other tabs with this app.");
+                    console.warn("[ProgressDB] IndexedDB 升级被阻塞，正在等待其他标签页释放连接...");
                 };
             });
         }
 
         async function initProgressDB() {
-            let db = await openProgressDB(PROGRESS_DB_VERSION);
-            // Self-healing: if the store does not exist (e.g. legacy DB was opened at the same version without it)
-            if (!db.objectStoreNames.contains(PROGRESS_STORE_NAME)) {
-                const targetVersion = (db.version || PROGRESS_DB_VERSION) + 1;
-                db.close();
-                db = await openProgressDB(targetVersion);
+            // 复用已有健康连接
+            if (cachedProgressDB && cachedProgressDB.objectStoreNames.contains(PROGRESS_STORE_NAME)) {
+                return cachedProgressDB;
             }
+
+            let db;
+            try {
+                // 1. 无版本号自适应打开（绝不抛出 VersionError）
+                db = await openProgressDB();
+            } catch (e) {
+                console.warn("[ProgressDB] 自适应打开失败，尝试从版本 1 创建:", e);
+                db = await openProgressDB(1);
+            }
+
+            // 2. 自愈检查：若缺少 object store 则安全升版 (+1)
+            if (!db.objectStoreNames.contains(PROGRESS_STORE_NAME)) {
+                const nextVersion = (db.version || 1) + 1;
+                db.close();
+                db = await openProgressDB(nextVersion);
+            }
+
+            // 3. 监听其他标签页升级请求，及时关闭连接避免互相死锁（onblocked）
+            db.onversionchange = () => {
+                console.warn("[ProgressDB] 检测到外部版本升级请求，主动释放本页缓存连接。");
+                try {
+                    db.close();
+                } catch (e) {}
+                if (cachedProgressDB === db) {
+                    cachedProgressDB = null;
+                }
+            };
+            db.onclose = () => {
+                if (cachedProgressDB === db) {
+                    cachedProgressDB = null;
+                }
+            };
+
+            cachedProgressDB = db;
             return db;
         }
 
         async function loadAllProgressFromIndexedDB() {
+            let loadedRecords = {};
+            let loadedFromDB = false;
+
             try {
                 const db = await initProgressDB();
-                return await new Promise((resolve, reject) => {
-                    if (!db.objectStoreNames.contains(PROGRESS_STORE_NAME)) {
-                        console.warn(`Object store ${PROGRESS_STORE_NAME} not found in ${PROGRESS_DB_NAME}`);
-                        resolve({});
-                        return;
-                    }
-                    const transaction = db.transaction([PROGRESS_STORE_NAME], 'readonly');
-                    const store = transaction.objectStore(PROGRESS_STORE_NAME);
-                    const request = store.getAll();
-                    request.onsuccess = (e) => {
-                        const records = e.target.result || [];
-                        coreWordsProgressMap = {};
-                        records.forEach(r => {
-                            coreWordsProgressMap[r.wordId] = r;
-                        });
-                        resolve(coreWordsProgressMap);
-                    };
-                    request.onerror = (e) => reject(e.target.error);
-                });
+                if (db.objectStoreNames.contains(PROGRESS_STORE_NAME)) {
+                    loadedRecords = await new Promise((resolve, reject) => {
+                        const transaction = db.transaction([PROGRESS_STORE_NAME], 'readonly');
+                        const store = transaction.objectStore(PROGRESS_STORE_NAME);
+                        const request = store.getAll();
+                        request.onsuccess = (e) => {
+                            const records = e.target.result || [];
+                            const map = {};
+                            records.forEach(r => {
+                                if (r && r.wordId) {
+                                    map[r.wordId] = r;
+                                }
+                            });
+                            resolve(map);
+                        };
+                        request.onerror = (e) => reject(e.target.error);
+                    });
+                    loadedFromDB = true;
+                }
             } catch (err) {
-                console.error("Failed to load progress from IndexedDB:", err);
-                coreWordsProgressMap = {};
-                return {};
+                console.error("[ProgressDB] 读取本地 IndexedDB 进度失败:", err);
+                cachedProgressDB = null;
             }
+
+            // 双重备份校验与自愈恢复：对比 IndexedDB 与 localStorage 备份
+            const backup = getProgressFromLocalStorageBackup();
+            const dbKeysCount = Object.keys(loadedRecords).length;
+            const backupKeysCount = backup ? Object.keys(backup).length : 0;
+
+            if (dbKeysCount === 0 && backupKeysCount > 0) {
+                // 自愈修复：IndexedDB 为空但本地 localStorage 存在备份
+                console.log(`[Progress] 从本地 localStorage 备份恢复 ${backupKeysCount} 条核心词复习进度...`);
+                coreWordsProgressMap = { ...backup };
+                repairIndexedDBFromMap(coreWordsProgressMap);
+            } else if (dbKeysCount > 0) {
+                coreWordsProgressMap = { ...loadedRecords };
+                // 若备份中含有 IndexedDB 遗漏的词汇（如多标签页或离线保存写入），进行智能补全
+                if (backup && backupKeysCount > dbKeysCount) {
+                    let mergedCount = 0;
+                    for (const [wId, rec] of Object.entries(backup)) {
+                        if (!coreWordsProgressMap[wId]) {
+                            coreWordsProgressMap[wId] = rec;
+                            mergedCount++;
+                        }
+                    }
+                    if (mergedCount > 0) {
+                        console.log(`[Progress] 从本地备份补全了 ${mergedCount} 条复习记录`);
+                        repairIndexedDBFromMap(coreWordsProgressMap);
+                    }
+                }
+                backupProgressToLocalStorage(coreWordsProgressMap);
+            } else {
+                coreWordsProgressMap = {};
+            }
+
+            return coreWordsProgressMap;
         }
 
         async function saveWordProgressToIndexedDB(wordId, lessonId, masteryScore) {
@@ -1519,6 +1647,10 @@
             };
 
             coreWordsProgressMap[wordId] = record;
+            // 1. 同步镜像写入 localStorage 备份
+            backupProgressToLocalStorage(coreWordsProgressMap);
+            // 2. 跨标签页广播状态
+            broadcastProgressUpdate(wordId, record);
 
             try {
                 const db = await initProgressDB();
@@ -1535,6 +1667,7 @@
                 });
             } catch (err) {
                 console.error("Failed to save progress record to IndexedDB:", err);
+                cachedProgressDB = null;
                 return false;
             }
         }
@@ -1562,10 +1695,23 @@
                     store.delete(w.id);
                 }
 
+                // 同步至 localStorage 备份
+                backupProgressToLocalStorage(coreWordsProgressMap);
+                if (appSyncBroadcastChannel) {
+                    try {
+                        appSyncBroadcastChannel.postMessage({
+                            type: 'PROGRESS_RESET_BATCH',
+                            senderId: TAB_INSTANCE_ID,
+                            wordIds: vocabs.map(w => w.id)
+                        });
+                    } catch (e) {}
+                }
+
                 alert(`${scopeName}核心词汇复习状态已成功重置为“待复习”！`);
                 renderLessons();
             } catch (err) {
                 console.error("Failed to reset lesson progress in IndexedDB:", err);
+                cachedProgressDB = null;
             }
         }
 
@@ -2005,6 +2151,20 @@
                             setTimeout(() => { if (statusEl) statusEl.textContent = '数据存储于本地 IndexedDB & 自动备份'; }, 2000);
                         }
                     }
+                }
+            } else if (msg.type === 'PROGRESS_UPDATED') {
+                // Another tab saved progress for a word
+                if (msg.senderId !== TAB_INSTANCE_ID && msg.wordId && msg.record) {
+                    coreWordsProgressMap[msg.wordId] = msg.record;
+                    backupProgressToLocalStorage(coreWordsProgressMap);
+                    renderLessons();
+                }
+            } else if (msg.type === 'PROGRESS_RESET_BATCH') {
+                // Another tab reset progress for a lesson/wordset
+                if (msg.senderId !== TAB_INSTANCE_ID && Array.isArray(msg.wordIds)) {
+                    msg.wordIds.forEach(id => delete coreWordsProgressMap[id]);
+                    backupProgressToLocalStorage(coreWordsProgressMap);
+                    renderLessons();
                 }
             }
         }
@@ -4628,6 +4788,34 @@
         window.copyDeckRecordPayload = copyDeckRecordPayload;
         window.copyDeckRecordResponse = copyDeckRecordResponse;
 
+        function reloadProgressOnFocus() {
+            const backup = getProgressFromLocalStorageBackup();
+            if (backup) {
+                const currentCount = Object.keys(coreWordsProgressMap).length;
+                const backupCount = Object.keys(backup).length;
+                if (backupCount > currentCount) {
+                    coreWordsProgressMap = { ...coreWordsProgressMap, ...backup };
+                    renderLessons();
+                }
+            }
+        }
+
+        async function requestPersistentStorage() {
+            if (navigator.storage && navigator.storage.persist) {
+                try {
+                    const isPersisted = await navigator.storage.persisted();
+                    if (!isPersisted) {
+                        const granted = await navigator.storage.persist();
+                        console.log(`[Storage] 申请持久化存储 (Persistent Storage): ${granted ? '已授予 ✅' : '未授予 (保持临时配额)'}`);
+                    } else {
+                        console.log('[Storage] 当前站点存储已处于持久化受保护状态 ✅');
+                    }
+                } catch (e) {
+                    console.warn("[Storage] 申请持久化存储异常:", e);
+                }
+            }
+        }
+
         // ==========================================
         // App Lifecycle & Initialization
         // ==========================================
@@ -4638,18 +4826,23 @@
             initKeyboardShortcuts();
             DeckAddLogsManager.updateBadges();
 
-            // 多标签页与多实例监听同步：窗口激活/存储变动时自动重新读取最新设置
+            // 多标签页与多实例监听同步：窗口激活/存储变动时自动重新读取最新设置与复习进度
             document.addEventListener('visibilitychange', () => {
                 if (!document.hidden) {
                     loadAppSettingsFromDB();
+                    reloadProgressOnFocus();
                 }
             });
             window.addEventListener('focus', () => {
                 loadAppSettingsFromDB();
+                reloadProgressOnFocus();
             });
             window.addEventListener('storage', (e) => {
                 if (e.key === SETTINGS_STORAGE_BACKUP_KEY) {
                     loadAppSettingsFromDB();
+                }
+                if (e.key === PROGRESS_STORAGE_BACKUP_KEY) {
+                    reloadProgressOnFocus();
                 }
             });
 
@@ -4665,6 +4858,7 @@
         });
 
         async function initApp() {
+            await requestPersistentStorage();
             try {
                 const dictDb = await initDictDB();
                 await migrateLegacyCoreWordsQueries(dictDb);

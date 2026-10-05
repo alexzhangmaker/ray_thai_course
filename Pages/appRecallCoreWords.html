@@ -906,10 +906,11 @@
             btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> 正在同步...`;
 
             try {
-                const req = indexedDB.open(PROGRESS_DB_NAME, PROGRESS_DB_VERSION);
+                const req = indexedDB.open(PROGRESS_DB_NAME);
                 req.onsuccess = (e) => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains(PROGRESS_STORE_NAME)) {
+                        db.close();
                         alert("未找到核心词复习进度存储库。");
                         btn.disabled = false;
                         btn.innerHTML = `<i class="ph-bold ph-check-double"></i> 同步提分至 3分`;
@@ -932,11 +933,31 @@
                     });
 
                     tx.oncomplete = () => {
+                        db.close();
+                        // 同步更新 localStorage 镜像备份
+                        try {
+                            const backupKey = 'vcourse_thai_corewords_progress_backup';
+                            const raw = localStorage.getItem(backupKey);
+                            const backup = raw ? JSON.parse(raw) : {};
+                            eliminatedWords.forEach(w => {
+                                backup[w.id] = {
+                                    wordId: w.id,
+                                    lessonId: w.lessonId || sessionData.lessonId || 'lesson_001',
+                                    status: 'reviewed',
+                                    masteryScore: 3,
+                                    lastReviewedAt: Date.now(),
+                                    reviewCount: 2
+                                };
+                            });
+                            localStorage.setItem(backupKey, JSON.stringify(backup));
+                        } catch (e) {}
+
                         btn.className = 'px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold shrink-0 flex items-center gap-1.5 shadow-md shadow-emerald-600/15 cursor-default';
                         btn.innerHTML = `<i class="ph-bold ph-check text-sm"></i> 已成功提升至 3 分！`;
                         alert("太棒了！本次消除的低分错词已全部在本地 IndexedDB 进度中提升为“巩固 (3分)”！返回核心词汇页刷新即可看到更新！");
                     };
                     tx.onerror = (err) => {
+                        db.close();
                         console.error("Tx error:", err);
                         alert("同步失败，请检查浏览器权限。");
                         btn.disabled = false;

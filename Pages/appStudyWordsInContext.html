@@ -648,10 +648,27 @@
 
         async function mirrorProgressToCoreWordsDB(wordId, lessonId, score) {
             const CORE_DB_NAME = 'ThaiCoreWordsReviewDB';
-            const CORE_DB_VERSION = 3;
             const CORE_STORE = 'coreWordProgress';
+            const BACKUP_KEY = 'vcourse_thai_corewords_progress_backup';
+
+            // 同步写入 localStorage 备份
             try {
-                const req = indexedDB.open(CORE_DB_NAME, CORE_DB_VERSION);
+                const raw = localStorage.getItem(BACKUP_KEY);
+                const backup = raw ? JSON.parse(raw) : {};
+                const currentRec = backup[wordId] || { reviewCount: 0 };
+                backup[wordId] = {
+                    wordId,
+                    lessonId: lessonId || 'wordset_default',
+                    status: 'reviewed',
+                    masteryScore: score,
+                    lastReviewedAt: Date.now(),
+                    reviewCount: (currentRec.reviewCount || 0) + 1
+                };
+                localStorage.setItem(BACKUP_KEY, JSON.stringify(backup));
+            } catch (e) {}
+
+            try {
+                const req = indexedDB.open(CORE_DB_NAME);
                 req.onupgradeneeded = (e) => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains(CORE_STORE)) {
@@ -675,6 +692,12 @@
                         masteryScore: score,
                         lastReviewedAt: Date.now()
                     });
+                    tx.oncomplete = () => {
+                        db.close();
+                    };
+                    tx.onerror = () => {
+                        db.close();
+                    };
                 };
             } catch (e) {}
         }
