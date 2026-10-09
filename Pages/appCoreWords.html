@@ -1401,6 +1401,18 @@
                 window.sideAppBridge.playEffect('detail-revealed', '#sideCoreWordRevealed', 800);
             }
             updateRevealSideAppButtonUI(true);
+
+            // 快捷键微触觉反馈
+            const btnCard = document.getElementById('btnRevealSideAppDetail');
+            if (btnCard) {
+                btnCard.classList.add('scale-95');
+                setTimeout(() => btnCard.classList.remove('scale-95'), 120);
+            }
+            const btnSide = document.getElementById('btnRevealSideAppDetailSide');
+            if (btnSide) {
+                btnSide.classList.add('scale-95');
+                setTimeout(() => btnSide.classList.remove('scale-95'), 120);
+            }
         }
         window.revealSideAppDetail = revealSideAppDetail;
 
@@ -1410,22 +1422,24 @@
             const syncBadge = document.getElementById('sideAppCardSyncStatus');
 
             if (btnCard) {
+                btnCard.title = '向手机伴侣屏发送指令，揭示词汇的解释与例句 (快捷键: S / R；此操作不影响主屏)';
                 if (isRevealed) {
                     btnCard.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-500/20 active:scale-95 cursor-pointer';
-                    btnCard.innerHTML = '<i class="ph-bold ph-check-circle text-sm"></i><span>伴侣屏已展示解释 (点击重发)</span>';
+                    btnCard.innerHTML = '<i class="ph-bold ph-check-circle text-sm"></i><span>伴侣屏已展示解释 (点击重发 · S)</span>';
                 } else {
                     btnCard.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-500/20 active:scale-95 cursor-pointer';
-                    btnCard.innerHTML = '<i class="ph-bold ph-eye text-sm"></i><span>展示解释与例句 (发送到伴侣屏)</span>';
+                    btnCard.innerHTML = '<i class="ph-bold ph-eye text-sm"></i><span>展示解释与例句 (发送到伴侣屏 · S)</span>';
                 }
             }
 
             if (btnSide) {
+                btnSide.title = '向手机伴侣屏发送指令，揭示词汇的中文解释和例句 (快捷键: S / R)';
                 if (isRevealed) {
                     btnSide.className = 'w-full py-2.5 px-3 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer';
-                    btnSide.innerHTML = '<i class="ph-bold ph-check-circle text-emerald-600"></i><span>伴侣屏已揭晓释义 (点击重发)</span>';
+                    btnSide.innerHTML = '<i class="ph-bold ph-check-circle text-emerald-600"></i><span>伴侣屏已揭晓释义 (点击重发 · S)</span>';
                 } else {
                     btnSide.className = 'w-full py-2.5 px-3 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer';
-                    btnSide.innerHTML = '<i class="ph-bold ph-device-mobile text-indigo-500"></i><span>展示解释与例句 (伴侣屏 R)</span>';
+                    btnSide.innerHTML = '<i class="ph-bold ph-device-mobile text-indigo-500"></i><span>展示解释与例句 (伴侣屏 S)</span>';
                 }
             }
 
@@ -5769,9 +5783,9 @@
                     </div>
                     <button id="btnRevealSideAppDetail" onclick="revealSideAppDetail()" type="button" 
                         class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer ${isSideAppDetailRevealed ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-500/20 active:scale-95' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-500/20 active:scale-95'}"
-                        title="向手机伴侣屏发送指令，揭示词汇的解释与例句 (快捷键: R；此操作不影响主屏)">
+                        title="向手机伴侣屏发送指令，揭示词汇的解释与例句 (快捷键: S / R；此操作不影响主屏)">
                         <i class="ph-bold ${isSideAppDetailRevealed ? 'ph-check-circle' : 'ph-eye'} text-sm"></i>
-                        <span>${isSideAppDetailRevealed ? '伴侣屏已展示解释 (点击重发)' : '展示解释与例句 (发送到伴侣屏)'}</span>
+                        <span>${isSideAppDetailRevealed ? '伴侣屏已展示解释 (点击重发 · S)' : '展示解释与例句 (发送到伴侣屏 · S)'}</span>
                     </button>
                 </div>
 
@@ -5820,9 +5834,9 @@
 
                         <!-- SideApp Remote Control Button in Rating Side Panel -->
                         <div class="pt-3 border-t border-slate-100">
-                            <button id="btnRevealSideAppDetailSide" onclick="revealSideAppDetail()" type="button" class="w-full py-2.5 px-3 rounded-xl border ${isSideAppDetailRevealed ? 'border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800' : 'border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700'} font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer" title="向手机伴侣屏发送指令，揭示词汇的中文解释和例句 (快捷键: R)">
+                            <button id="btnRevealSideAppDetailSide" onclick="revealSideAppDetail()" type="button" class="w-full py-2.5 px-3 rounded-xl border ${isSideAppDetailRevealed ? 'border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800' : 'border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700'} font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer" title="向手机伴侣屏发送指令，揭示词汇的中文解释和例句 (快捷键: S / R)">
                                 <i class="ph-bold ${isSideAppDetailRevealed ? 'ph-check-circle text-emerald-600' : 'ph-device-mobile text-indigo-500'}"></i>
-                                <span>${isSideAppDetailRevealed ? '伴侣屏已揭晓释义 (点击重发)' : '展示解释与例句 (伴侣屏 R)'}</span>
+                                <span>${isSideAppDetailRevealed ? '伴侣屏已揭晓释义 (点击重发 · S)' : '展示解释与例句 (伴侣屏 S)'}</span>
                             </button>
                         </div>
 
@@ -5830,7 +5844,7 @@
                         <div class="pt-3 border-t border-slate-100">
                             <div class="flex items-center justify-between mb-2">
                                 <span class="text-[11px] text-slate-400 font-semibold">微调评分:</span>
-                                <span class="text-[10px] text-slate-400 font-mono">快捷键: 1-5 键</span>
+                                <span class="text-[10px] text-slate-400 font-mono">快捷键: 0-5 键</span>
                             </div>
                             <div class="grid grid-cols-6 gap-1.5">
                                 ${[0, 1, 2, 3, 4, 5].map(score => `
@@ -5871,13 +5885,15 @@
                                         <i class="ph-bold ${hasNext ? 'ph-caret-right' : 'ph-check'} text-sm"></i>
                                     </button>
                                 </div>
-                                <div class="text-[11px] text-slate-400 mt-2 flex items-center justify-center gap-2 font-mono">
-                                    <span>[←/→] 翻页</span>
-                                    <span>·</span>
-                                    <span>[空格] 朗读</span>
-                                </div>
                             </div>
                         `}
+                        <div class="text-[11px] text-slate-400 mt-2 flex items-center justify-center gap-2 font-mono">
+                            <span>[←/→] 翻页</span>
+                            <span>·</span>
+                            <span>[空格] 朗读</span>
+                            <span>·</span>
+                            <span>[S] 伴侣屏释义</span>
+                        </div>
                     </div>
                 `;
             }
@@ -5991,10 +6007,10 @@
                     if (currentWord) {
                         playAudioDirect(currentWord.word || currentWord.headword || '');
                     }
-                } else if (e.key === 'r' || e.key === 'R') {
+                } else if (e.key === 's' || e.key === 'S' || e.key === 'r' || e.key === 'R') {
                     e.preventDefault();
                     revealSideAppDetail();
-                } else if (['1', '2', '3', '4', '5'].includes(e.key)) {
+                } else if (['0', '1', '2', '3', '4', '5'].includes(e.key)) {
                     const score = parseInt(e.key);
                     submitDirectStudyRating(score);
                 }
