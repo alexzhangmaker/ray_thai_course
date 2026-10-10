@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>核心低分词汇例句翻译强化 - vCourse.ThaiNotes</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Serif+Thai:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Noto Sans SC', 'sans-serif'],
+                        thai: ['Noto Serif Thai', 'Outfit', 'sans-serif'],
+                        mono: ['Fira Code', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --primary: #7c3aed;
+            --primary-dark: #6d28d9;
+            --indigo-main: #4f46e5;
+            --emerald-main: #10b981;
+            --rose-main: #f43f5e;
+            --amber-main: #f59e0b;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            min-height: 100vh;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(241, 245, 249, 0.7);
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* 3D 卡片与过渡动画 */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .exercise-card {
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        }
+        .exercise-card:hover {
+            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 消除与留队动画 */
+        @keyframes eliminateOut {
+            0% { transform: scale(1) translateY(0); opacity: 1; }
+            40% { transform: scale(1.03) translateY(-10px); opacity: 0.95; box-shadow: 0 0 30px rgba(16, 185, 129, 0.35); }
+            100% { transform: scale(0.92) translateY(-40px); opacity: 0; }
+        }
+        .animate-eliminate {
+            animation: eliminateOut 0.38s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes loopShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
+        }
+        .animate-loop-shake {
+            animation: loopShake 0.4s ease-in-out;
+        }
+
+        @keyframes cardPopIn {
+            0% { opacity: 0; transform: scale(0.95) translateY(14px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-card-enter {
+            animation: cardPopIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .kbd-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-family: 'Fira Code', ui-monospace, SFMono-Regular, monospace;
+            font-weight: 700;
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+        }
+
+        .target-word-highlight {
+            background-color: #ede9fe;
+            color: #6d28d9;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 6px;
+            border: 1px solid #c4b5fd;
+            text-decoration: underline;
+            text-decoration-color: #8b5cf6;
+            text-underline-offset: 3px;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Top Sticky Header Navigation & Progress Bar -->
+    <header class="bg-white/95 backdrop-blur-md border-b border-slate-200/90 sticky top-0 z-40 shadow-xs">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3.5 flex flex-col md:flex-row items-center justify-between gap-3">
+            
+            <!-- Left Info & Breadcrumb -->
+            <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
+                <a href="appCoreWords.html" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 transition" title="返回课时核心词汇主页面">
+                    <i class="ph-bold ph-arrow-left text-sm"></i>
+                    <span>返回核心词库</span>
+                </a>
+
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-violet-50 text-violet-800 border border-violet-200">
+                        <i class="ph-bold ph-translate text-violet-600"></i>
+                        <span id="session-title-badge">低分词汇例句翻译强化</span>
+                    </span>
+                    <span id="session-date-badge" class="text-[11px] text-slate-400 hidden sm:inline-block font-mono">--</span>
+                </div>
+            </div>
+
+            <!-- Center/Right Progress & Counters -->
+            <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                <!-- Round Badge -->
+                <div class="flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-xl text-xs font-bold text-slate-700 border border-slate-200/80">
+                    <i class="ph-bold ph-arrows-clockwise text-violet-600 text-sm"></i>
+                    <span>循环 <span id="current-round-text" class="text-violet-600 font-black">1</span> 轮</span>
+                </div>
+
+                <!-- Elimination Stats Counter -->
+                <div class="text-right">
+                    <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5 justify-end">
+                        <span>已攻克消除:</span>
+                        <span id="stat-eliminated" class="text-emerald-600 font-extrabold font-mono text-sm">0</span>
+                        <span class="text-slate-400">/</span>
+                        <span id="stat-total" class="font-mono text-slate-600 font-bold">0</span>
+                        <span id="stat-percentage" class="ml-1 text-[11px] font-bold px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">0%</span>
+                    </div>
+                </div>
+
+                <!-- Auto Audio Toggle Button -->
+                <button id="toggle-audio-btn" onclick="toggleAutoAudio()" type="button" class="px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100" title="核对答案时是否自动朗读标准泰语译文">
+                    <i id="toggle-audio-icon" class="ph-bold ph-speaker-high text-violet-600"></i>
+                    <span id="toggle-audio-label" class="hidden sm:inline">自动朗读: 开</span>
+                </button>
+
+                <!-- SideApp Companion Screen Quick Capsule Pill -->
+                <button id="btnSideAppPill" onclick="SideAppPairingPanel.open()" title="手机伴侣屏联动 (第二屏幕被动同步与控制)" class="px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-violet-700 cursor-pointer">
+                    <span id="sideAppStatusDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+                    <i class="ph-bold ph-device-mobile text-violet-600"></i>
+                    <span id="sideAppStatusText" class="hidden sm:inline">伴侣屏</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Progress Bar Strip -->
+        <div class="w-full bg-slate-100 h-1.5 overflow-hidden">
+            <div id="top-progress-bar" class="h-full bg-gradient-to-r from-violet-500 via-indigo-500 to-emerald-500 transition-all duration-300" style="width: 0%;"></div>
+        </div>
+    </header>
+
+    <!-- Main Content Workspace Container -->
+    <main class="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col justify-center">
+
+        <!-- VIEW 1: Loading State -->
+        <div id="view-loading" class="flex flex-col items-center justify-center py-24 text-center">
+            <div class="h-14 w-14 rounded-2xl bg-violet-50 text-violet-600 border border-violet-200 flex items-center justify-center text-2xl mb-4 animate-bounce">
+                <i class="ph-bold ph-translate"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-800">正在从 IndexedDB 读取低分词汇翻译数据...</h3>
+            <p class="text-xs text-slate-400 mt-1">准备就绪后即可开启低分词汇例句翻译强化！</p>
+        </div>
+
+        <!-- VIEW 2: Active Sentence Translation Screen -->
+        <div id="view-exercise" class="hidden flex flex-col gap-6">
+            
+            <!-- Cards Queue Header Status -->
+            <div class="flex items-center justify-between px-2 text-xs font-medium text-slate-500">
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-rose-50 text-rose-700 font-bold border border-rose-200">
+                        <i class="ph-bold ph-fire"></i>
+                        <span>待消除错词: <span id="queue-remaining-count" class="font-mono font-black text-sm">0</span> 词</span>
+                    </span>
+                    <span id="queue-streak-tip" class="hidden text-[11px] text-slate-400 sm:inline">通过句子翻译强化单词应用，直到全部消除</span>
+                </div>
+                <div class="text-slate-400 text-xs">
+                    卡片进度: <span id="card-index-tip" class="font-mono font-bold text-slate-700">1</span>
+                </div>
+            </div>
+
+            <!-- The Big Interactive Exercise Card -->
+            <div id="exercise-card-container" class="perspective-1000 relative">
+                <div id="exercise-card-box" class="exercise-card animate-card-enter bg-white rounded-3xl border-2 border-slate-200 shadow-md p-6 sm:p-9 flex flex-col justify-between min-h-[460px] relative overflow-hidden">
+                    
+                    <!-- Decorative Corner Accent -->
+                    <div class="absolute top-0 right-0 w-36 h-36 bg-gradient-to-br from-violet-100/40 via-indigo-50/30 to-transparent rounded-bl-full pointer-events-none"></div>
+
+                    <!-- Flashcard Top Meta: Original Score & Status -->
+                    <div class="flex items-center justify-between gap-2 pb-4 border-b border-slate-100 relative z-10">
+                        <div id="card-original-score-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                            <span class="text-amber-500 text-[11px] tracking-tight">★☆☆☆☆</span>
+                            <span>原得分: 1分 (需重学)</span>
+                        </div>
+
+                        <!-- Repetition Count for this word -->
+                        <div id="card-repetition-tag" class="text-xs font-semibold text-slate-400 flex items-center gap-1">
+                            <i class="ph ph-clock-counter-clockwise"></i>
+                            <span>本轮已循环 <span id="card-loop-times" class="font-bold text-slate-700">0</span> 次</span>
+                        </div>
+                    </div>
+
+                    <!-- Target Word Prompt Banner (核心约束：要求用户在翻译中必须使用这个词汇) -->
+                    <div class="my-4 bg-gradient-to-r from-violet-50 to-indigo-50/70 border border-violet-200 rounded-2xl p-4 relative z-10">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                <div class="h-10 w-10 rounded-xl bg-violet-600 text-white flex items-center justify-center text-lg font-bold shrink-0 shadow-sm shadow-violet-500/20">
+                                    <i class="ph-bold ph-crosshair"></i>
+                                </div>
+                                <div>
+                                    <div class="text-[10px] font-bold text-violet-600 uppercase tracking-wider flex items-center gap-1">
+                                        <span>必须运用的目标核心词汇</span>
+                                    </div>
+                                    <div class="flex items-baseline gap-2.5 mt-0.5 flex-wrap">
+                                        <span id="target-word-text" class="text-2xl sm:text-3xl font-thai font-black text-violet-950 select-text">--</span>
+                                        <span id="target-ipa-text" class="font-mono text-xs sm:text-sm text-slate-400 select-text">/--/</span>
+                                        <span id="target-pos-badge" class="px-2 py-0.5 rounded-md bg-violet-200/80 text-violet-800 text-[10px] font-bold font-mono">词性</span>
+                                        <span id="target-meaning-text" class="text-xs sm:text-sm font-bold text-slate-700 select-text">--</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                                <button onclick="playTargetWordAudio()" type="button" class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-violet-100 text-violet-700 border border-violet-200 text-xs font-semibold transition flex items-center gap-1 shadow-xs cursor-pointer" title="朗读目标单词发音">
+                                    <i class="ph-bold ph-speaker-high text-sm"></i>
+                                    <span>朗读单词</span>
+                                </button>
+                                <button onclick="insertTargetWordToInput()" type="button" class="px-2.5 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold transition flex items-center gap-1 shadow-sm shadow-violet-600/20 cursor-pointer" title="将目标词快速插入到输入框中">
+                                    <i class="ph-bold ph-plus-circle text-sm"></i>
+                                    <span>填入目标词</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question Prompt Area: Chinese Example Sentence -->
+                    <div class="space-y-4 relative z-10">
+                        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5">
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-700 text-[10px] font-bold uppercase tracking-wider">题目 · 中文例句</span>
+                                    <span class="text-xs text-slate-400">请使用上方目标词将此句翻译为泰语</span>
+                                </div>
+                                <!-- Switch Example Button (if word has multiple examples) -->
+                                <button id="btn-switch-example" onclick="switchNextExample()" type="button" class="hidden text-xs text-violet-600 hover:text-violet-800 font-semibold flex items-center gap-1 cursor-pointer">
+                                    <i class="ph ph-arrows-clockwise text-xs"></i>
+                                    <span id="switch-example-label">换一个例句 (1/2)</span>
+                                </button>
+                            </div>
+
+                            <!-- Big Chinese Sentence -->
+                            <div id="prompt-chinese-sentence" class="text-xl sm:text-2xl font-bold text-slate-900 leading-relaxed select-text py-1">
+                                “--”
+                            </div>
+                        </div>
+
+                        <!-- Student Translation Input Area -->
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-xs">
+                                <label for="student-translation-input" class="font-bold text-slate-700 flex items-center gap-1.5">
+                                    <i class="ph-bold ph-pencil-simple text-violet-600"></i>
+                                    <span>泰语翻译作答区（支持纸面手写或在线键入）:</span>
+                                </label>
+                                <!-- Live Target Word Detection Badge -->
+                                <span id="word-detected-badge" class="px-2 py-0.5 rounded-md text-[11px] font-bold border transition bg-amber-50 text-amber-700 border-amber-200">
+                                    <i class="ph-bold ph-warning"></i> 尚未输入目标词
+                                </span>
+                            </div>
+
+                            <textarea id="student-translation-input" rows="2" 
+                                class="w-full p-3.5 rounded-2xl border-2 border-slate-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none font-thai text-base sm:text-lg text-slate-800 transition duration-150 custom-scrollbar placeholder:font-sans placeholder:text-xs placeholder:text-slate-400"
+                                placeholder="在此键入您的泰语翻译句子（译文中必须包含目标词汇）..."
+                                oninput="handleTranslationInput(this.value)"></textarea>
+
+                            <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                                <span>💡 提示：学生也可在练习纸上手写作答，写完后点击“核对标准译文并评分”交由老师或家长评定。</span>
+                                <button onclick="clearStudentInput()" type="button" class="text-slate-400 hover:text-rose-600 transition cursor-pointer">清空输入</button>
+                            </div>
+                        </div>
+
+                        <!-- Unrevealed Action Bar with Dual Screen Control -->
+                        <div id="action-unrevealed-bar" class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                            <!-- Dual Screen Companion Control Strip -->
+                            <div class="flex items-center justify-between sm:justify-start gap-2.5 bg-violet-50/80 border border-violet-200/90 rounded-2xl px-3.5 py-2 text-xs">
+                                <div class="flex items-center gap-1.5 font-bold text-violet-950">
+                                    <i class="ph-bold ph-device-mobile text-violet-600"></i>
+                                    <span>手机副屏:</span>
+                                    <span id="sideAppCardSyncStatus" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-mono font-bold border border-amber-200">
+                                        参考译文遮蔽中
+                                    </span>
+                                </div>
+                                <button id="btnRevealSideAppDetail" onclick="toggleRevealSideAppDetail()" type="button" 
+                                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-xs bg-violet-600 text-white hover:bg-violet-700 active:scale-95 cursor-pointer" 
+                                    title="向手机伴侣屏发送指令，揭示或遮蔽参考译文 (快捷键: S；此操作不影响主屏)">
+                                    <i class="ph-bold ph-eye text-xs"></i>
+                                    <span id="btnRevealSideAppDetailText">向副屏揭晓答案 (S)</span>
+                                </button>
+                            </div>
+
+                            <button onclick="revealStandardAnswer()" type="button" class="px-6 py-3 rounded-2xl bg-slate-900 hover:bg-violet-700 text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-md shadow-slate-900/10 cursor-pointer">
+                                <i class="ph-bold ph-eye text-sm"></i>
+                                <span>核对标准译文并评分</span>
+                                <span class="kbd-badge bg-slate-800 text-slate-200 border-slate-700">Enter</span>
+                            </button>
+                        </div>
+
+                        <!-- REVEALED SECTION: Standard Answer & Comparison & Teacher Scoring Component -->
+                        <div id="revealed-section" class="hidden space-y-5 pt-3 border-t border-slate-200/80">
+                            
+                            <!-- Dual Screen Sync Bar in Revealed Section -->
+                            <div class="flex items-center justify-between bg-violet-50/80 border border-violet-200/90 rounded-2xl px-3.5 py-2 text-xs">
+                                <div class="flex items-center gap-1.5 font-bold text-violet-950">
+                                    <i class="ph-bold ph-device-mobile text-violet-600"></i>
+                                    <span>手机副屏联动:</span>
+                                    <span id="sideAppCardSyncStatusRevealed" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold border border-emerald-200">
+                                        副屏：已展示参考译文
+                                    </span>
+                                </div>
+                                <button onclick="toggleRevealSideAppDetail()" type="button" 
+                                    class="px-3 py-1 rounded-xl text-xs font-semibold border border-violet-200 bg-white hover:bg-violet-100 text-violet-700 transition flex items-center gap-1 cursor-pointer"
+                                    title="切换副屏译文展示状态 (快捷键: S)">
+                                    <i class="ph-bold ph-arrows-clockwise text-xs"></i>
+                                    <span>切换副屏显示 (S)</span>
+                                </button>
+                            </div>
+
+                            <!-- Standard Answer Box -->
+                            <div class="bg-indigo-50/60 border border-indigo-200/80 rounded-2xl p-4 sm:p-5 space-y-3">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-2 py-0.5 rounded-md bg-indigo-600 text-white text-[10px] font-bold uppercase tracking-wider">标准参考译文</span>
+                                        <span class="text-xs text-indigo-500 font-semibold">例句JSON规范表达</span>
+                                    </div>
+                                    <button onclick="playStandardSentenceAudio()" type="button" class="px-3 py-1.5 rounded-xl bg-white hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer" title="朗读标准泰语例句 (快捷键: P)">
+                                        <i class="ph-bold ph-speaker-high text-sm"></i>
+                                        <span>朗读例句</span>
+                                        <span class="kbd-badge ml-0.5">P</span>
+                                    </button>
+                                </div>
+
+                                <!-- Thai sentence with target word highlighted -->
+                                <div id="standard-thai-sentence" class="font-thai text-xl sm:text-2xl font-bold text-slate-900 leading-relaxed select-text py-1">
+                                    --
+                                </div>
+
+                                <!-- Contrast / Student answer review -->
+                                <div id="student-answer-review-box" class="hidden pt-2 border-t border-indigo-100 text-xs">
+                                    <span class="text-slate-400 font-semibold block mb-1">您的键入作答对比：</span>
+                                    <div id="student-answer-review-text" class="font-thai text-slate-700 bg-white/80 p-2.5 rounded-xl border border-indigo-100 font-medium"></div>
+                                </div>
+                            </div>
+
+                            <!-- TEACHER / PARENT SCORING COMPONENT -->
+                            <!-- 提供score的界面组件供老师或家长进行score确定是否下一轮是否继续复习这个词汇 -->
+                            <div class="bg-white border-2 border-violet-200 rounded-2xl p-5 shadow-sm space-y-4">
+                                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                                    <div>
+                                        <h4 class="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                                            <i class="ph-bold ph-chalkboard-teacher text-violet-600 text-base"></i>
+                                            <span>导师 / 家长综合评判 (Score & Evaluation)</span>
+                                        </h4>
+                                        <p class="text-[11px] text-slate-400 mt-0.5">
+                                            根据学生对核心词的应用准确度及整句翻译质量评定得分，决定下一轮是否继续重练
+                                        </p>
+                                    </div>
+                                    <div class="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200">
+                                        规则：≥ 3分达标消除 · &lt; 3分循环重练
+                                    </div>
+                                </div>
+
+                                <!-- 0 - 5 Score Rating Buttons -->
+                                <div>
+                                    <div class="text-[11px] font-bold text-slate-500 mb-1.5 flex items-center justify-between">
+                                        <span>请选择评分等级 (0 ~ 5 分):</span>
+                                        <span id="score-description-tip" class="text-violet-600 font-semibold">点击下方分值或直接点击决定按钮</span>
+                                    </div>
+                                    <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                                        <!-- Score 0 -->
+                                        <button type="button" onclick="selectScore(0)" id="score-btn-0" class="score-selector-btn py-2 px-1 rounded-xl border border-slate-200 text-center transition hover:border-rose-300 hover:bg-rose-50/50">
+                                            <div class="font-black text-sm text-slate-700">0 分</div>
+                                            <div class="text-[10px] text-slate-400 mt-0.5">未作答/全错</div>
+                                        </button>
+                                        <!-- Score 1 -->
+                                        <button type="button" onclick="selectScore(1)" id="score-btn-1" class="score-selector-btn py-2 px-1 rounded-xl border border-slate-200 text-center transition hover:border-rose-300 hover:bg-rose-50/50">
+                                            <div class="font-black text-sm text-slate-700">1 分</div>
+                                            <div class="text-[10px] text-slate-400 mt-0.5">目标词拼写错</div>
+                                        </button>
+                                        <!-- Score 2 -->
+                                        <button type="button" onclick="selectScore(2)" id="score-btn-2" class="score-selector-btn py-2 px-1 rounded-xl border border-slate-200 text-center transition hover:border-amber-300 hover:bg-amber-50/50">
+                                            <div class="font-black text-sm text-slate-700">2 分</div>
+                                            <div class="text-[10px] text-slate-400 mt-0.5">语法/句意偏差</div>
+                                        </button>
+                                        <!-- Score 3 -->
+                                        <button type="button" onclick="selectScore(3)" id="score-btn-3" class="score-selector-btn py-2 px-1 rounded-xl border border-slate-200 text-center transition hover:border-emerald-300 hover:bg-emerald-50/50">
+                                            <div class="font-black text-sm text-slate-700">3 分</div>
+                                            <div class="text-[10px] text-emerald-600 font-bold mt-0.5">基本合格通过</div>
+                                        </button>
+                                        <!-- Score 4 -->
+                                        <button type="button" onclick="selectScore(4)" id="score-btn-4" class="score-selector-btn py-2 px-1 rounded-xl border border-slate-200 text-center transition hover:border-emerald-300 hover:bg-emerald-50/50">
+                                            <div class="font-black text-sm text-slate-700">4 分</div>
+                                            <div class="text-[10px] text-emerald-600 font-bold mt-0.5">翻译通顺良好</div>
+                                        </button>
+                                        <!-- Score 5 -->
+                                        <button type="button" onclick="selectScore(5)" id="score-btn-5" class="score-selector-btn py-2 px-1 rounded-xl border border-slate-200 text-center transition hover:border-emerald-300 hover:bg-emerald-50/50">
+                                            <div class="font-black text-sm text-slate-700">5 分</div>
+                                            <div class="text-[10px] text-emerald-600 font-bold mt-0.5">地道精准完美</div>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Optional Teacher Feedback Comment Input -->
+                                <div>
+                                    <input type="text" id="teacher-note-input" 
+                                        placeholder="（选填）导师批注或错因点评，例如：注意动词时态与宾语搭配..."
+                                        class="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:border-violet-400 focus:ring-2 focus:ring-violet-400/10 outline-none text-slate-700 placeholder:text-slate-400" />
+                                </div>
+
+                                <!-- Decision Action Buttons (Overall logic similar to appRecallCoreWords: keep in loop vs eliminate) -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                                    <!-- Option 1: Not passed / Score < 3 -> Keep in loop -->
+                                    <button id="btn-keep-in-loop" onclick="handleKeepInLoop()" type="button" 
+                                        class="py-3.5 px-4 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 border-2 border-rose-200 hover:border-rose-300 text-xs sm:text-sm font-bold transition duration-150 flex flex-col sm:flex-row items-center justify-center gap-1.5 shadow-sm active:scale-98 cursor-pointer group">
+                                        <div class="flex items-center gap-1.5">
+                                            <i class="ph-bold ph-x-circle text-rose-600 text-lg group-hover:scale-110 transition"></i>
+                                            <span>未达标 · 下一轮继续重练</span>
+                                        </div>
+                                        <div class="flex items-center gap-1 text-[10px] text-rose-500 font-mono">
+                                            <span>[快捷键:</span>
+                                            <span class="kbd-badge bg-rose-100 border-rose-300 text-rose-800">1</span>
+                                            <span>或 ←]</span>
+                                        </div>
+                                    </button>
+
+                                    <!-- Option 2: Passed / Score >= 3 -> Eliminate from queue -->
+                                    <button id="btn-eliminate-word" onclick="handleEliminateWord()" type="button" 
+                                        class="py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white border-2 border-emerald-600 hover:border-emerald-700 text-xs sm:text-sm font-bold transition duration-150 flex flex-col sm:flex-row items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 active:scale-98 cursor-pointer group">
+                                        <div class="flex items-center gap-1.5">
+                                            <i class="ph-bold ph-check-circle text-white text-lg group-hover:scale-110 transition"></i>
+                                            <span>达标合格 · 攻克消除不再练！</span>
+                                        </div>
+                                        <div class="flex items-center gap-1 text-[10px] text-emerald-200 font-mono">
+                                            <span>[快捷键:</span>
+                                            <span class="kbd-badge bg-emerald-700 border-emerald-500 text-white">2</span>
+                                            <span>或 Enter]</span>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Bottom Keyboard Hints Strip -->
+            <div class="flex items-center justify-center gap-4 text-slate-400 text-xs flex-wrap">
+                <span class="flex items-center gap-1">
+                    <span class="kbd-badge">Enter</span> 核对答案 / 达标确认
+                </span>
+                <span class="flex items-center gap-1">
+                    <span class="kbd-badge">1</span> 或 <span class="kbd-badge">←</span> 未达标继续重练
+                </span>
+                <span class="flex items-center gap-1">
+                    <span class="kbd-badge">2</span> 或 <span class="kbd-badge">→</span> 达标消除
+                </span>
+                <span class="flex items-center gap-1">
+                    <span class="kbd-badge">S</span> 副屏揭晓/遮蔽
+                </span>
+                <span class="flex items-center gap-1">
+                    <span class="kbd-badge">P</span> 朗读泰语例句
+                </span>
+            </div>
+
+        </div>
+
+        <!-- VIEW 3: All Eliminated Victory Screen -->
+        <div id="view-victory" class="hidden bg-white rounded-3xl border-2 border-emerald-200 shadow-xl p-8 sm:p-12 text-center max-w-3xl mx-auto flex flex-col items-center animate-card-enter">
+            
+            <!-- Confetti / Trophy Badge -->
+            <div class="h-20 w-20 rounded-3xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center text-4xl mb-4 shadow-sm shadow-emerald-500/10">
+                <i class="ph-fill ph-trophy"></i>
+            </div>
+
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 font-mono">
+                MISSION ACCOMPLISHED
+            </span>
+
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-3">
+                错词翻译全歼！强化训练圆满达成！
+            </h2>
+            <p class="text-sm text-slate-500 mt-1.5 max-w-lg">
+                恭喜您！本组词汇集中所有低分词汇的例句翻译均已通过导师/家长考核并达到达标分（≥3分），实现了对单词在句中应用的深度掌握！
+            </p>
+
+            <!-- Score / Round Summary Grid -->
+            <div class="grid grid-cols-3 gap-3 w-full my-6 font-sans">
+                <div class="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 text-center">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">攻克词汇数</span>
+                    <span id="victory-total-words" class="text-2xl font-black text-slate-800">0</span>
+                </div>
+                <div class="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 text-center">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">经历轮次</span>
+                    <span id="victory-total-rounds" class="text-2xl font-black text-violet-600">1</span>
+                </div>
+                <div class="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 text-center">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">平均评定分</span>
+                    <span id="victory-avg-score" class="text-2xl font-black text-emerald-600">3.5</span>
+                </div>
+            </div>
+
+            <!-- Sync Back to ThaiCoreWordsReviewDB Banner -->
+            <div id="sync-banner" class="w-full bg-gradient-to-r from-violet-50 via-indigo-50 to-emerald-50 border border-indigo-200 rounded-2xl p-4 mb-6 text-left flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                    <div class="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                        <i class="ph-bold ph-database text-violet-600"></i>
+                        <span>同步掌握度至核心词汇库</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-0.5">
+                        可一键将本次攻克的错词掌握度在本地 IndexedDB 中统一更新为合格评分（3~5分）。
+                    </p>
+                </div>
+                <button id="btn-sync-scores" onclick="syncMasteryScoresToCoreDB()" type="button" class="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-1.5 shadow-md shadow-violet-600/15 cursor-pointer">
+                    <i class="ph-bold ph-check-double"></i>
+                    <span>同步提分至核心库</span>
+                </button>
+            </div>
+
+            <!-- Mastered Sentences Overview Accordion -->
+            <div class="w-full text-left mb-6">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                        <i class="ph ph-list-checks text-emerald-500"></i> 本次翻译攻克的例句清单
+                    </span>
+                    <span id="eliminated-words-count-badge" class="text-[11px] font-mono text-slate-500">共 0 词</span>
+                </div>
+                <div id="eliminated-words-grid" class="space-y-2.5 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
+                    <!-- Dynamic Badges Injected -->
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row items-center gap-3 w-full">
+                <button onclick="restartFullRecallSession()" type="button" class="w-full sm:flex-1 py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i class="ph-bold ph-arrow-counter-clockwise"></i>
+                    <span>再强化一轮 (打乱重练)</span>
+                </button>
+                <a href="appCoreWords.html" class="w-full sm:flex-1 py-3 px-4 rounded-xl bg-slate-900 hover:bg-violet-600 text-white font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-md shadow-slate-900/10 cursor-pointer">
+                    <i class="ph-bold ph-arrow-left"></i>
+                    <span>返回核心词汇学习页</span>
+                </a>
+            </div>
+
+        </div>
+
+        <!-- VIEW 4: Error State -->
+        <div id="view-error" class="hidden bg-white rounded-3xl border border-slate-200 shadow-lg p-8 sm:p-12 text-center max-w-lg mx-auto flex flex-col items-center">
+            <div class="h-16 w-16 rounded-2xl bg-rose-50 text-rose-500 border border-rose-200 flex items-center justify-center text-3xl mb-4">
+                <i class="ph-bold ph-warning"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800">未找到低分词汇翻译数据</h3>
+            <p id="error-desc-text" class="text-xs text-slate-500 mt-1 max-w-sm">
+                可能未指定有效的数据 ID，或该临时翻译强化记录已被清理。
+            </p>
+
+            <!-- Recent Sessions Selector -->
+            <div id="recent-sessions-container" class="w-full mt-6 text-left hidden">
+                <span class="text-xs font-bold text-slate-400 block mb-2">本地历史强化记录：</span>
+                <div id="recent-sessions-list" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar"></div>
+            </div>
+
+            <a href="appCoreWords.html" class="mt-6 px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-violet-600/15">
+                <i class="ph-bold ph-arrow-left"></i>
+                <span>返回课时核心词汇</span>
+            </a>
+        </div>
+
+    <!-- SideApp Companion Screen Dependencies -->
+    <script src="./js/sideapp/qrcode.min.js"></script>
+    <script src="./js/sideapp/bridge.js"></script>
+    <script src="./js/sideapp/pairingPanel.js"></script>
+
+    <!-- Script Block -->
+    <script>
+        // ==========================================
+        // IndexedDB Configuration
+        // ==========================================
+        const RECALL_DB_NAME = 'ThaiCoreWordsRecallDB';
+        const RECALL_DB_VERSION = 1;
+        const RECALL_STORE_NAME = 'recallSessions';
+
+        // ThaiCoreWordsReviewDB for progress synchronization
+        const PROGRESS_DB_NAME = 'ThaiCoreWordsReviewDB';
+        const PROGRESS_DB_VERSION = 3;
+        const PROGRESS_STORE_NAME = 'coreWordProgress';
+
+        function openRecallDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(RECALL_DB_NAME, RECALL_DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(RECALL_STORE_NAME)) {
+                        const store = db.createObjectStore(RECALL_STORE_NAME, { keyPath: 'id' });
+                        store.createIndex('timestamp', 'timestamp', { unique: false });
+                        store.createIndex('wordsetId', 'wordsetId', { unique: false });
+                        store.createIndex('lessonId', 'lessonId', { unique: false });
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function getRecallSessionFromIndexedDB(sessionId) {
+            const db = await openRecallDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction([RECALL_STORE_NAME], 'readonly');
+                const store = tx.objectStore(RECALL_STORE_NAME);
+                const req = store.get(sessionId);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function getAllRecentRecallSessions() {
+            try {
+                const db = await openRecallDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction([RECALL_STORE_NAME], 'readonly');
+                    const store = tx.objectStore(RECALL_STORE_NAME);
+                    const req = store.getAll();
+                    req.onsuccess = () => {
+                        const list = req.result || [];
+                        list.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                        resolve(list);
+                    };
+                    req.onerror = () => resolve([]);
+                });
+            } catch (err) {
+                return [];
+            }
+        }
+
+        // ==========================================
+        // Session State & Data
+        // ==========================================
+        let sessionData = null;
+        let originalWords = [];        // 初始错词数据 (全量)
+        let recallQueue = [];          // 当前待攻克错词队列 (循环中)
+        let eliminatedWords = [];       // 已成功消除的错词数组
+        let currentWord = null;         // 当前正在复习的单词对象
+        let currentRound = 1;          // 循环轮次
+        let isAnswerRevealed = false;  // 是否已核对揭示标准译文与评分区
+        let isProcessingAction = false;// 防止快捷键连续误触发
+        let loopCounterMap = {};       // 记录每个词在本复习会话中循环留队的次数
+        let currentExampleIndex = 0;   // 当前所选例句索引 (针对多例句词汇)
+        let selectedScoreValue = null; // 老师当前选中的评分 (0~5)
+        let isSideAppAnswerRevealed = false; // 手机伴侣屏当前是否揭晓参考译文 (主副屏可独立控制)
+        let inputSyncTimer = null;     // 作答文本同步到副屏的防抖计时器
+
+        // Preferences
+        let autoAudioEnabled = true;
+
+        // ==========================================
+        // TTS Pronunciation Audio Player
+        // ==========================================
+        window.playAudioDirect = (text) => {
+            if (!text) return;
+            const cleanText = text.replace(/“|”/g, '').trim();
+            const url = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(cleanText || text)}`;
+            new Audio(url).play().catch(err => {
+                console.warn("Direct TTS error, falling back to Web Speech API:", err);
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utter = new SpeechSynthesisUtterance(cleanText || text);
+                    utter.lang = 'th-TH';
+                    utter.rate = 0.9;
+                    window.speechSynthesis.speak(utter);
+                }
+            });
+        };
+
+        function playTargetWordAudio() {
+            if (!currentWord) return;
+            const wordText = currentWord.word || currentWord.headword || '';
+            playAudioDirect(wordText);
+            if (window.sideAppBridge && window.sideAppBridge.enabled) {
+                window.sideAppBridge.playEffect('audio-playing', '', 1200);
+            }
+        }
+
+        function playStandardSentenceAudio() {
+            if (!currentWord) return;
+            const ex = getActiveExample(currentWord);
+            if (ex && ex.thai) {
+                playAudioDirect(ex.thai);
+            }
+            if (window.sideAppBridge && window.sideAppBridge.enabled) {
+                window.sideAppBridge.playEffect('audio-playing', '', 1500);
+            }
+        }
+
+        function toggleAutoAudio() {
+            autoAudioEnabled = !autoAudioEnabled;
+            const labelEl = document.getElementById('toggle-audio-label');
+            const iconEl = document.getElementById('toggle-audio-icon');
+            const btnEl = document.getElementById('toggle-audio-btn');
+            
+            if (autoAudioEnabled) {
+                if (labelEl) labelEl.textContent = '自动朗读: 开';
+                if (iconEl) iconEl.className = 'ph-bold ph-speaker-high text-violet-600';
+                btnEl.classList.remove('opacity-60');
+            } else {
+                if (labelEl) labelEl.textContent = '自动朗读: 关';
+                if (iconEl) iconEl.className = 'ph-bold ph-speaker-slash text-slate-400';
+                btnEl.classList.add('opacity-60');
+            }
+        }
+
+        // ==========================================
+        // Application Startup & Data Fetching
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', async () => {
+            setupKeyboardShortcuts();
+            await initTranslateSession();
+        });
+
+        async function initTranslateSession() {
+            const params = new URLSearchParams(window.location.search);
+            const sessionId = params.get('id') || params.get('sessionId');
+
+            try {
+                if (sessionId) {
+                    sessionData = await getRecallSessionFromIndexedDB(sessionId);
+                }
+
+                if (!sessionData || !Array.isArray(sessionData.words) || sessionData.words.length === 0) {
+                    const recentSessions = await getAllRecentRecallSessions();
+                    if (recentSessions.length > 0) {
+                        renderRecentSessionsList(recentSessions);
+                    }
+                    showView('error');
+                    return;
+                }
+
+                originalWords = sessionData.words;
+                document.getElementById('session-title-badge').textContent = sessionData.title || sessionData.wordsetTitle || '核心低分词例句翻译';
+                document.getElementById('session-date-badge').textContent = sessionData.date || '';
+
+                // Initialize SideApp Bridge title & status
+                if (window.sideAppBridge) {
+                    window.sideAppBridge.setAppTitle('ThaiNotes 伴侣屏 · 例句翻译强化');
+                    window.sideAppBridge.onStatusChange((status) => {
+                        const dot = document.getElementById('sideAppStatusDot');
+                        const text = document.getElementById('sideAppStatusText');
+                        const btn = document.getElementById('btnSideAppPill');
+                        if (!dot || !text) return;
+
+                        if (!status.enabled) {
+                            dot.className = 'w-2 h-2 rounded-full bg-slate-400';
+                            text.textContent = '伴侣屏';
+                            if (btn) btn.classList.remove('border-emerald-300', 'bg-emerald-50', 'text-emerald-700');
+                        } else if (status.clientCount > 0) {
+                            dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+                            text.textContent = `伴侣屏 (${status.clientCount})`;
+                            if (btn) btn.classList.add('border-emerald-300', 'bg-emerald-50', 'text-emerald-700');
+                        } else {
+                            dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+                            text.textContent = '伴侣屏 (待配对)';
+                            if (btn) btn.classList.remove('border-emerald-300', 'bg-emerald-50', 'text-emerald-700');
+                        }
+                    });
+                }
+
+                startTranslateQueue(originalWords);
+            } catch (err) {
+                console.error("加载错词翻译强化数据异常:", err);
+                showView('error');
+            }
+        }
+
+        // ==========================================
+        // SideApp Companion Screen Dual-Screen Control & Sync
+        // ==========================================
+        function syncSideAppState(viewName = 'viewSentenceTranslateSession', forceFull = false, overrides = {}) {
+            if (!window.sideAppBridge || !window.sideAppBridge.enabled) return;
+            if (!currentWord) return;
+
+            const ex = getActiveExample(currentWord);
+            const total = originalWords.length || 1;
+            const currentIdx = eliminatedWords.length + 1;
+            const progressPercent = Math.round((eliminatedWords.length / total) * 100);
+            const answerRevealed = overrides.answerRevealed !== undefined ? overrides.answerRevealed : isSideAppAnswerRevealed;
+
+            const state = {
+                appType: 'sentence_translate',
+                title: sessionData?.title || sessionData?.wordsetTitle || '低分词例句翻译强化',
+                currentRound: currentRound,
+                currentIndex: currentIdx,
+                totalWords: total,
+                progressPercent: progressPercent,
+                progressText: `进度: ${currentIdx} / ${total}`,
+                answerRevealed: answerRevealed,
+                chineseSentence: ex.chinese,
+                thaiSentence: ex.thai,
+                studentAnswer: overrides.studentAnswer !== undefined ? overrides.studentAnswer : (document.getElementById('student-translation-input')?.value.trim() || ''),
+                teacherScore: overrides.teacherScore !== undefined ? overrides.teacherScore : selectedScoreValue,
+                targetWord: {
+                    word: currentWord.word || currentWord.headword || '',
+                    ipa: currentWord.ipa || '',
+                    pos: getWordPos(currentWord),
+                    meaning: getWordMeaning(currentWord)
+                }
+            };
+
+            window.sideAppBridge.pushState(viewName, state, forceFull, {
+                title: 'ThaiNotes 伴侣屏 · 例句翻译强化'
+            });
+        }
+        window.syncSideAppState = syncSideAppState;
+
+        function toggleRevealSideAppDetail() {
+            isSideAppAnswerRevealed = !isSideAppAnswerRevealed;
+            updateRevealSideAppButtonUI(isSideAppAnswerRevealed);
+            syncSideAppState('viewSentenceTranslateSession', false, { answerRevealed: isSideAppAnswerRevealed });
+            if (isSideAppAnswerRevealed && window.sideAppBridge && window.sideAppBridge.enabled) {
+                window.sideAppBridge.playEffect('detail-revealed', '#sideSentenceTranslateRevealed', 800);
+            }
+        }
+        window.toggleRevealSideAppDetail = toggleRevealSideAppDetail;
+
+        function updateRevealSideAppButtonUI(isRevealed) {
+            const btnText = document.getElementById('btnRevealSideAppDetailText');
+            const btn = document.getElementById('btnRevealSideAppDetail');
+            const syncBadge = document.getElementById('sideAppCardSyncStatus');
+            const syncBadgeRevealed = document.getElementById('sideAppCardSyncStatusRevealed');
+
+            if (btnText && btn) {
+                if (isRevealed) {
+                    btnText.textContent = '副屏已展示译文 (点击遮蔽 · S)';
+                    btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 cursor-pointer';
+                } else {
+                    btnText.textContent = '向副屏揭晓答案 (S)';
+                    btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm bg-violet-600 text-white hover:bg-violet-700 active:scale-95 cursor-pointer';
+                }
+            }
+
+            if (syncBadge) {
+                if (isRevealed) {
+                    syncBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold border border-emerald-200';
+                    syncBadge.textContent = '副屏：已展示参考译文';
+                } else {
+                    syncBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-mono font-bold border border-amber-200';
+                    syncBadge.textContent = '副屏：参考译文遮蔽中';
+                }
+            }
+
+            if (syncBadgeRevealed) {
+                if (isRevealed) {
+                    syncBadgeRevealed.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold border border-emerald-200';
+                    syncBadgeRevealed.textContent = '副屏：已展示参考译文';
+                } else {
+                    syncBadgeRevealed.className = 'text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-mono font-bold border border-amber-200';
+                    syncBadgeRevealed.textContent = '副屏：参考译文遮蔽中';
+                }
+            }
+        }
+
+        function startTranslateQueue(words) {
+            originalWords = [...words];
+            recallQueue = [...originalWords];
+            eliminatedWords = [];
+            currentRound = 1;
+            loopCounterMap = {};
+
+            originalWords.forEach(w => {
+                loopCounterMap[w.id] = 0;
+            });
+
+            updateProgressUI();
+            showView('exercise');
+            renderNextCard();
+        }
+
+        // ==========================================
+        // Helper: Extract Word Details & Examples
+        // ==========================================
+        function getWordMeaning(word) {
+            if (!word) return '暂无释义';
+            if (typeof word.meaning === 'string' && word.meaning.trim()) {
+                return word.meaning.trim();
+            }
+            if (Array.isArray(word.meanings) && word.meanings.length > 0) {
+                const parts = word.meanings
+                    .map(m => (typeof m === 'string' ? m : (m.meaning || m.chinese || m.definition || '')))
+                    .filter(Boolean);
+                if (parts.length > 0) return parts.join('； ');
+            }
+            if (word.chinese && typeof word.chinese === 'string') return word.chinese.trim();
+            if (word.meanCh && typeof word.meanCh === 'string') return word.meanCh.trim();
+            return '暂无释义';
+        }
+
+        function getWordPos(word) {
+            if (!word) return '核心词';
+            if (word.pos && typeof word.pos === 'string' && word.pos.trim()) return word.pos.trim();
+            if (word.part_of_speech && typeof word.part_of_speech === 'string') return word.part_of_speech.trim();
+            if (Array.isArray(word.meanings) && word.meanings.length > 0) {
+                const firstPos = word.meanings[0]?.part_of_speech || word.meanings[0]?.pos;
+                if (firstPos && typeof firstPos === 'string' && firstPos.trim()) return firstPos.trim();
+            }
+            return '核心词';
+        }
+
+        function getAllWordExamples(word) {
+            if (!word) return [];
+            let list = [];
+            if (Array.isArray(word.examples) && word.examples.length > 0) {
+                list.push(...word.examples);
+            }
+            if (Array.isArray(word.meanings)) {
+                word.meanings.forEach(m => {
+                    if (Array.isArray(m.examples)) {
+                        list.push(...m.examples);
+                    }
+                });
+            }
+
+            const unique = [];
+            const seen = new Set();
+            list.forEach(ex => {
+                const thai = (ex.sentence || ex.thai || '').trim();
+                const ch = (ex.meaning || ex.chinese || ex.translation || '').trim();
+                if ((thai || ch) && !seen.has(thai + '|' + ch)) {
+                    seen.add(thai + '|' + ch);
+                    unique.push({ thai: thai, chinese: ch });
+                }
+            });
+
+            if (unique.length === 0) {
+                unique.push({
+                    thai: word.word || word.headword || '',
+                    chinese: `请运用核心词【${word.word || word.headword}】（${getWordMeaning(word)}）进行例句翻译造句`,
+                    isFallback: true
+                });
+            }
+
+            return unique;
+        }
+
+        function getActiveExample(word) {
+            const list = getAllWordExamples(word);
+            const idx = Math.min(currentExampleIndex, list.length - 1);
+            return {
+                ...list[idx],
+                index: idx,
+                total: list.length
+            };
+        }
+
+        function highlightTargetWord(sentence, targetWord) {
+            if (!sentence || !targetWord) return sentence || '';
+            const escaped = targetWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(${escaped})`, 'gi');
+            return sentence.replace(regex, `<span class="target-word-highlight">$1</span>`);
+        }
+
+        // ==========================================
+        // Card Rendering & Flow Control
+        // ==========================================
+        function renderNextCard() {
+            if (recallQueue.length === 0) {
+                triggerVictory();
+                return;
+            }
+
+            isProcessingAction = false;
+            isAnswerRevealed = false;
+            selectedScoreValue = null;
+            currentExampleIndex = 0;
+            currentWord = recallQueue[0];
+
+            const loopTimes = loopCounterMap[currentWord.id] || 0;
+
+            // Reset Card Animation & State
+            const cardBox = document.getElementById('exercise-card-box');
+            cardBox.classList.remove('animate-eliminate', 'animate-loop-shake');
+            void cardBox.offsetWidth;
+            cardBox.classList.add('animate-card-enter');
+
+            // 1. Original Score Badge
+            const score = currentWord.masteryScore !== undefined ? currentWord.masteryScore : (currentWord.score !== undefined ? currentWord.score : 1);
+            const scoreBadgeEl = document.getElementById('card-original-score-badge');
+            if (score <= 1) {
+                scoreBadgeEl.innerHTML = `<span class="text-amber-500 text-[11px] tracking-tight">★☆☆☆☆</span><span>原得分: 1分 (需重学)</span>`;
+                scoreBadgeEl.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200';
+            } else if (score === 2) {
+                scoreBadgeEl.innerHTML = `<span class="text-amber-500 text-[11px] tracking-tight">★★☆☆☆</span><span>原得分: 2分 (模糊)</span>`;
+                scoreBadgeEl.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200';
+            } else {
+                scoreBadgeEl.innerHTML = `<span class="text-amber-500 text-[11px] tracking-tight">★★★☆☆</span><span>得分: ${score}分 (待强化)</span>`;
+                scoreBadgeEl.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200';
+            }
+
+            document.getElementById('card-loop-times').textContent = loopTimes;
+
+            // 2. Target Word Banner
+            const displayWord = currentWord.word || currentWord.headword || '';
+            document.getElementById('target-word-text').textContent = displayWord;
+            document.getElementById('target-ipa-text').textContent = currentWord.ipa ? `/${currentWord.ipa}/` : '';
+            document.getElementById('target-pos-badge').textContent = getWordPos(currentWord);
+            document.getElementById('target-meaning-text').textContent = getWordMeaning(currentWord);
+
+            // 3. Question Prompt: Chinese Example
+            renderCurrentExampleUI();
+
+            // 4. Reset Inputs
+            const inputEl = document.getElementById('student-translation-input');
+            inputEl.value = '';
+            inputEl.focus();
+            updateTargetWordDetectionBadge('');
+
+            // 5. Reset Teacher Notes and Scores
+            document.getElementById('teacher-note-input').value = '';
+            resetScoreButtons();
+
+            // 6. Reset Reveal Area
+            document.getElementById('action-unrevealed-bar').classList.remove('hidden');
+            document.getElementById('revealed-section').classList.add('hidden');
+
+            updateProgressUI();
+
+            // Sync to SideApp (shrouded for student on companion screen)
+            isSideAppAnswerRevealed = false;
+            updateRevealSideAppButtonUI(false);
+            syncSideAppState('viewSentenceTranslateSession', false, { answerRevealed: false });
+        }
+
+        function renderCurrentExampleUI() {
+            const ex = getActiveExample(currentWord);
+            document.getElementById('prompt-chinese-sentence').textContent = `“${ex.chinese || '暂无中文例句'}”`;
+
+            const switchBtn = document.getElementById('btn-switch-example');
+            const switchLabel = document.getElementById('switch-example-label');
+            if (ex.total > 1) {
+                switchBtn.classList.remove('hidden');
+                switchLabel.textContent = `换一个例句 (${ex.index + 1}/${ex.total})`;
+            } else {
+                switchBtn.classList.add('hidden');
+            }
+        }
+
+        function switchNextExample() {
+            const all = getAllWordExamples(currentWord);
+            if (all.length <= 1) return;
+            currentExampleIndex = (currentExampleIndex + 1) % all.length;
+            renderCurrentExampleUI();
+            if (isAnswerRevealed) {
+                renderRevealedStandardAnswer();
+            }
+            syncSideAppState('viewSentenceTranslateSession', false);
+        }
+
+        // ==========================================
+        // Live Input & Target Word Detection
+        // ==========================================
+        function handleTranslationInput(val) {
+            updateTargetWordDetectionBadge(val);
+            clearTimeout(inputSyncTimer);
+            inputSyncTimer = setTimeout(() => {
+                syncSideAppState('viewSentenceTranslateSession', false, { studentAnswer: val });
+            }, 300);
+        }
+
+        function updateTargetWordDetectionBadge(val) {
+            const badge = document.getElementById('word-detected-badge');
+            const target = (currentWord?.word || currentWord?.headword || '').trim();
+            if (!target) return;
+
+            if (val && val.includes(target)) {
+                badge.className = 'px-2 py-0.5 rounded-md text-[11px] font-bold border transition bg-emerald-50 text-emerald-700 border-emerald-200';
+                badge.innerHTML = `<i class="ph-bold ph-check"></i> 已包含目标词「${target}」`;
+            } else {
+                badge.className = 'px-2 py-0.5 rounded-md text-[11px] font-bold border transition bg-amber-50 text-amber-700 border-amber-200';
+                badge.innerHTML = `<i class="ph-bold ph-warning"></i> 尚未输入目标词「${target}」`;
+            }
+        }
+
+        function insertTargetWordToInput() {
+            const target = (currentWord?.word || currentWord?.headword || '').trim();
+            if (!target) return;
+            const inputEl = document.getElementById('student-translation-input');
+            const start = inputEl.selectionStart;
+            const end = inputEl.selectionEnd;
+            const text = inputEl.value;
+            inputEl.value = text.substring(0, start) + target + text.substring(end);
+            inputEl.selectionStart = inputEl.selectionEnd = start + target.length;
+            inputEl.focus();
+            updateTargetWordDetectionBadge(inputEl.value);
+            syncSideAppState('viewSentenceTranslateSession', false, { studentAnswer: inputEl.value });
+        }
+
+        function clearStudentInput() {
+            const inputEl = document.getElementById('student-translation-input');
+            inputEl.value = '';
+            inputEl.focus();
+            updateTargetWordDetectionBadge('');
+            syncSideAppState('viewSentenceTranslateSession', false, { studentAnswer: '' });
+        }
+
+        // ==========================================
+        // Reveal Standard Answer & Teacher Scoring
+        // ==========================================
+        function revealStandardAnswer() {
+            if (isAnswerRevealed) return;
+            isAnswerRevealed = true;
+
+            document.getElementById('action-unrevealed-bar').classList.add('hidden');
+            document.getElementById('revealed-section').classList.remove('hidden');
+
+            renderRevealedStandardAnswer();
+
+            // Auto Play Audio if enabled
+            if (autoAudioEnabled) {
+                setTimeout(() => {
+                    playStandardSentenceAudio();
+                }, 150);
+            }
+
+            // Sync reveal status to SideApp companion screen
+            isSideAppAnswerRevealed = true;
+            updateRevealSideAppButtonUI(true);
+            syncSideAppState('viewSentenceTranslateSession', false, { answerRevealed: true });
+        }
+
+        function renderRevealedStandardAnswer() {
+            const ex = getActiveExample(currentWord);
+            const target = currentWord.word || currentWord.headword || '';
+            const highlightedHtml = highlightTargetWord(ex.thai, target);
+            document.getElementById('standard-thai-sentence').innerHTML = highlightedHtml;
+
+            // Student Typed Review Box
+            const studentInput = document.getElementById('student-translation-input').value.trim();
+            const studentReviewBox = document.getElementById('student-answer-review-box');
+            const studentReviewText = document.getElementById('student-answer-review-text');
+
+            if (studentInput) {
+                studentReviewBox.classList.remove('hidden');
+                studentReviewText.innerHTML = highlightTargetWord(studentInput, target);
+            } else {
+                studentReviewBox.classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // Teacher Scoring Logic (0 ~ 5)
+        // ==========================================
+        function resetScoreButtons() {
+            selectedScoreValue = null;
+            document.querySelectorAll('.score-selector-btn').forEach(btn => {
+                btn.classList.remove('bg-rose-100', 'border-rose-400', 'bg-emerald-100', 'border-emerald-400', 'bg-violet-100', 'border-violet-400', 'ring-2', 'ring-violet-400');
+            });
+            document.getElementById('score-description-tip').textContent = '点击下方分值或直接点击决定按钮';
+        }
+
+        function selectScore(val) {
+            selectedScoreValue = val;
+            resetScoreButtons();
+            const activeBtn = document.getElementById(`score-btn-${val}`);
+            if (activeBtn) {
+                if (val < 3) {
+                    activeBtn.classList.add('bg-rose-100', 'border-rose-400', 'ring-2', 'ring-rose-400');
+                    document.getElementById('score-description-tip').textContent = `已选 ${val} 分 (未达标，下一轮将继续重练)`;
+                } else {
+                    activeBtn.classList.add('bg-emerald-100', 'border-emerald-400', 'ring-2', 'ring-emerald-400');
+                    document.getElementById('score-description-tip').textContent = `已选 ${val} 分 (达标合格，词汇将攻克消除！)`;
+                }
+            }
+            syncSideAppState('viewSentenceTranslateSession', false, { teacherScore: val });
+        }
+
+        // ==========================================
+        // Elimination / Loop Handlers
+        // ==========================================
+
+        // Option 1: 没达标 -> 留在循环中继续强化
+        function handleKeepInLoop() {
+            if (isProcessingAction || !currentWord) return;
+            isProcessingAction = true;
+
+            const cardBox = document.getElementById('exercise-card-box');
+            cardBox.classList.add('animate-loop-shake');
+
+            // 增加该词的循环计数
+            loopCounterMap[currentWord.id] = (loopCounterMap[currentWord.id] || 0) + 1;
+
+            setTimeout(() => {
+                // 将队首单词移出，重新 push 到队列末尾
+                const failedWord = recallQueue.shift();
+                recallQueue.push(failedWord);
+
+                checkRoundProgression();
+                renderNextCard();
+            }, 250);
+        }
+
+        // Option 2: 达标合格 -> 彻底消除！
+        function handleEliminateWord() {
+            if (isProcessingAction || !currentWord) return;
+            isProcessingAction = true;
+
+            const cardBox = document.getElementById('exercise-card-box');
+            cardBox.classList.add('animate-eliminate');
+
+            const finalScore = selectedScoreValue !== null && selectedScoreValue >= 3 ? selectedScoreValue : 3;
+            const teacherNote = document.getElementById('teacher-note-input').value.trim();
+            const studentText = document.getElementById('student-translation-input').value.trim();
+            const ex = getActiveExample(currentWord);
+
+            setTimeout(() => {
+                const clearedWord = recallQueue.shift();
+                eliminatedWords.push({
+                    ...clearedWord,
+                    finalScore: finalScore,
+                    teacherNote: teacherNote,
+                    studentAnswer: studentText,
+                    standardSentence: ex.thai,
+                    chineseSentence: ex.chinese
+                });
+
+                updateProgressUI();
+
+                if (recallQueue.length === 0) {
+                    triggerVictory();
+                } else {
+                    checkRoundProgression();
+                    renderNextCard();
+                }
+            }, 300);
+        }
+
+        function checkRoundProgression() {
+            const allPassedRound = recallQueue.every(w => (loopCounterMap[w.id] || 0) >= currentRound);
+            if (allPassedRound && recallQueue.length > 0) {
+                currentRound++;
+                document.getElementById('current-round-text').textContent = currentRound;
+            }
+        }
+
+        function updateProgressUI() {
+            const total = originalWords.length;
+            const eliminated = eliminatedWords.length;
+            const remaining = recallQueue.length;
+            const pct = total > 0 ? Math.round((eliminated / total) * 100) : 0;
+
+            document.getElementById('stat-eliminated').textContent = eliminated;
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-percentage').textContent = `${pct}%`;
+            document.getElementById('queue-remaining-count').textContent = remaining;
+            document.getElementById('current-round-text').textContent = currentRound;
+            document.getElementById('card-index-tip').textContent = `${eliminated + 1} / ${total}`;
+
+            const topBar = document.getElementById('top-progress-bar');
+            if (topBar) topBar.style.width = `${pct}%`;
+        }
+
+        // ==========================================
+        // Victory Screen & Core Progress Synchronization
+        // ==========================================
+        function triggerVictory() {
+            showView('victory');
+
+            const total = originalWords.length;
+            document.getElementById('victory-total-words').textContent = total;
+            document.getElementById('victory-total-rounds').textContent = currentRound;
+            document.getElementById('eliminated-words-count-badge').textContent = `共 ${eliminatedWords.length} 词已攻克`;
+
+            // Calculate average score
+            const sumScore = eliminatedWords.reduce((acc, w) => acc + (w.finalScore || 3), 0);
+            const avgScore = eliminatedWords.length > 0 ? (sumScore / eliminatedWords.length).toFixed(1) : '3.0';
+            document.getElementById('victory-avg-score').textContent = avgScore;
+
+            // Render Eliminated Sentences Grid
+            const gridEl = document.getElementById('eliminated-words-grid');
+            gridEl.innerHTML = eliminatedWords.map(w => {
+                const safeSentence = (w.standardSentence || '').replace(/'/g, "\\'");
+                const targetWord = w.word || w.headword || '';
+                const highlightedStandard = highlightTargetWord(w.standardSentence || '', targetWord);
+
+                return `
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 hover:bg-violet-50/30 hover:border-violet-200 transition">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="space-y-1.5 flex-grow select-text">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="font-thai font-black text-lg text-violet-900">${targetWord}</span>
+                                    ${w.ipa ? `<span class="font-mono text-xs text-slate-400">/${w.ipa}/</span>` : ''}
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 font-mono">
+                                        评定: ${w.finalScore}分
+                                    </span>
+                                    ${w.teacherNote ? `<span class="text-[11px] text-slate-500 italic">导师点评: ${w.teacherNote}</span>` : ''}
+                                </div>
+                                <div class="text-xs text-slate-500 font-medium">中文例句: “${w.chineseSentence || ''}”</div>
+                                <div class="font-thai text-sm text-slate-900 font-semibold pt-1">
+                                    ${highlightedStandard}
+                                </div>
+                                ${w.studentAnswer ? `
+                                    <div class="text-[11px] text-slate-500 font-thai bg-white p-2 rounded-xl border border-slate-100">
+                                        学生译文: ${w.studentAnswer}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <button onclick="playAudioDirect('${safeSentence}')" class="p-2 text-slate-400 hover:text-violet-600 rounded-xl hover:bg-violet-100 transition shrink-0" title="朗读标准译文">
+                                <i class="ph-bold ph-speaker-high text-base"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Sync summary to SideApp
+            if (window.sideAppBridge && window.sideAppBridge.enabled) {
+                window.sideAppBridge.pushState('viewSentenceTranslateSummary', {
+                    appType: 'sentence_translate',
+                    title: sessionData?.title || sessionData?.wordsetTitle || '低分词例句翻译强化',
+                    totalWords: originalWords.length,
+                    totalRounds: currentRound,
+                    avgScore: avgScore,
+                    eliminatedWords: eliminatedWords
+                }, true, { title: 'ThaiNotes 伴侣屏 · 例句翻译强化' });
+            }
+        }
+
+        // 一键将本次消除的所有词汇在 ThaiCoreWordsReviewDB 中将分数提升为 >=3 分（巩固）
+        async function syncMasteryScoresToCoreDB() {
+            const btn = document.getElementById('btn-sync-scores');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> 正在同步...`;
+
+            try {
+                const req = indexedDB.open(PROGRESS_DB_NAME);
+                req.onsuccess = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(PROGRESS_STORE_NAME)) {
+                        db.close();
+                        alert("未找到核心词复习进度存储库。");
+                        btn.disabled = false;
+                        btn.innerHTML = `<i class="ph-bold ph-check-double"></i> 同步提分至核心库`;
+                        return;
+                    }
+
+                    const tx = db.transaction([PROGRESS_STORE_NAME], 'readwrite');
+                    const store = tx.objectStore(PROGRESS_STORE_NAME);
+
+                    eliminatedWords.forEach(w => {
+                        const targetScore = Math.max(3, w.finalScore || 3);
+                        const rec = {
+                            wordId: w.id,
+                            lessonId: w.lessonId || sessionData.lessonId || 'lesson_001',
+                            status: 'reviewed',
+                            masteryScore: targetScore,
+                            lastReviewedAt: Date.now(),
+                            reviewCount: 2
+                        };
+                        store.put(rec);
+                    });
+
+                    tx.oncomplete = () => {
+                        db.close();
+                        // 同步更新 localStorage 镜像备份
+                        try {
+                            const backupKey = 'vcourse_thai_corewords_progress_backup';
+                            const raw = localStorage.getItem(backupKey);
+                            const backup = raw ? JSON.parse(raw) : {};
+                            eliminatedWords.forEach(w => {
+                                backup[w.id] = {
+                                    wordId: w.id,
+                                    lessonId: w.lessonId || sessionData.lessonId || 'lesson_001',
+                                    status: 'reviewed',
+                                    masteryScore: Math.max(3, w.finalScore || 3),
+                                    lastReviewedAt: Date.now(),
+                                    reviewCount: 2
+                                };
+                            });
+                            localStorage.setItem(backupKey, JSON.stringify(backup));
+                        } catch (e) {}
+
+                        btn.className = 'px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold shrink-0 flex items-center gap-1.5 shadow-md shadow-emerald-600/15 cursor-default';
+                        btn.innerHTML = `<i class="ph-bold ph-check text-sm"></i> 已同步提分至核心库！`;
+                        alert("太棒了！本次攻克的低分词汇例句翻译已全部在本地 IndexedDB 进度中提升为“巩固 (≥3分)”！返回核心词汇页刷新即可看到更新！");
+                    };
+                    tx.onerror = (err) => {
+                        db.close();
+                        console.error("Tx error:", err);
+                        alert("同步失败，请检查浏览器权限。");
+                        btn.disabled = false;
+                        btn.innerHTML = `<i class="ph-bold ph-check-double"></i> 同步提分至核心库`;
+                    };
+                };
+                req.onerror = (e) => {
+                    console.error("Open error:", e);
+                    alert("无法打开本地复习库。");
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="ph-bold ph-check-double"></i> 同步提分至核心库`;
+                };
+            } catch (err) {
+                console.error("Sync error:", err);
+                btn.disabled = false;
+                btn.innerHTML = `<i class="ph-bold ph-check-double"></i> 同步提分至核心库`;
+            }
+        }
+
+        function restartFullRecallSession() {
+            if (originalWords.length === 0) return;
+            const shuffled = [...originalWords].sort(() => 0.5 - Math.random());
+            startTranslateQueue(shuffled);
+        }
+
+        // ==========================================
+        // Keyboard Shortcuts Manager
+        // ==========================================
+        function setupKeyboardShortcuts() {
+            window.addEventListener('keydown', (e) => {
+                const activeTag = document.activeElement.tagName;
+                const activeId = document.activeElement.id;
+
+                // When user is typing inside student-translation-input
+                if (activeId === 'student-translation-input') {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        if (!isAnswerRevealed) {
+                            revealStandardAnswer();
+                        }
+                    }
+                    return;
+                }
+
+                if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
+
+                const key = e.key;
+
+                // Space or Enter: Reveal answer or play standard sentence
+                if (key === ' ' || e.code === 'Space' || key === 'Enter') {
+                    e.preventDefault();
+                    if (!isAnswerRevealed) {
+                        revealStandardAnswer();
+                    } else if (key === 'Enter') {
+                        handleEliminateWord();
+                    }
+                    return;
+                }
+
+                // Key '1' or Left Arrow: Keep in loop (未达标)
+                if (key === '1' || key === 'ArrowLeft') {
+                    e.preventDefault();
+                    if (!isAnswerRevealed) revealStandardAnswer();
+                    handleKeepInLoop();
+                    return;
+                }
+
+                // Key '2' or Right Arrow: Eliminate (达标消除)
+                if (key === '2' || key === 'ArrowRight') {
+                    e.preventDefault();
+                    if (!isAnswerRevealed) revealStandardAnswer();
+                    handleEliminateWord();
+                    return;
+                }
+
+                // Key 'p' or 'P': Play audio
+                if (key.toLowerCase() === 'p') {
+                    playStandardSentenceAudio();
+                    return;
+                }
+
+                // Key 's' or 'S': Toggle SideApp companion screen answer reveal/shroud
+                if (key.toLowerCase() === 's') {
+                    e.preventDefault();
+                    toggleRevealSideAppDetail();
+                    return;
+                }
+
+                // Keys '0', '3', '4', '5': Quick score selection
+                if (['0', '3', '4', '5'].includes(key)) {
+                    e.preventDefault();
+                    selectScore(parseInt(key, 10));
+                    return;
+                }
+            });
+        }
+
+        // ==========================================
+        // View Switcher Helper
+        // ==========================================
+        function showView(viewName) {
+            document.getElementById('view-loading').classList.add('hidden');
+            document.getElementById('view-exercise').classList.add('hidden');
+            document.getElementById('view-victory').classList.add('hidden');
+            document.getElementById('view-error').classList.add('hidden');
+
+            if (viewName === 'exercise') {
+                document.getElementById('view-exercise').classList.remove('hidden');
+            } else if (viewName === 'victory') {
+                document.getElementById('view-victory').classList.remove('hidden');
+            } else if (viewName === 'error') {
+                document.getElementById('view-error').classList.remove('hidden');
+            } else {
+                document.getElementById('view-loading').classList.remove('hidden');
+            }
+        }
+
+        function renderRecentSessionsList(sessions) {
+            const container = document.getElementById('recent-sessions-container');
+            const listEl = document.getElementById('recent-sessions-list');
+            if (!container || !listEl) return;
+
+            container.classList.remove('hidden');
+            listEl.innerHTML = sessions.slice(0, 5).map(s => `
+                <a href="appRecallSentenceTranslate.html?id=${encodeURIComponent(s.id)}" class="p-3 bg-slate-50 hover:bg-violet-50 border border-slate-200 hover:border-violet-200 rounded-xl flex items-center justify-between transition group text-xs">
+                    <div>
+                        <div class="font-bold text-slate-800 group-hover:text-violet-600">${s.title || '低分词例句翻译训练'}</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">${s.date || ''} · 共 ${s.words?.length || 0} 个低分词</div>
+                    </div>
+                    <i class="ph-bold ph-arrow-right text-slate-300 group-hover:text-violet-600 text-sm"></i>
+                </a>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

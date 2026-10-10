@@ -165,6 +165,13 @@
                     <i id="toggle-audio-icon" class="ph-bold ph-speaker-high text-indigo-600"></i>
                     <span id="toggle-audio-label" class="hidden sm:inline">自动朗读: 开</span>
                 </button>
+
+                <!-- SideApp Companion Screen Quick Capsule Pill -->
+                <button id="btnSideAppPill" onclick="SideAppPairingPanel.open()" title="手机伴侣屏联动 (第二屏幕被动同步与控制)" class="px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-amber-700 cursor-pointer">
+                    <span id="sideAppStatusDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+                    <i class="ph-bold ph-device-mobile text-amber-600"></i>
+                    <span id="sideAppStatusText" class="hidden sm:inline">伴侣屏</span>
+                </button>
             </div>
         </div>
 
@@ -283,44 +290,79 @@
                     </div>
 
                     <!-- Flashcard Bottom Action Bar -->
-                    <div id="action-buttons-unrevealed" class="pt-4 border-t border-slate-100 flex items-center justify-between relative z-10">
-                        <div class="text-[11px] text-slate-400">
-                            💡 先在脑海中回忆该词的泰语读音与汉语释义
+                    <div id="action-buttons-unrevealed" class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 relative z-10">
+                        <!-- Dual Screen Sub-Screen Control Strip -->
+                        <div class="flex items-center justify-between sm:justify-start gap-2.5 bg-amber-50/80 border border-amber-200/90 rounded-2xl px-3.5 py-2 text-xs">
+                            <div class="flex items-center gap-1.5 font-bold text-amber-950">
+                                <i class="ph-bold ph-device-mobile text-amber-600"></i>
+                                <span>手机副屏:</span>
+                                <span id="sideAppCardSyncStatus" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-mono font-bold border border-amber-200">
+                                    释义遮蔽中
+                                </span>
+                            </div>
+                            <button id="btnRevealSideAppDetail" onclick="toggleRevealSideAppDetail()" type="button" 
+                                class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-xs bg-amber-600 text-white hover:bg-amber-700 active:scale-95 cursor-pointer" 
+                                title="向手机伴侣屏发送指令，揭示或遮蔽词汇释义与例句 (快捷键: S；此操作不影响主屏)">
+                                <i class="ph-bold ph-eye text-xs"></i>
+                                <span id="btnRevealSideAppDetailText">向副屏揭晓释义 (S)</span>
+                            </button>
                         </div>
-                        <button onclick="revealCardDetails()" type="button" class="px-5 py-2.5 rounded-xl bg-slate-900 text-white hover:bg-indigo-600 text-xs font-bold transition flex items-center gap-2 shadow-md shadow-slate-900/10 cursor-pointer">
-                            <span>显示答案自我评判</span>
-                            <span class="kbd-badge bg-slate-700 text-slate-200 border-slate-600">Enter</span>
-                        </button>
+
+                        <div class="flex items-center justify-between sm:justify-end gap-3">
+                            <span class="text-[11px] text-slate-400 hidden md:inline">💡 空格或点击翻转主屏</span>
+                            <button onclick="revealCardDetails()" type="button" class="px-5 py-2.5 rounded-xl bg-slate-900 text-white hover:bg-indigo-600 text-xs font-bold transition flex items-center justify-center gap-2 shadow-md shadow-slate-900/10 cursor-pointer">
+                                <span>显示答案自我评判</span>
+                                <span class="kbd-badge bg-slate-700 text-slate-200 border-slate-600">Enter</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Action Buttons (Shown after card is revealed) -->
-                    <div id="action-buttons-revealed" class="hidden pt-4 border-t border-slate-100 grid grid-cols-2 gap-4 relative z-10">
-                        
-                        <!-- Button 1: Still Don't Know -> Keep in Loop -->
-                        <button id="btn-keep-in-loop" onclick="handleKeepInLoop()" type="button" class="py-3.5 px-4 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 border-2 border-rose-200 hover:border-rose-300 text-xs sm:text-sm font-bold transition duration-150 flex flex-col sm:flex-row items-center justify-center gap-1.5 shadow-sm active:scale-98 cursor-pointer group">
-                            <div class="flex items-center gap-1.5">
-                                <i class="ph-bold ph-x-circle text-rose-600 text-lg group-hover:scale-110 transition"></i>
-                                <span>没记住 · 留在循环</span>
+                    <div id="action-buttons-revealed" class="hidden pt-4 border-t border-slate-100 space-y-3 relative z-10">
+                        <!-- Dual Screen Companion Control in Revealed state -->
+                        <div class="flex items-center justify-between bg-amber-50/80 border border-amber-200/90 rounded-2xl px-3.5 py-2 text-xs">
+                            <div class="flex items-center gap-1.5 font-bold text-amber-950">
+                                <i class="ph-bold ph-device-mobile text-amber-600"></i>
+                                <span>手机副屏联动:</span>
+                                <span id="sideAppCardSyncStatusRevealed" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold border border-emerald-200">
+                                    副屏：已展示释义与例句
+                                </span>
                             </div>
-                            <div class="flex items-center gap-1 text-[10px] text-rose-500 font-mono">
-                                <span>[快捷键:</span>
-                                <span class="kbd-badge bg-rose-100 border-rose-300 text-rose-800">1</span>
-                                <span>或 ←]</span>
-                            </div>
-                        </button>
+                            <button onclick="toggleRevealSideAppDetail()" type="button" 
+                                class="px-3 py-1 rounded-xl text-xs font-semibold border border-amber-200 bg-white hover:bg-amber-100 text-amber-800 transition flex items-center gap-1 cursor-pointer"
+                                title="切换副屏释义展示状态 (快捷键: S)">
+                                <i class="ph-bold ph-arrows-clockwise text-xs"></i>
+                                <span id="btnRevealSideAppDetailRevealedText">切换副屏显示 (S)</span>
+                            </button>
+                        </div>
 
-                        <!-- Button 2: Remembered -> Eliminate from Queue! -->
-                        <button id="btn-eliminate-word" onclick="handleEliminateWord()" type="button" class="py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white border-2 border-emerald-600 hover:border-emerald-700 text-xs sm:text-sm font-bold transition duration-150 flex flex-col sm:flex-row items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 active:scale-98 cursor-pointer group">
-                            <div class="flex items-center gap-1.5">
-                                <i class="ph-bold ph-check-circle text-white text-lg group-hover:scale-110 transition"></i>
-                                <span>记住了 · 彻底消除！</span>
-                            </div>
-                            <div class="flex items-center gap-1 text-[10px] text-emerald-200 font-mono">
-                                <span>[快捷键:</span>
-                                <span class="kbd-badge bg-emerald-700 border-emerald-500 text-white">2</span>
-                                <span>或 Enter]</span>
-                            </div>
-                        </button>
+                        <div class="grid grid-cols-2 gap-4">
+                            <!-- Button 1: Still Don't Know -> Keep in Loop -->
+                            <button id="btn-keep-in-loop" onclick="handleKeepInLoop()" type="button" class="py-3.5 px-4 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 border-2 border-rose-200 hover:border-rose-300 text-xs sm:text-sm font-bold transition duration-150 flex flex-col sm:flex-row items-center justify-center gap-1.5 shadow-sm active:scale-98 cursor-pointer group">
+                                <div class="flex items-center gap-1.5">
+                                    <i class="ph-bold ph-x-circle text-rose-600 text-lg group-hover:scale-110 transition"></i>
+                                    <span>没记住 · 留在循环</span>
+                                </div>
+                                <div class="flex items-center gap-1 text-[10px] text-rose-500 font-mono">
+                                    <span>[快捷键:</span>
+                                    <span class="kbd-badge bg-rose-100 border-rose-300 text-rose-800">1</span>
+                                    <span>或 ←]</span>
+                                </div>
+                            </button>
+
+                            <!-- Button 2: Remembered -> Eliminate from Queue! -->
+                            <button id="btn-eliminate-word" onclick="handleEliminateWord()" type="button" class="py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white border-2 border-emerald-600 hover:border-emerald-700 text-xs sm:text-sm font-bold transition duration-150 flex flex-col sm:flex-row items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 active:scale-98 cursor-pointer group">
+                                <div class="flex items-center gap-1.5">
+                                    <i class="ph-bold ph-check-circle text-white text-lg group-hover:scale-110 transition"></i>
+                                    <span>记住了 · 彻底消除！</span>
+                                </div>
+                                <div class="flex items-center gap-1 text-[10px] text-emerald-200 font-mono">
+                                    <span>[快捷键:</span>
+                                    <span class="kbd-badge bg-emerald-700 border-emerald-500 text-white">2</span>
+                                    <span>或 Enter]</span>
+                                </div>
+                            </button>
+                        </div>
                     </div>
 
                 </div>
@@ -330,6 +372,9 @@
             <div class="flex items-center justify-center gap-4 text-slate-400 text-xs flex-wrap">
                 <span class="flex items-center gap-1">
                     <span class="kbd-badge">空格</span> 翻开 / 朗读
+                </span>
+                <span class="flex items-center gap-1">
+                    <span class="kbd-badge">S</span> 切换副屏释义
                 </span>
                 <span class="flex items-center gap-1">
                     <span class="kbd-badge">1</span> 或 <span class="kbd-badge">←</span> 留在循环
@@ -514,7 +559,8 @@
         let eliminatedWords = [];       // 已成功消除的错词数组
         let currentWord = null;         // 当前正在复习的单词对象
         let currentRound = 1;          // 循环轮次
-        let isCardRevealed = false;    // 当前卡片是否已翻开揭示答案
+        let isCardRevealed = false;    // 当前卡片是否已翻开揭示答案 (主屏)
+        let isSideAppDetailRevealed = false; // 手机伴侣屏当前是否揭晓释义与例句 (主副屏可独立控制)
         let isProcessingAction = false;// 防止快捷键连续误触发
         let loopCounterMap = {};       // 记录每个词在本复习会话中循环留队的次数
 
@@ -526,6 +572,9 @@
         // ==========================================
         window.playAudioDirect = (text) => {
             if (!text) return;
+            if (window.sideAppBridge && window.sideAppBridge.enabled) {
+                window.sideAppBridge.playEffect('audio-playing', '', 1200);
+            }
             const cleanText = text.replace(/“|”/g, '').trim();
             const url = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(cleanText || text)}`;
             new Audio(url).play().catch(err => {
@@ -595,10 +644,218 @@
                 document.getElementById('session-title-badge').textContent = sessionData.title || sessionData.wordsetTitle || '核心低分词强化';
                 document.getElementById('session-date-badge').textContent = sessionData.date || '';
 
+                // Initialize SideApp Bridge title & status
+                if (window.sideAppBridge) {
+                    window.sideAppBridge.setAppTitle('ThaiNotes 伴侣屏 · 核心低分词强化');
+                    let lastClientCount = 0;
+                    window.sideAppBridge.onStatusChange((status) => {
+                        const dot = document.getElementById('sideAppStatusDot');
+                        const text = document.getElementById('sideAppStatusText');
+                        const btn = document.getElementById('btnSideAppPill');
+                        if (!dot || !text) return;
+
+                        if (!status.enabled) {
+                            dot.className = 'w-2 h-2 rounded-full bg-slate-400';
+                            text.textContent = '伴侣屏';
+                            if (btn) btn.classList.remove('border-emerald-300', 'bg-emerald-50', 'text-emerald-700');
+                        } else if (status.clientCount > 0) {
+                            dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+                            text.textContent = `伴侣屏 (${status.clientCount})`;
+                            if (btn) btn.classList.add('border-emerald-300', 'bg-emerald-50', 'text-emerald-700');
+
+                            // Proactively sync active flashcard state when a new client connects
+                            if (status.clientCount > lastClientCount) {
+                                syncSideAppState(null, true);
+                            }
+                        } else {
+                            dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+                            text.textContent = '伴侣屏 (待配对)';
+                            if (btn) btn.classList.remove('border-emerald-300', 'bg-emerald-50', 'text-emerald-700');
+                        }
+                        lastClientCount = status.clientCount || 0;
+                    });
+                    if (window.sideAppBridge.enabled) {
+                        window.sideAppBridge.start();
+                    }
+                }
+
                 startRecallQueue(originalWords);
             } catch (err) {
                 console.error("加载错词强化数据异常:", err);
                 showView('error');
+            }
+        }
+
+        // ==========================================
+        // SideApp Companion Screen Dual-Screen Control & Sync
+        // ==========================================
+        function syncSideAppState(viewName = null, forceFull = false, overrides = {}) {
+            if (!window.sideAppBridge || !window.sideAppBridge.enabled) return;
+
+            try {
+                if (!viewName) {
+                    const isVictory = document.getElementById('view-victory') && !document.getElementById('view-victory').classList.contains('hidden');
+                    viewName = isVictory ? 'viewRecallCoreWordsSummary' : 'viewRecallCoreWordsSession';
+                }
+
+                if (viewName === 'viewRecallCoreWordsSummary') {
+                    window.sideAppBridge.pushState('viewRecallCoreWordsSummary', {
+                        appType: 'recall_core_words',
+                        title: sessionData?.title || sessionData?.wordsetTitle || '核心低分词强化记忆',
+                        totalWords: originalWords.length,
+                        totalRounds: currentRound,
+                        eliminatedWords: eliminatedWords.map(w => ({
+                            id: w.id,
+                            word: w.word || w.headword || '',
+                            ipa: w.ipa || '',
+                            meaning: getWordMeaning(w),
+                            pos: getWordPos(w),
+                            originalScore: w.masteryScore !== undefined ? w.masteryScore : (w.score !== undefined ? w.score : 1)
+                        }))
+                    }, forceFull, {
+                        title: 'ThaiNotes 伴侣屏 · 核心低分词强化'
+                    });
+                    return;
+                }
+
+                // If currentWord is not yet set, try to use first word in queue or original words
+                if (!currentWord) {
+                    if (recallQueue.length > 0) {
+                        currentWord = recallQueue[0];
+                    } else if (originalWords.length > 0) {
+                        currentWord = originalWords[0];
+                    }
+                }
+
+                if (!currentWord) {
+                    window.sideAppBridge.pushState('viewRecallCoreWordsSession', {
+                        appType: 'recall_core_words',
+                        mode: 'recall_core_words',
+                        title: sessionData?.title || sessionData?.wordsetTitle || '核心低分词强化记忆',
+                        wordsetTitle: sessionData?.wordsetTitle || sessionData?.title || '核心词集',
+                        currentRound: currentRound || 1,
+                        currentIndex: 1,
+                        totalWords: originalWords.length || 1,
+                        remainingCount: recallQueue.length || 0,
+                        eliminatedCount: eliminatedWords.length || 0,
+                        progressPercent: 0,
+                        progressText: '正在准备强化词汇队列...',
+                        detailRevealed: false,
+                        cardLoopTimes: 0,
+                        originalScore: 0,
+                        word: {
+                            id: '',
+                            word: '准备中...',
+                            ipa: '',
+                            pos: '',
+                            meaning: '正在初始化错词强化队列...',
+                            meanings: [],
+                            examples: []
+                        }
+                    }, forceFull, {
+                        title: 'ThaiNotes 伴侣屏 · 核心低分词强化'
+                    });
+                    return;
+                }
+
+                const total = originalWords.length || 1;
+                const currentIdx = eliminatedWords.length + 1;
+                const progressPercent = Math.round((eliminatedWords.length / total) * 100);
+                const detailRevealed = overrides.detailRevealed !== undefined ? overrides.detailRevealed : isSideAppDetailRevealed;
+
+                let wordExamples = [];
+                if (Array.isArray(currentWord.examples) && currentWord.examples.length > 0) {
+                    wordExamples = currentWord.examples;
+                } else if (Array.isArray(currentWord.meanings)) {
+                    currentWord.meanings.forEach(m => {
+                        if (Array.isArray(m.examples)) wordExamples.push(...m.examples);
+                    });
+                }
+
+                const state = {
+                    appType: 'recall_core_words',
+                    mode: 'recall_core_words',
+                    title: sessionData?.title || sessionData?.wordsetTitle || '核心低分词强化记忆',
+                    wordsetTitle: sessionData?.wordsetTitle || sessionData?.title || '核心词集',
+                    currentRound: currentRound,
+                    currentIndex: currentIdx,
+                    totalWords: total,
+                    remainingCount: recallQueue.length,
+                    eliminatedCount: eliminatedWords.length,
+                    progressPercent: progressPercent,
+                    progressText: `待消除: ${recallQueue.length} 词 · 已消除: ${eliminatedWords.length} / ${total} 词`,
+                    detailRevealed: detailRevealed,
+                    cardLoopTimes: loopCounterMap[currentWord.id] || 0,
+                    originalScore: currentWord.masteryScore !== undefined ? currentWord.masteryScore : (currentWord.score !== undefined ? currentWord.score : 1),
+                    word: {
+                        id: currentWord.id,
+                        word: currentWord.word || currentWord.headword || '',
+                        ipa: currentWord.ipa || '',
+                        pos: getWordPos(currentWord),
+                        meaning: getWordMeaning(currentWord),
+                        meanings: Array.isArray(currentWord.meanings) ? currentWord.meanings : [],
+                        examples: wordExamples
+                    }
+                };
+
+                window.sideAppBridge.pushState('viewRecallCoreWordsSession', state, forceFull, {
+                    title: 'ThaiNotes 伴侣屏 · 核心低分词强化'
+                });
+            } catch (err) {
+                console.warn('[SideApp syncSideAppState error]:', err);
+            }
+        }
+        window.syncSideAppState = syncSideAppState;
+
+        function toggleRevealSideAppDetail() {
+            isSideAppDetailRevealed = !isSideAppDetailRevealed;
+            updateRevealSideAppButtonUI(isSideAppDetailRevealed);
+            syncSideAppState('viewRecallCoreWordsSession', false, { detailRevealed: isSideAppDetailRevealed });
+            if (isSideAppDetailRevealed && window.sideAppBridge && window.sideAppBridge.enabled) {
+                window.sideAppBridge.playEffect('detail-revealed', '#sideRecallWordRevealed', 800);
+            }
+        }
+        window.toggleRevealSideAppDetail = toggleRevealSideAppDetail;
+
+        function updateRevealSideAppButtonUI(isRevealed) {
+            const btnText = document.getElementById('btnRevealSideAppDetailText');
+            const btn = document.getElementById('btnRevealSideAppDetail');
+            const syncBadge = document.getElementById('sideAppCardSyncStatus');
+            const syncBadgeRevealed = document.getElementById('sideAppCardSyncStatusRevealed');
+            const btnRevealedText = document.getElementById('btnRevealSideAppDetailRevealedText');
+
+            if (btnText && btn) {
+                if (isRevealed) {
+                    btnText.textContent = '副屏已展示释义 (点击遮蔽 · S)';
+                    btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 cursor-pointer';
+                } else {
+                    btnText.textContent = '向副屏揭晓释义 (S)';
+                    btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm bg-amber-600 text-white hover:bg-amber-700 active:scale-95 cursor-pointer';
+                }
+            }
+
+            if (btnRevealedText) {
+                btnRevealedText.textContent = isRevealed ? '副屏已展示 (点击遮蔽 · S)' : '向副屏揭晓释义 (S)';
+            }
+
+            if (syncBadge) {
+                if (isRevealed) {
+                    syncBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold border border-emerald-200';
+                    syncBadge.textContent = '副屏：已展示释义与例句';
+                } else {
+                    syncBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-mono font-bold border border-amber-200';
+                    syncBadge.textContent = '副屏：释义遮蔽中';
+                }
+            }
+
+            if (syncBadgeRevealed) {
+                if (isRevealed) {
+                    syncBadgeRevealed.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold border border-emerald-200';
+                    syncBadgeRevealed.textContent = '副屏：已展示释义与例句';
+                } else {
+                    syncBadgeRevealed.className = 'text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-mono font-bold border border-amber-200';
+                    syncBadgeRevealed.textContent = '副屏：释义遮蔽中';
+                }
             }
         }
 
@@ -667,6 +924,8 @@
 
             isProcessingAction = false;
             isCardRevealed = false;
+            isSideAppDetailRevealed = false;
+            updateRevealSideAppButtonUI(false);
             currentWord = recallQueue[0];
 
             const loopTimes = loopCounterMap[currentWord.id] || 0;
@@ -767,6 +1026,7 @@
             }
 
             updateProgressUI();
+            syncSideAppState('viewRecallCoreWordsSession', true, { detailRevealed: false });
         }
 
         function toggleCardReveal() {
@@ -783,6 +1043,9 @@
             document.getElementById('revealed-details-area').classList.remove('hidden');
             document.getElementById('action-buttons-unrevealed').classList.add('hidden');
             document.getElementById('action-buttons-revealed').classList.remove('hidden');
+
+            updateRevealSideAppButtonUI(isSideAppDetailRevealed);
+            syncSideAppState('viewRecallCoreWordsSession', false, { detailRevealed: isSideAppDetailRevealed });
         }
 
         // ==========================================
@@ -867,6 +1130,9 @@
         // ==========================================
         function triggerVictory() {
             showView('victory');
+            if (window.sideAppBridge && window.sideAppBridge.enabled) {
+                syncSideAppState('viewRecallCoreWordsSummary', true);
+            }
 
             document.getElementById('victory-total-words').textContent = originalWords.length;
             document.getElementById('victory-total-rounds').textContent = currentRound;
@@ -1028,6 +1294,13 @@
                 if (key.toLowerCase() === 'p') {
                     playCurrentWordAudio();
                 }
+
+                // Key 's' or 'S': Toggle SideApp companion screen answer reveal/shroud
+                if (key.toLowerCase() === 's') {
+                    e.preventDefault();
+                    toggleRevealSideAppDetail();
+                    return;
+                }
             });
         }
 
@@ -1068,5 +1341,10 @@
             `).join('');
         }
     </script>
+
+    <!-- SideApp Companion Screen Dependencies -->
+    <script src="./js/sideapp/qrcode.min.js"></script>
+    <script src="./js/sideapp/bridge.js"></script>
+    <script src="./js/sideapp/pairingPanel.js"></script>
 </body>
 </html>

@@ -432,6 +432,11 @@
                         <span>强化记忆低分词汇</span>
                         <span id="low-score-badge" class="hidden px-1.5 py-0.5 rounded-full text-[10px] bg-amber-200 text-amber-900 font-mono font-bold">0</span>
                     </button>
+                    <button onclick="launchTranslateLowScoreWords()" type="button" class="px-3.5 py-2 text-xs font-bold text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-300 rounded-xl transition duration-150 flex items-center gap-1.5 shadow-sm shadow-violet-500/10 cursor-pointer" title="提取当前词集低分词汇例句并在新标签页以句子翻译卡片方式强化应用与理解">
+                        <i class="ph-bold ph-translate text-violet-600 text-sm"></i>
+                        <span>强化低分词汇句子翻译</span>
+                        <span id="low-score-translate-badge" class="hidden px-1.5 py-0.5 rounded-full text-[10px] bg-violet-200 text-violet-900 font-mono font-bold">0</span>
+                    </button>
                     <button onclick="startBatchReviewSession(false)" type="button" class="px-4 py-2 text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-500/15 hover:shadow-indigo-500/25 transition duration-150 flex items-center gap-1.5">
                         <i class="ph-bold ph-play text-sm"></i>
                         <span>开始完整自测</span>
@@ -1821,6 +1826,17 @@
                     extractedMeaning = w.meanCh;
                 }
 
+                // 提取例句：包含顶层 examples 与 meanings 数组内各释义包含的 examples
+                let combinedExamples = [];
+                if (Array.isArray(w.examples) && w.examples.length > 0) {
+                    combinedExamples.push(...w.examples);
+                }
+                if (Array.isArray(w.meanings)) {
+                    w.meanings.forEach(m => {
+                        if (Array.isArray(m.examples)) combinedExamples.push(...m.examples);
+                    });
+                }
+
                 return {
                     id: w.id,
                     word: w.word || w.headword || '',
@@ -1829,7 +1845,7 @@
                     pos: extractedPos,
                     meaning: extractedMeaning,
                     meanings: Array.isArray(w.meanings) ? JSON.parse(JSON.stringify(w.meanings)) : [],
-                    examples: Array.isArray(w.examples) ? JSON.parse(JSON.stringify(w.examples)) : [],
+                    examples: combinedExamples.length > 0 ? JSON.parse(JSON.stringify(combinedExamples)) : (Array.isArray(w.examples) ? JSON.parse(JSON.stringify(w.examples)) : []),
                     masteryScore: score,
                     score: score,
                     status: p?.status || 'needs_relearn',
@@ -1868,6 +1884,122 @@
             } catch (err) {
                 console.error("写入 IndexedDB 失败:", err);
                 alert("写入本地错词强化记录失败，请检查浏览器权限。");
+            }
+        }
+
+        async function launchTranslateLowScoreWords() {
+            const vocabs = getCurrentLessonVocabs();
+            if (!vocabs || vocabs.length === 0) {
+                alert("当前词集暂无可复习词汇！");
+                return;
+            }
+
+            // 筛选出所有记录的 score 低于 3 的词汇 (即已复习记录且分值 < 3，或状态为需重学且分值 < 3)
+            const lowScoreVocabs = vocabs.filter(w => {
+                const p = coreWordsProgressMap[w.id];
+                if (!p) {
+                    if (w.masteryScore !== undefined && w.masteryScore < 3) return true;
+                    if (w.score !== undefined && w.score < 3) return true;
+                    return false;
+                }
+                const score = p.masteryScore !== undefined ? p.masteryScore : (p.score !== undefined ? p.score : null);
+                if (score !== null && score < 3) return true;
+                if (p.status === 'needs_relearn' || p.status === 'relearn') return true;
+                return false;
+            });
+
+            const currentWs = activeWordsetId ? allWordsets.find(ws => ws.id === activeWordsetId) : null;
+            const currentLesson = lessons.find(l => l.id === activeLessonId);
+            const scopeTitle = currentWs ? currentWs.title : (currentLesson ? currentLesson.title : '核心词汇集');
+
+            if (lowScoreVocabs.length === 0) {
+                alert(`太棒了！当前词集「${scopeTitle}」中暂无评分低于3分的词汇！\n提示：您可以先点击“开始完整自测”进行复习测验。`);
+                return;
+            }
+
+            // 提取词汇的完整 JSON 数据与例句，并保留当前得分与状态
+            const wordsData = lowScoreVocabs.map(w => {
+                const p = coreWordsProgressMap[w.id];
+                const score = (p && p.masteryScore !== undefined) ? p.masteryScore : (w.score !== undefined ? w.score : (p ? 1 : 0));
+                
+                // 提取首选释义与词性（兼容 tblCoreWords 的 meanings 数组或顶层 meaning 结构）
+                let extractedMeaning = '';
+                let extractedPos = w.pos || '';
+                if (typeof w.meaning === 'string' && w.meaning.trim()) {
+                    extractedMeaning = w.meaning.trim();
+                } else if (Array.isArray(w.meanings) && w.meanings.length > 0) {
+                    extractedMeaning = w.meanings
+                        .map(m => (typeof m === 'string' ? m : (m.meaning || m.chinese || m.definition || '')))
+                        .filter(Boolean)
+                        .join('； ');
+                    if (!extractedPos && w.meanings[0]?.part_of_speech) {
+                        extractedPos = w.meanings[0].part_of_speech;
+                    }
+                } else if (w.chinese) {
+                    extractedMeaning = w.chinese;
+                } else if (w.meanCh) {
+                    extractedMeaning = w.meanCh;
+                }
+
+                // 提取例句：包含顶层 examples 与 meanings 数组内各释义包含的 examples
+                let combinedExamples = [];
+                if (Array.isArray(w.examples) && w.examples.length > 0) {
+                    combinedExamples.push(...w.examples);
+                }
+                if (Array.isArray(w.meanings)) {
+                    w.meanings.forEach(m => {
+                        if (Array.isArray(m.examples)) combinedExamples.push(...m.examples);
+                    });
+                }
+
+                return {
+                    id: w.id,
+                    word: w.word || w.headword || '',
+                    headword: w.headword || w.word || '',
+                    ipa: w.ipa || '',
+                    pos: extractedPos,
+                    meaning: extractedMeaning,
+                    meanings: Array.isArray(w.meanings) ? JSON.parse(JSON.stringify(w.meanings)) : [],
+                    examples: combinedExamples.length > 0 ? JSON.parse(JSON.stringify(combinedExamples)) : (Array.isArray(w.examples) ? JSON.parse(JSON.stringify(w.examples)) : []),
+                    masteryScore: score,
+                    score: score,
+                    status: p?.status || 'needs_relearn',
+                    lessonId: w.lessonId || activeLessonId,
+                    setId: w.setId || activeWordsetId,
+                    lastReviewedAt: p?.lastReviewedAt || Date.now()
+                };
+            });
+
+            // 生成唯一会话 id 与当前日期
+            const translateSessionId = 'translate_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+            const now = new Date();
+            const dateStr = now.getFullYear() + '-' + 
+                String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                String(now.getDate()).padStart(2, '0') + ' ' + 
+                String(now.getHours()).padStart(2, '0') + ':' + 
+                String(now.getMinutes()).padStart(2, '0');
+
+            const sessionRecord = {
+                id: translateSessionId,
+                type: 'sentence_translation',
+                date: dateStr,
+                timestamp: Date.now(),
+                title: scopeTitle,
+                wordsetTitle: scopeTitle,
+                wordsetId: activeWordsetId || '',
+                lessonId: activeLessonId || '',
+                courseId: (currentLesson && currentLesson.course_id) ? currentLesson.course_id : '',
+                totalWords: wordsData.length,
+                words: wordsData
+            };
+
+            try {
+                await saveRecallSessionToIndexedDB(sessionRecord);
+                // 在浏览器中新开一个 tab 运行 appRecallSentenceTranslate.html 并把会话 id 作为参数
+                window.open(`appRecallSentenceTranslate.html?id=${encodeURIComponent(translateSessionId)}`, '_blank');
+            } catch (err) {
+                console.error("写入 IndexedDB 失败:", err);
+                alert("写入本地低分词汇句子翻译训练记录失败，请检查浏览器权限。");
             }
         }
 
@@ -5455,6 +5587,16 @@
                     lowScoreBadge.classList.remove('hidden');
                 } else {
                     lowScoreBadge.classList.add('hidden');
+                }
+            }
+
+            const lowScoreTranslateBadge = document.getElementById('low-score-translate-badge');
+            if (lowScoreTranslateBadge) {
+                if (lowScoreInSet > 0) {
+                    lowScoreTranslateBadge.textContent = lowScoreInSet;
+                    lowScoreTranslateBadge.classList.remove('hidden');
+                } else {
+                    lowScoreTranslateBadge.classList.add('hidden');
                 }
             }
 

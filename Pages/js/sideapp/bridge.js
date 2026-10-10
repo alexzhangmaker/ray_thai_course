@@ -106,6 +106,42 @@
      */
     async start() {
       try {
+        // 1. Try reusing active session from localStorage if still valid on server
+        const savedSessionStr = localStorage.getItem('thainotes_sideapp_active_session');
+        if (savedSessionStr) {
+          try {
+            const saved = JSON.parse(savedSessionStr);
+            if (saved && saved.sessionId && Date.now() < (saved.expiresAt || 0)) {
+              const checkRes = await fetch(`/sideapp/session/${saved.sessionId}/status`);
+              if (checkRes.ok) {
+                const checkData = await checkRes.json();
+                if (checkData.active) {
+                  this.sessionId = saved.sessionId;
+                  this.pairingCode = saved.pairingCode;
+                  this.wsUrl = saved.wsUrl;
+                  this.sideAppUrl = saved.sideAppUrl;
+                  this.localIp = saved.localIp;
+                  this.port = saved.port;
+                  this.clientCount = checkData.clientCount || 0;
+                  this.connectedClients = checkData.clients || [];
+
+                  this.startStatusPolling();
+                  this.notifyListeners();
+
+                  if (typeof window.syncSideAppState === 'function') {
+                    window.syncSideAppState(null, true);
+                  } else if (this.lastSnapshot) {
+                    this.pushState(this.lastSnapshot.view, this.lastSnapshot.state, true);
+                  }
+                  return saved;
+                }
+              }
+            }
+          } catch (e) {
+            // Ignore parse error and proceed to create new session
+          }
+        }
+
         const res = await fetch('/sideapp/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -125,6 +161,19 @@
         this.port = data.port;
         this.clientCount = 0;
         this.connectedClients = [];
+
+        // Save active session for cross-tab continuity
+        try {
+          localStorage.setItem('thainotes_sideapp_active_session', JSON.stringify({
+            sessionId: this.sessionId,
+            pairingCode: this.pairingCode,
+            wsUrl: this.wsUrl,
+            sideAppUrl: this.sideAppUrl,
+            localIp: this.localIp,
+            port: this.port,
+            expiresAt: data.expiresAt || (Date.now() + 2 * 60 * 60 * 1000)
+          }));
+        } catch (e) {}
 
         // Start polling client status every 3s
         this.startStatusPolling();
@@ -153,6 +202,14 @@
      * @param {object} [meta=null]
      */
     pushState(view, state, forceFull = false, meta = null) {
+      if (!view && this.lastSnapshot?.view) {
+        view = this.lastSnapshot.view;
+      }
+      if (!view) {
+        console.warn('[SideApp Bridge] Attempted to push state without a valid view, skipping push');
+        return;
+      }
+
       if (!this.enabled || !this.sessionId) {
         // Cache snapshot even when disabled so if enabled later, it can sync immediately
         this.lastSnapshot = { view, state: JSON.parse(JSON.stringify(state || {})) };
@@ -260,6 +317,10 @@
         } catch (e) {}
       }
 
+      try {
+        localStorage.removeItem('thainotes_sideapp_active_session');
+      } catch (e) {}
+
       this.sessionId = null;
       this.pairingCode = null;
       this.clientCount = 0;
@@ -281,10 +342,20 @@
               this.connectedClients.length !== newClients.length ||
               JSON.stringify(this.connectedClients) !== JSON.stringify(newClients);
 
+            const prevCount = this.clientCount;
             this.clientCount = newCount;
             this.connectedClients = newClients;
             if (changed) {
               this.notifyListeners();
+            }
+
+            // Proactively push full state to newly connected companion devices
+            if (newCount > prevCount && newCount > 0) {
+              if (typeof window.syncSideAppState === 'function') {
+                window.syncSideAppState(null, true);
+              } else if (this.lastSnapshot) {
+                this.pushState(this.lastSnapshot.view, this.lastSnapshot.state, true);
+              }
             }
           } else if (res.status === 404) {
             // Session expired on server, re-create
@@ -342,10 +413,10 @@
   // Expose global instance
   window.sideAppBridge = new SideAppBridge();
 
-  // Clean up on tab close
+  // Clean up timer on tab close without terminating session on backend
   window.addEventListener('beforeunload', () => {
-    if (window.sideAppBridge && window.sideAppBridge.sessionId) {
-      navigator.sendBeacon(`/sideapp/session/${window.sideAppBridge.sessionId}/close`);
+    if (window.sideAppBridge) {
+      window.sideAppBridge.stopStatusPolling();
     }
   });
 
