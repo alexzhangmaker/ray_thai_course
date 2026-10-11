@@ -968,10 +968,11 @@ app.post('/api/reviews/session/submit', async (req, res) => {
       }
 
       // 5. Audit log
+      const logRating = (req.body.score !== undefined && req.body.score !== null) ? Number(req.body.score) : q;
       await run(
         `INSERT INTO user_review_logs (user_id, item_type, item_id, reviewed_at, rating, prev_interval, new_interval, prev_ease_factor, new_ease_factor)
          VALUES (?, ?, ?, datetime('now', 'utc'), ?, ?, ?, ?, ?)`,
-        [userId, itemType, itemId, q, reviewState.interval_minutes || 0, newState.interval_minutes, reviewState.ease_factor || 2.5, newState.ease_factor]
+        [userId, itemType, itemId, logRating, reviewState.interval_minutes || 0, newState.interval_minutes, reviewState.ease_factor || 2.5, newState.ease_factor]
       );
 
       // 6. Update Streak Progress (Lesson review counts as 1 item completed)
@@ -4321,6 +4322,58 @@ const formatCoreWordRow = (row) => {
     };
   }
 };
+
+// 0. GET /api/core-words/progress - Retrieve core words progress map for auto-recovery & multi-device sync
+app.get('/api/core-words/progress', async (req, res) => {
+  const userId = req.query.userId || 'default_user';
+  try {
+    const sql = `
+      WITH RankedLogs AS (
+          SELECT item_id, rating, reviewed_at,
+                 ROW_NUMBER() OVER (PARTITION BY item_id ORDER BY id DESC) as rn
+          FROM user_review_logs
+          WHERE item_type = 'vocab' AND user_id = ?
+      )
+      SELECT 
+          ur.item_id as wordId,
+          COALESCE(cw.lesson_id, '') as lessonId,
+          'reviewed' as status,
+          COALESCE(l.rating, 3) as masteryScore,
+          ur.last_reviewed_at as lastReviewedAt,
+          COALESCE(ur.repetitions, 1) as reviewCount
+      FROM user_reviews ur
+      LEFT JOIN tblCoreWords cw ON cw.id = ur.item_id
+      LEFT JOIN RankedLogs l ON l.item_id = ur.item_id AND l.rn = 1
+      WHERE ur.item_type = 'vocab' AND ur.user_id = ?
+    `;
+    const rows = await all(sql, [userId, userId]);
+    const progressMap = {};
+    rows.forEach(r => {
+      let ts = Date.now();
+      if (r.lastReviewedAt) {
+        const cleanDateStr = r.lastReviewedAt.includes('T') ? r.lastReviewedAt : r.lastReviewedAt.replace(' ', 'T') + 'Z';
+        const parsed = Date.parse(cleanDateStr);
+        if (!isNaN(parsed)) ts = parsed;
+      }
+      progressMap[r.wordId] = {
+        wordId: r.wordId,
+        lessonId: r.lessonId || 'lesson_001',
+        status: 'reviewed',
+        masteryScore: (typeof r.masteryScore === 'number' && !isNaN(r.masteryScore)) ? r.masteryScore : 3,
+        lastReviewedAt: ts,
+        reviewCount: r.reviewCount || 1
+      };
+    });
+    res.json({
+      success: true,
+      totalCount: rows.length,
+      progressMap
+    });
+  } catch (err) {
+    console.error('Failed to get core-words progress:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // 1. GET /api/core-words - Retrieve core words (supports setId, lessonId, search)
 app.get('/api/core-words', async (req, res) => {

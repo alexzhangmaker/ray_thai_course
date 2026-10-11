@@ -732,9 +732,15 @@
 
             <!-- Modal Footer -->
             <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex justify-between items-center shrink-0">
-                <div class="flex items-center gap-2 text-xs text-slate-400">
-                    <i class="ph ph-database text-indigo-500"></i>
-                    <span id="settingsStatusText">数据存储于本地 IndexedDB & 自动备份</span>
+                <div class="flex items-center gap-3 text-xs text-slate-500">
+                    <div class="flex items-center gap-1.5">
+                        <i class="ph ph-database text-indigo-500"></i>
+                        <span id="settingsStatusText">数据存储于本地 IndexedDB & 自动备份</span>
+                    </div>
+                    <button type="button" onclick="manualSyncProgressFromServer()" class="text-indigo-600 hover:text-indigo-800 font-bold hover:underline flex items-center gap-1 cursor-pointer" title="若更换电脑、浏览器用户或本地存储被清除，可一键从云端 SQLite 恢复全部复习记录">
+                        <i class="ph-bold ph-arrows-clockwise text-xs"></i>
+                        <span>从服务端恢复进度</span>
+                    </button>
                 </div>
                 <div class="flex items-center gap-2.5">
                     <button type="button" onclick="closeSettingsModal()" class="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
@@ -1590,6 +1596,62 @@
             return db;
         }
 
+        async function fetchProgressFromServer() {
+            try {
+                const targetUserId = (typeof userId !== 'undefined' && userId) ? userId : 'default_user';
+                const res = await fetch(`/api/core-words/progress?userId=${encodeURIComponent(targetUserId)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.success && data.progressMap) {
+                        return data.progressMap;
+                    }
+                }
+            } catch (err) {
+                console.warn("[Progress] 从服务端获取核心词复习进度失败:", err);
+            }
+            return null;
+        }
+
+        async function manualSyncProgressFromServer() {
+            const statusEl = document.getElementById('settingsStatusText');
+            if (statusEl) {
+                statusEl.innerHTML = '<span class="text-indigo-600 text-xs font-semibold flex items-center gap-1"><i class="ph-bold ph-arrows-clockwise text-xs animate-spin"></i> 正在从服务端同步复习进度...</span>';
+            }
+            try {
+                const serverMap = await fetchProgressFromServer();
+                if (serverMap && Object.keys(serverMap).length > 0) {
+                    const sCount = Object.keys(serverMap).length;
+                    coreWordsProgressMap = { ...coreWordsProgressMap, ...serverMap };
+                    await repairIndexedDBFromMap(coreWordsProgressMap);
+                    backupProgressToLocalStorage(coreWordsProgressMap);
+                    if (typeof renderLessons === 'function') {
+                        renderLessons();
+                    }
+                    if (statusEl) {
+                        statusEl.innerHTML = `<span class="text-emerald-600 text-xs font-semibold flex items-center gap-1"><i class="ph-bold ph-check-circle text-xs"></i> 已成功恢复 ${sCount} 条词汇复习记录</span>`;
+                    }
+                    if (typeof showDeckSyncToast === 'function') {
+                        showDeckSyncToast(`已成功从云端数据库同步 ${sCount} 条核心词复习记录！`, 'success');
+                    }
+                } else {
+                    if (statusEl) {
+                        statusEl.textContent = '服务端暂无可同步的复习记录';
+                    }
+                    if (typeof showDeckSyncToast === 'function') {
+                        showDeckSyncToast('服务端暂无可同步的复习记录', 'info');
+                    }
+                }
+            } catch (err) {
+                console.error("手动同步复习记录失败:", err);
+                if (statusEl) {
+                    statusEl.innerHTML = `<span class="text-rose-600 text-xs font-semibold">同步失败: ${err.message}</span>`;
+                }
+                if (typeof showDeckSyncToast === 'function') {
+                    showDeckSyncToast(`同步失败: ${err.message}`, 'error');
+                }
+            }
+        }
+
         async function loadAllProgressFromIndexedDB() {
             let loadedRecords = {};
             let loadedFromDB = false;
@@ -1649,6 +1711,48 @@
                 backupProgressToLocalStorage(coreWordsProgressMap);
             } else {
                 coreWordsProgressMap = {};
+            }
+
+            // 三重容灾自愈：若本地 IndexedDB 和 localStorage 均为空，自动从服务端 SQLite 数据库全量恢复
+            const localCount = Object.keys(coreWordsProgressMap).length;
+            if (localCount === 0) {
+                try {
+                    const serverMap = await fetchProgressFromServer();
+                    if (serverMap && Object.keys(serverMap).length > 0) {
+                        const sCount = Object.keys(serverMap).length;
+                        console.log(`[Progress] 💡 本地存储为空，已触发自愈链路从服务端成功恢复 ${sCount} 条词汇复习记录！`);
+                        coreWordsProgressMap = { ...serverMap };
+                        await repairIndexedDBFromMap(coreWordsProgressMap);
+                        backupProgressToLocalStorage(coreWordsProgressMap);
+                        setTimeout(() => {
+                            if (typeof showDeckSyncToast === 'function') {
+                                showDeckSyncToast(`已自动从云端数据库恢复 ${sCount} 条历史复习记录`, 'success');
+                            }
+                        }, 600);
+                    }
+                } catch (e) {
+                    console.warn("[Progress] 服务端自愈恢复异常:", e);
+                }
+            } else {
+                // 若本地已有数据，异步对比服务端记录，如有缺失或跨设备更新则增量补全
+                fetchProgressFromServer().then(async (serverMap) => {
+                    if (!serverMap) return;
+                    let addedCount = 0;
+                    for (const [wId, sRec] of Object.entries(serverMap)) {
+                        if (!coreWordsProgressMap[wId]) {
+                            coreWordsProgressMap[wId] = sRec;
+                            addedCount++;
+                        }
+                    }
+                    if (addedCount > 0) {
+                        console.log(`[Progress] 💡 从服务端增量补全了 ${addedCount} 条复习记录`);
+                        await repairIndexedDBFromMap(coreWordsProgressMap);
+                        backupProgressToLocalStorage(coreWordsProgressMap);
+                        if (typeof renderLessons === 'function') {
+                            renderLessons();
+                        }
+                    }
+                }).catch(() => {});
             }
 
             return coreWordsProgressMap;
@@ -6064,7 +6168,8 @@
                         itemType: 'vocab',
                         itemId: currentWord.id,
                         sessionType: 'lesson_review',
-                        attempts: attemptsLog
+                        attempts: attemptsLog,
+                        score: score
                     })
                 }).then(() => {
                     loadStreakStats();
@@ -6426,7 +6531,8 @@
                         itemType: 'vocab',
                         itemId: currentWord.id,
                         sessionType: 'lesson_review',
-                        attempts: attemptsLog
+                        attempts: attemptsLog,
+                        score: score
                     })
                 }).then(() => {
                     loadStreakStats();
