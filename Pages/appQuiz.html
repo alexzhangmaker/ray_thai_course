@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="th" class="dark">
+<html lang="zh-CN" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>แบบทดสอบทบทวนความรู้: ภาษาไทยเพื่อการท่องเที่ยว</title>
+  <title>泰语知识测验 (Thai Quiz) - vCourse.ThaiNotes</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -26,17 +26,18 @@
             }
           },
           fontFamily: {
-            thai: ['Noto Serif Thai', 'serif'],
+            sans: ['Outfit', 'Noto Sans SC', 'sans-serif'],
+            thai: ['Noto Serif Thai', 'Outfit', 'Noto Sans SC', 'serif'],
           }
         }
       }
     }
   </script>
   
-  <!-- Google Fonts: Noto Serif Thai -->
+  <!-- Google Fonts: Outfit, Noto Sans SC & Noto Serif Thai -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Serif+Thai:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
   
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -46,7 +47,7 @@
 
   <style>
     body {
-      font-family: 'Noto Serif Thai', serif;
+      font-family: 'Outfit', 'Noto Sans SC', sans-serif;
     }
     
     /* Custom Scrollbar */
@@ -122,10 +123,10 @@
         </div>
         <div>
           <h1 class="font-bold text-base md:text-lg leading-tight line-clamp-1 bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-400 light:from-emerald-600 light:to-indigo-600">
-            Thai Tourism Quiz
+            Thai Quiz Coach
           </h1>
           <p class="text-xs text-slate-400 light:text-slate-500 font-light hidden sm:block">
-            ภาษาไทยเพื่อการท่องเที่ยว (วัฒนธรรมและวิถีชีวิต)
+            泰语课程同步测验与巩固练习
           </p>
         </div>
       </div>
@@ -137,7 +138,7 @@
         </select>
 
         <!-- Sound Toggle -->
-        <button id="soundToggleBtn" onclick="app.toggleSound()" title="เปิด/ปิด เสียงเอฟเฟกต์"
+        <button id="soundToggleBtn" onclick="app.toggleSound()" title="开启/关闭音效"
                 class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 light:bg-slate-200 light:text-slate-700 transition">
           <i id="soundIcon" class="fa-solid fa-volume-high text-emerald-400"></i>
         </button>
@@ -146,16 +147,16 @@
         <div class="hidden md:flex items-center bg-slate-900/80 light:bg-slate-200 rounded-lg p-1 text-xs font-medium">
           <button id="modePracticeBtn" onclick="app.setMode('practice')" 
                   class="px-3 py-1.5 rounded-md transition-all font-semibold bg-indigo-600 text-white shadow-sm">
-            <i class="fa-solid fa-book-open mr-1"></i> โหมดฝึกซ้อม
+            <i class="fa-solid fa-book-open mr-1"></i> 练习模式 (Practice)
           </button>
           <button id="modeExamBtn" onclick="app.setMode('exam')" 
                   class="px-3 py-1.5 rounded-md transition-all text-slate-400 hover:text-white light:hover:text-slate-900">
-            <i class="fa-solid fa-stopwatch mr-1"></i> โหมดสอบจริง
+            <i class="fa-solid fa-stopwatch mr-1"></i> 考试模式 (Exam)
           </button>
         </div>
 
         <!-- JSON Custom Data Button -->
-        <button onclick="app.openJsonModal()" title="จัดการข้อมูล Quiz JSON"
+        <button onclick="app.openJsonModal()" title="管理 Quiz JSON 数据"
                 class="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-xs font-medium text-slate-300 light:bg-slate-200 light:text-slate-700 flex items-center gap-1.5 transition">
           <i class="fa-solid fa-code text-indigo-400"></i>
           <span class="hidden sm:inline">JSON Data</span>
@@ -168,7 +169,7 @@
         </a>
 
         <!-- Dark / Light Mode Toggle -->
-        <button onclick="app.toggleTheme()" title="สลับโหมดมืด/สว่าง"
+        <button onclick="app.toggleTheme()" title="切换深色/浅色模式"
                 class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 light:bg-slate-200 light:text-slate-700 transition">
           <i id="themeIcon" class="fa-solid fa-moon text-amber-400"></i>
         </button>
@@ -188,29 +189,28 @@
 
         <div class="relative z-10">
           <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-semibold mb-4">
-            <i class="fa-solid fa-sparkles"></i> แบบทดสอบประเมินผลความรู้
+            <i class="fa-solid fa-sparkles"></i> 课程知识测验评估 (Quiz Assessment)
           </div>
-          <h2 id="quizHeroTitle" class="text-xl md:text-2xl font-bold mb-3 leading-snug">
+          <h2 id="quizHeroTitle" class="text-xl md:text-2xl font-bold mb-3 leading-snug font-thai">
             แบบทดสอบทบทวนความรู้: ภาษาไทยเพื่อการท่องเที่ยว (วัฒนธรรมและวิถีชีวิต)
           </h2>
           <p class="text-sm text-slate-300 light:text-slate-600 mb-6 font-light leading-relaxed">
-            ทดสอบและเสริมสร้างความรู้ความเข้าใจเกี่ยวกับคำนิยาม วัฒนธรรมรูปธรรม นามธรรม และวิถีชีวิตไทย 
-            พร้อมระบบเฉลยละเอียดและสถิติวิเคราะห์จุดแข็งตามจุดประสงค์การเรียนรู้
+            通过互动测验巩固课程核心词汇、语法、文化与生活常识，支持练习模式即时查看答案解析，或考试模式模拟实战并提供知识点掌握度分析。划选题目中的泰语单词即可随时查词并听取发音。
           </p>
 
           <!-- Stats Overview Cards -->
           <div class="grid grid-cols-3 gap-3 mb-6">
             <div class="p-3.5 rounded-xl bg-slate-900/60 light:bg-slate-100 border border-slate-800 light:border-slate-200 text-center">
-              <span class="block text-xs text-slate-400 light:text-slate-500">จำนวนข้อ</span>
-              <span id="heroTotalQ" class="text-lg md:text-xl font-bold text-indigo-400">10 ข้อ</span>
+              <span class="block text-xs text-slate-400 light:text-slate-500">题目总数</span>
+              <span id="heroTotalQ" class="text-lg md:text-xl font-bold text-indigo-400">10 题</span>
             </div>
             <div class="p-3.5 rounded-xl bg-slate-900/60 light:bg-slate-100 border border-slate-800 light:border-slate-200 text-center">
-              <span class="block text-xs text-slate-400 light:text-slate-500">ประเภทคำถาม</span>
-              <span class="text-xs md:text-sm font-semibold text-emerald-400 mt-1 block">ตัวเลือก / ปรนัย / ถูกผิด</span>
+              <span class="block text-xs text-slate-400 light:text-slate-500">题型涵盖</span>
+              <span class="text-xs md:text-sm font-semibold text-emerald-400 mt-1 block">单选 / 多选 / 判断</span>
             </div>
             <div class="p-3.5 rounded-xl bg-slate-900/60 light:bg-slate-100 border border-slate-800 light:border-slate-200 text-center">
-              <span class="block text-xs text-slate-400 light:text-slate-500">ระดับความยาก</span>
-              <span class="text-xs md:text-sm font-semibold text-amber-400 mt-1 block">ง่าย - ปานกลาง - ยาก</span>
+              <span class="block text-xs text-slate-400 light:text-slate-500">难度分级</span>
+              <span class="text-xs md:text-sm font-semibold text-amber-400 mt-1 block">简单 - 中等 - 困难</span>
             </div>
           </div>
 
@@ -219,13 +219,13 @@
             <div class="flex items-center space-x-3 text-xs text-slate-400">
               <label class="flex items-center space-x-2 cursor-pointer select-none">
                 <input type="checkbox" id="shuffleToggle" class="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-indigo-500">
-                <span>สุ่มลำดับคำถาม</span>
+                <span>随机打乱题目顺序</span>
               </label>
             </div>
 
             <button onclick="app.startQuiz()" 
                     class="w-full sm:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold text-base shadow-lg shadow-emerald-500/25 transition-all transform active:scale-95 flex items-center justify-center gap-2">
-              <i class="fa-solid fa-play"></i>เริ่มทำแบบทดสอบ
+              <i class="fa-solid fa-play"></i>开始测验 (Start Quiz)
             </button>
           </div>
         </div>
@@ -239,7 +239,7 @@
           <div class="flex items-center space-x-2">
             <!-- Question Number Pill -->
             <span class="px-3 py-1 rounded-lg bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 font-semibold text-sm">
-              ข้อที่ <span id="currentQNum">1</span> / <span id="totalQNum">10</span>
+              第 <span id="currentQNum">1</span> / <span id="totalQNum">10</span> 题
             </span>
 
             <!-- Difficulty Badge -->
@@ -256,17 +256,17 @@
           <!-- Knowledge Point Pill -->
           <div class="flex items-center gap-1.5 text-slate-400 light:text-slate-500 font-medium">
             <i class="fa-solid fa-bookmark text-indigo-400"></i>
-            <span id="knowledgePointText" class="max-w-[200px] sm:max-w-xs truncate">ความรู้พื้นฐาน</span>
+            <span id="knowledgePointText" class="max-w-[200px] sm:max-w-xs truncate font-thai">核心知识点</span>
           </div>
         </div>
 
         <!-- Question Body -->
         <div>
-          <h3 id="questionText" class="text-lg md:text-xl font-bold leading-relaxed text-slate-100 light:text-slate-800">
-            คำถามจะปรากฏที่นี่...
+          <h3 id="questionText" class="text-lg md:text-xl font-bold leading-relaxed text-slate-100 light:text-slate-800 font-thai">
+            题目加载中...
           </h3>
           <p id="multiChoiceNotice" class="hidden text-xs text-amber-400 mt-2 font-medium flex items-center gap-1">
-            <i class="fa-solid fa-circle-info"></i> คำถามนี้เป็นแบบเลือกตอบได้หลายข้อ (โปรดเลือกทุกข้อที่ถูกต้อง แล้วกดยืนยันคำตอบ / 多选：请勾选所有正确选项后提交)
+            <i class="fa-solid fa-circle-info"></i> 多选题：请勾选所有正确选项后点击下方“确认提交答案”按钮
           </p>
         </div>
 
@@ -279,7 +279,7 @@
         <div id="multiSubmitWrapper" class="hidden pt-2">
           <button onclick="app.submitMultiChoice()" id="multiSubmitBtn" disabled
                   class="w-full py-3 rounded-xl bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-indigo-500 text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2">
-            <i class="fa-solid fa-check"></i> ยืนยันคำตอบที่เลือก
+            <i class="fa-solid fa-check"></i> 确认提交答案
           </button>
         </div>
 
@@ -291,10 +291,10 @@
             </div>
             <div class="flex-grow space-y-1">
               <h4 id="explanationTitle" class="font-bold text-sm md:text-base">
-                คำอธิบายเพิ่มเติม
+                答案解析
               </h4>
-              <p id="explanationText" class="text-xs md:text-sm text-slate-300 light:text-slate-600 leading-relaxed">
-                คำอธิบายเฉลย...
+              <p id="explanationText" class="text-xs md:text-sm text-slate-300 light:text-slate-600 leading-relaxed font-thai">
+                解析内容加载中...
               </p>
             </div>
           </div>
@@ -304,16 +304,16 @@
         <div class="flex items-center justify-between pt-4 border-t border-slate-800 light:border-slate-200">
           <button onclick="app.prevQuestion()" id="prevQBtn" disabled
                   class="px-4 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-semibold text-slate-300 light:bg-slate-200 light:text-slate-700 transition flex items-center gap-2">
-            <i class="fa-solid fa-arrow-left"></i> ย้อนกลับ
+            <i class="fa-solid fa-arrow-left"></i> 上一题 (Prev)
           </button>
 
           <div class="flex items-center space-x-2">
             <button onclick="app.nextQuestion()" id="nextQBtn"
                     class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-teal-500 hover:from-indigo-500 hover:to-teal-400 text-white text-xs font-bold shadow-md transition flex items-center gap-2">
-              <span>ถัดไป</span> <i class="fa-solid fa-arrow-right"></i>
+              <span>下一题 (Next)</span> <i class="fa-solid fa-arrow-right"></i>
             </button>
             <button onclick="app.finishQuiz()" id="finishExamBtn" class="hidden px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md transition flex items-center gap-2">
-              <i class="fa-solid fa-flag-checkered"></i> ส่งข้อสอบ
+              <i class="fa-solid fa-flag-checkered"></i> 提交试卷 (Finish)
             </button>
           </div>
         </div>
@@ -325,11 +325,11 @@
         <!-- Score Header & Radial Progress -->
         <div class="text-center space-y-4">
           <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs font-semibold">
-            <i class="fa-solid fa-trophy"></i> ผลการทดสอบ
+            <i class="fa-solid fa-trophy"></i> 测验结果报告 (Quiz Results)
           </div>
           
           <h2 class="text-2xl md:text-3xl font-extrabold text-slate-100 light:text-slate-800">
-            สรุปคะแนนของคุณ
+            你的测验成绩总结
           </h2>
 
           <!-- Radial Circle Score Display -->
@@ -342,35 +342,35 @@
             </svg>
             <div class="absolute inset-0 flex flex-col items-center justify-center">
               <span id="finalScorePercent" class="text-3xl md:text-4xl font-extrabold text-emerald-400">0%</span>
-              <span id="finalScoreFraction" class="text-xs text-slate-400 font-medium mt-0.5">0 / 10 ข้อ</span>
+              <span id="finalScoreFraction" class="text-xs text-slate-400 font-medium mt-0.5">0 / 10 题</span>
             </div>
           </div>
 
           <!-- Rating / Evaluation Text -->
           <div id="scoreBadgeTitle" class="inline-block px-4 py-1.5 rounded-xl bg-slate-800 text-slate-200 text-sm font-bold border border-slate-700">
-            ระดับประเมิน: -
+            评级: -
           </div>
           <p id="scoreSummaryMsg" class="text-xs md:text-sm text-slate-300 light:text-slate-600 max-w-md mx-auto">
-            ประเมินผลการเรียนรู้รายข้อและความเข้าใจด้านวัฒนธรรมไทย
+            正在分析各题作答情况与知识点掌握程度
           </p>
         </div>
 
         <!-- Key Metrics Cards -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div class="p-3.5 rounded-xl bg-slate-900/60 light:bg-slate-100 border border-slate-800 light:border-slate-200 text-center">
-            <span class="block text-xs text-slate-400">ตอบถูกต้อง</span>
+            <span class="block text-xs text-slate-400">答对题数</span>
             <span id="statCorrect" class="text-xl font-bold text-emerald-400">0</span>
           </div>
           <div class="p-3.5 rounded-xl bg-slate-900/60 light:bg-slate-100 border border-slate-800 light:border-slate-200 text-center">
-            <span class="block text-xs text-slate-400">ตอบผิด</span>
+            <span class="block text-xs text-slate-400">答错题数</span>
             <span id="statWrong" class="text-xl font-bold text-rose-400">0</span>
           </div>
           <div class="p-3.5 rounded-xl bg-slate-900/60 light:bg-slate-100 border border-slate-800 light:border-slate-200 text-center">
-            <span class="block text-xs text-slate-400">ตอบต่อเนื่อง (Max Streak)</span>
+            <span class="block text-xs text-slate-400">最高连对 (Max Streak)</span>
             <span id="statMaxStreak" class="text-xl font-bold text-amber-400">0 🔥</span>
           </div>
           <div class="p-3.5 rounded-xl bg-slate-900/60 light:bg-slate-100 border border-slate-800 light:border-slate-200 text-center">
-            <span class="block text-xs text-slate-400">เวลาที่ใช้</span>
+            <span class="block text-xs text-slate-400">用时 (Time)</span>
             <span id="statTimeTaken" class="text-xl font-bold text-indigo-400">00:00</span>
           </div>
         </div>
@@ -384,7 +384,7 @@
         <!-- Knowledge Point Analysis Breakdown -->
         <div class="space-y-3">
           <h3 class="font-bold text-sm md:text-base text-slate-200 light:text-slate-800 flex items-center gap-2">
-            <i class="fa-solid fa-chart-pie text-indigo-400"></i> วิเคราะห์ความเข้าใจตามจุดประสงค์การเรียนรู้
+            <i class="fa-solid fa-chart-pie text-indigo-400"></i> 知识点掌握度分析
           </h3>
           <div id="knowledgeBreakdownList" class="space-y-2.5">
             <!-- Dynamic Knowledge Bars -->
@@ -395,14 +395,14 @@
         <div class="space-y-4 pt-4 border-t border-slate-800 light:border-slate-200">
           <div class="flex items-center justify-between flex-wrap gap-2">
             <h3 class="font-bold text-sm md:text-base text-slate-200 light:text-slate-800 flex items-center gap-2">
-              <i class="fa-solid fa-list-check text-emerald-400"></i> ทบทวนเฉลยอย่างละเอียด
+              <i class="fa-solid fa-list-check text-emerald-400"></i> 题目答案与详细解析回顾
             </h3>
 
             <!-- Review Filter Pills -->
             <div class="flex items-center bg-slate-900/80 light:bg-slate-200 p-1 rounded-lg text-xs">
-              <button onclick="app.filterReview('all')" id="filterAllBtn" class="px-3 py-1 rounded-md bg-indigo-600 text-white font-semibold">ทั้งหมด</button>
-              <button onclick="app.filterReview('correct')" id="filterCorrectBtn" class="px-3 py-1 rounded-md text-slate-400 hover:text-slate-200">ถูกต้อง</button>
-              <button onclick="app.filterReview('wrong')" id="filterWrongBtn" class="px-3 py-1 rounded-md text-slate-400 hover:text-slate-200">ตอบผิด</button>
+              <button onclick="app.filterReview('all')" id="filterAllBtn" class="px-3 py-1 rounded-md bg-indigo-600 text-white font-semibold">全部</button>
+              <button onclick="app.filterReview('correct')" id="filterCorrectBtn" class="px-3 py-1 rounded-md text-slate-400 hover:text-slate-200">仅看答对</button>
+              <button onclick="app.filterReview('wrong')" id="filterWrongBtn" class="px-3 py-1 rounded-md text-slate-400 hover:text-slate-200">仅看错题</button>
             </div>
           </div>
 
@@ -416,11 +416,11 @@
         <div class="flex flex-wrap items-center justify-center gap-3 pt-6 border-t border-slate-800 light:border-slate-200">
           <button onclick="app.retryQuiz()" 
                   class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-md transition flex items-center gap-2">
-            <i class="fa-solid fa-rotate-right"></i> ทำแบบทดสอบอีกครั้ง
+            <i class="fa-solid fa-rotate-right"></i> 重新开始测验
           </button>
           <button onclick="app.retryIncorrectOnly()" id="retryWrongBtn"
                   class="px-6 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-sm shadow-md transition flex items-center gap-2">
-            <i class="fa-solid fa-arrows-rotate"></i> ทำซ้ำเฉพาะข้อที่ผิด
+            <i class="fa-solid fa-arrows-rotate"></i> 仅重练错题
           </button>
         </div>
 
@@ -436,10 +436,10 @@
         
         <div class="flex items-center justify-between">
           <h3 class="font-bold text-sm text-slate-200 light:text-slate-800 flex items-center gap-2">
-            <i class="fa-solid fa-compass text-teal-400"></i> ตัวนำทางข้อสอบ
+            <i class="fa-solid fa-compass text-teal-400"></i> 题目导航
           </h3>
           <!-- Streak Indicator -->
-          <div title="จำนวนข้อที่ตอบถูกต่อเนื่อง" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-bold">
+          <div title="当前连续答对题数" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-bold">
             <i class="fa-solid fa-fire text-amber-400"></i>
             <span id="liveStreakCount">0</span>
           </div>
@@ -448,7 +448,7 @@
         <!-- Overall Progress Bar -->
         <div class="space-y-1.5">
           <div class="flex justify-between text-xs text-slate-400 font-medium">
-            <span>ความคืบหน้า</span>
+            <span>答题进度</span>
             <span id="progressPercentText">0%</span>
           </div>
           <div class="w-full h-2.5 bg-slate-800 light:bg-slate-200 rounded-full overflow-hidden">
@@ -459,8 +459,8 @@
         <!-- Question Grid Navigator Dot Map -->
         <div class="space-y-2">
           <div class="flex items-center justify-between text-xs text-slate-400">
-            <span>รายการข้อ (<span id="answeredCountText">0</span>/<span id="totalQuestionsNav">10</span>)</span>
-            <span class="text-[10px] text-slate-500">กดเพื่อข้ามไปข้อนั้น</span>
+            <span>题目列表 (<span id="answeredCountText">0</span>/<span id="totalQuestionsNav">10</span>)</span>
+            <span class="text-[10px] text-slate-500">点击题号可直接跳转</span>
           </div>
 
           <div id="questionGridNav" class="grid grid-cols-5 gap-2">
@@ -472,19 +472,19 @@
         <div class="pt-3 border-t border-slate-800/80 light:border-slate-200 grid grid-cols-2 gap-2 text-[11px] text-slate-400">
           <div class="flex items-center gap-1.5">
             <span class="w-2.5 h-2.5 rounded-full bg-slate-700 light:bg-slate-300"></span>
-            <span>ยังไม่ได้ทำ</span>
+            <span>未作答</span>
           </div>
           <div class="flex items-center gap-1.5">
             <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
-            <span>ข้อปัจจุบัน</span>
+            <span>当前题目</span>
           </div>
           <div class="flex items-center gap-1.5">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            <span>ตอบถูก</span>
+            <span>回答正确</span>
           </div>
           <div class="flex items-center gap-1.5">
             <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-            <span>ตอบผิด</span>
+            <span>回答错误</span>
           </div>
         </div>
 
@@ -492,7 +492,7 @@
         <div class="p-3 rounded-xl bg-indigo-950/40 light:bg-indigo-50 border border-indigo-800/30 text-xs text-indigo-300 light:text-indigo-700 leading-relaxed">
           <p class="flex items-start gap-2">
             <i class="fa-solid fa-lightbulb mt-0.5 text-amber-400"></i>
-            <span><strong>เคล็ดลับ:</strong> คุณสามารถใช้ปุ่มคีย์บอร์ด 1-4 หรือ A-D ในการเลือกคำตอบ และลูกศร ซ้าย/ขวา ในการเปลี่ยนข้อได้อย่างรวดเร็ว</span>
+            <span><strong>快捷键提示：</strong>可使用键盘数字键 1-4 或字母 A-D 快速选择选项，使用左/右方向键切换上/下一题。</span>
           </p>
         </div>
 
@@ -507,14 +507,14 @@
     <div class="glass-panel max-w-2xl w-full rounded-2xl p-6 space-y-4 shadow-2xl border border-slate-700">
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-bold text-slate-100 light:text-slate-800 flex items-center gap-2">
-          <i class="fa-solid fa-code text-indigo-400"></i> จัดการชุดข้อมูล Quiz (JSON)
+          <i class="fa-solid fa-code text-indigo-400"></i> 管理测验数据 (Quiz JSON)
         </h3>
         <button onclick="app.closeJsonModal()" class="text-slate-400 hover:text-white p-1">
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
       <p class="text-xs text-slate-400">
-        คุณสามารถดู คัดลอก หรือแก้ไขโครงสร้างคำถาม JSON ได้ที่นี่ ระบบจะอัปเดต Quiz ตาม JSON ที่ป้อนเข้าทันที
+        你可以在此查看、复制或编辑 Quiz 题目的 JSON 数据结构，点击“应用 JSON”即可立即更新当前测验。
       </p>
       
       <textarea id="jsonTextArea" rows="12" 
@@ -523,19 +523,19 @@
 
       <div class="flex items-center justify-between pt-2 flex-wrap gap-2">
         <button onclick="app.resetDefaultJson()" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300">
-          <i class="fa-solid fa-rotate text-amber-400 mr-1"></i> รีเซ็ตเป็นค่าเริ่มต้น
+          <i class="fa-solid fa-rotate text-amber-400 mr-1"></i> 恢复默认数据
         </button>
 
         <div class="flex items-center space-x-2 flex-wrap gap-2">
           <button onclick="app.uploadJsonToBackend()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md flex items-center gap-1.5">
             <i class="fa-solid fa-cloud-arrow-up"></i>
-            <span>บันทึกไปยังเซิร์ฟเวอร์ (Save to DB)</span>
+            <span>保存到服务器 (Save to DB)</span>
           </button>
           <button onclick="app.closeJsonModal()" class="px-4 py-2 rounded-lg bg-slate-800 text-xs text-slate-300">
-            ยกเลิก
+            取消
           </button>
           <button onclick="app.applyJsonData()" class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md">
-            <i class="fa-solid fa-check mr-1"></i> ปรับใช้ JSON
+            <i class="fa-solid fa-check mr-1"></i> 应用 JSON
           </button>
         </div>
       </div>
@@ -886,8 +886,8 @@
 
       init() {
         this.questions = [...this.quizData.questions];
-        document.getElementById('quizHeroTitle').textContent = this.quizData.quiz_title || 'แบบทดสอบ';
-        document.getElementById('heroTotalQ').textContent = `${this.questions.length} ข้อ`;
+        document.getElementById('quizHeroTitle').textContent = this.quizData.quiz_title || '泰语知识测验';
+        document.getElementById('heroTotalQ').textContent = `${this.questions.length} 题`;
         document.getElementById('totalQNum').textContent = this.questions.length;
         document.getElementById('totalQuestionsNav').textContent = this.questions.length;
         
@@ -1122,19 +1122,19 @@
 
         document.getElementById('currentQNum').textContent = this.currentIndex + 1;
         document.getElementById('questionText').textContent = q.question;
-        document.getElementById('knowledgePointText').textContent = q.knowledge_point || 'ความรู้ทั่วไป';
+        document.getElementById('knowledgePointText').textContent = q.knowledge_point || '综合知识';
         
         // Difficulty Badge
         const diffBadge = document.getElementById('difficultyBadge');
         if (q.difficulty === 'easy') {
           diffBadge.className = "px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-          diffBadge.textContent = "ง่าย (Easy)";
+          diffBadge.textContent = "简单 (Easy)";
         } else if (q.difficulty === 'medium') {
           diffBadge.className = "px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20";
-          diffBadge.textContent = "ปานกลาง (Medium)";
+          diffBadge.textContent = "中等 (Medium)";
         } else {
           diffBadge.className = "px-2.5 py-1 rounded-md text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20";
-          diffBadge.textContent = "ยาก (Hard)";
+          diffBadge.textContent = "困难 (Hard)";
         }
 
         // Question Type Badge
@@ -1143,15 +1143,15 @@
         const multiWrapper = document.getElementById('multiSubmitWrapper');
 
         if (q.type === 'single_choice') {
-          typeBadge.textContent = "ปรนัย (Single Choice)";
+          typeBadge.textContent = "单选题 (Single Choice)";
           multiNotice.classList.add('hidden');
           multiWrapper.classList.add('hidden');
         } else if (q.type === 'multiple_choice') {
-          typeBadge.textContent = "เลือกตอบหลายข้อ (Multiple Choice)";
+          typeBadge.textContent = "多选题 (Multiple Choice)";
           multiNotice.classList.remove('hidden');
           multiWrapper.classList.remove('hidden');
         } else if (q.type === 'true_false') {
-          typeBadge.textContent = "ถูก / ผิด (True / False)";
+          typeBadge.textContent = "判断题 (True / False)";
           multiNotice.classList.add('hidden');
           multiWrapper.classList.add('hidden');
         }
@@ -1180,7 +1180,7 @@
           if (isCorrect) {
             expBox.className = "p-4 md:p-5 rounded-xl border bg-emerald-950/40 border-emerald-800/60 light:bg-emerald-50 light:border-emerald-200 text-slate-100 light:text-slate-800";
             document.getElementById('explanationIcon').innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i>`;
-            document.getElementById('explanationTitle').textContent = "คำตอบถูกต้อง!";
+            document.getElementById('explanationTitle').textContent = "回答正确！(Correct)";
             document.getElementById('explanationTitle').className = "font-bold text-sm md:text-base text-emerald-400";
           } else {
             expBox.className = "p-4 md:p-5 rounded-xl border bg-rose-950/40 border-rose-800/60 light:bg-rose-50 light:border-rose-200 text-slate-100 light:text-slate-800";
@@ -1188,15 +1188,15 @@
             
             let formattedAns = q.answer;
             if (Array.isArray(q.answer)) formattedAns = q.answer.join(', ');
-            else if (q.type === 'true_false') formattedAns = this.normalizeTf(q.answer) === 'true' ? 'ถูก (True)' : 'ผิด (False)';
-            else if (q.answer === 'true') formattedAns = 'ถูก (True)';
-            else if (q.answer === 'false') formattedAns = 'ผิด (False)';
+            else if (q.type === 'true_false') formattedAns = this.normalizeTf(q.answer) === 'true' ? '正确 (True)' : '错误 (False)';
+            else if (q.answer === 'true') formattedAns = '正确 (True)';
+            else if (q.answer === 'false') formattedAns = '错误 (False)';
 
-            document.getElementById('explanationTitle').textContent = `คำตอบที่ไม่ถูกต้อง (เฉลย: ${formattedAns})`;
+            document.getElementById('explanationTitle').textContent = `回答错误（正确答案：${formattedAns}）`;
             document.getElementById('explanationTitle').className = "font-bold text-sm md:text-base text-rose-400";
           }
 
-          document.getElementById('explanationText').textContent = q.explanation || "ไม่มีคำอธิบายเพิ่มเติม";
+          document.getElementById('explanationText').textContent = q.explanation || "暂无详细解析";
         } else {
           expBox.classList.add('hidden');
         }
@@ -1254,10 +1254,10 @@
           };
 
           card.innerHTML = `
-            <div class="w-8 h-8 rounded-lg ${badgeStyle} flex items-center justify-center font-bold text-xs shrink-0 transition">
+            <div class="w-8 h-8 rounded-lg ${badgeStyle} flex items-center justify-center font-bold text-xs shrink-0 transition font-thai">
               ${keyLetter}
             </div>
-            <div class="text-sm font-medium leading-normal flex-grow">
+            <div class="text-sm font-medium leading-normal flex-grow font-thai">
               ${optText}
             </div>
             ${hasSubmitted && keyLetter === q.answer ? '<i class="fa-solid fa-circle-check text-emerald-400 text-lg shrink-0"></i>' : ''}
@@ -1277,8 +1277,8 @@
 
       renderTrueFalseOptions(container, q, currentAnswer, hasSubmitted) {
         const tfOptions = [
-          { label: "ถูก (True)", value: "true", icon: "fa-thumbs-up", color: "emerald" },
-          { label: "ผิด (False)", value: "false", icon: "fa-thumbs-down", color: "rose" }
+          { label: "正确 (True)", value: "true", icon: "fa-thumbs-up", color: "emerald" },
+          { label: "错误 (False)", value: "false", icon: "fa-thumbs-down", color: "rose" }
         ];
 
         container.className = "grid grid-cols-1 sm:grid-cols-2 gap-4";
@@ -1363,7 +1363,7 @@
             <div class="w-6 h-6 rounded-md border ${checkStyle} flex items-center justify-center shrink-0 transition">
               ${isSelected ? '<i class="fa-solid fa-check text-xs"></i>' : ''}
             </div>
-            <div class="text-sm font-medium leading-normal flex-grow">
+            <div class="text-sm font-medium leading-normal flex-grow font-thai">
               ${optText}
             </div>
             ${hasSubmitted && isTarget ? '<i class="fa-solid fa-circle-check text-emerald-400 text-lg shrink-0"></i>' : ''}
@@ -1377,11 +1377,11 @@
         if (submitBtn) {
           submitBtn.disabled = (selectedList.length === 0 || hasSubmitted);
           if (hasSubmitted) {
-            submitBtn.innerHTML = `<i class="fa-solid fa-check-double"></i> ตรวจคำตอบแล้ว / 已完成判断`;
+            submitBtn.innerHTML = `<i class="fa-solid fa-check-double"></i> 已完成判题 (Submitted)`;
           } else if (this.mode === 'exam') {
-            submitBtn.innerHTML = `<i class="fa-solid fa-check"></i> บันทึกและถัดไป (${selectedList.length} ข้อ)`;
+            submitBtn.innerHTML = `<i class="fa-solid fa-check"></i> 保存并下一题 (已选 ${selectedList.length} 项)`;
           } else {
-            submitBtn.innerHTML = `<i class="fa-solid fa-check"></i> ยืนยันคำตอบที่เลือก (${selectedList.length} ข้อ) / 确认提交答案`;
+            submitBtn.innerHTML = `<i class="fa-solid fa-check"></i> 确认提交答案 (已选 ${selectedList.length} 项)`;
           }
         }
       }
@@ -1535,7 +1535,7 @@
 
           if (isCorrect) correctCount++;
 
-          const kp = q.knowledge_point || 'ความรู้ทั่วไป';
+          const kp = q.knowledge_point || '综合知识';
           if (!knowledgeMap[kp]) knowledgeMap[kp] = { total: 0, correct: 0 };
           knowledgeMap[kp].total++;
           if (isCorrect) knowledgeMap[kp].correct++;
@@ -1555,7 +1555,7 @@
         ring.style.strokeDashoffset = offset;
 
         document.getElementById('finalScorePercent').textContent = `${percent}%`;
-        document.getElementById('finalScoreFraction').textContent = `${correctCount} / ${totalQ} ข้อ`;
+        document.getElementById('finalScoreFraction').textContent = `${correctCount} / ${totalQ} 题`;
 
         // Evaluation Badge & Text
         const badgeTitle = document.getElementById('scoreBadgeTitle');
@@ -1563,22 +1563,22 @@
 
         if (percent === 100) {
           badgeTitle.className = "inline-block px-4 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 text-sm font-bold border border-emerald-500/30";
-          badgeTitle.textContent = "🏆 ระดับประเมิน: ผู้เชี่ยวชาญระดับดีเยี่ยม (Perfect Score!)";
-          summaryMsg.textContent = "คุณมีความรู้ความเข้าใจในเนื้อหาภาษาไทยเพื่อการท่องเที่ยวเกี่ยวกับวัฒนธรรมและวิถีชีวิตอย่างครบถ้วนสมบูรณ์";
+          badgeTitle.textContent = "🏆 评级：满分通关 (Perfect Score!)";
+          summaryMsg.textContent = "太棒了！你已完全掌握本节测验的所有泰语知识点。";
           confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         } else if (percent >= 80) {
           badgeTitle.className = "inline-block px-4 py-1.5 rounded-xl bg-teal-500/20 text-teal-400 text-sm font-bold border border-teal-500/30";
-          badgeTitle.textContent = "🌟 ระดับประเมิน: ผ่านเกณฑ์ดีมาก (Great Job)";
-          summaryMsg.textContent = "คุณเข้าใจบริบททางวัฒนธรรมและวิถีชีวิตไทยได้เป็นอย่างดีเยี่ยม";
+          badgeTitle.textContent = "🌟 评级：优秀 (Great Job)";
+          summaryMsg.textContent = "表现出色！你对绝大部分课程知识点都掌握得非常扎实。";
           confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
         } else if (percent >= 60) {
           badgeTitle.className = "inline-block px-4 py-1.5 rounded-xl bg-indigo-500/20 text-indigo-400 text-sm font-bold border border-indigo-500/30";
-          badgeTitle.textContent = "👍 ระดับประเมิน: ผ่านเกณฑ์ (Passed)";
-          summaryMsg.textContent = "คุณมีความรู้ในเกณฑ์มาตรฐาน สามารถทบทวนเพิ่มเติมข้อที่ตอบผิดเพื่อเพิ่มความแม่นยำ";
+          badgeTitle.textContent = "👍 评级：及格 (Passed)";
+          summaryMsg.textContent = "已达到基本要求，建议重点回顾下方答错的题目以进一步巩固。";
         } else {
           badgeTitle.className = "inline-block px-4 py-1.5 rounded-xl bg-rose-500/20 text-rose-400 text-sm font-bold border border-rose-500/30";
-          badgeTitle.textContent = "📚 ระดับประเมิน: ควรทบทวนเนื้อหาเพิ่มเติม (Needs Review)";
-          summaryMsg.textContent = "แนะนำให้ศึกษาและอ่านคำอธิบายในข้อที่ตอบผิดเพิ่มเติมเพื่อสร้างความเข้าใจที่ดียิ่งขึ้น";
+          badgeTitle.textContent = "📚 评级：仍需加强 (Needs Review)";
+          summaryMsg.textContent = "建议结合课程笔记认真阅读下方错题解析，并点击“仅重练错题”再次巩固。";
         }
 
         // Stats Numbers
@@ -1604,7 +1604,7 @@
           barRow.className = "p-3 rounded-xl bg-slate-900/60 light:bg-slate-100 border border-slate-800 light:border-slate-200 space-y-1.5";
           barRow.innerHTML = `
             <div class="flex items-center justify-between text-xs">
-              <span class="font-semibold text-slate-200 light:text-slate-800">${kp}</span>
+              <span class="font-semibold text-slate-200 light:text-slate-800 font-thai">${kp}</span>
               <span class="font-bold ${kpPct >= 70 ? 'text-emerald-400' : 'text-amber-400'}">${item.correct}/${item.total} (${kpPct}%)</span>
             </div>
             <div class="w-full h-2 bg-slate-800 light:bg-slate-300 rounded-full overflow-hidden">
@@ -1704,22 +1704,22 @@
           if (filterType === 'wrong' && isCorrect) return;
 
           let formattedUserAns = userAns;
-          if (Array.isArray(userAns)) formattedUserAns = userAns.length > 0 ? userAns.join(', ') : 'ไม่ได้ตอบ';
+          if (Array.isArray(userAns)) formattedUserAns = userAns.length > 0 ? userAns.join(', ') : '未作答';
           else if (q.type === 'true_false') {
             const normUser = this.normalizeTf(userAns);
-            formattedUserAns = normUser === 'true' ? 'ถูก (True)' : (normUser === 'false' ? 'ผิด (False)' : 'ไม่ได้ตอบ');
+            formattedUserAns = normUser === 'true' ? '正确 (True)' : (normUser === 'false' ? '错误 (False)' : '未作答');
           }
-          else if (userAns === 'true') formattedUserAns = 'ถูก (True)';
-          else if (userAns === 'false') formattedUserAns = 'ผิด (False)';
-          else if (!userAns) formattedUserAns = 'ไม่ได้ตอบ';
+          else if (userAns === 'true') formattedUserAns = '正确 (True)';
+          else if (userAns === 'false') formattedUserAns = '错误 (False)';
+          else if (!userAns) formattedUserAns = '未作答';
 
           let formattedTargetAns = q.answer;
           if (Array.isArray(q.answer)) formattedTargetAns = q.answer.join(', ');
           else if (q.type === 'true_false') {
-            formattedTargetAns = this.normalizeTf(q.answer) === 'true' ? 'ถูก (True)' : 'ผิด (False)';
+            formattedTargetAns = this.normalizeTf(q.answer) === 'true' ? '正确 (True)' : '错误 (False)';
           }
-          else if (q.answer === 'true') formattedTargetAns = 'ถูก (True)';
-          else if (q.answer === 'false') formattedTargetAns = 'ผิด (False)';
+          else if (q.answer === 'true') formattedTargetAns = '正确 (True)';
+          else if (q.answer === 'false') formattedTargetAns = '错误 (False)';
 
           const reviewCard = document.createElement('div');
           reviewCard.className = `p-4 rounded-xl border ${isCorrect ? 'bg-slate-900/60 border-slate-800 light:bg-white light:border-slate-200' : 'bg-rose-950/20 border-rose-900/40'} space-y-3`;
@@ -1727,33 +1727,33 @@
           reviewCard.innerHTML = `
             <div class="flex items-start justify-between gap-2">
               <span class="font-bold text-sm text-slate-200 light:text-slate-800">
-                ข้อ ${idx + 1}. ${q.question}
+                第 ${idx + 1} 题. <span class="font-thai">${q.question}</span>
               </span>
               <span class="px-2.5 py-0.5 rounded text-xs font-bold shrink-0 ${isCorrect ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
-                ${isCorrect ? '<i class="fa-solid fa-check mr-1"></i>ถูก' : '<i class="fa-solid fa-xmark mr-1"></i>ผิด'}
+                ${isCorrect ? '<i class="fa-solid fa-check mr-1"></i>正确' : '<i class="fa-solid fa-xmark mr-1"></i>错误'}
               </span>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               <div class="p-2.5 rounded-lg ${isCorrect ? 'bg-slate-800/60 text-slate-300' : 'bg-rose-900/30 text-rose-200'}">
-                <span class="text-slate-400 block text-[11px]">คำตอบของคุณ:</span>
-                <span class="font-semibold">${formattedUserAns}</span>
+                <span class="text-slate-400 block text-[11px]">你的答案:</span>
+                <span class="font-semibold font-thai">${formattedUserAns}</span>
               </div>
               <div class="p-2.5 rounded-lg bg-emerald-900/30 text-emerald-200">
-                <span class="text-emerald-400/80 block text-[11px]">เฉลยที่ถูกต้อง:</span>
-                <span class="font-semibold">${formattedTargetAns}</span>
+                <span class="text-emerald-400/80 block text-[11px]">正确答案:</span>
+                <span class="font-semibold font-thai">${formattedTargetAns}</span>
               </div>
             </div>
 
             <div class="p-3 rounded-lg bg-slate-800/40 text-xs text-slate-300 light:bg-slate-100 light:text-slate-600 leading-relaxed">
-              <strong class="text-indigo-400">คำอธิบาย:</strong> ${q.explanation || 'ไม่มีคำอธิบาย'}
+              <strong class="text-indigo-400">解析：</strong><span class="font-thai">${q.explanation || '暂无解析'}</span>
             </div>
           `;
           container.appendChild(reviewCard);
         });
 
         if (container.children.length === 0) {
-          container.innerHTML = `<div class="text-center py-6 text-xs text-slate-400">ไม่มีรายการคำถามในหมวดนี้</div>`;
+          container.innerHTML = `<div class="text-center py-6 text-xs text-slate-400">没有符合筛选条件的题目</div>`;
         }
       }
 
@@ -1802,15 +1802,15 @@
           const text = document.getElementById('jsonTextArea').value;
           const parsed = JSON.parse(text);
           if (!parsed.questions || !Array.isArray(parsed.questions)) {
-            alert('โครงสร้าง JSON ไม่ถูกต้อง: ต้องมี property "questions" เป็น array');
+            alert('JSON 结构无效：必须包含 "questions" 数组');
             return;
           }
           this.quizData = parsed;
           this.init();
           this.closeJsonModal();
-          alert('อัปเดตชุดข้อมูล Quiz สำเร็จ!');
+          alert('Quiz 测验数据更新成功！');
         } catch (e) {
-          alert('รูปแบบ JSON ไม่ถูกต้อง: ' + e.message);
+          alert('JSON 格式错误: ' + e.message);
         }
       }
 
