@@ -148,6 +148,7 @@
             body > main,
             #modalCollection,
             #modalWord,
+            #modalGeneratePrompt,
             #toastNotification,
             .no-print {
                 display: none !important;
@@ -315,6 +316,23 @@
                 </button>
             </div>
 
+            <!-- Collections Title Filter Bar -->
+            <div class="glass-panel rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div class="flex flex-wrap items-center gap-3 flex-1">
+                    <div class="relative min-w-[240px] flex-1 max-w-md">
+                        <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input id="collectionSearchInput" type="text" placeholder="按词集标题过滤筛选..." oninput="renderCollectionsList()" class="w-full pl-9 pr-8 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition">
+                        <button id="clearCollectionSearchBtn" type="button" onclick="clearCollectionSearch()" title="清空筛选" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition">
+                            <i class="ph-bold ph-x-circle text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="text-slate-400 shrink-0">
+                    已显示 <span id="filteredCollectionsCount" class="text-white font-bold">0</span> / <span id="totalCollectionsCount" class="text-slate-300 font-medium">0</span> 个词集
+                </div>
+            </div>
+
             <!-- Collections Grid -->
             <div id="collectionsListContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 <!-- Rendered dynamically -->
@@ -400,9 +418,15 @@
         <!-- ========================================================= -->
         <section id="tabImport" class="hidden space-y-5">
             <div class="glass-panel rounded-3xl p-6 sm:p-8 space-y-6">
-                <div>
-                    <h2 class="text-lg font-bold text-white">批量 JSON 导入与数据归档</h2>
-                    <p class="text-xs text-slate-400">支持一键导入成套词集与带多例句结构的生词，亦可将整个词库导出备份。</p>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-white">批量 JSON 导入与数据归档</h2>
+                        <p class="text-xs text-slate-400">支持一键导入成套词集与带多例句结构的生词，亦可将整个词库导出备份。</p>
+                    </div>
+                    <button type="button" onclick="openGeneratePromptModal()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-500 hover:to-violet-500 text-white font-semibold text-xs shadow-lg shadow-violet-500/25 flex items-center gap-1.5 transition shrink-0">
+                        <i class="ph-bold ph-sparkle"></i>
+                        <span>生成Prompt</span>
+                    </button>
                 </div>
 
                 <!-- Template Loader Buttons -->
@@ -1054,6 +1078,131 @@
         </div>
     </div>
 
+    <!-- ========================================================= -->
+    <!-- MODAL: AI BATCH IMPORT PROMPT GENERATOR                   -->
+    <!-- ========================================================= -->
+    <div id="modalGeneratePrompt" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 hidden">
+        <div class="glass-panel rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col border border-violet-500/30 shadow-2xl overflow-hidden">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between gap-4 shrink-0 bg-slate-950/40">
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 rounded-2xl bg-gradient-to-tr from-fuchsia-600 to-violet-600 flex items-center justify-center shadow-lg shadow-violet-500/25 shrink-0">
+                        <i class="ph-bold ph-sparkle text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white flex items-center gap-2">
+                            <span>生成 AI 批量导入 Prompt</span>
+                            <span class="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30">JSON Array Generator</span>
+                        </h3>
+                        <p class="text-xs text-slate-400">输入泰语单词列表（每行一词），自动生成可直接发送给 AI 对话框的指令 Prompt，快速获取本系统可导入的 JSON 数组</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeGeneratePromptModal()" class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition shrink-0">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                    <!-- Left Column: Word List Input & Options -->
+                    <div class="flex flex-col space-y-4">
+                        <div class="flex items-center justify-between gap-2">
+                            <label for="promptWordListInput" class="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+                                <i class="ph-bold ph-list-bullets text-violet-400"></i>
+                                <span>1. 输入单词列表（每行一个泰语单词）</span>
+                            </label>
+                            <div class="flex items-center gap-1.5">
+                                <span id="promptWordCountBadge" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/30">0 词</span>
+                                <button type="button" onclick="fillSamplePromptWords()" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-[11px] transition">
+                                    填入示例
+                                </button>
+                                <button type="button" onclick="clearPromptGenerator()" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white text-[11px] transition">
+                                    清空
+                                </button>
+                            </div>
+                        </div>
+
+                        <textarea id="promptWordListInput" rows="12" oninput="generateBatchImportPrompt(false)" placeholder="请粘贴或输入泰语单词列表，每行一个单词，例如：&#10;การแนะนำตัว&#10;แนะนำ&#10;แนะนำตัว&#10;นักศึกษา&#10;นักเรียน&#10;อาจารย์&#10;ครู" class="w-full flex-1 min-h-[240px] p-4 rounded-2xl bg-slate-950 border border-white/10 font-thai text-sm leading-relaxed text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 custom-scrollbar resize-y"></textarea>
+
+                        <!-- Options Card -->
+                        <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3 text-xs">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="space-y-1">
+                                    <label for="promptPhoneticStyle" class="block text-[11px] font-semibold text-slate-300">读音标注方式</label>
+                                    <select id="promptPhoneticStyle" onchange="generateBatchImportPrompt(false)" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-slate-200 text-xs focus:outline-none focus:border-violet-500">
+                                        <option value="romanized" selected>罗马注音带声调 (如 gaan-náe-nam-dtua)</option>
+                                        <option value="ipa">国际音标 IPA (如 /kaːn˧.nɛʔ˦˥.nam˧.tuə˧/)</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-1">
+                                    <label for="promptExampleCount" class="block text-[11px] font-semibold text-slate-300">每个词配套例句数</label>
+                                    <select id="promptExampleCount" onchange="generateBatchImportPrompt(false)" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-slate-200 text-xs focus:outline-none focus:border-violet-500">
+                                        <option value="1">每词 1 个例句（精简）</option>
+                                        <option value="2" selected>每词 2 个例句（推荐）</option>
+                                        <option value="3">每词 3 个例句（丰富）</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label for="promptExtraNote" class="block text-[11px] font-semibold text-slate-300">附加教学要求（可选）</label>
+                                <input id="promptExtraNote" type="text" oninput="generateBatchImportPrompt(false)" placeholder="例如：适合泰语零基础初学者、例句贴近校园自我介绍场景、尽量简短便于听写" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500">
+                            </div>
+
+                            <div class="flex items-center justify-between gap-2 pt-0.5">
+                                <label class="flex items-center gap-2 text-[11px] text-slate-300 cursor-pointer select-none">
+                                    <input type="checkbox" id="promptDeduplicateCb" checked onchange="generateBatchImportPrompt(false)" class="rounded border-white/20 bg-white/5 text-violet-600 focus:ring-0 cursor-pointer">
+                                    <span>自动过滤空行与重复单词</span>
+                                </label>
+                                <span id="promptDedupHint" class="text-[11px] text-amber-300 hidden"></span>
+                            </div>
+                        </div>
+
+                        <button type="button" onclick="generateBatchImportPrompt(true)" class="w-full py-2.5 px-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2 transition">
+                            <i class="ph-bold ph-magic-wand"></i>
+                            <span>生成 / 刷新 AI Prompt</span>
+                        </button>
+                    </div>
+
+                    <!-- Right Column: Generated Prompt Preview & Copy -->
+                    <div class="flex flex-col space-y-4">
+                        <div class="flex items-center justify-between gap-2">
+                            <label for="generatedPromptOutput" class="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+                                <i class="ph-bold ph-chat-teardrop-text text-fuchsia-400"></i>
+                                <span>2. 生成的 AI Prompt（可直接复制到 AI 对话框）</span>
+                            </label>
+                            <span id="promptCharCountBadge" class="text-[11px] font-mono text-slate-400">0 字符</span>
+                        </div>
+
+                        <textarea id="generatedPromptOutput" rows="16" readonly placeholder="在左侧输入泰语单词列表后，此处将自动生成可直接用于 ChatGPT / Gemini / Claude 等 AI 的完整 Prompt..." class="w-full flex-1 min-h-[340px] p-4 rounded-2xl bg-slate-950/90 border border-violet-500/25 font-mono text-xs leading-relaxed text-slate-200 placeholder-slate-500 focus:outline-none focus:border-violet-500 custom-scrollbar resize-y"></textarea>
+
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
+                                <i class="ph-bold ph-info text-violet-400 shrink-0"></i>
+                                <span>复制后发送给 AI，将返回的 JSON 数组粘贴回“批量导入”文本框即可。</span>
+                            </div>
+                            <button type="button" id="btnCopyGeneratedPrompt" onclick="copyGeneratedPrompt()" disabled class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-500 hover:to-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs shadow-lg shadow-violet-500/25 flex items-center gap-1.5 transition shrink-0">
+                                <i class="ph-bold ph-copy"></i>
+                                <span id="btnCopyGeneratedPromptText">复制 Prompt 到剪贴板</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-3.5 border-t border-white/10 bg-slate-950/40 flex items-center justify-between gap-3 shrink-0">
+                <div class="text-[11px] text-slate-400 hidden sm:block">
+                    生成的 JSON 数组格式包含 <code class="text-violet-300 font-mono">thaiWord</code>、<code class="text-violet-300 font-mono">phonetic</code>、<code class="text-violet-300 font-mono">meaning</code> 与 <code class="text-violet-300 font-mono">examples</code>，可直接通过本页校验导入。
+                </div>
+                <button type="button" onclick="closeGeneratePromptModal()" class="ml-auto px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-xs font-medium transition">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toastNotification" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full bg-slate-900/90 border border-violet-500/40 text-white text-xs font-medium shadow-2xl backdrop-blur-md flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-300">
         <i id="toastIcon" class="ph-fill ph-check-circle text-emerald-400 text-base"></i>
@@ -1161,8 +1310,36 @@
             }
         }
 
+        function clearCollectionSearch() {
+            const input = document.getElementById('collectionSearchInput');
+            if (input) {
+                input.value = '';
+                input.focus();
+            }
+            renderCollectionsList();
+        }
+
         function renderCollectionsList() {
             const container = document.getElementById('collectionsListContainer');
+            const searchInput = document.getElementById('collectionSearchInput');
+            const clearBtn = document.getElementById('clearCollectionSearchBtn');
+            const filteredCountEl = document.getElementById('filteredCollectionsCount');
+            const totalCountEl = document.getElementById('totalCollectionsCount');
+
+            const rawKeyword = searchInput ? searchInput.value.trim() : '';
+            const keyword = rawKeyword.toLowerCase();
+
+            if (clearBtn) {
+                clearBtn.classList.toggle('hidden', !rawKeyword);
+            }
+
+            const filteredCollections = keyword
+                ? collections.filter(col => (col.name || '').toLowerCase().includes(keyword))
+                : collections;
+
+            if (filteredCountEl) filteredCountEl.innerText = filteredCollections.length;
+            if (totalCountEl) totalCountEl.innerText = collections.length;
+
             if (collections.length === 0) {
                 container.innerHTML = `
                     <div class="col-span-full p-8 text-center glass-card rounded-2xl text-slate-400 text-xs">
@@ -1172,9 +1349,21 @@
                 return;
             }
 
-            container.innerHTML = collections.map(col => {
+            if (filteredCollections.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full p-8 text-center glass-card rounded-2xl text-slate-400 text-xs space-y-3">
+                        <p>未找到标题包含 “<span class="text-violet-300 font-semibold">${escapeHtml(rawKeyword)}</span>” 的词集单元。</p>
+                        <button type="button" onclick="clearCollectionSearch()" class="px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 text-xs transition">
+                            清空筛选条件
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filteredCollections.map(col => {
                 const tagsBadges = (col.tags || []).map(t => 
-                    `<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-white/5 text-slate-300 border border-white/10">${t}</span>`
+                    `<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-white/5 text-slate-300 border border-white/10">${escapeHtml(t)}</span>`
                 ).join('');
 
                 return `
@@ -1186,8 +1375,8 @@
                                 </span>
                                 ${col.dueCount > 0 ? `<span class="text-[10px] font-bold text-amber-300 bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 rounded-md">${col.dueCount} 词待复习</span>` : ''}
                             </div>
-                            <h4 class="font-bold text-white text-base">${col.name}</h4>
-                            <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">${col.description || '暂无描述说明'}</p>
+                            <h4 class="font-bold text-white text-base">${escapeHtml(col.name)}</h4>
+                            <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">${escapeHtml(col.description || '暂无描述说明')}</p>
                             <div class="flex flex-wrap gap-1.5 pt-1">
                                 ${tagsBadges}
                             </div>
@@ -2276,7 +2465,8 @@
 
             let parsed;
             try {
-                parsed = JSON.parse(text);
+                const cleanedText = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+                parsed = JSON.parse(cleanedText);
             } catch (e) {
                 alert('JSON 解析失败，请检查格式是否正确: ' + e.message);
                 return;
@@ -2733,18 +2923,304 @@
                 .replace(/'/g, "&#039;");
         }
 
-        // Close worksheet modal on backdrop click or Escape
+        // -------------------------------------------------------------
+        // AI Batch Import Prompt Generator Modal
+        // -------------------------------------------------------------
+        const PROMPT_SAMPLE_WORDS = [
+            'การแนะนำตัว',
+            'แนะนำ',
+            'แนะนำตัว',
+            'นักศึกษา',
+            'นักเรียน',
+            'อาจารย์',
+            'ครู',
+            'เรียน',
+            'ศึกษา',
+            'มหาวิทยาลัย',
+            'โรงเรียน',
+            'คณะ',
+            'เอก',
+            'ภาษา',
+            'ภาษาไทย',
+            'ภาษาจีน',
+            'ภาษาอังกฤษ'
+        ].join('\n');
+
+        let copyPromptBtnTimer = null;
+
+        function openGeneratePromptModal() {
+            const modal = document.getElementById('modalGeneratePrompt');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            generateBatchImportPrompt(false);
+            const inputEl = document.getElementById('promptWordListInput');
+            if (inputEl) {
+                setTimeout(() => inputEl.focus(), 60);
+            }
+        }
+
+        function closeGeneratePromptModal() {
+            const modal = document.getElementById('modalGeneratePrompt');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function parsePromptWordList(rawText, deduplicate = true) {
+            const lines = (rawText || '').split(/\r?\n/);
+            const result = [];
+            const seen = new Set();
+            let duplicateCount = 0;
+
+            for (const rawLine of lines) {
+                const cleaned = rawLine
+                    .trim()
+                    .replace(/^(?:\d+[\.\)、]|[-•·*])\s+/, '')
+                    .trim();
+                if (!cleaned) continue;
+
+                if (deduplicate) {
+                    if (seen.has(cleaned)) {
+                        duplicateCount++;
+                        continue;
+                    }
+                    seen.add(cleaned);
+                }
+                result.push(cleaned);
+            }
+
+            return { words: result, duplicateCount };
+        }
+
+        function buildBatchImportPrompt(wordList, options = {}) {
+            const phoneticStyle = options.phoneticStyle || 'romanized';
+            const exampleCount = parseInt(options.exampleCount, 10) || 2;
+            const extraNote = (options.extraNote || '').trim();
+
+            const phoneticRule = phoneticStyle === 'ipa'
+                ? '标准泰语国际音标 IPA（含声调符号，使用斜杠包裹，例如 `/kaːn˧.nɛʔ˦˥.nam˧.tuə˧/`、`/nak˦˥.sɯk˨˩.saː˩˩˦/`）'
+                : '标准泰语罗马音注音（带声调符号，音节之间用连字符 `-` 连接，例如 `gaan-náe-nam-dtua`、`nák-sùek-sǎa`）';
+
+            const samplePhonetic1 = phoneticStyle === 'ipa' ? '/kaːn˧.nɛʔ˦˥.nam˧.tuə˧/' : 'gaan-náe-nam-dtua';
+            const samplePhonetic2 = phoneticStyle === 'ipa' ? '/nak˦˥.sɯk˨˩.saː˩˩˦/' : 'nák-sùek-sǎa';
+
+            const sampleExamples1 = [
+                {
+                    thai: 'การแนะนำตัวเป็นสิ่งสำคัญในการสัมภาษณ์งาน',
+                    translation: '自我介绍在求职面试中很重要。'
+                },
+                {
+                    thai: 'ขอเริ่มจากการแนะนำตัวสั้นๆ นะครับ',
+                    translation: '请允许我先做一个简短的自我介绍。'
+                },
+                {
+                    thai: 'วันนี้เราจะมาฝึกการแนะนำตัวเป็นภาษาไทยกัน',
+                    translation: '今天我们来一起练习用泰语做自我介绍。'
+                }
+            ].slice(0, exampleCount);
+
+            const sampleExamples2 = [
+                {
+                    thai: 'ผมเป็นนักศึกษามหาวิทยาลัยปีที่สอง',
+                    translation: '我是一名大学二年级的学生。'
+                },
+                {
+                    thai: 'นักศึกษาต่างชาติหลายคนสนใจเรียนภาษาไทย',
+                    translation: '很多外国留学生对学习泰语感兴趣。'
+                },
+                {
+                    thai: 'ห้องสมุดนี้เปิดให้นักศึกษาเข้าใช้ฟรีทุกวัน',
+                    translation: '这座图书馆每天免费向大学生开放。'
+                }
+            ].slice(0, exampleCount);
+
+            const sampleJson = JSON.stringify([
+                {
+                    thaiWord: 'การแนะนำตัว',
+                    phonetic: samplePhonetic1,
+                    meaning: '[n.] 自我介绍',
+                    examples: sampleExamples1
+                },
+                {
+                    thaiWord: 'นักศึกษา',
+                    phonetic: samplePhonetic2,
+                    meaning: '[n.] 大学生',
+                    examples: sampleExamples2
+                }
+            ], null, 2);
+
+            const numberedWords = wordList.map((w, idx) => `${idx + 1}. ${w}`).join('\n');
+            const extraSection = extraNote
+                ? `\n# 附加教学要求\n${extraNote}\n`
+                : '';
+
+            return `# 角色
+你是一位拥有丰富经验的泰语教学专家兼词典编纂助手，精通泰语标准拼写、声调读音、中文释义及地道日常例句编写。
+
+# 任务
+请根据下方【待处理泰语单词列表】中的全部 **${wordList.length}** 个泰语单词，逐一生成可用于本系统“听写词库批量导入”的标准 **JSON 数组**。
+
+# 输出格式与严格要求
+1. **仅输出合法的纯 JSON 数组**：最外层必须为 \`[\` 和 \`]\`，不要输出任何开场白、解释说明、注释或结尾总结，确保内容可直接被 \`JSON.parse()\` 解析。
+2. **完整覆盖且保持顺序**：必须完整生成列表中的全部 **${wordList.length}** 个单词，严格保持原始顺序，不可遗漏、合并、改写原词或使用省略号（如 \`...\`）省略条目。
+3. **字段定义（每个词条对象均须包含以下 4 个字段）**：
+   - \`thaiWord\` (string, 必填)：泰语原词，必须与输入列表完全一致（**不要**包含序号或多余空格）。
+   - \`phonetic\` (string, 必填)：${phoneticRule}。
+   - \`meaning\` (string, 必填)：准确、简明的中文释义，建议带词性前缀（如 \`[n.] 自我介绍\`、\`[v.] 介绍、推荐\`；若有多义可用 \` / \` 或 \`；\` 分隔）。
+   - \`examples\` (array, 必填)：包含 **${exampleCount}** 个地道、自然、适合听写练习的泰语双语例句对象，每个对象包含：
+     - \`thai\` (string)：泰语例句，**必须自然包含当前的 \`thaiWord\`**，长度适中（建议 5~14 个词），语法自然。
+     - \`translation\` (string)：准确、流畅的中文翻译。
+4. **JSON 语法规范**：
+   - 所有键名与字符串值必须使用标准英文双引号 \`"\`；
+   - 若字符串内含双引号请正确转义 \`\\"\`；
+   - 严禁出现尾随逗号（trailing comma）或注释。
+${extraSection}
+# 输出 JSON 数组格式示例
+${sampleJson}
+
+# 待处理泰语单词列表（共 ${wordList.length} 个）
+${numberedWords}
+
+请立即按照上述规范输出包含全部 ${wordList.length} 个词条的 JSON 数组：`;
+        }
+
+        function generateBatchImportPrompt(showFeedback = false) {
+            const inputEl = document.getElementById('promptWordListInput');
+            const outputEl = document.getElementById('generatedPromptOutput');
+            const countBadge = document.getElementById('promptWordCountBadge');
+            const dedupHint = document.getElementById('promptDedupHint');
+            const charBadge = document.getElementById('promptCharCountBadge');
+            const copyBtn = document.getElementById('btnCopyGeneratedPrompt');
+
+            if (!inputEl || !outputEl) return;
+
+            const deduplicate = document.getElementById('promptDeduplicateCb')?.checked ?? true;
+            const phoneticStyle = document.getElementById('promptPhoneticStyle')?.value || 'romanized';
+            const exampleCount = document.getElementById('promptExampleCount')?.value || '2';
+            const extraNote = document.getElementById('promptExtraNote')?.value || '';
+
+            const { words: parsedWords, duplicateCount } = parsePromptWordList(inputEl.value, deduplicate);
+
+            if (countBadge) {
+                countBadge.innerText = `${parsedWords.length} 词`;
+            }
+
+            if (dedupHint) {
+                if (deduplicate && duplicateCount > 0) {
+                    dedupHint.innerText = `已自动去重 ${duplicateCount} 个重复词`;
+                    dedupHint.classList.remove('hidden');
+                } else {
+                    dedupHint.innerText = '';
+                    dedupHint.classList.add('hidden');
+                }
+            }
+
+            if (parsedWords.length === 0) {
+                outputEl.value = '';
+                if (charBadge) charBadge.innerText = '0 字符';
+                if (copyBtn) copyBtn.disabled = true;
+                if (showFeedback) {
+                    showToast('请先在左侧输入至少一个泰语单词（每行一词）', 'warning');
+                    inputEl.focus();
+                }
+                return;
+            }
+
+            const promptText = buildBatchImportPrompt(parsedWords, {
+                phoneticStyle,
+                exampleCount,
+                extraNote
+            });
+
+            outputEl.value = promptText;
+            if (charBadge) charBadge.innerText = `${promptText.length.toLocaleString()} 字符`;
+            if (copyBtn) copyBtn.disabled = false;
+
+            if (showFeedback) {
+                showToast(`已为 ${parsedWords.length} 个单词生成 AI Prompt，可直接复制使用`, 'success');
+            }
+        }
+
+        function fillSamplePromptWords() {
+            const inputEl = document.getElementById('promptWordListInput');
+            if (!inputEl) return;
+            inputEl.value = PROMPT_SAMPLE_WORDS;
+            generateBatchImportPrompt(true);
+        }
+
+        function clearPromptGenerator() {
+            const inputEl = document.getElementById('promptWordListInput');
+            const extraEl = document.getElementById('promptExtraNote');
+            if (inputEl) inputEl.value = '';
+            if (extraEl) extraEl.value = '';
+            generateBatchImportPrompt(false);
+            if (inputEl) inputEl.focus();
+        }
+
+        async function copyGeneratedPrompt() {
+            const outputEl = document.getElementById('generatedPromptOutput');
+            const btnTextEl = document.getElementById('btnCopyGeneratedPromptText');
+            if (!outputEl || !outputEl.value.trim()) {
+                showToast('当前没有可复制的 Prompt，请先输入单词列表', 'warning');
+                return;
+            }
+
+            const textToCopy = outputEl.value;
+            let copied = false;
+
+            if (navigator.clipboard && window.isSecureContext) {
+                try {
+                    await navigator.clipboard.writeText(textToCopy);
+                    copied = true;
+                } catch (err) {
+                    console.warn('Clipboard API copy failed, falling back to execCommand:', err);
+                }
+            }
+
+            if (!copied) {
+                try {
+                    outputEl.focus();
+                    outputEl.select();
+                    outputEl.setSelectionRange(0, textToCopy.length);
+                    copied = document.execCommand('copy');
+                } catch (err) {
+                    console.error('Fallback copy failed:', err);
+                }
+            }
+
+            if (copied) {
+                showToast('Prompt 已复制到剪贴板，可直接粘贴至 AI 对话框使用！', 'success');
+                if (btnTextEl) {
+                    btnTextEl.innerText = '已复制到剪贴板 ✓';
+                    if (copyPromptBtnTimer) clearTimeout(copyPromptBtnTimer);
+                    copyPromptBtnTimer = setTimeout(() => {
+                        btnTextEl.innerText = '复制 Prompt 到剪贴板';
+                    }, 2200);
+                }
+            } else {
+                showToast('自动复制失败，请手动全选右侧文本框内容进行复制', 'error');
+            }
+        }
+
+        // Close modals on backdrop click or Escape
         window.addEventListener('click', (e) => {
-            const modal = document.getElementById('modalPrintWorksheet');
-            if (e.target === modal) {
+            const worksheetModal = document.getElementById('modalPrintWorksheet');
+            if (e.target === worksheetModal) {
                 closePrintWorksheetModal();
+            }
+            const promptModal = document.getElementById('modalGeneratePrompt');
+            if (e.target === promptModal) {
+                closeGeneratePromptModal();
             }
         });
 
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                const modal = document.getElementById('modalPrintWorksheet');
-                if (modal && !modal.classList.contains('hidden')) {
+                const promptModal = document.getElementById('modalGeneratePrompt');
+                if (promptModal && !promptModal.classList.contains('hidden')) {
+                    closeGeneratePromptModal();
+                    return;
+                }
+                const worksheetModal = document.getElementById('modalPrintWorksheet');
+                if (worksheetModal && !worksheetModal.classList.contains('hidden')) {
                     closePrintWorksheetModal();
                 }
             }

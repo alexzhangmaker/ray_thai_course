@@ -477,22 +477,41 @@
                             请学生在纸上默写此泰语词
                         </div>
                         <p class="text-xs text-slate-400">
-                            屏幕已遮盖泰文拼写与释义以防偷看。学生完成纸上书写后，导师点击下方按钮翻开核对。
+                            屏幕已遮盖泰文拼写与释义以防偷看。导师可点击“主屏显示答案”仅在主屏查看，或点击“伴侣屏翻看答案”同步呈现给学生核对。
                         </p>
                     </div>
 
-                    <!-- Big Reveal Answer Button -->
-                    <div class="w-full max-w-md pt-2">
-                        <button onclick="revealAnswer()" class="w-full py-4 px-6 rounded-2xl bg-white text-slate-900 hover:bg-slate-100 font-bold text-base shadow-xl flex items-center justify-center gap-2.5 transition transform active:scale-98">
+                    <!-- Reveal Answer Buttons (Main Screen Only vs Companion Screen) -->
+                    <div class="w-full max-w-lg pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button id="btnRevealMainOnly" type="button" onclick="revealMainScreenAnswer()" title="仅在主屏幕显示听写单词答案，伴侣屏依然保持隐藏答案状态" class="w-full py-4 px-5 rounded-2xl bg-violet-600/25 hover:bg-violet-600/40 border border-violet-400/40 text-violet-100 font-bold text-base shadow-lg flex items-center justify-center gap-2 transition transform active:scale-98 cursor-pointer">
+                            <i class="ph-bold ph-desktop text-violet-300 text-lg"></i>
+                            <span>主屏显示答案</span>
+                        </button>
+                        <button id="btnRevealSideApp" type="button" onclick="revealAnswer()" title="在主屏显示答案并同步让伴侣屏翻看答案" class="w-full py-4 px-5 rounded-2xl bg-white text-slate-900 hover:bg-slate-100 font-bold text-base shadow-xl flex items-center justify-center gap-2 transition transform active:scale-98 cursor-pointer">
                             <i class="ph-bold ph-eye text-violet-600 text-lg"></i>
-                            翻开核对答案 (Reveal)
-                            <span class="text-xs font-normal text-slate-500 ml-1">[Space]</span>
+                            <span>伴侣屏翻看答案</span>
+                            <span class="text-xs font-normal text-slate-500 ml-0.5">[Space]</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- PHASE B: REVEALED ANSWER & SUPERVISOR GRADING -->
                 <div id="phaseRevealed" class="hidden py-4 space-y-6">
+                    <!-- Companion Screen Answer Sync Control Strip -->
+                    <div id="sideAppRevealControlBar" class="flex flex-wrap items-center justify-between gap-2.5 px-4 py-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 transition">
+                        <div class="flex items-center gap-2 text-xs">
+                            <i id="sideAppRevealStatusIcon" class="ph-bold ph-device-mobile text-amber-400 text-base"></i>
+                            <span class="font-semibold text-slate-200">伴侣屏状态:</span>
+                            <span id="sideAppRevealStatusBadge" class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold text-[11px]">
+                                隐藏答案中
+                            </span>
+                        </div>
+                        <button id="btnRevealSideAppInRevealed" type="button" onclick="revealAnswer()" title="同步让伴侣屏翻看当前单词答案" class="px-3.5 py-1.5 rounded-xl bg-white text-slate-900 hover:bg-slate-100 font-bold text-xs shadow flex items-center gap-1.5 transition transform active:scale-95 cursor-pointer">
+                            <i id="btnRevealSideAppInRevealedIcon" class="ph-bold ph-eye text-violet-600 text-sm"></i>
+                            <span id="btnRevealSideAppInRevealedText">伴侣屏翻看答案</span>
+                            <span id="btnRevealSideAppInRevealedKbd" class="text-[10px] font-normal text-slate-500">[Space]</span>
+                        </button>
+                    </div>
                     <!-- Word Details Header -->
                     <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 p-5 rounded-2xl bg-white/5 border border-white/10">
                         <div class="space-y-1">
@@ -586,7 +605,238 @@
 
                 <!-- Footer Tips -->
                 <div class="pt-4 text-center text-xs text-slate-500">
-                    快捷操作: <span class="text-slate-400">[P]</span> 重放音频 · <span class="text-slate-400">[Space]</span> 翻开答案 · <span class="text-slate-400">[1-4]</span> 快速评分
+                    快捷操作: <span class="text-slate-400">[P]</span> 重放音频 · <span class="text-slate-400">[Space]</span> 伴侣屏翻看答案 · <span class="text-slate-400">[1-4]</span> 快速评分
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 2B: COLLECTION EXAMPLE SENTENCE REVIEW PLAYER                -->
+        <!-- ================================================================= -->
+        <div id="viewExampleSession" class="hidden space-y-5">
+            <!-- Example Session Status Header -->
+            <div class="glass-panel rounded-2xl px-5 py-3 flex items-center justify-between border border-white/10">
+                <div class="flex items-center gap-3">
+                    <button type="button" onclick="confirmExitExampleSession()" title="退出例句复习" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition cursor-pointer">
+                        <i class="ph-bold ph-x text-lg"></i>
+                    </button>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span id="exampleSessionModeBadge" class="text-xs font-semibold text-cyan-300">词集例句复习</span>
+                            <span class="text-slate-500 text-xs">·</span>
+                            <span id="exampleSessionWordProgressText" class="text-xs text-slate-300 font-medium">第 1 / 10 词</span>
+                            <span id="exampleSessionSentenceBadge" class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                                例句 1 / 1
+                            </span>
+                        </div>
+                        <!-- Micro Progress Bar -->
+                        <div class="w-36 sm:w-56 h-1.5 bg-white/10 rounded-full mt-1.5 overflow-hidden">
+                            <div id="exampleSessionProgressBar" class="h-full bg-gradient-to-r from-cyan-500 to-violet-500 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <div class="text-right">
+                        <div class="text-xs text-slate-400">本次正确率</div>
+                        <div id="exampleSessionAccuracyText" class="text-sm font-bold text-emerald-400">100%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- The Example Sentence Flashcard -->
+            <div class="glass-panel rounded-3xl p-6 sm:p-10 border border-white/10 shadow-2xl relative overflow-hidden min-h-[440px] flex flex-col justify-between gap-6">
+                <!-- Card Top Meta Bar -->
+                <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+                    <div class="flex items-center gap-2">
+                        <span id="exampleCardSideDot" class="h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                        <span id="exampleCardSideLabel" class="font-medium text-cyan-200">正面 · 泰语例句</span>
+                    </div>
+                    <div id="exampleCardHistoryStats" class="text-slate-400 flex items-center gap-2">
+                        <!-- Repetition / Interval info -->
+                    </div>
+                </div>
+
+                <!-- Multi-Example Navigation Strip (shown when current word has > 1 example) -->
+                <div id="exampleMultiNavBar" class="hidden flex items-center justify-between gap-3 px-4 py-2.5 rounded-2xl bg-cyan-950/35 border border-cyan-500/25">
+                    <button id="btnPrevExampleNav" type="button" onclick="prevExampleSentence()" class="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-slate-300 hover:text-white font-medium flex items-center gap-1 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">
+                        <i class="ph-bold ph-caret-left"></i>
+                        <span>上一句</span>
+                    </button>
+
+                    <div class="flex items-center gap-2">
+                        <div id="exampleDotsContainer" class="flex items-center gap-1.5">
+                            <!-- Dynamic dots -->
+                        </div>
+                        <span id="exampleMultiNavText" class="text-xs font-mono text-cyan-200 font-semibold">例句 1 / 2</span>
+                    </div>
+
+                    <button id="btnNextExampleNav" type="button" onclick="nextExampleSentence()" class="px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/35 border border-cyan-400/40 text-xs text-cyan-200 hover:text-white font-semibold flex items-center gap-1 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">
+                        <span>Next 例句</span>
+                        <i class="ph-bold ph-caret-right"></i>
+                    </button>
+                </div>
+
+                <!-- CARD FRONT: Thai Example Sentence -->
+                <div id="exampleCardFront" class="flex-1 flex flex-col items-center justify-center text-center py-4 space-y-6">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-xs text-cyan-300 font-medium">
+                        <i class="ph-bold ph-chat-teardrop-text"></i>
+                        <span>阅读或聆听例句，回忆中文 / 英文翻译</span>
+                    </div>
+
+                    <!-- Big Thai Example Sentence Box (clickable to flip) -->
+                    <div onclick="flipExampleCard()" title="点击卡片翻转查看翻译" class="w-full max-w-2xl p-6 sm:p-8 rounded-3xl bg-white/5 hover:bg-white/[0.07] border border-white/10 hover:border-cyan-400/40 transition cursor-pointer space-y-4">
+                        <div id="exampleFrontThaiSentence" class="font-thai text-2xl sm:text-3xl md:text-4xl font-bold text-white leading-relaxed tracking-wide">
+                            --
+                        </div>
+                        <div id="exampleFrontPhonetic" class="hidden text-sm font-mono text-cyan-300/90"></div>
+                    </div>
+
+                    <!-- Audio Play Control -->
+                    <div class="flex items-center justify-center gap-3">
+                        <button type="button" onclick="playCurrentExampleAudio()" class="px-4 py-2.5 rounded-xl bg-cyan-600/25 hover:bg-cyan-600/40 border border-cyan-400/40 text-xs text-cyan-100 font-semibold flex items-center gap-2 transition active:scale-95 cursor-pointer">
+                            <i class="ph-fill ph-speaker-high text-cyan-300 text-base"></i>
+                            <span>朗读例句</span>
+                            <span class="text-[11px] text-cyan-300/80 font-mono">[P]</span>
+                        </button>
+                    </div>
+
+                    <!-- Flip Card Button -->
+                    <div class="w-full max-w-md pt-1">
+                        <button type="button" onclick="flipExampleCard()" class="w-full py-4 px-6 rounded-2xl bg-white text-slate-900 hover:bg-slate-100 font-bold text-base shadow-xl flex items-center justify-center gap-2.5 transition transform active:scale-98 cursor-pointer">
+                            <i class="ph-bold ph-arrows-clockwise text-violet-600 text-lg"></i>
+                            <span>翻转背面查看翻译</span>
+                            <span class="text-xs font-normal text-slate-500 ml-1">[Space]</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CARD BACK: Chinese / English Translation + Next Example / 1-4 SM-2 Score -->
+                <div id="exampleCardBack" class="hidden flex-1 flex flex-col justify-between space-y-5">
+                    <div class="space-y-4">
+                        <!-- Reference Thai Sentence (Compact) -->
+                        <div class="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-start justify-between gap-3">
+                            <div class="space-y-1">
+                                <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                                    <i class="ph-bold ph-text-aa text-cyan-400"></i>
+                                    <span>正面泰语例句</span>
+                                </div>
+                                <div id="exampleBackThaiSentence" class="font-thai text-lg sm:text-xl font-bold text-violet-100 leading-relaxed">
+                                    --
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <button type="button" onclick="playCurrentExampleAudio()" title="朗读例句 [P]" class="h-9 w-9 rounded-xl bg-cyan-600/25 hover:bg-cyan-600/45 text-cyan-200 flex items-center justify-center transition cursor-pointer">
+                                    <i class="ph-bold ph-speaker-high text-base"></i>
+                                </button>
+                                <button type="button" onclick="flipExampleCard()" title="翻回正面 [Space]" class="h-9 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-slate-300 hover:text-white font-medium flex items-center gap-1 transition cursor-pointer">
+                                    <i class="ph-bold ph-arrows-clockwise text-sm"></i>
+                                    <span class="hidden sm:inline">翻回正面</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Back Answer: Chinese / English Translation -->
+                        <div class="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-cyan-950/45 to-violet-950/40 border border-cyan-400/30 space-y-2.5">
+                            <div class="text-xs font-semibold uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
+                                <i class="ph-bold ph-translate text-cyan-400"></i>
+                                <span>例句中文 / 英文翻译</span>
+                            </div>
+                            <div id="exampleBackTranslation" class="text-xl sm:text-2xl font-bold text-white leading-relaxed">
+                                --
+                            </div>
+                            <div id="exampleBackEnglishTranslation" class="hidden text-sm sm:text-base text-cyan-200/90 leading-relaxed pt-1 border-t border-white/10">
+                            </div>
+                        </div>
+
+                        <!-- Associated Target Word Reference -->
+                        <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex items-center gap-2.5 flex-wrap">
+                                <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-violet-500/20 text-violet-300 border border-violet-500/30">关联单词</span>
+                                <span id="exampleBackWordThai" class="font-thai text-xl font-bold text-white">--</span>
+                                <span id="exampleBackWordPhonetic" class="px-2 py-0.5 rounded-md bg-white/10 text-violet-300 font-mono text-xs">--</span>
+                                <span class="text-slate-500">·</span>
+                                <span id="exampleBackWordMeaning" class="text-sm text-slate-200 font-medium">--</span>
+                            </div>
+                            <button type="button" onclick="playCurrentExampleWordAudio()" title="播放单词发音" class="px-3 py-1.5 rounded-xl bg-violet-600/25 hover:bg-violet-600/45 text-violet-200 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer">
+                                <i class="ph-bold ph-speaker-high text-sm"></i>
+                                <span>听单词</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Next Example Action (Shown when current word still has remaining examples) -->
+                    <div id="exampleNextSentenceAction" class="hidden pt-3 border-t border-white/10 space-y-3">
+                        <div class="flex items-center justify-between text-xs text-cyan-200/90">
+                            <span class="flex items-center gap-1.5 font-medium">
+                                <i class="ph-bold ph-list-numbers text-cyan-400"></i>
+                                <span id="exampleRemainingHintText">该单词还有更多例句，全部复习完成后将进行评分</span>
+                            </span>
+                            <span class="text-slate-400 hidden sm:inline">快捷键: Enter / →</span>
+                        </div>
+                        <button type="button" onclick="nextExampleSentence()" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-cyan-500 to-violet-600 hover:from-cyan-400 hover:to-violet-500 text-white font-bold text-base shadow-xl shadow-cyan-500/20 flex items-center justify-center gap-2 transition transform active:scale-98 cursor-pointer">
+                            <span id="btnNextExamplePrimaryText">Next 例句 (下一条例句)</span>
+                            <i class="ph-bold ph-arrow-right text-lg"></i>
+                        </button>
+                    </div>
+
+                    <!-- SM-2 1-4 Score Panel (Shown when all examples for current word are completed) -->
+                    <div id="exampleGradingPanel" class="hidden pt-3 border-t border-white/10 space-y-2.5">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-semibold text-slate-300 flex items-center gap-1.5">
+                                <i class="ph-bold ph-check-circle text-emerald-400"></i>
+                                本词例句已全部复习完成，请评分 (同步更新 SM-2 单词复习计划):
+                            </span>
+                            <span class="text-slate-500">键盘快捷键: 1 / 2 / 3 / 4</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                            <!-- Score 1 -> SM-2 rating 0: Forgot -->
+                            <button type="button" onclick="submitExampleGrade(0)" class="p-3 rounded-2xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/60 text-left transition transform active:scale-95 group cursor-pointer">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-lg">❌</span>
+                                    <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 font-bold">[1]</span>
+                                </div>
+                                <div class="font-bold text-red-300 text-sm mt-1">忘记 (Forgot)</div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">重置回 1 天后</div>
+                            </button>
+
+                            <!-- Score 2 -> SM-2 rating 3: Hard -->
+                            <button type="button" onclick="submitExampleGrade(3)" class="p-3 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-500/60 text-left transition transform active:scale-95 group cursor-pointer">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-lg">⚠️</span>
+                                    <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">[2]</span>
+                                </div>
+                                <div class="font-bold text-amber-300 text-sm mt-1">勉强 (Hard)</div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">理解迟疑或需提示</div>
+                            </button>
+
+                            <!-- Score 3 -> SM-2 rating 4: Correct -->
+                            <button type="button" onclick="submitExampleGrade(4)" class="p-3 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 hover:border-emerald-500/60 text-left transition transform active:scale-95 group cursor-pointer">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-lg">✅</span>
+                                    <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">[3]</span>
+                                </div>
+                                <div class="font-bold text-emerald-300 text-sm mt-1">正确 (Correct)</div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">准确理解例句翻译</div>
+                            </button>
+
+                            <!-- Score 4 -> SM-2 rating 5: Perfect -->
+                            <button type="button" onclick="submitExampleGrade(5)" class="p-3 rounded-2xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 hover:border-violet-500/60 text-left transition transform active:scale-95 group cursor-pointer">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-lg">⭐</span>
+                                    <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 font-bold">[4]</span>
+                                </div>
+                                <div class="font-bold text-violet-300 text-sm mt-1">熟练 (Perfect)</div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">秒懂句意·熟练掌握</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Tips -->
+                <div class="pt-2 text-center text-xs text-slate-500">
+                    快捷操作: <span class="text-slate-400">[P]</span> 朗读例句 · <span class="text-slate-400">[Space]</span> 翻转卡片 · <span class="text-slate-400">[←/→]</span> 切换例句 · <span class="text-slate-400">[1-4]</span> 评定分数
                 </div>
             </div>
         </div>
@@ -602,7 +852,7 @@
                 </div>
 
                 <div class="space-y-2">
-                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white">本次听写练习已完成！</h2>
+                    <h2 id="summaryHeading" class="text-2xl sm:text-3xl font-extrabold text-white">本次听写练习已完成！</h2>
                     <p class="text-sm text-slate-300 max-w-md mx-auto">
                         所有生词的复习记录与 SM-2 间隔参数均已更新保存至数据库。
                     </p>
@@ -1079,9 +1329,18 @@
         let collections = [];
         let activeQueue = [];
         let currentIndex = 0;
-        let currentSessionMode = 'smart_due'; // 'smart_due' | 'collection' | 'all'
+        let currentSessionMode = 'smart_due'; // 'smart_due' | 'collection' | 'all' | 'example_review'
         let currentCollectionId = null;
         let sessionResults = []; // [{ word, rating, sm2 }]
+        let isMainAnswerRevealed = false;    // 主屏是否已显示当前词答案
+        let isSideAppAnswerRevealed = false; // 伴侣屏是否已翻看当前词答案
+        let exampleReviewState = {
+            collectionName: '',
+            currentExampleIndex: 0,
+            maxVisitedExampleIndex: 0,
+            isFlipped: false,
+            isSubmitting: false
+        };
 
         // =============================================================
         // SideApp Companion Screen State Synchronization
@@ -1117,7 +1376,7 @@
                 } else if (viewName === 'viewSession') {
                     if (!activeQueue || currentIndex >= activeQueue.length) return;
                     const currentWord = activeQueue[currentIndex];
-                    const isRevealed = !document.getElementById('phaseRevealed')?.classList.contains('hidden');
+                    const isRevealed = isSideAppAnswerRevealed;
                     const progressText = document.getElementById('sessionProgressText')?.innerText || '';
                     const accuracyText = document.getElementById('sessionAccuracyText')?.innerText || '100%';
                     const progressPercent = Math.round((currentIndex / activeQueue.length) * 100);
@@ -1397,6 +1656,7 @@
                 // Switch View to Session
                 document.getElementById('viewSelection').classList.add('hidden');
                 document.getElementById('viewSummary').classList.add('hidden');
+                document.getElementById('viewExampleSession').classList.add('hidden');
                 document.getElementById('viewSession').classList.remove('hidden');
 
                 // Update session header badge
@@ -2530,6 +2790,7 @@
             // Switch view to session
             document.getElementById('viewSelection').classList.add('hidden');
             document.getElementById('viewSummary').classList.add('hidden');
+            document.getElementById('viewExampleSession').classList.add('hidden');
             document.getElementById('viewSession').classList.remove('hidden');
 
             updateReinforceSessionHeader();
@@ -2650,7 +2911,15 @@
         }
 
         function finishReinforceSession() {
+            const summaryHeading = document.getElementById('summaryHeading');
+            if (summaryHeading) {
+                summaryHeading.innerText = currentSessionMode === 'example_review'
+                    ? '本次单词例句复习已完成！'
+                    : '本次听写练习已完成！';
+            }
+
             document.getElementById('viewSession').classList.add('hidden');
+            document.getElementById('viewExampleSession').classList.add('hidden');
             document.getElementById('viewSummary').classList.remove('hidden');
 
             const modal = document.getElementById('modalInterRoundTransition');
@@ -3071,6 +3340,13 @@
                 }
 
                 // Action button HTML
+                const exampleReviewBtnHtml = `
+                    <button type="button" onclick="startExampleReviewSession('${col.id}')" class="w-full py-2.5 px-3 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/30 border border-cyan-400/30 hover:border-cyan-400/60 text-cyan-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer">
+                        <i class="ph-bold ph-chat-teardrop-text"></i>
+                        复习单词例句
+                    </button>
+                `;
+
                 let actionButtonsHtml = '';
                 if (col.wordCount === 0) {
                     actionButtonsHtml = `
@@ -3101,21 +3377,28 @@
                                     <span>重练</span>
                                 </button>
                             </div>
+                            ${exampleReviewBtnHtml}
                         </div>
                     `;
                 } else if (reviewStatus === 'completed') {
                     actionButtonsHtml = `
-                        <button onclick="startDictationSession('collection', '${col.id}', true)" class="w-full py-2.5 px-3 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 border border-emerald-500/30 hover:border-emerald-500 text-emerald-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition">
-                            <i class="ph-bold ph-arrow-counter-clockwise"></i>
-                            再次复习此词集
-                        </button>
+                        <div class="space-y-2">
+                            <button onclick="startDictationSession('collection', '${col.id}', true)" class="w-full py-2.5 px-3 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 border border-emerald-500/30 hover:border-emerald-500 text-emerald-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                                <i class="ph-bold ph-arrow-counter-clockwise"></i>
+                                再次复习此词集
+                            </button>
+                            ${exampleReviewBtnHtml}
+                        </div>
                     `;
                 } else {
                     actionButtonsHtml = `
-                        <button onclick="startDictationSession('collection', '${col.id}')" class="w-full py-2.5 px-3 rounded-xl bg-violet-600/30 hover:bg-violet-600 border border-violet-500/40 hover:border-violet-500 text-violet-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition">
-                            <i class="ph-bold ph-play"></i>
-                            开始复习此词集
-                        </button>
+                        <div class="space-y-2">
+                            <button onclick="startDictationSession('collection', '${col.id}')" class="w-full py-2.5 px-3 rounded-xl bg-violet-600/30 hover:bg-violet-600 border border-violet-500/40 hover:border-violet-500 text-violet-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                                <i class="ph-bold ph-play"></i>
+                                开始复习此词集
+                            </button>
+                            ${exampleReviewBtnHtml}
+                        </div>
                     `;
                 }
 
@@ -3204,6 +3487,7 @@
                 // Switch View to Session
                 document.getElementById('viewSelection').classList.add('hidden');
                 document.getElementById('viewSummary').classList.add('hidden');
+                document.getElementById('viewExampleSession').classList.add('hidden');
                 document.getElementById('viewSession').classList.remove('hidden');
 
                 // Update session header badge
@@ -3264,9 +3548,12 @@
             }
 
             // Reset Card Phases: show writing phase, hide revealed phase
+            isMainAnswerRevealed = false;
+            isSideAppAnswerRevealed = false;
             document.getElementById('phaseWriting').classList.remove('hidden');
             document.getElementById('phaseRevealed').classList.add('hidden');
             document.getElementById('cardStepLabel').innerText = '步骤 1/2: 听音并在纸上书写 (Writing in progress)';
+            updateRevealControlsUI();
 
             // Prepare Revealed Data for later
             document.getElementById('revealedThaiWord').innerText = word.thaiWord;
@@ -3333,13 +3620,59 @@
             }
         }
 
+        function updateRevealControlsUI() {
+            const bar = document.getElementById('sideAppRevealControlBar');
+            const icon = document.getElementById('sideAppRevealStatusIcon');
+            const badge = document.getElementById('sideAppRevealStatusBadge');
+            const btn = document.getElementById('btnRevealSideAppInRevealed');
+            const btnIcon = document.getElementById('btnRevealSideAppInRevealedIcon');
+            const btnText = document.getElementById('btnRevealSideAppInRevealedText');
+            const btnKbd = document.getElementById('btnRevealSideAppInRevealedKbd');
+            if (!bar || !badge || !btn) return;
+
+            if (isSideAppAnswerRevealed) {
+                bar.className = 'flex flex-wrap items-center justify-between gap-2.5 px-4 py-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 transition';
+                if (icon) icon.className = 'ph-bold ph-device-mobile text-emerald-400 text-base';
+                badge.className = 'px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold text-[11px]';
+                badge.innerText = '已翻看答案';
+                btn.className = 'px-3.5 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-200 font-semibold text-xs flex items-center gap-1.5 transition transform active:scale-95 cursor-pointer';
+                if (btnIcon) btnIcon.className = 'ph-bold ph-check-circle text-emerald-300 text-sm';
+                if (btnText) btnText.innerText = '伴侣屏已翻看答案';
+                if (btnKbd) btnKbd.classList.add('hidden');
+            } else {
+                bar.className = 'flex flex-wrap items-center justify-between gap-2.5 px-4 py-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 transition';
+                if (icon) icon.className = 'ph-bold ph-device-mobile text-amber-400 text-base';
+                badge.className = 'px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold text-[11px]';
+                badge.innerText = '隐藏答案中';
+                btn.className = 'px-3.5 py-1.5 rounded-xl bg-white text-slate-900 hover:bg-slate-100 font-bold text-xs shadow flex items-center gap-1.5 transition transform active:scale-95 cursor-pointer';
+                if (btnIcon) btnIcon.className = 'ph-bold ph-eye text-violet-600 text-sm';
+                if (btnText) btnText.innerText = '伴侣屏翻看答案';
+                if (btnKbd) btnKbd.classList.remove('hidden');
+            }
+        }
+
+        function revealMainScreenAnswer() {
+            isMainAnswerRevealed = true;
+            document.getElementById('phaseWriting').classList.add('hidden');
+            document.getElementById('phaseRevealed').classList.remove('hidden');
+            document.getElementById('cardStepLabel').innerText = isSideAppAnswerRevealed
+                ? '步骤 2/2: 核对纸面并完成评分 (Grade & SM-2)'
+                : '步骤 2/2: 主屏已显示答案 · 伴侣屏仍隐藏答案';
+            updateRevealControlsUI();
+            // Do NOT change isSideAppAnswerRevealed or reveal answer on companion screen
+        }
+
         function revealAnswer() {
+            const wasAlreadyRevealedOnSideApp = isSideAppAnswerRevealed;
+            isMainAnswerRevealed = true;
+            isSideAppAnswerRevealed = true;
             document.getElementById('phaseWriting').classList.add('hidden');
             document.getElementById('phaseRevealed').classList.remove('hidden');
             document.getElementById('cardStepLabel').innerText = '步骤 2/2: 核对纸面并完成评分 (Grade & SM-2)';
+            updateRevealControlsUI();
 
             // Sync state to SideApp companion screen
-            syncSideAppState('viewSession');
+            syncSideAppState('viewSession', wasAlreadyRevealedOnSideApp);
         }
 
         async function submitGrade(rating) {
@@ -3418,7 +3751,15 @@
                 }
             }
 
+            const summaryHeading = document.getElementById('summaryHeading');
+            if (summaryHeading) {
+                summaryHeading.innerText = currentSessionMode === 'example_review'
+                    ? '本次单词例句复习已完成！'
+                    : '本次听写练习已完成！';
+            }
+
             document.getElementById('viewSession').classList.add('hidden');
+            document.getElementById('viewExampleSession').classList.add('hidden');
             document.getElementById('viewSummary').classList.remove('hidden');
 
             const total = sessionResults.length;
@@ -3496,6 +3837,8 @@
         function restartCurrentSession() {
             if (currentSessionMode === 'reinforce_missed' && reinforceState && reinforceState.allInitialWords) {
                 startReinforceDrillWithWords(reinforceState.allInitialWords, reinforceState.sessionTitle, reinforceState.targetDateStr);
+            } else if (currentSessionMode === 'example_review' && currentCollectionId) {
+                startExampleReviewSession(currentCollectionId);
             } else {
                 startDictationSession(currentSessionMode, currentCollectionId, true);
             }
@@ -3505,6 +3848,7 @@
             const modalTransition = document.getElementById('modalInterRoundTransition');
             if (modalTransition) modalTransition.classList.add('hidden');
             document.getElementById('viewSession').classList.add('hidden');
+            document.getElementById('viewExampleSession').classList.add('hidden');
             document.getElementById('viewSummary').classList.add('hidden');
             document.getElementById('viewSelection').classList.remove('hidden');
             loadAppStats();
@@ -3512,6 +3856,368 @@
             updateTodayResultBadge();
             updateMissedBadges();
             syncSideAppState('viewSelection');
+        }
+
+        // -------------------------------------------------------------
+        // Collection Example Sentence Review Session Controller
+        // -------------------------------------------------------------
+        function escapeHtmlText(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function highlightTargetWordInSentence(sentence, targetWord) {
+            const safeSentence = escapeHtmlText(sentence);
+            const word = String(targetWord || '').trim();
+            if (!word) return safeSentence;
+            const safeWord = escapeHtmlText(word);
+            const escapedRegex = safeWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return safeSentence.replace(
+                new RegExp(escapedRegex, 'g'),
+                `<span class="text-cyan-300 underline decoration-cyan-400/60 underline-offset-4">${safeWord}</span>`
+            );
+        }
+
+        function normalizeWordExamples(word) {
+            const rawList = Array.isArray(word?.examples) ? word.examples : [];
+            const normalized = [];
+            for (const ex of rawList) {
+                if (!ex || typeof ex !== 'object') continue;
+                const thai = String(ex.thai || ex.sentence || ex.text || '').trim();
+                const zh = String(ex.translation || ex.chinese || ex.zh || ex.meaning || '').trim();
+                const en = String(ex.english || ex.en || '').trim();
+                const phonetic = String(ex.phonetic || ex.transliteration || ex.ipa || '').trim();
+                const audioUrl = ex.audioUrl || ex.audio_url || null;
+                if (thai) {
+                    normalized.push({
+                        thai,
+                        translation: zh || en || '暂无翻译',
+                        english: (zh && en && en !== zh) ? en : '',
+                        phonetic,
+                        audioUrl
+                    });
+                }
+            }
+            return normalized;
+        }
+
+        async function startExampleReviewSession(collectionId) {
+            if (!collectionId) return;
+            currentSessionMode = 'example_review';
+            currentCollectionId = String(collectionId);
+            reinforceState = null;
+            currentIndex = 0;
+            sessionResults = [];
+
+            const matchedCol = collections.find(c => String(c.id) === String(collectionId));
+            const collectionName = matchedCol ? matchedCol.name : '词集例句复习';
+
+            try {
+                showToast('正在加载词集单词例句...');
+                const res = await fetchApi(`/dictation/queue?type=collection&collectionId=${encodeURIComponent(collectionId)}&limit=200`);
+                const rawQueue = res.queue || [];
+
+                const wordsWithExamples = rawQueue
+                    .map(w => ({
+                        ...w,
+                        _normalizedExamples: normalizeWordExamples(w)
+                    }))
+                    .filter(w => w._normalizedExamples.length > 0);
+
+                if (wordsWithExamples.length === 0) {
+                    showToast('该词集中暂无已录入例句的单词', 'warning');
+                    return;
+                }
+
+                const skippedCount = rawQueue.length - wordsWithExamples.length;
+                if (skippedCount > 0) {
+                    showToast(`已加载 ${wordsWithExamples.length} 个含例句词条（跳过 ${skippedCount} 个暂无例句词条）`);
+                }
+
+                activeQueue = wordsWithExamples;
+                exampleReviewState = {
+                    collectionName,
+                    currentExampleIndex: 0,
+                    maxVisitedExampleIndex: 0,
+                    isFlipped: false,
+                    isSubmitting: false
+                };
+
+                // Switch view to Example Review Session
+                document.getElementById('viewSelection').classList.add('hidden');
+                document.getElementById('viewSession').classList.add('hidden');
+                document.getElementById('viewSummary').classList.add('hidden');
+                document.getElementById('viewExampleSession').classList.remove('hidden');
+
+                document.getElementById('exampleSessionModeBadge').innerText = `例句复习 · ${collectionName}`;
+                renderCurrentExampleCard();
+            } catch (err) {
+                console.error('Failed to start example review session:', err);
+                showToast('加载单词例句失败: ' + err.message, 'error');
+            }
+        }
+
+        function renderCurrentExampleCard(shouldAutoPlay = true) {
+            if (!activeQueue || currentIndex >= activeQueue.length) {
+                finishSession();
+                return;
+            }
+
+            const word = activeQueue[currentIndex];
+            const examples = word._normalizedExamples || normalizeWordExamples(word);
+            if (!examples || examples.length === 0) {
+                currentIndex++;
+                exampleReviewState.currentExampleIndex = 0;
+                exampleReviewState.maxVisitedExampleIndex = 0;
+                exampleReviewState.isFlipped = false;
+                renderCurrentExampleCard(shouldAutoPlay);
+                return;
+            }
+
+            const exIdx = Math.max(0, Math.min(exampleReviewState.currentExampleIndex, examples.length - 1));
+            exampleReviewState.currentExampleIndex = exIdx;
+            if (exIdx > exampleReviewState.maxVisitedExampleIndex) {
+                exampleReviewState.maxVisitedExampleIndex = exIdx;
+            }
+            const ex = examples[exIdx];
+
+            // Header progress
+            document.getElementById('exampleSessionWordProgressText').innerText = `第 ${currentIndex + 1} / ${activeQueue.length} 词`;
+            document.getElementById('exampleSessionSentenceBadge').innerText = `例句 ${exIdx + 1} / ${examples.length}`;
+            const progressPercent = Math.round((currentIndex / activeQueue.length) * 100);
+            document.getElementById('exampleSessionProgressBar').style.width = `${progressPercent}%`;
+
+            if (sessionResults.length > 0) {
+                const correct = sessionResults.filter(r => r.rating >= 3).length;
+                const acc = Math.round((correct / sessionResults.length) * 100);
+                document.getElementById('exampleSessionAccuracyText').innerText = `${acc}%`;
+            } else {
+                document.getElementById('exampleSessionAccuracyText').innerText = '100%';
+            }
+
+            // Word SM-2 History Stats
+            const repetition = word.repetition != null ? Number(word.repetition) : 0;
+            const interval = word.interval != null ? Number(word.interval) : (word.intervalDays != null ? Number(word.intervalDays) : 1);
+            document.getElementById('exampleCardHistoryStats').innerHTML = `
+                <span>复习次数: <strong class="text-white">${repetition}</strong></span>
+                <span>·</span>
+                <span>当前间隔: <strong class="text-white">${interval}天</strong></span>
+            `;
+
+            // Multi-Example Navigation Bar
+            const multiNavBar = document.getElementById('exampleMultiNavBar');
+            if (examples.length > 1) {
+                multiNavBar.classList.remove('hidden');
+                document.getElementById('exampleMultiNavText').innerText = `例句 ${exIdx + 1} / ${examples.length}`;
+                document.getElementById('btnPrevExampleNav').disabled = exIdx === 0;
+                document.getElementById('btnNextExampleNav').disabled = exIdx >= examples.length - 1;
+
+                const dotsEl = document.getElementById('exampleDotsContainer');
+                dotsEl.innerHTML = examples.map((_, idx) => {
+                    if (idx === exIdx) {
+                        return `<span class="w-5 h-2 rounded-full bg-cyan-400 transition-all"></span>`;
+                    } else if (idx <= exampleReviewState.maxVisitedExampleIndex) {
+                        return `<span class="w-2 h-2 rounded-full bg-emerald-400/80 transition-all"></span>`;
+                    } else {
+                        return `<span class="w-2 h-2 rounded-full bg-white/20 transition-all"></span>`;
+                    }
+                }).join('');
+            } else {
+                multiNavBar.classList.add('hidden');
+            }
+
+            // Populate Card Front & Back
+            const highlightedThai = highlightTargetWordInSentence(ex.thai, word.thaiWord);
+            document.getElementById('exampleFrontThaiSentence').innerHTML = highlightedThai;
+            document.getElementById('exampleBackThaiSentence').innerHTML = highlightedThai;
+
+            const phoneticEl = document.getElementById('exampleFrontPhonetic');
+            if (ex.phonetic) {
+                phoneticEl.innerText = ex.phonetic;
+                phoneticEl.classList.remove('hidden');
+            } else {
+                phoneticEl.innerText = '';
+                phoneticEl.classList.add('hidden');
+            }
+
+            document.getElementById('exampleBackTranslation').innerText = ex.translation;
+            const enEl = document.getElementById('exampleBackEnglishTranslation');
+            if (ex.english) {
+                enEl.innerText = ex.english;
+                enEl.classList.remove('hidden');
+            } else {
+                enEl.innerText = '';
+                enEl.classList.add('hidden');
+            }
+
+            document.getElementById('exampleBackWordThai').innerText = word.thaiWord || '--';
+            document.getElementById('exampleBackWordPhonetic').innerText = word.phonetic || word.transliteration || '音标未录入';
+            document.getElementById('exampleBackWordMeaning').innerText = word.meaning || '--';
+
+            updateExampleCardSideUI();
+
+            if (shouldAutoPlay && autoPlayAudio && !exampleReviewState.isFlipped) {
+                setTimeout(() => {
+                    playCurrentExampleAudio();
+                }, 150);
+            }
+        }
+
+        function updateExampleCardSideUI() {
+            if (!activeQueue || currentIndex >= activeQueue.length) return;
+            const word = activeQueue[currentIndex];
+            const examples = word._normalizedExamples || [];
+            const exIdx = exampleReviewState.currentExampleIndex;
+            const totalEx = examples.length;
+
+            const frontEl = document.getElementById('exampleCardFront');
+            const backEl = document.getElementById('exampleCardBack');
+            const sideDot = document.getElementById('exampleCardSideDot');
+            const sideLabel = document.getElementById('exampleCardSideLabel');
+            const nextActionEl = document.getElementById('exampleNextSentenceAction');
+            const gradingPanelEl = document.getElementById('exampleGradingPanel');
+
+            if (exampleReviewState.isFlipped) {
+                frontEl.classList.add('hidden');
+                backEl.classList.remove('hidden');
+                sideDot.className = 'h-2 w-2 rounded-full bg-emerald-400';
+                sideLabel.className = 'font-medium text-emerald-300';
+                sideLabel.innerText = `背面 · 中文 / 英文翻译 (例句 ${exIdx + 1}/${totalEx})`;
+
+                const hasMoreExamples = exIdx < totalEx - 1;
+                const allExamplesDone = exIdx >= totalEx - 1 || exampleReviewState.maxVisitedExampleIndex >= totalEx - 1;
+
+                if (hasMoreExamples) {
+                    nextActionEl.classList.remove('hidden');
+                    const remaining = totalEx - 1 - exIdx;
+                    document.getElementById('exampleRemainingHintText').innerText =
+                        `该单词共有 ${totalEx} 条例句，还剩 ${remaining} 条例句待复习，全部完成后进行评分`;
+                    document.getElementById('btnNextExamplePrimaryText').innerText =
+                        `Next 例句 (切换至例句 ${exIdx + 2} / ${totalEx})`;
+                } else {
+                    nextActionEl.classList.add('hidden');
+                }
+
+                if (allExamplesDone) {
+                    gradingPanelEl.classList.remove('hidden');
+                } else {
+                    gradingPanelEl.classList.add('hidden');
+                }
+            } else {
+                frontEl.classList.remove('hidden');
+                backEl.classList.add('hidden');
+                sideDot.className = 'h-2 w-2 rounded-full bg-cyan-400 animate-pulse';
+                sideLabel.className = 'font-medium text-cyan-200';
+                sideLabel.innerText = `正面 · 泰语例句 (例句 ${exIdx + 1}/${totalEx})`;
+            }
+        }
+
+        function flipExampleCard() {
+            exampleReviewState.isFlipped = !exampleReviewState.isFlipped;
+            updateExampleCardSideUI();
+        }
+
+        function nextExampleSentence() {
+            if (!activeQueue || currentIndex >= activeQueue.length) return;
+            const word = activeQueue[currentIndex];
+            const examples = word._normalizedExamples || [];
+            if (exampleReviewState.currentExampleIndex < examples.length - 1) {
+                exampleReviewState.currentExampleIndex++;
+                if (exampleReviewState.currentExampleIndex > exampleReviewState.maxVisitedExampleIndex) {
+                    exampleReviewState.maxVisitedExampleIndex = exampleReviewState.currentExampleIndex;
+                }
+                exampleReviewState.isFlipped = false;
+                renderCurrentExampleCard(true);
+            }
+        }
+
+        function prevExampleSentence() {
+            if (!activeQueue || currentIndex >= activeQueue.length) return;
+            if (exampleReviewState.currentExampleIndex > 0) {
+                exampleReviewState.currentExampleIndex--;
+                exampleReviewState.isFlipped = false;
+                renderCurrentExampleCard(false);
+            }
+        }
+
+        function playCurrentExampleAudio() {
+            if (!activeQueue || currentIndex >= activeQueue.length) return;
+            const word = activeQueue[currentIndex];
+            const examples = word._normalizedExamples || [];
+            const ex = examples[exampleReviewState.currentExampleIndex];
+            if (!ex || !ex.thai) return;
+            window.playSentenceVoice(ex.thai, ex.audioUrl);
+        }
+
+        function playCurrentExampleWordAudio() {
+            if (!activeQueue || currentIndex >= activeQueue.length) return;
+            const word = activeQueue[currentIndex];
+            if (!word || !word.thaiWord) return;
+            window.playSentenceVoice(word.thaiWord, word.audioUrl);
+        }
+
+        async function submitExampleGrade(rating) {
+            if (exampleReviewState.isSubmitting) return;
+            if (!activeQueue || currentIndex >= activeQueue.length) return;
+            const currentWord = activeQueue[currentIndex];
+            const examples = currentWord._normalizedExamples || [];
+            const allExamplesDone = exampleReviewState.currentExampleIndex >= examples.length - 1 ||
+                exampleReviewState.maxVisitedExampleIndex >= examples.length - 1;
+            if (!allExamplesDone) {
+                showToast('请先复习完当前单词的全部例句后再评分', 'warning');
+                return;
+            }
+
+            exampleReviewState.isSubmitting = true;
+            try {
+                // Submit to backend SM-2 review API so score updates word review schedule
+                const res = await fetchApi('/dictation/review', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        wordId: currentWord.id,
+                        rating: rating,
+                        collectionId: currentCollectionId
+                    })
+                });
+
+                sessionResults.push({
+                    word: currentWord,
+                    rating: rating,
+                    sm2: res.sm2,
+                    round: 1
+                });
+
+                recordTodayDictation(currentWord, rating, res.sm2);
+                if (rating < 3) {
+                    recordMissedWord(currentWord, rating);
+                }
+
+                const nextDays = res.sm2.current.interval;
+                const ef = res.sm2.current.easinessFactor;
+                showToast(`评分已录入! 下次复习: ${nextDays} 天后 (EF: ${ef})`, rating >= 3 ? 'success' : 'warning');
+
+                // Advance to next word's examples
+                currentIndex++;
+                exampleReviewState.currentExampleIndex = 0;
+                exampleReviewState.maxVisitedExampleIndex = 0;
+                exampleReviewState.isFlipped = false;
+                renderCurrentExampleCard(true);
+            } catch (err) {
+                console.error('Failed to submit example review rating:', err);
+                showToast('提交评分失败: ' + err.message, 'error');
+            } finally {
+                exampleReviewState.isSubmitting = false;
+            }
+        }
+
+        function confirmExitExampleSession() {
+            if (confirm('确定要退出当前单词例句复习并返回主菜单吗？已评分单词的 SM-2 复习计划已自动保存。')) {
+                returnToSelection();
+            }
         }
 
         async function confirmExitSession() {
@@ -3582,6 +4288,61 @@
                     }
                 }
 
+                // Example Sentence Review Session keyboard shortcuts
+                const exampleSessionVisible = !document.getElementById('viewExampleSession')?.classList.contains('hidden');
+                if (exampleSessionVisible) {
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        confirmExitExampleSession();
+                        return;
+                    }
+                    const currentWord = activeQueue && activeQueue[currentIndex];
+                    const examples = currentWord ? (currentWord._normalizedExamples || []) : [];
+                    const hasMoreExamples = exampleReviewState.currentExampleIndex < examples.length - 1;
+                    const allExamplesDone = exampleReviewState.currentExampleIndex >= examples.length - 1 ||
+                        exampleReviewState.maxVisitedExampleIndex >= examples.length - 1;
+
+                    if (e.key === 'p' || e.key === 'P') {
+                        e.preventDefault();
+                        playCurrentExampleAudio();
+                    } else if (e.code === 'Space') {
+                        e.preventDefault();
+                        flipExampleCard();
+                    } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (!exampleReviewState.isFlipped) {
+                            flipExampleCard();
+                        } else if (hasMoreExamples) {
+                            nextExampleSentence();
+                        }
+                    } else if (e.key === 'ArrowRight') {
+                        if (hasMoreExamples) {
+                            e.preventDefault();
+                            nextExampleSentence();
+                        }
+                    } else if (e.key === 'ArrowLeft') {
+                        if (exampleReviewState.currentExampleIndex > 0) {
+                            e.preventDefault();
+                            prevExampleSentence();
+                        }
+                    } else if (exampleReviewState.isFlipped && allExamplesDone) {
+                        if (e.key === '1') {
+                            e.preventDefault();
+                            submitExampleGrade(0);
+                        } else if (e.key === '2') {
+                            e.preventDefault();
+                            submitExampleGrade(3);
+                        } else if (e.key === '3') {
+                            e.preventDefault();
+                            submitExampleGrade(4);
+                        } else if (e.key === '4') {
+                            e.preventDefault();
+                            submitExampleGrade(5);
+                        }
+                    }
+                    return;
+                }
+
                 const sessionVisible = !document.getElementById('viewSession').classList.contains('hidden');
                 if (!sessionVisible) return;
 
@@ -3598,7 +4359,7 @@
                     e.preventDefault();
                     playCurrentWordAudio();
                 } else if (e.code === 'Space' || e.key === 'Enter') {
-                    if (isWritingPhase) {
+                    if (isWritingPhase || !isSideAppAnswerRevealed) {
                         e.preventDefault();
                         revealAnswer();
                     }
@@ -3656,6 +4417,16 @@
         window.resumeCollectionReview = resumeCollectionReview;
         window.restartCollectionReview = restartCollectionReview;
         window.confirmExitSession = confirmExitSession;
+        window.revealMainScreenAnswer = revealMainScreenAnswer;
+        window.revealAnswer = revealAnswer;
+        window.startExampleReviewSession = startExampleReviewSession;
+        window.flipExampleCard = flipExampleCard;
+        window.nextExampleSentence = nextExampleSentence;
+        window.prevExampleSentence = prevExampleSentence;
+        window.playCurrentExampleAudio = playCurrentExampleAudio;
+        window.playCurrentExampleWordAudio = playCurrentExampleWordAudio;
+        window.submitExampleGrade = submitExampleGrade;
+        window.confirmExitExampleSession = confirmExitExampleSession;
     </script>
 </body>
 </html>
