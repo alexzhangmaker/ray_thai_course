@@ -113,7 +113,7 @@
             </div>
             
             <!-- Quick links -->
-            <nav class="flex items-center gap-2">
+            <nav class="flex items-center flex-wrap gap-2">
                 <button type="button" onclick="openImportModal()" class="px-4 py-2 text-sm text-emerald-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-emerald-500/20">
                     <i class="ph ph-download-simple"></i>
                     <span>导入 JSON 数组</span>
@@ -121,6 +121,10 @@
                 <button type="button" id="btn-header-export" onclick="exportCurrentLessonSentencesJSON()" class="px-4 py-2 text-sm text-emerald-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-emerald-500/20" title="导出当前科目/课时的所有句子为 JSON 数组并拷贝到剪贴板">
                     <i class="ph ph-export"></i>
                     <span>导出 JSON 数组</span>
+                </button>
+                <button type="button" id="btn-header-export-words" onclick="exportCurrentLessonGlossaryWords()" class="hidden px-4 py-2 text-sm text-teal-300 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-teal-500/30" title="导出当前科目/课时所有句子 glossary 中的泰语单词清单并拷贝到剪贴板">
+                    <i id="btn-header-export-words-icon" class="ph ph-list-bullets"></i>
+                    <span id="btn-header-export-words-text">导出单词清单</span>
                 </button>
                 <button type="button" onclick="openPromptModal()" class="px-4 py-2 text-sm text-amber-400 hover:text-white rounded-lg hover:bg-slate-800/50 transition duration-200 flex items-center gap-1.5 border border-amber-500/20">
                     <i class="ph ph-note"></i>
@@ -214,7 +218,7 @@
                 </div>
                 <h3 class="text-sm font-bold text-slate-200 mb-1">未选择任何翻译句子</h3>
                 <p class="text-xs text-slate-500 max-w-xs text-center mb-5">请从左侧列表中选择要编辑的项目，或点击下方按钮新增或批量导入。</p>
-                <div class="flex items-center gap-3 mb-6 font-sans">
+                <div class="flex items-center flex-wrap justify-center gap-3 mb-6 font-sans">
                     <button type="button" onclick="initNewSentence()" class="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl text-xs font-semibold hover:opacity-95 shadow-md shadow-emerald-500/10 transition duration-200 flex items-center gap-1.5">
                         <i class="ph-bold ph-plus-circle text-sm"></i>
                         <span>新增单个句子</span>
@@ -226,6 +230,10 @@
                     <button type="button" id="btn-empty-export" onclick="exportCurrentLessonSentencesJSON()" class="px-4 py-2 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 hover:text-white hover:bg-emerald-500/25 rounded-xl text-xs font-semibold shadow-md shadow-emerald-500/10 transition duration-200 flex items-center gap-1.5" title="导出当前科目/课时的所有句子为 JSON 数组并拷贝到剪贴板">
                         <i class="ph-bold ph-export text-sm"></i>
                         <span>导出 JSON 数组</span>
+                    </button>
+                    <button type="button" id="btn-empty-export-words" onclick="exportCurrentLessonGlossaryWords()" class="hidden px-4 py-2 bg-teal-500/15 border border-teal-500/30 text-teal-300 hover:text-white hover:bg-teal-500/25 rounded-xl text-xs font-semibold shadow-md shadow-teal-500/10 transition duration-200 flex items-center gap-1.5" title="导出当前科目/课时所有句子 glossary 中的泰语单词清单并拷贝到剪贴板">
+                        <i id="btn-empty-export-words-icon" class="ph-bold ph-list-bullets text-sm"></i>
+                        <span id="btn-empty-export-words-text">导出单词清单</span>
                     </button>
                 </div>
                 
@@ -1617,20 +1625,42 @@
             }
         }
 
+        let exportWordListResetTimer = null;
+
+        function resetExportWordListButtons() {
+            if (exportWordListResetTimer) {
+                clearTimeout(exportWordListResetTimer);
+                exportWordListResetTimer = null;
+            }
+            const headerText = document.getElementById('btn-header-export-words-text');
+            const headerIcon = document.getElementById('btn-header-export-words-icon');
+            if (headerText) headerText.textContent = '导出单词清单';
+            if (headerIcon) headerIcon.className = 'ph ph-list-bullets';
+
+            const emptyText = document.getElementById('btn-empty-export-words-text');
+            const emptyIcon = document.getElementById('btn-empty-export-words-icon');
+            if (emptyText) emptyText.textContent = '导出单词清单';
+            if (emptyIcon) emptyIcon.className = 'ph-bold ph-list-bullets text-sm';
+        }
+
         function updateExportButtonTooltip() {
             const filterCourse = document.getElementById('filter-course');
             const filterLesson = document.getElementById('filter-lesson');
             const courseId = filterCourse ? filterCourse.value : '';
             const lessonId = filterLesson ? filterLesson.value : '';
+            const hasScope = Boolean(courseId || lessonId);
 
             let tooltip = "导出当前选定科目/课时下的所有句子为 JSON 数组并拷贝到剪贴板";
+            let wordListTooltip = "导出当前选定科目/课时下所有句子 glossary 中的泰语单词清单并拷贝到剪贴板";
             if (courseId) {
                 const cName = getCourseName(courseId);
                 if (lessonId) {
                     const lName = getLessonName(courseId, lessonId);
                     tooltip = `导出「${cName} / ${lName}」的所有句子为 JSON 数组并拷贝到剪贴板`;
+                    wordListTooltip = `导出「${cName} / ${lName}」所有句子 glossary 中的泰语单词清单并拷贝到剪贴板`;
                 } else {
                     tooltip = `导出「${cName} (全部课时)」的所有句子为 JSON 数组并拷贝到剪贴板`;
+                    wordListTooltip = `导出「${cName} (全部课时)」所有句子 glossary 中的泰语单词清单并拷贝到剪贴板`;
                 }
             }
 
@@ -1638,9 +1668,19 @@
                 const el = document.getElementById(id);
                 if (el) el.title = tooltip;
             });
+
+            ['btn-header-export-words', 'btn-empty-export-words'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.classList.toggle('hidden', !hasScope);
+                    el.title = wordListTooltip;
+                }
+            });
+
+            resetExportWordListButtons();
         }
 
-        async function exportCurrentLessonSentencesJSON(targetCourseId, targetLessonId) {
+        async function resolveExportScopeSentences(targetCourseId, targetLessonId) {
             let courseId = targetCourseId;
             let lessonId = targetLessonId;
 
@@ -1668,6 +1708,7 @@
                         if (filterLesson) {
                             filterLesson.value = lessonId;
                             renderList();
+                            updateExportButtonTooltip();
                         }
                     }
                 }
@@ -1676,7 +1717,7 @@
             if (!courseId) {
                 alert("请先在左侧筛选栏中选择要导出的科目！");
                 if (filterCourse) filterCourse.focus();
-                return;
+                return null;
             }
 
             if (!sentences || sentences.length === 0) {
@@ -1703,7 +1744,7 @@
 
             if (targetSentences.length === 0) {
                 alert(`当前「${scopeTitle}」下未包含任何翻译句子！`);
-                return;
+                return null;
             }
 
             // 保持与展示顺序及序号一致（按 order 升序）
@@ -1713,6 +1754,15 @@
                 if (orderA && orderB && orderA !== orderB) return orderA - orderB;
                 return (a.uuid || '').localeCompare(b.uuid || '');
             });
+
+            return { courseId, lessonId, scopeTitle, targetSentences };
+        }
+
+        async function exportCurrentLessonSentencesJSON(targetCourseId, targetLessonId) {
+            const scope = await resolveExportScopeSentences(targetCourseId, targetLessonId);
+            if (!scope) return;
+
+            const { scopeTitle, targetSentences } = scope;
 
             const cleanArray = targetSentences.map((item, idx) => {
                 const c = item.jsonContent || {};
@@ -1753,6 +1803,78 @@
             }, (err) => {
                 console.warn("copyTextToClipboard failed:", err);
                 window.prompt(`自动拷贝失败，请按 Ctrl+C 手动复制「${scopeTitle}」的句子 JSON 数组数据:`, jsonStr);
+            });
+        }
+
+        async function exportCurrentLessonGlossaryWords(targetCourseId, targetLessonId) {
+            const scope = await resolveExportScopeSentences(targetCourseId, targetLessonId);
+            if (!scope) return;
+
+            const { scopeTitle, targetSentences } = scope;
+
+            const seen = new Set();
+            const thaiWords = [];
+            let totalWordCount = 0;
+
+            targetSentences.forEach(item => {
+                const c = item.jsonContent || {};
+                const glossary = c.glossary;
+                if (!glossary) return;
+
+                const entries = Array.isArray(glossary)
+                    ? glossary
+                    : (typeof glossary === 'object' ? Object.values(glossary) : []);
+
+                entries.forEach(entry => {
+                    let word = '';
+                    if (typeof entry === 'string') {
+                        word = entry;
+                    } else if (entry && typeof entry === 'object' && typeof entry.thai === 'string') {
+                        word = entry.thai;
+                    }
+                    word = word.normalize('NFC').replace(/\s+/g, ' ').trim();
+                    if (!word) return;
+                    totalWordCount++;
+                    if (!seen.has(word)) {
+                        seen.add(word);
+                        thaiWords.push(word);
+                    }
+                });
+            });
+
+            if (thaiWords.length === 0) {
+                alert(`当前「${scopeTitle}」下所有句子的 glossary 中暂无可导出的泰语单词！`);
+                return;
+            }
+
+            const duplicateCount = totalWordCount - thaiWords.length;
+            const wordListText = thaiWords.join(',');
+
+            copyTextToClipboard(wordListText, () => {
+                const headerText = document.getElementById('btn-header-export-words-text');
+                const headerIcon = document.getElementById('btn-header-export-words-icon');
+                if (headerText && headerIcon) {
+                    headerText.textContent = `已复制 (${thaiWords.length}词)`;
+                    headerIcon.className = 'ph ph-check text-emerald-300';
+                }
+
+                const emptyText = document.getElementById('btn-empty-export-words-text');
+                const emptyIcon = document.getElementById('btn-empty-export-words-icon');
+                if (emptyText && emptyIcon) {
+                    emptyText.textContent = `已复制 (${thaiWords.length}词)`;
+                    emptyIcon.className = 'ph-bold ph-check text-sm text-emerald-300';
+                }
+
+                if (exportWordListResetTimer) clearTimeout(exportWordListResetTimer);
+                exportWordListResetTimer = setTimeout(() => {
+                    resetExportWordListButtons();
+                }, 2000);
+
+                const dedupHint = duplicateCount > 0 ? `（已自动去重 ${duplicateCount} 个重复词）` : '';
+                showToast(`已成功导出「${scopeTitle}」下的 ${thaiWords.length} 个泰语单词清单${dedupHint}并复制到剪贴板！`, "success");
+            }, (err) => {
+                console.warn("copyTextToClipboard failed:", err);
+                window.prompt(`自动拷贝失败，请按 Ctrl+C 手动复制「${scopeTitle}」的泰语单词清单:`, wordListText);
             });
         }
 
@@ -2048,6 +2170,7 @@
                     if (filterLesson) {
                         filterLesson.value = lessonId;
                         renderList();
+                        updateExportButtonTooltip();
                     }
                 }
 

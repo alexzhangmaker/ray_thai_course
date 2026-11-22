@@ -371,13 +371,40 @@
 
             <!-- Collection List Cards Section -->
             <div class="space-y-3 pt-2">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                    <div>
-                        <h3 class="text-base font-bold text-white flex items-center gap-2">
-                            <i class="ph-bold ph-books text-violet-400"></i>
-                            按词集单元针对练习
-                        </h3>
-                        <span id="collectionCountText" class="text-xs text-slate-400">正在加载词集...</span>
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-4 flex-1 min-w-0">
+                        <div class="shrink-0">
+                            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                <i class="ph-bold ph-books text-violet-400"></i>
+                                按词集单元针对练习
+                            </h3>
+                            <span id="collectionCountText" class="text-xs text-slate-400">正在加载词集...</span>
+                        </div>
+
+                        <!-- Collection Title Filter Input -->
+                        <div class="relative w-full sm:w-64">
+                            <i class="ph-bold ph-magnifying-glass text-slate-400 text-sm absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                            <input
+                                type="text"
+                                id="collectionTitleFilterInput"
+                                oninput="setCollectionTitleFilter(this.value)"
+                                onkeydown="if (event.key === 'Escape') { clearCollectionTitleFilter(); this.blur(); }"
+                                placeholder="按词集标题过滤..."
+                                autocomplete="off"
+                                aria-label="按词集单元标题过滤"
+                                class="w-full h-9 pl-8 pr-8 rounded-xl bg-white/5 hover:bg-white/10 focus:bg-white/10 border border-white/10 focus:border-violet-500/60 focus:outline-none focus:ring-2 focus:ring-violet-500/20 text-xs text-white placeholder-slate-400 transition"
+                            />
+                            <button
+                                type="button"
+                                id="btnClearCollectionTitleFilter"
+                                onclick="clearCollectionTitleFilter()"
+                                title="清空标题筛选"
+                                aria-label="清空标题筛选"
+                                class="hidden absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 rounded-md text-slate-400 hover:text-white hover:bg-white/10 flex items-center justify-center transition cursor-pointer"
+                            >
+                                <i class="ph-bold ph-x text-xs"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Status Filter Tabs: 全部 / 未复习 / 正在复习 / 已经完成 -->
@@ -853,9 +880,24 @@
 
                 <div class="space-y-2">
                     <h2 id="summaryHeading" class="text-2xl sm:text-3xl font-extrabold text-white">本次听写练习已完成！</h2>
-                    <p class="text-sm text-slate-300 max-w-md mx-auto">
+                    <p id="summarySubtext" class="text-sm text-slate-300 max-w-lg mx-auto">
                         所有生词的复习记录与 SM-2 间隔参数均已更新保存至数据库。
                     </p>
+                </div>
+
+                <!-- Collection Overall Progress Box (Shown in collection session mode) -->
+                <div id="summaryCollectionProgressBox" class="hidden max-w-2xl mx-auto p-4 rounded-2xl bg-violet-500/10 border border-violet-500/25 text-left space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                        <span id="summaryCollectionProgressTitle" class="font-semibold text-violet-200 flex items-center gap-1.5">
+                            <i class="ph-bold ph-books text-violet-400"></i>
+                            词集整体进度
+                        </span>
+                        <span id="summaryCollectionProgressLabel" class="font-mono font-bold text-cyan-300">0 / 0 词 (0%)</span>
+                    </div>
+                    <div class="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                        <div id="summaryCollectionProgressBar" class="bg-gradient-to-r from-cyan-500 to-emerald-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div id="summaryCollectionProgressHint" class="text-[11px] text-slate-300"></div>
                 </div>
 
                 <!-- Score Metrics Grid -->
@@ -884,9 +926,9 @@
                         <i class="ph-bold ph-arrow-counter-clockwise"></i>
                         强化重练本轮错词
                     </button>
-                    <button onclick="restartCurrentSession()" class="px-5 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-sm shadow-lg shadow-violet-500/20 flex items-center gap-2 transition">
-                        <i class="ph-bold ph-repeat"></i>
-                        再练一遍
+                    <button id="btnRestartOrNextSession" onclick="restartCurrentSession()" class="px-5 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-sm shadow-lg shadow-violet-500/20 flex items-center gap-2 transition">
+                        <i id="btnRestartOrNextSessionIcon" class="ph-bold ph-repeat"></i>
+                        <span id="btnRestartOrNextSessionText">再练一遍</span>
                     </button>
                     <button onclick="openTodayResultsModal()" class="px-5 py-3 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 text-emerald-200 hover:text-white font-semibold text-sm flex items-center gap-2 transition">
                         <i class="ph-bold ph-table"></i>
@@ -1325,12 +1367,15 @@
         window.showSingleInstanceWarning = showSingleInstanceWarning;
 
         // State variables
+        const COLLECTION_SESSION_SIZE = 50; // 每个词集复习 Session 的系统设定词数
         let appStats = null;
         let collections = [];
         let activeQueue = [];
         let currentIndex = 0;
         let currentSessionMode = 'smart_due'; // 'smart_due' | 'collection' | 'all' | 'example_review'
         let currentCollectionId = null;
+        let currentCollectionMeta = null; // 后端返回的词集整体进度 { totalWords, reviewedWords, remainingWords, sessionStartIndex, sessionEndIndex, ... }
+        let pendingCollectionRoundReset = false; // 已完成词集点击“再次复习”时，在首次评分提交时开启新一轮
         let sessionResults = []; // [{ word, rating, sm2 }]
         let isMainAnswerRevealed = false;    // 主屏是否已显示当前词答案
         let isSideAppAnswerRevealed = false; // 伴侣屏是否已翻看当前词答案
@@ -1676,12 +1721,21 @@
         }
 
         async function restartCollectionReview(collectionId) {
-            if (confirm('确定要放弃该词集上次的未完成进度，从第 1 词重新开始听写复习吗？')) {
-                await deleteCollectionProgress(collectionId);
-                if (savedCollectionProgressMap) {
-                    delete savedCollectionProgressMap[String(collectionId)];
+            if (confirm('确定要重置该词集的当前复习进度，从第 1 词开启新一轮听写复习吗？（历史复习记录与全局 SM-2 参数不受影响）')) {
+                try {
+                    await fetchApi(`/collections/${encodeURIComponent(collectionId)}/reset-progress`, {
+                        method: 'POST'
+                    });
+                    await deleteCollectionProgress(collectionId);
+                    if (savedCollectionProgressMap) {
+                        delete savedCollectionProgressMap[String(collectionId)];
+                    }
+                    await loadCollections();
+                    await startDictationSession('collection', collectionId, false);
+                } catch (err) {
+                    console.error('Failed to reset collection progress:', err);
+                    showToast('重置词集进度失败: ' + err.message, 'error');
                 }
-                await startDictationSession('collection', collectionId, true);
             }
         }
 
@@ -2911,6 +2965,17 @@
         }
 
         function finishReinforceSession() {
+            const progressBox = document.getElementById('summaryCollectionProgressBox');
+            if (progressBox) progressBox.classList.add('hidden');
+            const summarySubtext = document.getElementById('summarySubtext');
+            if (summarySubtext) {
+                summarySubtext.innerText = '所有生词的复习记录与 SM-2 间隔参数均已更新保存至数据库。';
+            }
+            const btnNextIcon = document.getElementById('btnRestartOrNextSessionIcon');
+            if (btnNextIcon) btnNextIcon.className = 'ph-bold ph-repeat';
+            const btnNextText = document.getElementById('btnRestartOrNextSessionText');
+            if (btnNextText) btnNextText.innerText = '再练一遍';
+
             const summaryHeading = document.getElementById('summaryHeading');
             if (summaryHeading) {
                 summaryHeading.innerText = currentSessionMode === 'example_review'
@@ -3206,6 +3271,7 @@
         }
 
         let currentCollectionStatusFilter = 'all'; // 'all' | 'not_reviewed' | 'in_progress' | 'completed'
+        let currentCollectionTitleFilter = '';
 
         function setCollectionStatusFilter(filterStatus) {
             currentCollectionStatusFilter = filterStatus;
@@ -3220,9 +3286,31 @@
         }
         window.setCollectionStatusFilter = setCollectionStatusFilter;
 
+        function setCollectionTitleFilter(keyword) {
+            currentCollectionTitleFilter = String(keyword || '');
+            const clearBtn = document.getElementById('btnClearCollectionTitleFilter');
+            if (clearBtn) {
+                clearBtn.classList.toggle('hidden', currentCollectionTitleFilter.length === 0);
+            }
+            renderCollectionsGrid();
+        }
+        window.setCollectionTitleFilter = setCollectionTitleFilter;
+
+        function clearCollectionTitleFilter() {
+            currentCollectionTitleFilter = '';
+            const inputEl = document.getElementById('collectionTitleFilterInput');
+            if (inputEl) inputEl.value = '';
+            const clearBtn = document.getElementById('btnClearCollectionTitleFilter');
+            if (clearBtn) clearBtn.classList.add('hidden');
+            renderCollectionsGrid();
+        }
+        window.clearCollectionTitleFilter = clearCollectionTitleFilter;
+
         function renderCollectionsGrid() {
             const container = document.getElementById('collectionsGrid');
+            const countTextEl = document.getElementById('collectionCountText');
             if (!collections || collections.length === 0) {
+                if (countTextEl) countTextEl.innerText = '共 0 个词集单元';
                 container.innerHTML = `
                     <div class="col-span-full p-8 text-center glass-card rounded-2xl text-slate-400 text-sm">
                         暂无词集单元，可前往管理控制台创建。
@@ -3231,43 +3319,52 @@
                 return;
             }
 
+            const titleKeyword = currentCollectionTitleFilter.trim().toLowerCase();
+            const titleMatchedCollections = titleKeyword
+                ? collections.filter(col => String(col.name || '').toLowerCase().includes(titleKeyword))
+                : collections;
+
+            if (countTextEl) {
+                countTextEl.innerText = titleKeyword
+                    ? `匹配 ${titleMatchedCollections.length} / 共 ${collections.length} 个词集单元`
+                    : `共 ${collections.length} 个词集单元`;
+            }
+
             let countNotReviewed = 0;
             let countInProgress = 0;
             let countCompleted = 0;
 
-            const itemsWithStatus = collections.map(col => {
-                const saved = savedCollectionProgressMap && savedCollectionProgressMap[String(col.id)];
-                const totalWords = saved ? (saved.totalWords || (saved.activeQueue ? saved.activeQueue.length : 0)) : (col.wordCount || 0);
-                const isInProgress = Boolean(saved && (saved.status === 'in_progress' || !saved.status) && saved.currentIndex > 0 && saved.currentIndex < totalWords);
+            const itemsWithStatus = titleMatchedCollections.map(col => {
+                const totalWords = Number(col.wordCount || 0);
+                const reviewedWords = Math.min(totalWords, Number(col.reviewedCount || 0));
+                const remainingWords = col.remainingCount != null
+                    ? Number(col.remainingCount)
+                    : Math.max(0, totalWords - reviewedWords);
 
                 let reviewStatus = 'not_reviewed';
                 let reviewStatusLabel = '未复习';
-                let lastReviewDateStr = '未复习';
+                let lastReviewDateStr = col.lastReviewedAt ? formatDateOnly(col.lastReviewedAt) : '未复习';
 
-                if (isInProgress) {
-                    reviewStatus = 'in_progress';
-                    reviewStatusLabel = '正在复习';
-                    countInProgress++;
-                    const dateVal = (saved && saved.updatedAt) || col.lastReviewedAt;
-                    lastReviewDateStr = formatDateOnly(dateVal);
-                } else if ((saved && saved.status === 'completed') || col.lastReviewedAt) {
+                if (totalWords > 0 && reviewedWords >= totalWords) {
                     reviewStatus = 'completed';
                     reviewStatusLabel = '已经完成';
                     countCompleted++;
-                    const dateVal = (saved && (saved.lastCompletedAt || saved.lastReviewedAt)) || col.lastReviewedAt;
-                    lastReviewDateStr = formatDateOnly(dateVal);
+                } else if (reviewedWords > 0 && reviewedWords < totalWords) {
+                    reviewStatus = 'in_progress';
+                    reviewStatusLabel = '正在复习';
+                    countInProgress++;
                 } else {
                     reviewStatus = 'not_reviewed';
                     reviewStatusLabel = '未复习';
                     countNotReviewed++;
-                    lastReviewDateStr = '未复习';
                 }
 
                 return {
                     col,
-                    saved,
                     totalWords,
-                    isInProgress,
+                    reviewedWords,
+                    remainingWords,
+                    isInProgress: reviewStatus === 'in_progress',
                     reviewStatus,
                     reviewStatusLabel,
                     lastReviewDateStr
@@ -3291,20 +3388,28 @@
             }
 
             if (displayedItems.length === 0) {
+                const emptyMsg = titleKeyword
+                    ? `未找到标题包含 “${escapeHtmlText(currentCollectionTitleFilter.trim())}” 的词集单元。`
+                    : '当前筛选分类下无符合条件的词集单元。';
+                const resetBtnHtml = titleKeyword
+                    ? `<button type="button" onclick="clearCollectionTitleFilter()" class="mt-3 px-3.5 py-1.5 rounded-xl bg-violet-600/30 hover:bg-violet-600/50 border border-violet-500/40 text-violet-200 text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer"><i class="ph-bold ph-arrow-counter-clockwise"></i>清空标题筛选</button>`
+                    : '';
                 container.innerHTML = `
                     <div class="col-span-full p-8 text-center glass-card rounded-2xl text-slate-400 text-sm">
-                        当前筛选分类下无符合条件的词集单元。
+                        <div>${emptyMsg}</div>
+                        ${resetBtnHtml}
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = displayedItems.map(({ col, saved, totalWords, isInProgress, reviewStatus, reviewStatusLabel, lastReviewDateStr }) => {
+            container.innerHTML = displayedItems.map(({ col, totalWords, reviewedWords, remainingWords, isInProgress, reviewStatus, reviewStatusLabel, lastReviewDateStr }) => {
                 const tagsBadges = (col.tags || []).map(t => 
                     `<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-white/5 text-slate-300 border border-white/10">${t}</span>`
                 ).join('');
 
-                const progressPercent = isInProgress ? Math.round((saved.currentIndex / totalWords) * 100) : (reviewStatus === 'completed' ? 100 : 0);
+                const progressPercent = totalWords > 0 ? Math.round((reviewedWords / totalWords) * 100) : 0;
+                const nextSessionSize = Math.min(COLLECTION_SESSION_SIZE, remainingWords);
 
                 let statusBadgeHtml = '';
                 let statusDotClass = 'text-slate-500';
@@ -3314,7 +3419,7 @@
                     statusBadgeHtml = `
                         <span class="text-[10px] font-bold text-amber-300 bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 rounded-md flex items-center gap-1">
                             <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
-                            正在复习 (${saved.currentIndex}/${totalWords})
+                            正在复习 (${reviewedWords}/${totalWords})
                         </span>
                     `;
                     statusDotClass = 'text-amber-400 animate-pulse';
@@ -3323,7 +3428,7 @@
                     statusBadgeHtml = `
                         <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/25 px-2 py-0.5 rounded-md flex items-center gap-1">
                             <i class="ph-bold ph-check-circle text-emerald-400"></i>
-                            已经完成
+                            已经完成 (${totalWords}/${totalWords})
                         </span>
                     `;
                     statusDotClass = 'text-emerald-400';
@@ -3360,19 +3465,19 @@
                         <div class="space-y-2 pt-1">
                             <div class="flex items-center justify-between text-[11px] text-slate-400">
                                 <span class="flex items-center gap-1 text-cyan-300">
-                                    <i class="ph-bold ph-bookmarks"></i>未完成进度
+                                    <i class="ph-bold ph-bookmarks"></i>词集进度 · 剩 ${remainingWords} 词
                                 </span>
-                                <span class="text-cyan-300 font-semibold font-mono">${progressPercent}% (${saved.currentIndex}/${totalWords})</span>
+                                <span class="text-cyan-300 font-semibold font-mono">${progressPercent}% (${reviewedWords}/${totalWords})</span>
                             </div>
                             <div class="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
                                 <div class="bg-gradient-to-r from-cyan-500 to-violet-500 h-full rounded-full transition-all duration-300" style="width: ${progressPercent}%"></div>
                             </div>
                             <div class="flex items-center gap-2 pt-1">
-                                <button onclick="resumeCollectionReview('${col.id}')" class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-600 to-violet-600 hover:from-cyan-500 hover:to-violet-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-cyan-500/20 transition active:scale-95">
+                                <button onclick="startDictationSession('collection', '${col.id}')" class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-600 to-violet-600 hover:from-cyan-500 hover:to-violet-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-cyan-500/20 transition active:scale-95">
                                     <i class="ph-bold ph-play"></i>
-                                    继续复习 (第 ${saved.currentIndex + 1} 词)
+                                    继续复习 (第 ${reviewedWords + 1} 词起 · ${nextSessionSize} 词)
                                 </button>
-                                <button onclick="restartCollectionReview('${col.id}')" title="放弃上次进度，从第 1 词重新开始" class="h-9 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-rose-500/30 text-slate-400 hover:text-rose-300 text-xs font-medium flex items-center justify-center gap-1 transition">
+                                <button onclick="restartCollectionReview('${col.id}')" title="重置进度，从第 1 词开启新一轮复习" class="h-9 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-rose-500/30 text-slate-400 hover:text-rose-300 text-xs font-medium flex items-center justify-center gap-1 transition">
                                     <i class="ph-bold ph-arrow-counter-clockwise"></i>
                                     <span>重练</span>
                                 </button>
@@ -3391,11 +3496,14 @@
                         </div>
                     `;
                 } else {
+                    const startLabel = totalWords > COLLECTION_SESSION_SIZE
+                        ? `开始复习此词集 (每次 ${COLLECTION_SESSION_SIZE} 词)`
+                        : '开始复习此词集';
                     actionButtonsHtml = `
                         <div class="space-y-2">
                             <button onclick="startDictationSession('collection', '${col.id}')" class="w-full py-2.5 px-3 rounded-xl bg-violet-600/30 hover:bg-violet-600 border border-violet-500/40 hover:border-violet-500 text-violet-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition">
                                 <i class="ph-bold ph-play"></i>
-                                开始复习此词集
+                                ${startLabel}
                             </button>
                             ${exampleReviewBtnHtml}
                         </div>
@@ -3447,31 +3555,25 @@
         async function startDictationSession(mode, collectionId = null, forceRestart = false) {
             currentSessionMode = mode;
             currentCollectionId = collectionId ? String(collectionId) : null;
+            currentCollectionMeta = null;
+            pendingCollectionRoundReset = false;
             reinforceState = null;
-
-            if (mode === 'collection' && currentCollectionId && !forceRestart) {
-                const saved = await getCollectionProgress(currentCollectionId);
-                const totalWords = saved ? (saved.totalWords || (saved.activeQueue ? saved.activeQueue.length : 0)) : 0;
-                if (saved && (saved.status === 'in_progress' || !saved.status) && saved.currentIndex > 0 && saved.currentIndex < totalWords) {
-                    const shouldResume = confirm(`检测到词集【${saved.collectionName || '当前词集'}】存在上次未完成的复习进度（上次进行至第 ${saved.currentIndex + 1} / ${totalWords} 词）。\n\n点击【确定】从上次位置继续复习\n点击【取消】重新开始复习`);
-                    if (shouldResume) {
-                        await resumeCollectionReview(currentCollectionId, saved);
-                        return;
-                    } else {
-                        await deleteCollectionProgress(currentCollectionId);
-                        if (savedCollectionProgressMap) {
-                            delete savedCollectionProgressMap[String(currentCollectionId)];
-                        }
-                    }
-                }
-            }
 
             currentIndex = 0;
             sessionResults = [];
 
-            let queueUrl = `/dictation/queue?type=${mode}&limit=50`;
+            let queueUrl = `/dictation/queue?type=${mode}&limit=${COLLECTION_SESSION_SIZE}`;
             if (mode === 'collection' && currentCollectionId) {
-                queueUrl += `&collectionId=${currentCollectionId}`;
+                queueUrl += `&collectionId=${encodeURIComponent(currentCollectionId)}`;
+                if (forceRestart) {
+                    queueUrl += `&includeReviewed=true`;
+                    pendingCollectionRoundReset = true;
+                }
+                // Clean up any legacy IndexedDB state so backend DB remains single source of truth
+                deleteCollectionProgress(currentCollectionId).catch(() => {});
+                if (savedCollectionProgressMap) {
+                    delete savedCollectionProgressMap[String(currentCollectionId)];
+                }
             }
 
             try {
@@ -3484,6 +3586,13 @@
                     return;
                 }
 
+                if (mode === 'collection' && res.collectionProgress) {
+                    currentCollectionMeta = res.collectionProgress;
+                    if (currentCollectionMeta.isStartingNewRound) {
+                        pendingCollectionRoundReset = true;
+                    }
+                }
+
                 // Switch View to Session
                 document.getElementById('viewSelection').classList.add('hidden');
                 document.getElementById('viewSummary').classList.add('hidden');
@@ -3493,10 +3602,16 @@
                 // Update session header badge
                 const modeBadge = document.getElementById('sessionModeBadge');
                 if (mode === 'smart_due') {
-                    modeBadge.innerText = '今日智能复习 (Due Today)';
+                    modeBadge.innerText = '今日智能复习 (SM-2 全局调度)';
                 } else if (mode === 'collection') {
                     const matchedCol = collections.find(c => String(c.id) === String(currentCollectionId));
-                    modeBadge.innerText = matchedCol ? matchedCol.name : '词集专项练习';
+                    const colName = matchedCol ? matchedCol.name : '词集专项练习';
+                    if (currentCollectionMeta && currentCollectionMeta.totalWords > 0) {
+                        modeBadge.innerText = `${colName} · 第 ${currentCollectionMeta.sessionStartIndex}~${currentCollectionMeta.sessionEndIndex} 词 (共 ${currentCollectionMeta.totalWords} 词)`;
+                        showToast(`已开启本轮 Session（${activeQueue.length} 词，从第 ${currentCollectionMeta.sessionStartIndex} 词继续，词集共 ${currentCollectionMeta.totalWords} 词）`, 'info');
+                    } else {
+                        modeBadge.innerText = colName;
+                    }
                 } else {
                     modeBadge.innerText = '词库全量摸底';
                 }
@@ -3681,14 +3796,25 @@
 
             try {
                 // Submit to backend API
+                const shouldResetRound = currentSessionMode === 'collection' && Boolean(pendingCollectionRoundReset);
                 const res = await fetchApi('/dictation/review', {
                     method: 'POST',
                     body: JSON.stringify({
                         wordId: currentWord.id,
                         rating: rating,
-                        collectionId: currentCollectionId
+                        collectionId: currentCollectionId,
+                        ...(shouldResetRound ? { resetCollectionRound: true } : {})
                     })
                 });
+                if (shouldResetRound) {
+                    pendingCollectionRoundReset = false;
+                }
+                if (currentSessionMode === 'collection' && res.collectionProgress) {
+                    currentCollectionMeta = {
+                        ...(currentCollectionMeta || {}),
+                        ...res.collectionProgress
+                    };
+                }
 
                 // Record result for session summary
                 sessionResults.push({
@@ -3716,9 +3842,9 @@
                 // Move to next card
                 currentIndex++;
 
-                // Save review progress to IndexedDB for collection review sessions
+                // Progress is immediately persisted to SQLite on every review submission
                 if (currentSessionMode === 'collection' && currentCollectionId) {
-                    await saveCurrentCollectionProgress();
+                    flashAutoSaveIndicator();
                 }
 
                 renderCurrentCard();
@@ -3729,33 +3855,68 @@
         }
 
         async function finishSession() {
-            // When collection review completes, mark it as completed in IndexedDB
+            // Clean up any legacy IndexedDB entry; backend DB tracks true collection completion across sessions
             if (currentSessionMode === 'collection' && currentCollectionId) {
-                const matchedCol = collections.find(c => String(c.id) === String(currentCollectionId));
-                const collectionName = matchedCol ? matchedCol.name : '词集专项练习';
-                const completedRecord = {
-                    collectionId: String(currentCollectionId),
-                    collectionName: collectionName,
-                    status: 'completed',
-                    currentIndex: activeQueue ? activeQueue.length : 0,
-                    totalWords: activeQueue ? activeQueue.length : 0,
-                    lastCompletedAt: Date.now(),
-                    lastReviewedAt: Date.now(),
-                    updatedAt: Date.now(),
-                    activeQueue: [],
-                    sessionResults: []
-                };
-                await saveCollectionProgress(completedRecord);
+                await deleteCollectionProgress(currentCollectionId).catch(() => {});
                 if (savedCollectionProgressMap) {
-                    savedCollectionProgressMap[String(currentCollectionId)] = completedRecord;
+                    delete savedCollectionProgressMap[String(currentCollectionId)];
                 }
             }
 
             const summaryHeading = document.getElementById('summaryHeading');
-            if (summaryHeading) {
-                summaryHeading.innerText = currentSessionMode === 'example_review'
-                    ? '本次单词例句复习已完成！'
-                    : '本次听写练习已完成！';
+            const summarySubtext = document.getElementById('summarySubtext');
+            const progressBox = document.getElementById('summaryCollectionProgressBox');
+            const btnNextIcon = document.getElementById('btnRestartOrNextSessionIcon');
+            const btnNextText = document.getElementById('btnRestartOrNextSessionText');
+
+            if (currentSessionMode === 'collection' && currentCollectionMeta && currentCollectionMeta.totalWords > 0) {
+                const totalW = Number(currentCollectionMeta.totalWords || 0);
+                const reviewedW = Math.min(totalW, Number(currentCollectionMeta.reviewedWords || 0));
+                const remainingW = Math.max(0, totalW - reviewedW);
+                const pct = totalW > 0 ? Math.round((reviewedW / totalW) * 100) : 100;
+                const matchedCol = collections.find(c => String(c.id) === String(currentCollectionId));
+                const colTitle = matchedCol ? matchedCol.name : '当前词集';
+
+                if (progressBox) {
+                    progressBox.classList.remove('hidden');
+                    const titleEl = document.getElementById('summaryCollectionProgressTitle');
+                    const labelEl = document.getElementById('summaryCollectionProgressLabel');
+                    const barEl = document.getElementById('summaryCollectionProgressBar');
+                    const hintEl = document.getElementById('summaryCollectionProgressHint');
+                    if (titleEl) titleEl.innerHTML = `<i class="ph-bold ph-books text-violet-400"></i>词集整体进度 · ${escapeHtmlText(colTitle)}`;
+                    if (labelEl) labelEl.innerText = `${reviewedW} / ${totalW} 词 (${pct}%)`;
+                    if (barEl) barEl.style.width = `${pct}%`;
+                    if (hintEl) {
+                        hintEl.innerText = remainingW > 0
+                            ? `剩余 ${remainingW} 词未复习，下次点击该词集或下方按钮将直接从第 ${reviewedW + 1} 词继续下一 Session。`
+                            : `全部 ${totalW} 词已完成本轮复习，该词集已正式标注为“已经完成”。`;
+                    }
+                }
+
+                if (remainingW > 0) {
+                    const nextBatch = Math.min(COLLECTION_SESSION_SIZE, remainingW);
+                    if (summaryHeading) summaryHeading.innerText = '本轮 Session 听写已完成！';
+                    if (summarySubtext) summarySubtext.innerText = `词集总进度已更新至 ${reviewedW} / ${totalW} 词（剩余 ${remainingW} 词未复习），所有 SM-2 参数已保存至数据库。`;
+                    if (btnNextIcon) btnNextIcon.className = 'ph-bold ph-play';
+                    if (btnNextText) btnNextText.innerText = `继续下一 Session (${nextBatch} 词)`;
+                } else {
+                    if (summaryHeading) summaryHeading.innerText = '🎉 该词集已全部复习完成！';
+                    if (summarySubtext) summarySubtext.innerText = `恭喜！词集全部 ${totalW} 个词条已完成复习，所有 SM-2 间隔参数已更新保存至数据库。`;
+                    if (btnNextIcon) btnNextIcon.className = 'ph-bold ph-arrow-counter-clockwise';
+                    if (btnNextText) btnNextText.innerText = '从头再次复习此词集';
+                }
+            } else {
+                if (progressBox) progressBox.classList.add('hidden');
+                if (summaryHeading) {
+                    summaryHeading.innerText = currentSessionMode === 'example_review'
+                        ? '本次单词例句复习已完成！'
+                        : '本次听写练习已完成！';
+                }
+                if (summarySubtext) {
+                    summarySubtext.innerText = '所有生词的复习记录与 SM-2 间隔参数均已更新保存至数据库。';
+                }
+                if (btnNextIcon) btnNextIcon.className = 'ph-bold ph-repeat';
+                if (btnNextText) btnNextText.innerText = currentSessionMode === 'smart_due' ? '继续智能复习' : '再练一遍';
             }
 
             document.getElementById('viewSession').classList.add('hidden');
@@ -3839,6 +4000,9 @@
                 startReinforceDrillWithWords(reinforceState.allInitialWords, reinforceState.sessionTitle, reinforceState.targetDateStr);
             } else if (currentSessionMode === 'example_review' && currentCollectionId) {
                 startExampleReviewSession(currentCollectionId);
+            } else if (currentSessionMode === 'collection' && currentCollectionId) {
+                const hasRemaining = currentCollectionMeta && Number(currentCollectionMeta.remainingWords || 0) > 0;
+                startDictationSession('collection', currentCollectionId, !hasRemaining);
             } else {
                 startDictationSession(currentSessionMode, currentCollectionId, true);
             }
@@ -3918,7 +4082,7 @@
 
             try {
                 showToast('正在加载词集单词例句...');
-                const res = await fetchApi(`/dictation/queue?type=collection&collectionId=${encodeURIComponent(collectionId)}&limit=200`);
+                const res = await fetchApi(`/dictation/queue?type=collection&collectionId=${encodeURIComponent(collectionId)}&limit=200&includeReviewed=true`);
                 const rawQueue = res.queue || [];
 
                 const wordsWithExamples = rawQueue
@@ -4223,12 +4387,12 @@
         async function confirmExitSession() {
             let msg = '确定要中断当前听写练习返回主菜单吗？';
             if (currentSessionMode === 'collection' && activeQueue && activeQueue.length > 0 && currentIndex < activeQueue.length) {
-                msg = `确定要中断当前听写练习返回主菜单吗？\n当前词集复习进度（第 ${currentIndex + 1} / ${activeQueue.length} 词）已自动保存至本地 IndexedDB，下次进入可继续复习。`;
+                const progressSuffix = currentCollectionMeta && currentCollectionMeta.totalWords > 0
+                    ? `（词集整体进度 ${currentCollectionMeta.reviewedWords}/${currentCollectionMeta.totalWords} 词）`
+                    : '';
+                msg = `确定要退出当前听写 Session 返回主菜单吗？\n已评分词条的进度已实时保存至数据库${progressSuffix}，下次进入该词集将从未复习的第一个词继续。`;
             }
             if (confirm(msg)) {
-                if (currentSessionMode === 'collection' && currentCollectionId && currentIndex > 0 && currentIndex < activeQueue.length) {
-                    await saveCurrentCollectionProgress();
-                }
                 returnToSelection();
             }
         }

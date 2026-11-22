@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>翻译练习 - vCourse.ThaiNotes</title>
     <!-- Tailwind CSS (Preflight disabled to protect existing custom styling) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -23,20 +24,32 @@
         }
         body {
             background: #f4f7fb;
-            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
             display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            flex-direction: column;
+            padding: 0;
+            color: #0f172a;
         }
         .app {
-            max-width: 1080px;
-            width: 100%;
+            max-width: none;
+            width: 80%;
+            min-height: 80%;
+            flex-shrink: 0;
+            margin: 0 auto;
             background: white;
-            border-radius: 32px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.08), 0 8px 16px rgba(0,0,0,0.04);
-            padding: 28px 30px 38px;
+            border-radius: 26px;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.03);
+            border: 1px solid #e9edf2;
+            padding: 24px 32px 28px;
             transition: 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+        #sequentialViewContainer {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
         h1 {
             font-size: 24px;
@@ -59,9 +72,9 @@
             flex-wrap: wrap;
             gap: 16px 20px;
             background: #f8fafc;
-            padding: 16px 20px;
+            padding: 14px 20px;
             border-radius: 20px;
-            margin-bottom: 28px;
+            margin-bottom: 20px;
             align-items: center;
             border: 1px solid #e9edf2;
         }
@@ -140,79 +153,95 @@
         .card {
             background: #ffffff;
             border-radius: 24px;
-            padding: 24px 26px 20px;
+            padding: 28px 34px 26px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.02);
             border: 1px solid #edf1f7;
-            margin-bottom: 28px;
+            margin-bottom: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        #translationStepArea {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        #quizStepArea {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         /* 泰语高亮样式 */
         .thai-glossary-highlight {
             background: #dbeafe;
             color: #1e3a8a;
-            padding: 0 3px;
-            border-radius: 6px;
+            padding: 0 4px;
+            border-radius: 8px;
             font-weight: 600;
-            text-decoration: underline 2.5px solid #2563eb;
-            text-underline-offset: 5px;
+            text-decoration: underline 3px solid #2563eb;
+            text-underline-offset: 6px;
         }
         .thai-token-highlight {
             background: #fef9c3;
             color: #854d0e;
-            padding: 0 2px;
-            border-radius: 4px;
+            padding: 0 3px;
+            border-radius: 5px;
             font-weight: 500;
         }
 
         .sentence-question {
-            font-size: 24px;
-            line-height: 1.6;
+            font-size: 30px;
+            line-height: 1.65;
             color: #0f172a;
-            font-weight: 450;
-            padding: 8px 0 4px;
-            border-top: 1px dashed #e2e8f0;
-            margin-top: 14px;
+            font-weight: 500;
+            padding: 6px 0 8px;
+            margin-top: 0;
         }
         .sentence-question.lang-th {
-            font-size: 26px;
+            font-size: 34px;
+            line-height: 1.7;
             font-weight: 500;
             color: #0b1e33;
         }
         .sentence-answer {
-            font-size: 22px;
-            line-height: 1.6;
+            font-size: 28px;
+            line-height: 1.65;
             color: #0f172a;
-            font-weight: 450;
-            padding: 12px 0 4px;
+            font-weight: 500;
+            padding: 18px 0 6px;
             border-top: 1px dashed #e2e8f0;
-            margin-top: 14px;
+            margin-top: 2px;
         }
         .sentence-answer.lang-th {
-            font-size: 26px;
+            font-size: 34px;
+            line-height: 1.7;
             font-weight: 500;
             color: #0b1e33;
         }
         .sentence-english {
-            font-size: 16px;
+            font-size: 20px;
+            line-height: 1.55;
             color: #64748b;
-            margin-top: 10px;
+            margin-top: 2px;
             border-top: 1px dashed #e2e8f0;
-            padding-top: 12px;
+            padding-top: 16px;
             font-style: italic;
         }
         .glossary-box {
             background: #f8fafc;
-            border-radius: 18px;
-            padding: 14px 18px;
-            margin-top: 14px;
+            border-radius: 20px;
+            padding: 20px 24px;
+            margin-top: auto;
             border: 1px solid #e9edf2;
         }
         .glossary-title {
-            font-size: 13px;
+            font-size: 16px;
             font-weight: 600;
             color: #475569;
             letter-spacing: 0.3px;
-            margin-bottom: 10px;
+            margin-bottom: 14px;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -220,18 +249,18 @@
         .glossary-items {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px 14px;
+            gap: 12px 16px;
         }
         .glossary-tag {
             background: white;
-            padding: 6px 14px 6px 12px;
+            padding: 10px 20px 10px 18px;
             border-radius: 40px;
-            font-size: 15px;
+            font-size: 22px;
             border: 1px solid #dce2ea;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 10px;
             cursor: pointer;
             transition: all 0.15s ease;
             user-select: none;
@@ -245,12 +274,15 @@
             transform: translateY(0);
         }
         .glossary-tag .th {
-            font-weight: 500;
+            font-size: 24px;
+            line-height: 1.4;
+            font-weight: 600;
             color: #0b1e33;
         }
         .glossary-tag .zh {
             color: #475569;
-            font-size: 13px;
+            font-size: 19px;
+            font-weight: 500;
         }
         .lang-th.clickable {
             cursor: pointer;
@@ -312,9 +344,17 @@
             text-align: center;
         }
         @media (max-width: 600px) {
-            .app { padding: 18px 16px; }
-            .sentence-question { font-size: 20px; }
-            .sentence-answer { font-size: 20px; }
+            .app { width: 95%; min-height: 80%; padding: 16px 14px 20px; }
+            .card { padding: 20px 18px 18px; }
+            .sentence-question { font-size: 23px; }
+            .sentence-question.lang-th { font-size: 26px; }
+            .sentence-answer { font-size: 22px; }
+            .sentence-answer.lang-th { font-size: 26px; }
+            .sentence-english { font-size: 16px; }
+            .glossary-box { padding: 16px 14px; }
+            .glossary-tag { padding: 8px 14px; gap: 7px; }
+            .glossary-tag .th { font-size: 20px; }
+            .glossary-tag .zh { font-size: 16px; }
             .control-bar { flex-direction: column; align-items: stretch; }
             .display-group { margin-left: 0; justify-content: center; flex-wrap: wrap; }
             .mode-group { justify-content: center; }
@@ -714,7 +754,7 @@
 
         /* --- 选中文字浮动菜单 styles --- */
         #selectionToolbar {
-            position: absolute;
+            position: fixed;
             background: #1e293b;
             color: white;
             border-radius: 20px;
@@ -1136,12 +1176,18 @@
             margin-top: 6px;
         }
         .card-glossary-tag {
-            padding: 3px 8px;
-            font-size: 12px;
+            padding: 4px 10px;
+            font-size: 13px;
             border-radius: 20px;
+            gap: 5px;
+        }
+        .card-glossary-tag .th {
+            font-size: 14px;
+            font-weight: 600;
         }
         .card-glossary-tag .zh {
-            font-size: 11px;
+            font-size: 12px;
+            font-weight: 400;
         }
         .exercise-card-footer {
             display: flex;
@@ -1177,84 +1223,627 @@
                 max-width: 100%;
             }
         }
+
+        /* =====================================================
+         * Top Header Bar + Toggleable Left Nav + Center Content
+         * ===================================================== */
+        .app-header {
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid #e2e8f0;
+            padding: 11px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px 16px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+            z-index: 30;
+            box-shadow: 0 1px 8px rgba(15, 23, 42, 0.04);
+        }
+        .header-left-group,
+        .header-right-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .header-nav-toggle-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 11px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: #475569;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+        }
+        .header-nav-toggle-btn:hover {
+            border-color: #c7d2fe;
+            color: #4f46e5;
+            background: #eef2ff;
+        }
+        .header-nav-toggle-btn.active {
+            border-color: #c7d2fe;
+            color: #4f46e5;
+            background: #eef2ff;
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.12);
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+        .header-brand-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #2563eb, #4f46e5);
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.22);
+            flex-shrink: 0;
+        }
+        .header-brand h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+            letter-spacing: -0.2px;
+            line-height: 1.2;
+        }
+        .header-info-pill {
+            font-size: 13px;
+            font-weight: 400;
+            color: #64748b;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.15s ease;
+            max-width: 100%;
+        }
+        .header-info-pill:hover {
+            border-color: #cbd5e1;
+            background: #e9eef5;
+        }
+        .header-scope-tag {
+            font-weight: 700;
+            color: #1e40af;
+            background: #dbeafe;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .header-action-btn {
+            padding: 7px 13px;
+            border-radius: 11px;
+            font-size: 13px;
+            font-weight: 600;
+            gap: 6px;
+        }
+
+        /* Main Workspace Container */
+        .app-workspace {
+            flex: 1;
+            display: flex;
+            min-height: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Left Toggleable Navigation Sidebar */
+        .left-nav-sidebar {
+            width: 296px;
+            flex-shrink: 0;
+            background: #f8fafc;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: width 0.26s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease, opacity 0.2s ease;
+            z-index: 25;
+        }
+        .left-nav-sidebar.nav-collapsed {
+            width: 0;
+            border-right-color: transparent;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .left-nav-inner {
+            width: 296px;
+            min-width: 296px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .left-nav-header {
+            padding: 14px 16px;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .left-nav-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+        .left-nav-collapse-btn {
+            border: none;
+            background: transparent;
+            color: #64748b;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-size: 14px;
+        }
+        .left-nav-collapse-btn:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+        .left-nav-controls {
+            padding: 14px 14px 12px;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        .left-nav-field-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 6px;
+        }
+        .left-nav-select {
+            width: 100%;
+            padding: 8px 11px;
+            border-radius: 11px;
+            border: 1px solid #cbd5e1;
+            font-size: 13px;
+            font-weight: 600;
+            background: #f8fafc;
+            color: #1e293b;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+        }
+        .left-nav-select:focus {
+            border-color: #2563eb;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .left-nav-search-wrap {
+            position: relative;
+        }
+        .left-nav-search-wrap input {
+            width: 100%;
+            padding: 7px 10px 7px 30px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            font-size: 12px;
+            color: #334155;
+            outline: none;
+            transition: all 0.15s ease;
+        }
+        .left-nav-search-wrap input:focus {
+            border-color: #2563eb;
+            background: #ffffff;
+        }
+        .left-nav-search-wrap i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 13px;
+            color: #94a3b8;
+            pointer-events: none;
+        }
+        .left-nav-list-header {
+            padding: 9px 14px;
+            background: #f1f5f9;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+            flex-shrink: 0;
+        }
+        .left-nav-count-badge {
+            font-size: 11px;
+            font-weight: 600;
+            color: #475569;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 1px 8px;
+            border-radius: 12px;
+        }
+        .left-nav-lesson-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .nav-lesson-item {
+            width: 100%;
+            text-align: left;
+            border: 1px solid transparent;
+            background: transparent;
+            border-radius: 12px;
+            padding: 9px 11px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            transition: all 0.16s ease;
+            color: #334155;
+        }
+        .nav-lesson-item:hover {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            transform: translateX(2px);
+        }
+        .nav-lesson-item.active {
+            background: #ffffff;
+            border-color: #bfdbfe;
+            border-left: 3.5px solid #2563eb;
+            box-shadow: 0 3px 10px rgba(37, 99, 235, 0.09);
+            color: #1e40af;
+        }
+        .nav-lesson-item-main {
+            min-width: 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .nav-lesson-item-title {
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.35;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .nav-lesson-item.active .nav-lesson-item-title {
+            font-weight: 700;
+            color: #1d4ed8;
+        }
+        .nav-lesson-item-sub {
+            font-size: 11px;
+            color: #94a3b8;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .nav-lesson-item-count {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            background: #eef2f6;
+            padding: 2px 8px;
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+        .nav-lesson-item.active .nav-lesson-item-count {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        .left-nav-footer {
+            padding: 11px 14px;
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 12px;
+            color: #64748b;
+            flex-shrink: 0;
+        }
+        .left-nav-reset-btn {
+            border: 1px solid #c7d2fe;
+            background: #eef2ff;
+            color: #4338ca;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .left-nav-reset-btn:hover {
+            background: #e0e7ff;
+            border-color: #818cf8;
+        }
+
+        /* Floating Edge Toggle Button when Left Nav is collapsed */
+        #leftNavEdgeToggleBtn {
+            position: fixed;
+            left: 0;
+            top: 32%;
+            background: #ffffff;
+            color: #475569;
+            padding: 14px 7px;
+            border-radius: 0 12px 12px 0;
+            box-shadow: 4px 4px 14px rgba(15, 23, 42, 0.1);
+            border: 1px solid #e2e8f0;
+            border-left: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.18s ease;
+            user-select: none;
+            z-index: 40;
+        }
+        #leftNavEdgeToggleBtn:hover {
+            background: #eef2ff;
+            color: #4f46e5;
+            border-color: #c7d2fe;
+        }
+        #leftNavEdgeToggleBtn .vertical-text {
+            font-size: 11px;
+            font-weight: 700;
+            writing-mode: vertical-rl;
+            letter-spacing: 2px;
+        }
+
+        /* Mobile Drawer Backdrop */
+        #leftNavBackdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.35);
+            backdrop-filter: blur(2px);
+            z-index: 35;
+        }
+
+        /* Center Interactive Content Workspace */
+        .app-main {
+            flex: 1;
+            min-width: 0;
+            height: 100%;
+            overflow-y: auto;
+            padding: 0;
+            background: #f4f7fb;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .app-main::before,
+        .app-main::after {
+            content: '';
+            flex: 1 0 20px;
+        }
+
+        /* Subtle Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar,
+        .app-main::-webkit-scrollbar,
+        .left-nav-lesson-list::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track,
+        .app-main::-webkit-scrollbar-track,
+        .left-nav-lesson-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb,
+        .app-main::-webkit-scrollbar-thumb,
+        .left-nav-lesson-list::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.35);
+            border-radius: 999px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+        .app-main::-webkit-scrollbar-thumb:hover,
+        .left-nav-lesson-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 116, 139, 0.55);
+        }
+
+        @media (max-width: 960px) {
+            .left-nav-sidebar {
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                z-index: 45;
+                box-shadow: 8px 0 28px rgba(15, 23, 42, 0.16);
+            }
+            .app-main {
+                padding: 0;
+            }
+            .app-main::before,
+            .app-main::after {
+                flex: 1 0 14px;
+            }
+            .app {
+                width: 92%;
+                padding: 20px 20px 24px;
+            }
+            .app-header {
+                padding: 10px 14px;
+            }
+        }
+        @media (max-width: 600px) {
+            .app {
+                width: 95%;
+                min-height: 80%;
+                padding: 16px 14px 20px;
+            }
+            .header-scope-tag {
+                max-width: 120px;
+            }
+        }
     </style>
 </head>
 <body>
-<div class="app" id="app">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
-        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-            <h1 style="margin-bottom: 0; display: flex; align-items: center; gap: 8px;">
-                <span>📚 翻译练习</span>
-            </h1>
-            <small id="headerInfo" style="font-size: 14px; font-weight: 400; color: #64748b; background: #eef2f6; border: 1px solid #e2e8f0; padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px; vertical-align: middle;">
-                <span id="headerScopeTag" style="font-weight: 700; color: #1e40af; background: #dbeafe; padding: 2px 8px; border-radius: 12px; font-size: 12px;">全部科目</span>
-                <span style="font-weight: 600; color: #334155;">泰 · 中</span>
-                <span style="color: #cbd5e1; font-weight: 300;">|</span>
-                <span id="cardProgressText" style="font-weight: 500; color: #64748b;">共 -- 张 · 待复习 -- 张</span>
-            </small>
+<!-- 顶部 Header Bar -->
+<header class="app-header" id="appHeader">
+    <div class="header-left-group">
+        <button type="button" id="leftNavHeaderBtn" class="header-nav-toggle-btn active" onclick="toggleLeftNav()" title="切换/收起左侧复习范围导航栏" aria-label="切换左侧复习范围导航栏" aria-expanded="true">
+            <i class="ph-bold ph-sidebar-simple"></i>
+        </button>
 
-            <!-- 视图切换模式：顺序复习 / 卡片列表 -->
-            <div class="view-mode-group" id="viewModeGroup" role="tablist" aria-label="练习视图切换">
-                <button type="button" class="view-mode-btn active" id="viewSequentialBtn" onclick="switchView('sequential')" title="顺序逐步复习">
-                    <i class="ph ph-cards"></i>
-                    <span>顺序复习</span>
-                </button>
-                <button type="button" class="view-mode-btn" id="viewListBtn" onclick="switchView('list')" title="查看所有练习题目卡片列表">
-                    <i class="ph ph-squares-four"></i>
-                    <span>卡片列表</span>
-                    <span id="listTotalCountBadge" class="view-count-badge">0</span>
-                </button>
-            </div>
+        <div class="header-brand">
+            <span class="header-brand-icon" aria-hidden="true">
+                <i class="ph-bold ph-translate"></i>
+            </span>
+            <h1>翻译练习</h1>
         </div>
 
-        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <!-- SideApp Companion Screen Quick Capsule Pill -->
-            <button id="btnSideAppPill" onclick="SideAppPairingPanel.open()" title="手机伴侣屏联动 (第二屏幕被动同步)" class="btn btn-outline" style="padding: 8px 14px; border-radius: 12px; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
-                <span id="sideAppStatusDot" class="w-2 h-2 rounded-full bg-slate-400" style="width: 8px; height: 8px; border-radius: 50%; background-color: #94a3b8; display: inline-block;"></span>
-                <i class="ph-bold ph-device-mobile text-indigo-500"></i>
-                <span id="sideAppStatusText">伴侣屏</span>
+        <small id="headerInfo" class="header-info-pill">
+            <span id="headerScopeTag" class="header-scope-tag" title="全部科目 · 全部课时">全部科目</span>
+            <span style="font-weight: 600; color: #334155;">泰 · 中</span>
+            <span style="color: #cbd5e1; font-weight: 300;">|</span>
+            <span id="cardProgressText" style="font-weight: 500; color: #64748b;">共 -- 张 · 待复习 -- 张</span>
+        </small>
+
+        <!-- 视图切换模式：顺序复习 / 卡片列表 -->
+        <div class="view-mode-group" id="viewModeGroup" role="tablist" aria-label="练习视图切换">
+            <button type="button" class="view-mode-btn active" id="viewSequentialBtn" onclick="switchView('sequential')" title="顺序逐步复习">
+                <i class="ph ph-cards"></i>
+                <span>顺序复习</span>
             </button>
-            <button class="btn btn-outline" id="historyBtn" style="padding: 8px 14px; border-radius: 12px; font-size: 14px; font-weight: 600;" title="查看 Quiz 记录">
-                <i class="ph ph-activity text-lg"></i>
-                <span>复习记录</span>
-            </button>
-            <button class="btn btn-outline" id="resetReviewBtn" style="padding: 8px 14px; border-radius: 12px; font-size: 14px; font-weight: 600;" title="重置当前复习进度并从头开始">
-                <i class="ph ph-arrow-counter-clockwise text-lg"></i>
-                <span>重置复习</span>
-            </button>
-            <button class="btn btn-outline" id="appSettingsBtn" style="padding: 8px 14px; border-radius: 12px; font-size: 14px; font-weight: 600;" title="设置">
-                <i class="ph ph-gear text-lg"></i>
-                <span>设置</span>
+            <button type="button" class="view-mode-btn" id="viewListBtn" onclick="switchView('list')" title="查看所有练习题目卡片列表">
+                <i class="ph ph-squares-four"></i>
+                <span>卡片列表</span>
+                <span id="listTotalCountBadge" class="view-count-badge">0</span>
             </button>
         </div>
     </div>
 
-    <!-- 视图 1: 顺序逐步复习视图 -->
-    <div id="sequentialViewContainer">
-        <!-- 顺序复习范围选择栏 -->
-        <div id="seqScopeBar" style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 10px 18px; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <span style="font-size: 13px; font-weight: 700; color: #334155; display: inline-flex; align-items: center; gap: 6px;">
+    <div class="header-right-group">
+        <!-- SideApp Companion Screen Quick Capsule Pill -->
+        <button id="btnSideAppPill" onclick="SideAppPairingPanel.open()" title="手机伴侣屏联动 (第二屏幕被动同步)" class="btn btn-outline header-action-btn" style="display: inline-flex; align-items: center; cursor: pointer;">
+            <span id="sideAppStatusDot" class="w-2 h-2 rounded-full bg-slate-400" style="width: 8px; height: 8px; border-radius: 50%; background-color: #94a3b8; display: inline-block;"></span>
+            <i class="ph-bold ph-device-mobile text-indigo-500"></i>
+            <span id="sideAppStatusText">伴侣屏</span>
+        </button>
+        <button class="btn btn-outline header-action-btn" id="historyBtn" title="查看 Quiz 记录">
+            <i class="ph ph-activity text-base"></i>
+            <span>复习记录</span>
+        </button>
+        <button class="btn btn-outline header-action-btn" id="resetReviewBtn" title="重置当前复习进度并从头开始">
+            <i class="ph ph-arrow-counter-clockwise text-base"></i>
+            <span>重置复习</span>
+        </button>
+        <button class="btn btn-outline header-action-btn" id="appSettingsBtn" title="设置">
+            <i class="ph ph-gear text-base"></i>
+            <span>设置</span>
+        </button>
+    </div>
+</header>
+
+<!-- 主体工作区：左侧可折叠导航栏 + 中部交互内容区 -->
+<div class="app-workspace" id="appWorkspace">
+    <!-- 左侧导航栏收起后的悬浮展开按钮 -->
+    <button type="button" id="leftNavEdgeToggleBtn" class="hidden" onclick="toggleLeftNav(true)" title="展开复习范围导航栏">
+        <i class="ph-bold ph-caret-right" style="font-size: 12px;"></i>
+        <span class="vertical-text">复习范围</span>
+    </button>
+
+    <!-- 窄屏抽屉遮罩 -->
+    <div id="leftNavBackdrop" class="hidden" onclick="toggleLeftNav(false)"></div>
+
+    <!-- 左侧可 Toggle 复习范围导航栏（科目 / 课时选择） -->
+    <aside id="leftNavSidebar" class="left-nav-sidebar" aria-label="复习范围科目与课时导航">
+        <div class="left-nav-inner">
+            <div class="left-nav-header">
+                <div class="left-nav-title">
                     <i class="ph-bold ph-graduation-cap text-indigo-600 text-base"></i>
-                    <span>复习范围:</span>
-                </span>
-                <select id="seqCourseSelect" onchange="onSeqCourseChange(this.value)" style="padding: 6px 12px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 13px; font-weight: 600; background: white; color: #1e293b; outline: none; cursor: pointer;">
-                    <option value="">全部科目 (All Courses)</option>
-                </select>
-                <select id="seqLessonSelect" onchange="onSeqLessonChange(this.value)" style="padding: 6px 12px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 13px; font-weight: 600; background: white; color: #1e293b; outline: none; cursor: pointer;">
-                    <option value="">全部课时 (All Lessons)</option>
-                </select>
+                    <span>复习范围</span>
+                </div>
+                <button type="button" class="left-nav-collapse-btn" onclick="toggleLeftNav(false)" title="收起导航栏" aria-label="收起导航栏">
+                    <i class="ph-bold ph-caret-left"></i>
+                </button>
             </div>
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <span id="seqScopeSummary" style="font-size: 13px; font-weight: 600; color: #64748b;">
-                    当前范围共 <strong id="seqScopeTotal" style="color: #2563eb;">0</strong> 题
-                </span>
-                <button type="button" onclick="switchView('list')" style="background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: 0.15s;" title="转到卡片列表查看并筛选题目">
-                    <i class="ph ph-squares-four"></i>
-                    <span>卡片列表</span>
+
+            <div class="left-nav-controls">
+                <div>
+                    <label for="navCourseSelect" class="left-nav-field-label">
+                        <i class="ph-bold ph-books text-indigo-500"></i>
+                        <span>科目选择 (Course)</span>
+                    </label>
+                    <select id="navCourseSelect" class="left-nav-select" onchange="onNavCourseChange(this.value)">
+                        <option value="">全部科目 (All Courses)</option>
+                    </select>
+                </div>
+
+                <div class="left-nav-search-wrap">
+                    <i class="ph ph-magnifying-glass"></i>
+                    <input type="text" id="navLessonSearchInput" placeholder="快速筛选课时名称..." oninput="onNavLessonSearch(this.value)">
+                </div>
+            </div>
+
+            <div class="left-nav-list-header">
+                <span>课时目录 (Lessons)</span>
+                <span id="navLessonCountBadge" class="left-nav-count-badge">0 课时</span>
+            </div>
+
+            <div id="navLessonListContainer" class="left-nav-lesson-list">
+                <div style="text-align: center; padding: 28px 12px; color: #94a3b8; font-size: 12px;">
+                    正在加载课时列表...
+                </div>
+            </div>
+
+            <div class="left-nav-footer">
+                <div>
+                    当前范围 <strong id="navScopeTotal" style="color: #2563eb;">0</strong> 题
+                    <span style="color: #cbd5e1; margin: 0 3px;">/</span>
+                    <span>共 <span id="navBankTotal">0</span> 题</span>
+                </div>
+                <button type="button" id="navResetScopeBtn" class="left-nav-reset-btn hidden" onclick="resetNavScope()" title="重置为全部科目与全部课时">
+                    全部
                 </button>
             </div>
         </div>
+    </aside>
+
+    <!-- 中部内容交互显示区 -->
+    <main class="app-main" id="appMain">
+        <div class="app" id="app">
+            <!-- 视图 1: 顺序逐步复习视图 -->
+            <div id="sequentialViewContainer">
 
         <div class="control-bar">
             <div id="stepProgressIndicator" style="display: flex; gap: 8px; flex-grow: 1; max-width: 480px; align-items: center; font-size: 13px; font-weight: 600;">
@@ -1296,8 +1885,8 @@
             
             <!-- Step 3: Quiz check display -->
             <div id="quizStepArea" class="hidden">
-                <h3 style="font-size:16px; font-weight:600; color:#1e293b; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
-                    <i class="ph-bold ph-pencil-line text-emerald-500 text-lg"></i>
+                <h3 style="font-size:19px; font-weight:600; color:#1e293b; margin-bottom:18px; display:flex; align-items:center; gap:8px;">
+                    <i class="ph-bold ph-pencil-line text-emerald-500 text-xl"></i>
                     <span>Quiz 自测：请用中文翻译以下泰语词句</span>
                 </h3>
                 <div id="quizItemsContainer" style="display:flex; flex-direction:column; gap:16px;">
@@ -1345,24 +1934,6 @@
                 <button type="button" id="clearSearchBtn" class="clear-search-btn hidden" onclick="clearCardListSearch()" title="清空搜索">
                     <i class="ph-fill ph-x-circle"></i>
                 </button>
-            </div>
-
-            <!-- 科目与课时范围筛选 -->
-            <div class="scope-filter-controls" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <span style="font-size: 13px; font-weight: 700; color: #475569; display: inline-flex; align-items: center; gap: 5px;">
-                    <i class="ph-bold ph-graduation-cap text-indigo-600 text-base"></i>
-                    <span>科目:</span>
-                </span>
-                <select id="cardListCourseSelect" onchange="onCardListCourseChange(this.value)" style="padding: 7px 12px; border-radius: 14px; border: 1px solid #cbd5e1; font-size: 13px; font-weight: 600; background: white; color: #1e293b; outline: none; cursor: pointer; max-width: 200px;">
-                    <option value="">全部科目 (All Courses)</option>
-                </select>
-                <span style="font-size: 13px; font-weight: 700; color: #475569; display: inline-flex; align-items: center; gap: 5px; margin-left: 4px;">
-                    <i class="ph-bold ph-book-open text-indigo-600 text-base"></i>
-                    <span>课时:</span>
-                </span>
-                <select id="cardListLessonSelect" onchange="onCardListLessonChange(this.value)" style="padding: 7px 12px; border-radius: 14px; border: 1px solid #cbd5e1; font-size: 13px; font-weight: 600; background: white; color: #1e293b; outline: none; cursor: pointer; max-width: 240px;">
-                    <option value="">全部课时 (All Lessons)</option>
-                </select>
             </div>
 
             <div class="filter-controls-group">
@@ -1420,6 +1991,8 @@
             </button>
         </div>
     </div>
+        </div>
+    </main>
 </div>
 
 <!-- 自测 Quiz 历史记录 Modal -->
@@ -2083,15 +2656,78 @@
         }
 
         // ==========================================
-        // 科目与课时范围联动与下拉框初始化
+        // 左侧导航栏（复习范围：科目与课时选择）逻辑
         // ==========================================
+        const LEFT_NAV_STORAGE_KEY = 'translate_left_nav_open';
+        let navLessonSearchQuery = '';
+
+        function isMobileNavViewport() {
+            return window.innerWidth <= 960;
+        }
+
+        function toggleLeftNav(open) {
+            const sidebar = document.getElementById('leftNavSidebar');
+            const headerBtn = document.getElementById('leftNavHeaderBtn');
+            const edgeBtn = document.getElementById('leftNavEdgeToggleBtn');
+            const backdrop = document.getElementById('leftNavBackdrop');
+            if (!sidebar) return;
+
+            const isOpen = open !== undefined ? Boolean(open) : sidebar.classList.contains('nav-collapsed');
+            if (isOpen) {
+                sidebar.classList.remove('nav-collapsed');
+                if (headerBtn) {
+                    headerBtn.classList.add('active');
+                    headerBtn.setAttribute('aria-expanded', 'true');
+                }
+                if (edgeBtn) edgeBtn.classList.add('hidden');
+                if (backdrop) {
+                    backdrop.classList.toggle('hidden', !isMobileNavViewport());
+                }
+            } else {
+                sidebar.classList.add('nav-collapsed');
+                if (headerBtn) {
+                    headerBtn.classList.remove('active');
+                    headerBtn.setAttribute('aria-expanded', 'false');
+                }
+                if (edgeBtn) edgeBtn.classList.remove('hidden');
+                if (backdrop) backdrop.classList.add('hidden');
+            }
+
+            if (!isMobileNavViewport()) {
+                try {
+                    localStorage.setItem(LEFT_NAV_STORAGE_KEY, isOpen ? '1' : '0');
+                } catch (e) {}
+            }
+        }
+        window.toggleLeftNav = toggleLeftNav;
+
+        function initLeftNavState() {
+            if (isMobileNavViewport()) {
+                toggleLeftNav(false);
+            } else {
+                const saved = localStorage.getItem(LEFT_NAV_STORAGE_KEY);
+                toggleLeftNav(saved === null ? true : saved === '1');
+            }
+        }
+
+        function escapeNavHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         function populateCourseAndLessonDropdowns() {
-            const seqCourseSel = document.getElementById('seqCourseSelect');
-            const cardListCourseSel = document.getElementById('cardListCourseSelect');
-            
+            const navCourseSel = document.getElementById('navCourseSelect');
+            const bankTotalEl = document.getElementById('navBankTotal');
+
             const totalCount = allRawSentences.length;
+            if (bankTotalEl) bankTotalEl.textContent = totalCount;
+
             const courseOptionsHtml = [`<option value="">全部科目 (All Courses) (${totalCount}题)</option>`];
-            
+
             const sortedCourses = [...coursesData].sort((a, b) => {
                 const countA = allRawSentences.filter(s => Array.isArray(s.courses) && s.courses.some(c => c.courseId === a.id)).length;
                 const countB = allRawSentences.filter(s => Array.isArray(s.courses) && s.courses.some(c => c.courseId === b.id)).length;
@@ -2103,27 +2739,26 @@
             sortedCourses.forEach(c => {
                 const count = allRawSentences.filter(s => Array.isArray(s.courses) && s.courses.some(item => item.courseId === c.id)).length;
                 if (count > 0) {
-                    courseOptionsHtml.push(`<option value="${c.id}">${c.name || c.id} (${count}题)</option>`);
+                    courseOptionsHtml.push(`<option value="${escapeNavHtml(c.id)}">${escapeNavHtml(c.name || c.id)} (${count}题)</option>`);
                 }
             });
 
-            const fullCourseHtml = courseOptionsHtml.join('');
-            if (seqCourseSel) seqCourseSel.innerHTML = fullCourseHtml;
-            if (cardListCourseSel) cardListCourseSel.innerHTML = fullCourseHtml;
+            if (navCourseSel) {
+                navCourseSel.innerHTML = courseOptionsHtml.join('');
+            }
 
-            populateLessonDropdowns(activeCourseId);
+            renderNavLessonList(activeCourseId);
         }
 
-        function populateLessonDropdowns(courseId) {
-            const seqLessonSel = document.getElementById('seqLessonSelect');
-            const cardListLessonSel = document.getElementById('cardListLessonSelect');
+        function renderNavLessonList(courseId) {
+            const container = document.getElementById('navLessonListContainer');
+            const countBadge = document.getElementById('navLessonCountBadge');
+            if (!container) return;
 
             let relevantSentences = allRawSentences;
             if (courseId) {
                 relevantSentences = allRawSentences.filter(s => Array.isArray(s.courses) && s.courses.some(c => c.courseId === courseId));
             }
-
-            const lessonOptionsHtml = [`<option value="">全部课时 (All Lessons) (${relevantSentences.length}题)</option>`];
 
             let relevantLessons = lessonsData;
             if (courseId) {
@@ -2131,6 +2766,7 @@
             }
             relevantLessons = [...relevantLessons].sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0));
 
+            const lessonsWithCount = [];
             relevantLessons.forEach(l => {
                 let count = 0;
                 if (courseId) {
@@ -2139,35 +2775,99 @@
                     count = allRawSentences.filter(s => Array.isArray(s.courses) && s.courses.some(c => c.lessonId === l.id)).length;
                 }
                 if (count > 0) {
-                    lessonOptionsHtml.push(`<option value="${l.id}">${l.title || l.id} (${count}题)</option>`);
+                    const courseObj = coursesData.find(c => c.id === l.course_id);
+                    lessonsWithCount.push({
+                        id: l.id,
+                        title: l.title || l.id,
+                        courseName: courseObj ? (courseObj.name || courseObj.id) : '',
+                        count
+                    });
                 }
             });
 
-            const fullLessonHtml = lessonOptionsHtml.join('');
-            if (seqLessonSel) seqLessonSel.innerHTML = fullLessonHtml;
-            if (cardListLessonSel) cardListLessonSel.innerHTML = fullLessonHtml;
+            if (countBadge) {
+                countBadge.textContent = `${lessonsWithCount.length} 课时`;
+            }
+
+            const query = navLessonSearchQuery.trim().toLowerCase();
+            const filteredLessons = query
+                ? lessonsWithCount.filter(item =>
+                    item.title.toLowerCase().includes(query) ||
+                    item.courseName.toLowerCase().includes(query)
+                )
+                : lessonsWithCount;
+
+            const parts = [];
+
+            if (!query) {
+                const isAllActive = !activeLessonId;
+                const allSubText = courseId ? getActiveCourseName() : '涵盖全部科目练习题';
+                parts.push(`
+                    <button type="button" class="nav-lesson-item ${isAllActive ? 'active' : ''}" onclick="onNavLessonSelect('')">
+                        <div class="nav-lesson-item-main">
+                            <span class="nav-lesson-item-title">全部课时 (All Lessons)</span>
+                            <span class="nav-lesson-item-sub">${escapeNavHtml(allSubText)}</span>
+                        </div>
+                        <span class="nav-lesson-item-count">${relevantSentences.length} 题</span>
+                    </button>
+                `);
+            }
+
+            filteredLessons.forEach(item => {
+                const isActive = (activeLessonId === item.id);
+                const safeId = String(item.id).replace(/'/g, "\\'");
+                const subHtml = (!courseId && item.courseName)
+                    ? `<span class="nav-lesson-item-sub">${escapeNavHtml(item.courseName)}</span>`
+                    : '';
+                parts.push(`
+                    <button type="button" class="nav-lesson-item ${isActive ? 'active' : ''}" onclick="onNavLessonSelect('${safeId}')" title="${escapeNavHtml(item.title)}">
+                        <div class="nav-lesson-item-main">
+                            <span class="nav-lesson-item-title">${escapeNavHtml(item.title)}</span>
+                            ${subHtml}
+                        </div>
+                        <span class="nav-lesson-item-count">${item.count} 题</span>
+                    </button>
+                `);
+            });
+
+            if (filteredLessons.length === 0 && query) {
+                parts.push(`
+                    <div style="text-align: center; padding: 28px 12px; color: #94a3b8; font-size: 12px;">
+                        未找到包含 “${escapeNavHtml(navLessonSearchQuery)}” 的课时
+                    </div>
+                `);
+            }
+
+            container.innerHTML = parts.join('');
+        }
+
+        function populateLessonDropdowns(courseId) {
+            renderNavLessonList(courseId);
         }
 
         function syncScopeDropdowns() {
-            const seqCourseSel = document.getElementById('seqCourseSelect');
-            const cardListCourseSel = document.getElementById('cardListCourseSelect');
-            const seqLessonSel = document.getElementById('seqLessonSelect');
-            const cardListLessonSel = document.getElementById('cardListLessonSelect');
+            const navCourseSel = document.getElementById('navCourseSelect');
+            if (navCourseSel) navCourseSel.value = activeCourseId || '';
 
-            if (seqCourseSel) seqCourseSel.value = activeCourseId || '';
-            if (cardListCourseSel) cardListCourseSel.value = activeCourseId || '';
-            if (seqLessonSel) seqLessonSel.value = activeLessonId || '';
-            if (cardListLessonSel) cardListLessonSel.value = activeLessonId || '';
+            const resetBtn = document.getElementById('navResetScopeBtn');
+            if (resetBtn) {
+                resetBtn.classList.toggle('hidden', !(activeCourseId || activeLessonId));
+            }
+
+            renderNavLessonList(activeCourseId);
         }
 
         function updateScopeDisplay() {
             const scopeTitle = getActiveScopeTitle();
 
             const headerTag = document.getElementById('headerScopeTag');
-            if (headerTag) headerTag.textContent = scopeTitle;
+            if (headerTag) {
+                headerTag.textContent = scopeTitle;
+                headerTag.title = scopeTitle;
+            }
 
-            const seqTotal = document.getElementById('seqScopeTotal');
-            if (seqTotal) seqTotal.textContent = sentencesList.length;
+            const navTotal = document.getElementById('navScopeTotal');
+            if (navTotal) navTotal.textContent = sentencesList.length;
 
             const listBadgeText = document.getElementById('listScopeBadgeText');
             if (listBadgeText) listBadgeText.textContent = scopeTitle;
@@ -2247,33 +2947,52 @@
         }
         window.applyReviewScope = applyReviewScope;
 
-        function onSeqCourseChange(courseId) {
-            populateLessonDropdowns(courseId);
+        function onNavCourseChange(courseId) {
+            navLessonSearchQuery = '';
+            const searchInput = document.getElementById('navLessonSearchInput');
+            if (searchInput) searchInput.value = '';
             applyReviewScope(courseId, '', true);
             showToast(`已切换复习范围：${getActiveScopeTitle()}（共 ${sentencesList.length} 题）`);
         }
-        window.onSeqCourseChange = onSeqCourseChange;
+        window.onNavCourseChange = onNavCourseChange;
+        window.onSeqCourseChange = onNavCourseChange;
+        window.onCardListCourseChange = onNavCourseChange;
 
-        function onSeqLessonChange(lessonId) {
+        function onNavLessonSelect(lessonId) {
             applyReviewScope(activeCourseId, lessonId, true);
+            if (isMobileNavViewport()) {
+                toggleLeftNav(false);
+            }
             showToast(`已切换复习课时：${getActiveLessonTitle()}（共 ${sentencesList.length} 题）`);
         }
-        window.onSeqLessonChange = onSeqLessonChange;
+        window.onNavLessonSelect = onNavLessonSelect;
+        window.onSeqLessonChange = onNavLessonSelect;
+        window.onCardListLessonChange = onNavLessonSelect;
 
-        function onCardListCourseChange(courseId) {
-            populateLessonDropdowns(courseId);
-            applyReviewScope(courseId, '', true);
-            renderCardList();
-            showToast(`卡片列表筛选：${getActiveScopeTitle()}（共 ${sentencesList.length} 题）`);
+        function onNavLessonSearch(val) {
+            navLessonSearchQuery = val || '';
+            renderNavLessonList(activeCourseId);
         }
-        window.onCardListCourseChange = onCardListCourseChange;
+        window.onNavLessonSearch = onNavLessonSearch;
 
-        function onCardListLessonChange(lessonId) {
-            applyReviewScope(activeCourseId, lessonId, true);
-            renderCardList();
-            showToast(`卡片列表筛选：${getActiveLessonTitle()}（共 ${sentencesList.length} 题）`);
+        function resetNavScope() {
+            navLessonSearchQuery = '';
+            const searchInput = document.getElementById('navLessonSearchInput');
+            if (searchInput) searchInput.value = '';
+            applyReviewScope('', '', true);
+            showToast(`已重置为全部范围（共 ${sentencesList.length} 题）`);
         }
-        window.onCardListLessonChange = onCardListLessonChange;
+        window.resetNavScope = resetNavScope;
+
+        function scrollMainToTop() {
+            const mainEl = document.getElementById('appMain');
+            if (mainEl) {
+                mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                const appEl = document.getElementById('app');
+                if (appEl) appEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
 
         function startSequentialReviewForCurrentScope() {
             if (!sentencesList || sentencesList.length === 0) {
@@ -2292,10 +3011,7 @@
             saveProgressToIndexedDB();
             syncSideAppState('viewTranslateSession', true, { answerRevealed: false });
 
-            const appEl = document.getElementById('app');
-            if (appEl) {
-                appEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+            scrollMainToTop();
             showToast(`已开始整体顺序复习：${getActiveScopeTitle()}（共 ${sentencesList.length} 题）`);
         }
         window.startSequentialReviewForCurrentScope = startSequentialReviewForCurrentScope;
@@ -2589,13 +3305,13 @@
             if (data.glossary && data.glossary.length > 0) {
                 data.glossary.forEach((g, idx) => {
                     html += `
-                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:12px 16px; display:flex; flex-direction:column; gap:8px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-size:12px; font-weight:700; color:#10b981; background:#dcfce7; padding:2px 8px; border-radius:6px; letter-spacing:0.5px;">关键词词汇</span>
-                                <span style="font-size:16px; font-weight:600; color:#0b1e33;" class="lang-th">${g.thai}</span>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:14px 18px; display:flex; flex-direction:column; gap:10px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                                <span style="font-size:13px; font-weight:700; color:#10b981; background:#dcfce7; padding:3px 10px; border-radius:6px; letter-spacing:0.5px; flex-shrink:0;">关键词词汇</span>
+                                <span style="font-size:24px; font-weight:600; color:#0b1e33;" class="lang-th">${g.thai}</span>
                             </div>
-                            <input type="text" class="quiz-input" data-type="word" data-thai="${g.thai}" data-correct="${g.meaning}" placeholder="输入中文释义..." style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; font-size:14px; outline:none; transition:all 0.15s;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='#cbd5e1'">
-                            <div class="quiz-feedback hidden" style="font-size:13px; font-weight:550; padding-top:4px;"></div>
+                            <input type="text" class="quiz-input" data-type="word" data-thai="${g.thai}" data-correct="${g.meaning}" placeholder="输入中文释义..." style="width:100%; border:1px solid #cbd5e1; border-radius:10px; padding:10px 14px; font-size:17px; outline:none; transition:all 0.15s;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='#cbd5e1'">
+                            <div class="quiz-feedback hidden" style="font-size:15px; font-weight:550; padding-top:4px;"></div>
                         </div>
                     `;
                 });
@@ -2603,13 +3319,13 @@
 
             // 2. Sentence Thai
             html += `
-                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:12px 16px; display:flex; flex-direction:column; gap:8px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:12px; font-weight:700; color:#3b82f6; background:#dbeafe; padding:2px 8px; border-radius:6px; letter-spacing:0.5px;">完整泰语句子</span>
-                        <span style="font-size:18px; font-weight:600; color:#0b1e33; text-align:right; font-family:'Noto Serif Thai', sans-serif;" class="lang-th">${data.thai}</span>
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:14px 18px; display:flex; flex-direction:column; gap:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                        <span style="font-size:13px; font-weight:700; color:#3b82f6; background:#dbeafe; padding:3px 10px; border-radius:6px; letter-spacing:0.5px; flex-shrink:0;">完整泰语句子</span>
+                        <span style="font-size:24px; font-weight:600; color:#0b1e33; text-align:right; font-family:'Noto Serif Thai', sans-serif;" class="lang-th">${data.thai}</span>
                     </div>
-                    <textarea class="quiz-input" data-type="sentence" data-thai="${data.thai}" data-correct="${data.chinese}" placeholder="输入整句中文翻译..." rows="2" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; font-size:14px; outline:none; transition:all 0.15s; resize:none;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='#cbd5e1'"></textarea>
-                    <div class="quiz-feedback hidden" style="font-size:13px; font-weight:550; padding-top:4px;"></div>
+                    <textarea class="quiz-input" data-type="sentence" data-thai="${data.thai}" data-correct="${data.chinese}" placeholder="输入整句中文翻译..." rows="2" style="width:100%; border:1px solid #cbd5e1; border-radius:10px; padding:10px 14px; font-size:17px; outline:none; transition:all 0.15s; resize:none;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='#cbd5e1'"></textarea>
+                    <div class="quiz-feedback hidden" style="font-size:15px; font-weight:550; padding-top:4px;"></div>
                 </div>
             `;
 
@@ -3013,7 +3729,7 @@
                 questionDisplay.onclick = null;
                 questionDisplay.title = '';
             } else {
-                questionHtml = buildThaiHtml(data, displayMode) + ` <i class="ph ph-speaker-high speaker-btn text-lg text-slate-400 transition-colors ml-1.5 align-middle" onclick="window.playAudioDirect('${safeThai}'); event.stopPropagation();" title="点击播放泰语原句发音"></i>`;
+                questionHtml = buildThaiHtml(data, displayMode) + ` <i class="ph ph-speaker-high speaker-btn text-2xl text-slate-400 transition-colors ml-2 align-middle" onclick="window.playAudioDirect('${safeThai}'); event.stopPropagation();" title="点击播放泰语原句发音"></i>`;
                 questionDisplay.className = 'sentence-question lang-th';
                 questionDisplay.title = '';
                 questionDisplay.onclick = null;
@@ -3029,7 +3745,7 @@
                 answerDisplay.title = '';
             } else {
                 if (isZh2th) {
-                    answerHtml = buildThaiHtml(data, displayMode) + ` <i class="ph ph-speaker-high speaker-btn text-lg text-slate-400 transition-colors ml-1.5 align-middle" onclick="window.playAudioDirect('${safeThai}'); event.stopPropagation();" title="点击播放泰语原句发音"></i>`;
+                    answerHtml = buildThaiHtml(data, displayMode) + ` <i class="ph ph-speaker-high speaker-btn text-2xl text-slate-400 transition-colors ml-2 align-middle" onclick="window.playAudioDirect('${safeThai}'); event.stopPropagation();" title="点击播放泰语原句发音"></i>`;
                     answerDisplay.className = 'sentence-answer lang-th';
                     answerDisplay.title = '';
                     answerDisplay.onclick = null;
@@ -3053,14 +3769,14 @@
 
         function renderGlossary(glossaryArr) {
             if (!glossaryArr || glossaryArr.length === 0) {
-                glossaryList.innerHTML = '<span style="color:#94a3b8; font-size:14px;">无关键词</span>';
+                glossaryList.innerHTML = '<span style="color:#94a3b8; font-size:16px;">无关键词</span>';
                 return;
             }
             glossaryList.innerHTML = glossaryArr.map(g => {
                 const safeThai = g.thai.replace(/'/g, "\\'");
-                return `<span class="glossary-tag flex items-center gap-1.5" onclick="window.playAudioDirect('${safeThai}')" title="点击播放单词发音">
+                return `<span class="glossary-tag flex items-center gap-2.5" onclick="window.playAudioDirect('${safeThai}')" title="点击播放单词发音">
                     <span class="th">${g.thai}</span>
-                    <i class="ph ph-speaker-high text-xs text-emerald-500"></i>
+                    <i class="ph ph-speaker-high text-lg text-emerald-500"></i>
                     <span class="zh">${g.meaning}</span>
                 </span>`;
             }).join('');
@@ -3178,11 +3894,8 @@
             saveProgressToIndexedDB();
             syncSideAppState('viewTranslateSession', true, { answerRevealed: false });
 
-            // Scroll to app container top smoothly
-            const appEl = document.getElementById('app');
-            if (appEl) {
-                appEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+            // Scroll main workspace top smoothly
+            scrollMainToTop();
 
             showToast(`已从第 ${index + 1} 题开始复习`);
         }
@@ -3867,7 +4580,7 @@
                     const top = rect.top - toolbarHeight - 8;
                     
                     selectionToolbar.style.left = `${Math.max(10, Math.min(left, window.innerWidth - toolbarWidth - 10))}px`;
-                    selectionToolbar.style.top = `${Math.max(10, Math.min(top, window.innerHeight - toolbarHeight - 10)) + window.scrollY}px`;
+                    selectionToolbar.style.top = `${Math.max(10, Math.min(top, window.innerHeight - toolbarHeight - 10))}px`;
                 } else {
                     selectionToolbar.classList.add('hidden');
                 }
@@ -3915,14 +4628,16 @@
                 appSettingsBtn.addEventListener('click', openAppSettingsModal);
             }
 
-            const viewSeqBtn = document.getElementById('viewSequentialBtn');
-            if (viewSeqBtn) {
-                viewSeqBtn.addEventListener('click', () => switchView('sequential'));
-            }
-            const viewListBtn = document.getElementById('viewListBtn');
-            if (viewListBtn) {
-                viewListBtn.addEventListener('click', () => switchView('list'));
-            }
+            // 初始化左侧导航栏展开/收起状态
+            initLeftNavState();
+            window.addEventListener('resize', () => {
+                const sidebar = document.getElementById('leftNavSidebar');
+                const backdrop = document.getElementById('leftNavBackdrop');
+                if (sidebar && backdrop) {
+                    const isOpen = !sidebar.classList.contains('nav-collapsed');
+                    backdrop.classList.toggle('hidden', !(isOpen && isMobileNavViewport()));
+                }
+            });
 
             const headerInfo = document.getElementById('headerInfo');
             if (headerInfo) {
@@ -3946,7 +4661,7 @@
             }
 
             document.addEventListener('keydown', (e) => {
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
                 if (currentView === 'list') {
                     if (e.key === 'Escape') {

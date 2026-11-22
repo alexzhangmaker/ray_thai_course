@@ -3058,10 +3058,18 @@ export const initDb = async () => {
       name TEXT NOT NULL,
       description TEXT,
       tags TEXT,
+      round_started_at TEXT DEFAULT NULL,
       created_at TEXT DEFAULT (datetime('now', 'localtime')),
       updated_at TEXT DEFAULT (datetime('now', 'localtime'))
     )
   `);
+
+  // Idempotent migration: add round_started_at to existing dictation_collections tables
+  const dictationColInfo = await all(`PRAGMA table_info(dictation_collections)`);
+  const hasRoundStartedAt = dictationColInfo.some(col => col.name === 'round_started_at');
+  if (!hasRoundStartedAt) {
+    await run(`ALTER TABLE dictation_collections ADD COLUMN round_started_at TEXT DEFAULT NULL`);
+  }
 
   await run(`
     CREATE TABLE IF NOT EXISTS dictation_words (

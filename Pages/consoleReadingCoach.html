@@ -212,7 +212,7 @@
                         <span id="editor-action-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-500/20">编辑</span>
                         <h2 id="editor-title" class="text-base font-bold text-slate-150">课文编辑</h2>
                     </div>
-                    <div class="flex items-center gap-2 font-sans">
+                    <div class="flex items-center flex-wrap justify-end gap-2 font-sans">
                         <button type="button" id="open-client-btn" onclick="openArticleInApp()" class="px-3.5 py-2 text-xs font-semibold text-sky-400 hover:text-white rounded-xl hover:bg-sky-500/10 border border-sky-500/20 hover:border-sky-500/40 transition duration-200 flex items-center gap-1.5" title="在阅读客户端中直接打开本文">
                             <i class="ph ph-arrow-square-out"></i>
                             <span>在客户端阅读</span>
@@ -227,6 +227,14 @@
                         <button type="submit" class="px-5 py-2 text-xs font-semibold bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-xl hover:opacity-95 shadow-md shadow-sky-500/20 transition duration-200 flex items-center gap-1.5">
                             <i class="ph ph-floppy-disk"></i>
                             <span>保存文章</span>
+                        </button>
+                        <button type="button" id="export-vocab-btn" onclick="exportVocabList()" class="px-4 py-2 text-xs font-semibold text-emerald-400 hover:text-white rounded-xl hover:bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/40 transition duration-200 flex items-center gap-1.5" title="导出文章 vocabulary_glossary 中的泰语单词清单并复制到剪贴板">
+                            <i id="export-vocab-icon" class="ph ph-copy"></i>
+                            <span id="export-vocab-btn-text">导出词汇清单</span>
+                        </button>
+                        <button type="button" id="export-article-btn" onclick="exportArticleText()" class="px-4 py-2 text-xs font-semibold text-amber-400 hover:text-white rounded-xl hover:bg-amber-500/10 border border-amber-500/20 hover:border-amber-500/40 transition duration-200 flex items-center gap-1.5" title="导出文章纯文本正文内容并复制到剪贴板">
+                            <i id="export-article-icon" class="ph ph-file-text"></i>
+                            <span id="export-article-btn-text">导出文章</span>
                         </button>
                     </div>
                 </div>
@@ -654,6 +662,8 @@
                 document.getElementById('editor-action-badge').textContent = "编辑";
                 document.getElementById('editor-action-badge').className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-500/20";
                 document.getElementById('delete-article-btn').classList.remove('hidden');
+                resetExportVocabButton();
+                resetExportArticleButton();
                 
                 document.getElementById('form-uuid').value = data.uuid;
                 document.getElementById('form-title').value = data.title;
@@ -686,6 +696,216 @@
         }
 
         // ==========================================
+        // 导出词汇清单 / 导出文章并复制到剪贴板
+        // ==========================================
+        let exportVocabResetTimer = null;
+        let exportArticleResetTimer = null;
+
+        function resetExportVocabButton() {
+            if (exportVocabResetTimer) {
+                clearTimeout(exportVocabResetTimer);
+                exportVocabResetTimer = null;
+            }
+            const btnText = document.getElementById('export-vocab-btn-text');
+            const icon = document.getElementById('export-vocab-icon');
+            if (btnText) btnText.textContent = '导出词汇清单';
+            if (icon) icon.className = 'ph ph-copy';
+        }
+
+        function resetExportArticleButton() {
+            if (exportArticleResetTimer) {
+                clearTimeout(exportArticleResetTimer);
+                exportArticleResetTimer = null;
+            }
+            const btnText = document.getElementById('export-article-btn-text');
+            const icon = document.getElementById('export-article-icon');
+            if (btnText) btnText.textContent = '导出文章';
+            if (icon) icon.className = 'ph ph-file-text';
+        }
+
+        function stripHtmlToText(html) {
+            if (!html || typeof html !== 'string') return '';
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            return (tempDiv.textContent || tempDiv.innerText || '').trim();
+        }
+
+        function parseCurrentArticleContentJson() {
+            const jsonText = document.getElementById('form-content-json')?.value?.trim();
+            if (jsonText) {
+                return JSON.parse(jsonText);
+            }
+            if (activeArticle && activeArticle.content) {
+                return typeof activeArticle.content === 'string'
+                    ? JSON.parse(activeArticle.content)
+                    : activeArticle.content;
+            }
+            return null;
+        }
+
+        function fallbackCopyText(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.top = '0';
+            textArea.style.left = '0';
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            let successful = false;
+            try {
+                successful = document.execCommand('copy');
+            } catch (err) {
+                console.error('Fallback copy failed:', err);
+            }
+            document.body.removeChild(textArea);
+            return successful;
+        }
+
+        function copyTextToClipboard(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                return navigator.clipboard.writeText(text).catch(err => {
+                    console.warn('navigator.clipboard copy failed, trying fallback...', err);
+                    if (!fallbackCopyText(text)) {
+                        throw err;
+                    }
+                });
+            }
+            return new Promise((resolve, reject) => {
+                if (fallbackCopyText(text)) {
+                    resolve();
+                } else {
+                    reject(new Error('浏览器不支持自动复制'));
+                }
+            });
+        }
+
+        async function exportVocabList() {
+            let contentObj = null;
+            try {
+                contentObj = parseCurrentArticleContentJson();
+            } catch (err) {
+                alert("文章 JSON 格式不正确，无法导出词汇清单: " + err.message);
+                return;
+            }
+
+            const glossary = contentObj && contentObj.vocabulary_glossary;
+            if (!glossary || typeof glossary !== 'object') {
+                alert("当前文章 JSON 中未找到有效的 vocabulary_glossary 字段！");
+                return;
+            }
+
+            const entries = Array.isArray(glossary) ? glossary : Object.values(glossary);
+            const thaiWords = Array.from(new Set(
+                entries
+                    .map(item => {
+                        if (typeof item === 'string') return item.trim();
+                        if (item && typeof item === 'object' && typeof item.thai === 'string') {
+                            return item.thai.trim();
+                        }
+                        return '';
+                    })
+                    .filter(Boolean)
+            ));
+
+            if (thaiWords.length === 0) {
+                alert("当前文章的 vocabulary_glossary 中没有可导出的泰语单词！");
+                return;
+            }
+
+            const csvText = thaiWords.join(',');
+
+            try {
+                await copyTextToClipboard(csvText);
+
+                const btnText = document.getElementById('export-vocab-btn-text');
+                const icon = document.getElementById('export-vocab-icon');
+                if (btnText && icon) {
+                    btnText.textContent = `已复制 (${thaiWords.length}词)`;
+                    icon.className = 'ph ph-check text-emerald-300';
+                    if (exportVocabResetTimer) clearTimeout(exportVocabResetTimer);
+                    exportVocabResetTimer = setTimeout(() => {
+                        resetExportVocabButton();
+                    }, 2000);
+                }
+
+                updateConnectionStatus('connected', `已复制 ${thaiWords.length} 个泰语词汇`);
+                setTimeout(() => updateConnectionStatus('connected', '服务连接正常'), 2000);
+            } catch (err) {
+                console.error('Export vocab copy failed:', err);
+                alert("复制到剪贴板失败，请手动复制以下词汇清单：\n\n" + csvText);
+            }
+        }
+
+        async function exportArticleText() {
+            let contentObj = null;
+            try {
+                contentObj = parseCurrentArticleContentJson();
+            } catch (err) {
+                alert("文章 JSON 格式不正确，无法导出文章内容: " + err.message);
+                return;
+            }
+
+            if (!contentObj || typeof contentObj !== 'object') {
+                alert("当前没有可导出的文章内容！");
+                return;
+            }
+
+            let paragraphs = [];
+            if (Array.isArray(contentObj.paragraphs)) {
+                paragraphs = contentObj.paragraphs;
+            } else if (Array.isArray(contentObj.sentences)) {
+                paragraphs = [{ sentences: contentObj.sentences }];
+            } else {
+                alert("当前文章 JSON 中未找到有效的 paragraphs 或 sentences 字段！");
+                return;
+            }
+
+            const paragraphTexts = paragraphs
+                .map(p => {
+                    if (!p || !Array.isArray(p.sentences)) return '';
+                    return p.sentences
+                        .map(s => {
+                            if (!s || typeof s !== 'object') return '';
+                            const raw = s.html_render || s.text || s.thai || '';
+                            return stripHtmlToText(raw);
+                        })
+                        .filter(Boolean)
+                        .join(' ');
+                })
+                .filter(Boolean);
+
+            if (paragraphTexts.length === 0) {
+                alert("当前文章中没有可导出的正文内容！");
+                return;
+            }
+
+            const articleText = paragraphTexts.join('\n\n');
+
+            try {
+                await copyTextToClipboard(articleText);
+
+                const btnText = document.getElementById('export-article-btn-text');
+                const icon = document.getElementById('export-article-icon');
+                if (btnText && icon) {
+                    btnText.textContent = `已复制 (${paragraphTexts.length}段)`;
+                    icon.className = 'ph ph-check text-emerald-300';
+                    if (exportArticleResetTimer) clearTimeout(exportArticleResetTimer);
+                    exportArticleResetTimer = setTimeout(() => {
+                        resetExportArticleButton();
+                    }, 2000);
+                }
+
+                updateConnectionStatus('connected', `已复制文章正文 (${paragraphTexts.length}段)`);
+                setTimeout(() => updateConnectionStatus('connected', '服务连接正常'), 2000);
+            } catch (err) {
+                console.error('Export article copy failed:', err);
+                alert("复制到剪贴板失败，请手动复制以下文章内容：\n\n" + articleText);
+            }
+        }
+
+        // ==========================================
         // 新增课文
         // ==========================================
         function initNewArticle() {
@@ -707,6 +927,8 @@
             document.getElementById('editor-action-badge').textContent = "新建";
             document.getElementById('editor-action-badge').className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-500/20";
             document.getElementById('delete-article-btn').classList.add('hidden');
+            resetExportVocabButton();
+            resetExportArticleButton();
 
             // Reset values
             document.getElementById('form-uuid').value = '';

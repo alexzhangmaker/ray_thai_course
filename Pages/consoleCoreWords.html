@@ -547,6 +547,30 @@
                     </div>
                 </div>
 
+                <!-- AI Prompt Generator Helper -->
+                <div class="p-3.5 rounded-2xl bg-violet-500/10 border border-violet-500/20 space-y-2.5">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <i class="ph ph-sparkle text-violet-400 text-base shrink-0"></i>
+                            <label for="import-word-list-input" class="text-[11px] font-bold text-slate-200 uppercase tracking-wider">
+                                单词清单（用于生成 AI 制词 Prompt）
+                            </label>
+                            <span id="import-word-list-count" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                                0 词
+                            </span>
+                        </div>
+                        <button type="button" id="btn-export-prompt" onclick="exportCoreWordsPrompt()" class="px-3.5 py-1.5 text-xs font-semibold text-emerald-300 hover:text-white rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 transition duration-150 flex items-center justify-center gap-1.5 shrink-0" title="根据单词清单实例化 AI 制词 Prompt 并拷贝到剪贴板">
+                            <i id="export-prompt-icon" class="ph ph-copy"></i>
+                            <span id="export-prompt-btn-text">Prompt导出</span>
+                        </button>
+                    </div>
+                    <textarea id="import-word-list-input" rows="2" oninput="updateImportWordListCount()" placeholder="输入或粘贴泰语单词清单（支持空格、逗号或换行 Enter 分隔），例如：ประวัติศาสตร์, บรรพบุรุษ, อาณาจักร"
+                        class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-violet-500 font-thai custom-scrollbar"></textarea>
+                    <p class="text-[11px] text-slate-400 leading-relaxed">
+                        输入单词清单后点击“Prompt导出”，系统将自动实例化完整的 AI Prompt 并复制到剪贴板；粘贴到 AI 对话框即可生成下方所需的标准 JSON 数组。
+                    </p>
+                </div>
+
                 <!-- Textarea -->
                 <div class="space-y-1.5">
                     <div class="flex justify-between items-center">
@@ -2014,12 +2038,151 @@
 
             if (replaceCb) replaceCb.checked = false;
             if (replaceSetCb) replaceSetCb.checked = false;
+            resetExportPromptButton();
+            updateImportWordListCount();
             statusEl.className = "hidden";
             modal.classList.remove('hidden');
         }
 
         function closeImportModal() {
             document.getElementById('import-json-modal').classList.add('hidden');
+        }
+
+        // ==========================================
+        // AI 制词 Prompt 实例化与导出
+        // ==========================================
+        let exportPromptResetTimer = null;
+
+        function parseImportWordList(rawText) {
+            if (!rawText || typeof rawText !== 'string') return [];
+            return Array.from(new Set(
+                rawText
+                    .split(/[\s,，、;；]+/)
+                    .map(w => w.trim())
+                    .filter(Boolean)
+            ));
+        }
+
+        function updateImportWordListCount() {
+            const inputEl = document.getElementById('import-word-list-input');
+            const badgeEl = document.getElementById('import-word-list-count');
+            if (!inputEl || !badgeEl) return;
+            const words = parseImportWordList(inputEl.value);
+            badgeEl.textContent = `${words.length} 词`;
+        }
+
+        function resetExportPromptButton() {
+            if (exportPromptResetTimer) {
+                clearTimeout(exportPromptResetTimer);
+                exportPromptResetTimer = null;
+            }
+            const btnText = document.getElementById('export-prompt-btn-text');
+            const icon = document.getElementById('export-prompt-icon');
+            if (btnText) btnText.textContent = 'Prompt导出';
+            if (icon) icon.className = 'ph ph-copy';
+        }
+
+        function buildCoreWordsPrompt(words) {
+            const numberedWordList = words.map((w, idx) => `${idx + 1}. ${w}`).join('\n');
+            return `# Role
+你是一位拥有 20 年经验的泰语语言学与对外泰语教学专家，同时精通结构化 JSON 数据编写。你的任务是根据给定的泰语单词清单，生成可直接导入 vCourse.ThaiNotes 核心词汇学习系统的标准 JSON 数组。
+
+# Task
+请针对下方单词清单中的**每一个泰语单词**，按原顺序生成完整的核心词汇词条，包含：
+1. \`word\`：泰语原词（保持与输入清单一致，不要改动拼写）。
+2. \`ipa\`：标准曼谷泰语国际音标，用斜杠 \`/.../\` 包裹、音节间以 \`.\` 分隔，并标注长元音 \`ː\` 与五声调调值（如中平 \`˧\`、低降 \`˩˩\`、降调 \`˥˩\`、高升 \`˦˥\`、升调 \`˩˩˦\`，例如 \`/pʰuːm˧.tʰaːn˩˩˦/\`）。
+3. \`meanings\`：多词性/多义项数组。每个义项对象包含：
+   - \`part_of_speech\`：标准词性缩写（如 \`n.\`、\`v.\`、\`adj.\`、\`adv.\`、\`prep.\`、\`conj.\`、\`pron.\`、\`clf.\`、\`part.\`、\`idiom\`）。
+   - \`meaning\`：准确、简洁、地道的中文释义（同词性下多个近义中文释义可用顿号或逗号分隔）。
+   - \`examples\`：例句数组，每个义项提供 **1~2 个**自然地道的泰中对照例句：
+     - \`sentence\`：纯泰语例句（必须自然包含该目标单词，不夹杂拼音、罗马音或中文注释）。
+     - \`meaning\`：对应例句的准确流畅中文翻译。
+
+# Strict Output Rules
+1. **只输出纯 JSON 数组**（以 \`[\` 开头、\`]\` 结尾），**不要**包含 Markdown 代码块标记（如 \`\`\`json ... \`\`\`），**不要**输出任何开场白、解释说明或总结文字。
+2. 必须严格遵守合法 JSON 语法（使用英文双引号、无尾随逗号、正确转义特殊字符）。
+3. 必须完整覆盖下方全部 **${words.length}** 个单词，严格按顺序输出，**不得遗漏、合并或擅自增删单词**。
+4. 若某单词在泰语中存在多个常见词性或核心义项，请在 \`meanings\` 中分条列出；若以单一核心义项为主，保留 1 条即可。
+5. **不要**添加 \`id\`、\`lessonId\`、\`setId\`、\`order\` 等系统管理字段（系统在导入时会自动绑定）。
+
+# JSON Schema Reference & Example
+[
+  {
+    "word": "ภูมิฐาน",
+    "ipa": "/pʰuːm˧.tʰaːn˩˩˦/",
+    "meanings": [
+      {
+        "part_of_speech": "adj.",
+        "meaning": "有地位的，有尊严的，端庄的",
+        "examples": [
+          {
+            "sentence": "เขามีบุคลิกภาพที่ภูมิฐาน",
+            "meaning": "他有端庄稳重的气质"
+          },
+          {
+            "sentence": "การแต่งกายแบบภูมิฐานเหมาะกับงานสำคัญ",
+            "meaning": "端庄的着装适合重要场合"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "word": "ประมาณ",
+    "ipa": "/pra˧.maːn˧/",
+    "meanings": [
+      {
+        "part_of_speech": "adv.",
+        "meaning": "大约、大概",
+        "examples": [
+          {
+            "sentence": "เราเรียนภาษาไทยประมาณ ๘ ชั่วโมงต่อสัปดาห์",
+            "meaning": "我们每周大约学8个小时泰语"
+          }
+        ]
+      }
+    ]
+  }
+]
+
+# Input Word List（共 ${words.length} 个泰语单词）
+${numberedWordList}
+
+请严格按照上述 Schema 和规则，直接输出包含以上全部 ${words.length} 个单词的纯 JSON 数组：`;
+        }
+
+        function exportCoreWordsPrompt() {
+            const inputEl = document.getElementById('import-word-list-input');
+            const rawText = inputEl ? inputEl.value : '';
+            const words = parseImportWordList(rawText);
+
+            if (words.length === 0) {
+                showModalStatus("请先在“单词清单”输入框中输入至少一个泰语单词（支持空格、逗号或换行分隔）！", "error");
+                if (inputEl) inputEl.focus();
+                return;
+            }
+
+            const promptText = buildCoreWordsPrompt(words);
+
+            copyTextToClipboard(
+                promptText,
+                () => {
+                    const btnText = document.getElementById('export-prompt-btn-text');
+                    const icon = document.getElementById('export-prompt-icon');
+                    if (btnText && icon) {
+                        btnText.textContent = `已复制 Prompt (${words.length}词)`;
+                        icon.className = 'ph ph-check text-emerald-300';
+                        if (exportPromptResetTimer) clearTimeout(exportPromptResetTimer);
+                        exportPromptResetTimer = setTimeout(() => {
+                            resetExportPromptButton();
+                        }, 2500);
+                    }
+                    showModalStatus(`已使用 ${words.length} 个单词实例化 AI Prompt 并复制到剪贴板！请粘贴到 AI 对话框生成 JSON 数组后，再粘贴至下方导入。`, "success");
+                },
+                () => {
+                    showModalStatus("自动复制到剪贴板失败，请检查浏览器权限后重试。", "error");
+                }
+            );
         }
 
         function loadSampleImportJson() {

@@ -5869,18 +5869,91 @@ const formatDictationCollection = (row, stats = {}) => {
   if (row.tags) {
     tags = typeof row.tags === 'string' ? row.tags.split(',').map(s => s.trim()).filter(Boolean) : row.tags;
   }
+  const wordCount = Number(stats.wordCount || 0);
+  const reviewedCount = Math.min(wordCount, Number(stats.reviewedCount || 0));
+  const remainingCount = Math.max(0, wordCount - reviewedCount);
+  let reviewStatus = 'not_reviewed';
+  if (wordCount > 0 && reviewedCount >= wordCount) {
+    reviewStatus = 'completed';
+  } else if (reviewedCount > 0 && reviewedCount < wordCount) {
+    reviewStatus = 'in_progress';
+  }
+
   return {
     id: row.id,
     name: row.name,
     description: row.description || '',
     tags: tags,
     tagsString: row.tags || '',
-    wordCount: Number(stats.wordCount || 0),
+    wordCount,
+    reviewedCount,
+    remainingCount,
+    reviewStatus,
     dueCount: Number(stats.dueCount || 0),
     masteredCount: Number(stats.masteredCount || 0),
     lastReviewedAt: stats.lastReviewedAt || row.last_reviewed_at || null,
+    roundStartedAt: row.round_started_at || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at
+  };
+};
+
+// Compute real-time collection review progress for the current round
+const getCollectionProgressStats = async (collectionId, knownRoundStartedAt = undefined) => {
+  let roundStartedAt = knownRoundStartedAt;
+  if (roundStartedAt === undefined) {
+    const colRow = await get(`SELECT round_started_at FROM dictation_collections WHERE id = ?`, [collectionId]);
+    roundStartedAt = colRow ? (colRow.round_started_at || null) : null;
+  }
+
+  const totalRow = await get(
+    `SELECT COUNT(cw.word_id) as total_words,
+            SUM(CASE WHEN datetime(w.next_review_date) <= datetime('now') THEN 1 ELSE 0 END) as due_count,
+            SUM(CASE WHEN w.repetition >= 3 THEN 1 ELSE 0 END) as mastered_count
+     FROM dictation_collection_words cw
+     JOIN dictation_words w ON cw.word_id = w.id
+     WHERE cw.collection_id = ?`,
+    [collectionId]
+  );
+
+  const reviewedRow = await get(
+    `SELECT COUNT(DISTINCT cw.word_id) as reviewed_words
+     FROM dictation_collection_words cw
+     WHERE cw.collection_id = ?
+       AND EXISTS (
+         SELECT 1 FROM dictation_review_logs l
+         WHERE l.collection_id = cw.collection_id
+           AND l.word_id = cw.word_id
+           AND (? IS NULL OR l.reviewed_at >= ?)
+       )`,
+    [collectionId, roundStartedAt, roundStartedAt]
+  );
+
+  const lastLogRow = await get(
+    `SELECT MAX(reviewed_at) as last_reviewed_at FROM dictation_review_logs WHERE collection_id = ?`,
+    [collectionId]
+  );
+
+  const totalWords = Number(totalRow?.total_words || 0);
+  const reviewedWords = Math.min(totalWords, Number(reviewedRow?.reviewed_words || 0));
+  const remainingWords = Math.max(0, totalWords - reviewedWords);
+  let reviewStatus = 'not_reviewed';
+  if (totalWords > 0 && reviewedWords >= totalWords) {
+    reviewStatus = 'completed';
+  } else if (reviewedWords > 0 && reviewedWords < totalWords) {
+    reviewStatus = 'in_progress';
+  }
+
+  return {
+    collectionId,
+    totalWords,
+    reviewedWords,
+    remainingWords,
+    reviewStatus,
+    dueCount: Number(totalRow?.due_count || 0),
+    masteredCount: Number(totalRow?.mastered_count || 0),
+    lastReviewedAt: lastLogRow?.last_reviewed_at || null,
+    roundStartedAt
   };
 };
 
@@ -5893,6 +5966,15 @@ app.get('/api/collections', authenticateDictationApi, async (req, res) => {
              COUNT(cw.word_id) as word_count,
              SUM(CASE WHEN datetime(w.next_review_date) <= datetime('now') THEN 1 ELSE 0 END) as due_count,
              SUM(CASE WHEN w.repetition >= 3 THEN 1 ELSE 0 END) as mastered_count,
+             (SELECT COUNT(DISTINCT cw2.word_id)
+              FROM dictation_collection_words cw2
+              WHERE cw2.collection_id = c.id
+                AND EXISTS (
+                  SELECT 1 FROM dictation_review_logs l
+                  WHERE l.collection_id = c.id
+                    AND l.word_id = cw2.word_id
+                    AND (c.round_started_at IS NULL OR l.reviewed_at >= c.round_started_at)
+                )) as reviewed_count,
              (SELECT MAX(reviewed_at) FROM dictation_review_logs WHERE collection_id = c.id) as last_reviewed_at
       FROM dictation_collections c
       LEFT JOIN dictation_collection_words cw ON c.id = cw.collection_id
@@ -5909,6 +5991,7 @@ app.get('/api/collections', authenticateDictationApi, async (req, res) => {
     const rows = await all(query, params);
     const collections = rows.map(r => formatDictationCollection(r, {
       wordCount: r.word_count,
+      reviewedCount: r.reviewed_count,
       dueCount: r.due_count,
       masteredCount: r.mastered_count,
       lastReviewedAt: r.last_reviewed_at
@@ -5988,10 +6071,13 @@ app.get('/api/collections/:id', authenticateDictationApi, async (req, res) => {
       words.push(formatted);
     }
 
+    const progressStats = await getCollectionProgressStats(id, col.round_started_at || null);
     const collection = formatDictationCollection(col, {
       wordCount: words.length,
+      reviewedCount: progressStats.reviewedWords,
       dueCount,
-      masteredCount
+      masteredCount,
+      lastReviewedAt: progressStats.lastReviewedAt
     });
     collection.words = words;
 
@@ -6026,26 +6112,54 @@ app.put('/api/collections/:id', authenticateDictationApi, async (req, res) => {
     );
 
     const updated = await get(`SELECT * FROM dictation_collections WHERE id = ?`, [id]);
-    const countRow = await get(
-      `SELECT COUNT(cw.word_id) as word_count,
-              SUM(CASE WHEN datetime(w.next_review_date) <= datetime('now') THEN 1 ELSE 0 END) as due_count,
-              SUM(CASE WHEN w.repetition >= 3 THEN 1 ELSE 0 END) as mastered_count
-       FROM dictation_collection_words cw
-       JOIN dictation_words w ON cw.word_id = w.id
-       WHERE cw.collection_id = ?`,
-      [id]
-    );
+    const progressStats = await getCollectionProgressStats(id, updated.round_started_at || null);
 
     res.json({
       success: true,
       collection: formatDictationCollection(updated, {
-        wordCount: countRow?.word_count || 0,
-        dueCount: countRow?.due_count || 0,
-        masteredCount: countRow?.mastered_count || 0
+        wordCount: progressStats.totalWords,
+        reviewedCount: progressStats.reviewedWords,
+        dueCount: progressStats.dueCount,
+        masteredCount: progressStats.masteredCount,
+        lastReviewedAt: progressStats.lastReviewedAt
       })
     });
   } catch (err) {
     console.error('Failed to update collection:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4b. POST /api/collections/:id/reset-progress - Start a fresh review cycle for this collection from word #1
+app.post('/api/collections/:id/reset-progress', authenticateDictationApi, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const existing = await get(`SELECT * FROM dictation_collections WHERE id = ?`, [id]);
+    if (!existing) {
+      return res.status(404).json({ error: `Collection '${id}' not found` });
+    }
+
+    const nowIso = new Date().toISOString();
+    await run(
+      `UPDATE dictation_collections SET round_started_at = ?, updated_at = ? WHERE id = ?`,
+      [nowIso, nowIso, id]
+    );
+
+    const updated = await get(`SELECT * FROM dictation_collections WHERE id = ?`, [id]);
+    const progressStats = await getCollectionProgressStats(id, nowIso);
+
+    res.json({
+      success: true,
+      collection: formatDictationCollection(updated, {
+        wordCount: progressStats.totalWords,
+        reviewedCount: progressStats.reviewedWords,
+        dueCount: progressStats.dueCount,
+        masteredCount: progressStats.masteredCount,
+        lastReviewedAt: progressStats.lastReviewedAt
+      })
+    });
+  } catch (err) {
+    console.error('Failed to reset collection progress:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -6402,7 +6516,7 @@ app.delete('/api/words/:id', authenticateDictationApi, async (req, res) => {
 // 12. POST /api/dictation/review - Supervisor records dictation grading result & calculates SM-2
 app.post('/api/dictation/review', authenticateDictationApi, async (req, res) => {
   try {
-    const { wordId, rating, collectionId } = req.body;
+    const { wordId, rating, collectionId, resetCollectionRound } = req.body;
     if (!wordId) {
       return res.status(400).json({ error: 'wordId is required' });
     }
@@ -6424,6 +6538,15 @@ app.post('/api/dictation/review', authenticateDictationApi, async (req, res) => 
 
     const nextState = calculateSM2(currentState, numericRating);
     const nowIso = new Date().toISOString();
+
+    // If starting a fresh review round on an already-completed collection, mark round_started_at
+    // with the exact same timestamp so this first graded word counts as 1/N in the new round
+    if (collectionId && resetCollectionRound) {
+      await run(
+        `UPDATE dictation_collections SET round_started_at = ?, updated_at = ? WHERE id = ?`,
+        [nowIso, nowIso, collectionId]
+      );
+    }
 
     // Update word with new SM-2 parameters
     await run(
@@ -6458,6 +6581,7 @@ app.post('/api/dictation/review', authenticateDictationApi, async (req, res) => 
 
     const updatedWord = await get(`SELECT * FROM dictation_words WHERE id = ?`, [wordId]);
     const colRows = await all(`SELECT collection_id FROM dictation_collection_words WHERE word_id = ?`, [wordId]);
+    const collectionProgress = collectionId ? await getCollectionProgressStats(collectionId) : null;
 
     res.json({
       success: true,
@@ -6466,7 +6590,8 @@ app.post('/api/dictation/review', authenticateDictationApi, async (req, res) => 
       sm2: {
         previous: currentState,
         current: nextState
-      }
+      },
+      ...(collectionProgress ? { collectionProgress } : {})
     });
   } catch (err) {
     console.error('Failed to submit dictation review:', err);
@@ -6477,46 +6602,111 @@ app.post('/api/dictation/review', authenticateDictationApi, async (req, res) => 
 // 13. GET /api/dictation/queue - Get practice queue (smart_due, collection, or all)
 app.get('/api/dictation/queue', authenticateDictationApi, async (req, res) => {
   try {
-    const { type = 'smart_due', collectionId, limit = 50, shuffle } = req.query;
-    let query = '';
-    const params = [];
+    const { type = 'smart_due', collectionId, limit = 50, shuffle, includeReviewed } = req.query;
+    const parsedLimit = Math.max(1, parseInt(limit, 10) || 50);
+    let rows = [];
+    let collectionProgress = null;
 
     if (type === 'collection') {
       if (!collectionId) {
         return res.status(400).json({ error: 'collectionId is required when type=collection' });
       }
-      query = `
-        SELECT w.*, cw.sort_order
-        FROM dictation_words w
-        JOIN dictation_collection_words cw ON w.id = cw.word_id
-        WHERE cw.collection_id = ?
-        ORDER BY cw.sort_order ASC, w.created_at ASC
-        LIMIT ?
-      `;
-      params.push(collectionId, parseInt(limit, 10));
+      const col = await get(`SELECT * FROM dictation_collections WHERE id = ?`, [collectionId]);
+      if (!col) {
+        return res.status(404).json({ error: `Collection '${collectionId}' not found` });
+      }
+
+      const roundStartedAt = col.round_started_at || null;
+      const stats = await getCollectionProgressStats(collectionId, roundStartedAt);
+      const shouldIncludeReviewed = includeReviewed === 'true' || includeReviewed === '1';
+      let isStartingNewRound = false;
+
+      if (shouldIncludeReviewed) {
+        rows = await all(
+          `SELECT w.*, cw.sort_order
+           FROM dictation_words w
+           JOIN dictation_collection_words cw ON w.id = cw.word_id
+           WHERE cw.collection_id = ?
+           ORDER BY cw.sort_order ASC, w.created_at ASC
+           LIMIT ?`,
+          [collectionId, parsedLimit]
+        );
+        if (stats.totalWords > 0 && stats.reviewedWords >= stats.totalWords) {
+          isStartingNewRound = true;
+        }
+      } else {
+        // Default collection session mode: start from the first unreviewed word in current round
+        rows = await all(
+          `SELECT w.*, cw.sort_order
+           FROM dictation_words w
+           JOIN dictation_collection_words cw ON w.id = cw.word_id
+           WHERE cw.collection_id = ?
+             AND NOT EXISTS (
+               SELECT 1 FROM dictation_review_logs l
+               WHERE l.collection_id = cw.collection_id
+                 AND l.word_id = w.id
+                 AND (? IS NULL OR l.reviewed_at >= ?)
+             )
+           ORDER BY cw.sort_order ASC, w.created_at ASC
+           LIMIT ?`,
+          [collectionId, roundStartedAt, roundStartedAt, parsedLimit]
+        );
+
+        // If all words in this collection have been reviewed in the current round, start a new round from word #1
+        if (rows.length === 0 && stats.totalWords > 0) {
+          isStartingNewRound = true;
+          rows = await all(
+            `SELECT w.*, cw.sort_order
+             FROM dictation_words w
+             JOIN dictation_collection_words cw ON w.id = cw.word_id
+             WHERE cw.collection_id = ?
+             ORDER BY cw.sort_order ASC, w.created_at ASC
+             LIMIT ?`,
+            [collectionId, parsedLimit]
+          );
+        }
+      }
+
+      const effectiveReviewed = isStartingNewRound ? 0 : stats.reviewedWords;
+      const effectiveRemaining = isStartingNewRound ? stats.totalWords : stats.remainingWords;
+
+      collectionProgress = {
+        collectionId,
+        totalWords: stats.totalWords,
+        reviewedWords: effectiveReviewed,
+        remainingWords: effectiveRemaining,
+        reviewStatus: isStartingNewRound ? 'not_reviewed' : stats.reviewStatus,
+        sessionLimit: parsedLimit,
+        sessionStartIndex: rows.length > 0 ? (effectiveReviewed + 1) : 0,
+        sessionEndIndex: rows.length > 0 ? Math.min(stats.totalWords, effectiveReviewed + rows.length) : 0,
+        currentSessionNumber: Math.floor(effectiveReviewed / parsedLimit) + 1,
+        totalSessions: Math.max(1, Math.ceil(stats.totalWords / parsedLimit)),
+        isStartingNewRound
+      };
     } else if (type === 'smart_due') {
-      query = `
-        SELECT * FROM dictation_words
-        WHERE datetime(next_review_date) <= datetime('now')
-        ORDER BY next_review_date ASC, repetition ASC
-        LIMIT ?
-      `;
-      params.push(parseInt(limit, 10));
+      // Global SM-2 scheduling across all words in the vocabulary bank
+      rows = await all(
+        `SELECT * FROM dictation_words
+         WHERE datetime(next_review_date) <= datetime('now')
+         ORDER BY datetime(next_review_date) ASC, repetition ASC
+         LIMIT ?`,
+        [parsedLimit]
+      );
+      // If smart_due queue is empty, fallback to words with earliest next_review_date
+      if (rows.length === 0) {
+        rows = await all(
+          `SELECT * FROM dictation_words ORDER BY datetime(next_review_date) ASC, repetition ASC LIMIT ?`,
+          [parsedLimit]
+        );
+      }
     } else {
       // type === 'all'
-      query = `
-        SELECT * FROM dictation_words
-        ORDER BY created_at DESC
-        LIMIT ?
-      `;
-      params.push(parseInt(limit, 10));
-    }
-
-    let rows = await all(query, params);
-
-    // If smart_due queue is empty, fallback to words with lowest repetition or all words
-    if (type === 'smart_due' && rows.length === 0) {
-      rows = await all(`SELECT * FROM dictation_words ORDER BY next_review_date ASC LIMIT ?`, [parseInt(limit, 10)]);
+      rows = await all(
+        `SELECT * FROM dictation_words
+         ORDER BY created_at DESC
+         LIMIT ?`,
+        [parsedLimit]
+      );
     }
 
     if (shuffle === 'true' || shuffle === '1') {
@@ -6536,6 +6726,7 @@ app.get('/api/dictation/queue', authenticateDictationApi, async (req, res) => {
       success: true,
       type,
       total: queue.length,
+      ...(collectionProgress ? { collectionProgress } : {}),
       queue
     });
   } catch (err) {
