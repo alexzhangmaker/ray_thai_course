@@ -161,10 +161,19 @@ export function createSideAppRouter(port = 3002) {
     }
   });
 
-  // 6. Serve static files and HTML for SideApp
-  router.use('/sideapp', express.static(path.join(parentDir, 'Pages', 'sideapp')));
+  // 6. Serve static files and HTML for SideApp (disable stale browser caching for renderer/wsClient)
+  router.use('/sideapp', express.static(path.join(parentDir, 'Pages', 'sideapp'), {
+    setHeaders: (res) => {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  }));
   router.get('/sideapp', (req, res) => {
     const sideAppHtmlPath = path.join(parentDir, 'Pages', 'sideapp', 'index.html');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.sendFile(sideAppHtmlPath);
   });
 

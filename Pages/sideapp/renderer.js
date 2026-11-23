@@ -809,50 +809,80 @@
       // ==========================================
       // Incremental patch handling for Core Words
       // ==========================================
+      if (this.currentView === 'viewCoreWordsSelection') {
+        this.renderCoreWordsSelectionView();
+      }
+
       if (this.currentView === 'viewCoreWordsSession' || (s.appType === 'core_words' && this.currentView === 'viewSession')) {
-        const shrouded = document.getElementById('sideCoreWordShrouded');
-        const revealed = document.getElementById('sideCoreWordRevealed');
-        const stepDot = document.getElementById('sideCoreStepDot');
-        const stepLabel = document.getElementById('sideCoreStepLabel');
+        const currentDir = s.reviewDirection === 'zh2th' ? 'zh2th' : 'th2zh';
+        const isZh2Th = currentDir === 'zh2th';
+        const sessionCard = document.getElementById('sideCoreSessionCard');
+        if (!sessionCard || sessionCard.dataset.reviewDirection !== currentDir) {
+          this.renderCoreWordsSessionView();
+        } else {
+          const shrouded = document.getElementById('sideCoreWordShrouded');
+          const revealed = document.getElementById('sideCoreWordRevealed');
+          const stepDot = document.getElementById('sideCoreStepDot');
+          const stepLabel = document.getElementById('sideCoreStepLabel');
 
-        if (shrouded && revealed && s.detailRevealed !== undefined) {
-          if (s.detailRevealed) {
-            shrouded.classList.add('hidden');
-            revealed.classList.remove('hidden');
-            if (stepDot) stepDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
-            if (stepLabel) stepLabel.innerText = '步骤 2/2: 已翻开释义与例句精读';
-          } else {
-            shrouded.classList.remove('hidden');
-            revealed.classList.add('hidden');
-            if (stepDot) stepDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
-            if (stepLabel) stepLabel.innerText = '步骤 1/2: 认读泰语单词 (释义遮蔽中)';
+          if (shrouded && revealed && s.detailRevealed !== undefined) {
+            if (s.detailRevealed) {
+              shrouded.classList.add('hidden');
+              shrouded.classList.remove('flex');
+              revealed.classList.remove('hidden');
+              revealed.classList.add('flex');
+              if (stepDot) stepDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+              if (stepLabel) stepLabel.innerText = isZh2Th ? '步骤 2/2: 已揭晓泰语单词与例句精读' : '步骤 2/2: 已翻开释义与例句精读';
+            } else {
+              shrouded.classList.remove('hidden');
+              shrouded.classList.add('flex');
+              revealed.classList.add('hidden');
+              revealed.classList.remove('flex');
+              if (stepDot) stepDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+              if (stepLabel) stepLabel.innerText = isZh2Th ? '步骤 1/2: 看中文答泰语 (泰语答案遮蔽中)' : '步骤 1/2: 认读泰语单词 (释义遮蔽中)';
+            }
           }
-        }
 
-        const thaiEl = document.getElementById('sideCoreThaiWord');
-        if (thaiEl && s.word?.word) thaiEl.innerText = s.word.word;
+          const chineseFrontEl = document.getElementById('sideCoreChineseFront');
+          if (chineseFrontEl && s.word) {
+            chineseFrontEl.innerHTML = this.renderCoreWordChineseFrontHtml(s.word);
+          }
 
-        const ipaEl = document.getElementById('sideCoreIpa');
-        if (ipaEl && s.word?.ipa) {
-          ipaEl.innerText = s.word.ipa;
-          ipaEl.classList.remove('hidden');
-        }
+          const thaiEl = document.getElementById('sideCoreThaiWord');
+          if (thaiEl && s.word) thaiEl.innerText = s.word.word || '--';
 
-        const progText = document.getElementById('sideCoreProgressText');
-        if (progText && s.progressText) progText.innerText = s.progressText;
+          const ipaEl = document.getElementById('sideCoreIpa');
+          if (ipaEl) {
+            if (s.word?.ipa) {
+              ipaEl.innerText = s.word.ipa;
+              ipaEl.classList.remove('hidden');
+            } else {
+              ipaEl.innerText = '';
+              ipaEl.classList.add('hidden');
+            }
+          }
 
-        const progBar = document.getElementById('sideCoreProgressBar');
-        if (progBar && s.progressPercent !== undefined) progBar.style.width = `${s.progressPercent}%`;
+          const progText = document.getElementById('sideCoreProgressText');
+          if (progText && s.progressText) progText.innerText = s.progressText;
 
-        const progPct = document.getElementById('sideCoreProgressPct');
-        if (progPct && s.progressPercent !== undefined) progPct.innerText = `${s.progressPercent}%`;
+          const progBar = document.getElementById('sideCoreProgressBar');
+          if (progBar && s.progressPercent !== undefined) progBar.style.width = `${s.progressPercent}%`;
 
-        const wordIdx = document.getElementById('sideCoreWordIndex');
-        if (wordIdx && s.currentIndex && s.totalWords) wordIdx.innerText = `#${s.currentIndex} / ${s.totalWords}`;
+          const progPct = document.getElementById('sideCoreProgressPct');
+          if (progPct && s.progressPercent !== undefined) progPct.innerText = `${s.progressPercent}%`;
 
-        const meaningsList = document.getElementById('sideCoreMeaningsList');
-        if (meaningsList && s.word) {
-          meaningsList.innerHTML = this.renderCoreWordMeaningsHtml(s.word);
+          const wordIdx = document.getElementById('sideCoreWordIndex');
+          if (wordIdx && s.currentIndex && s.totalWords) wordIdx.innerText = `#${s.currentIndex} / ${s.totalWords}`;
+
+          const meaningsList = document.getElementById('sideCoreMeaningsList');
+          if (meaningsList && s.word) {
+            meaningsList.innerHTML = this.renderCoreWordMeaningsHtml(s.word);
+          }
+
+          const examplesList = document.getElementById('sideCoreExamplesList');
+          if (examplesList && s.word) {
+            examplesList.innerHTML = this.renderCoreWordExamplesOnlyHtml(s.word);
+          }
         }
       }
 
@@ -1064,58 +1094,84 @@
       // Incremental patch handling for Recall Core Words Reinforce
       // ==========================================
       if (this.currentView === 'viewRecallCoreWordsSession' || (s.appType === 'recall_core_words' && this.currentView === 'viewSession')) {
-        const shrouded = document.getElementById('sideRecallWordShrouded');
-        const revealed = document.getElementById('sideRecallWordRevealed');
-        const stepDot = document.getElementById('sideRecallStepDot');
-        const stepLabel = document.getElementById('sideRecallStepLabel');
+        const currentDir = s.reviewDirection === 'zh2th' ? 'zh2th' : 'th2zh';
+        const isZh2Th = currentDir === 'zh2th';
+        const recallCard = document.getElementById('sideRecallSessionCard');
+        if (!recallCard || recallCard.dataset.reviewDirection !== currentDir) {
+          this.renderRecallCoreWordsSessionView();
+        } else {
+          const shrouded = document.getElementById('sideRecallWordShrouded');
+          const revealed = document.getElementById('sideRecallWordRevealed');
+          const stepDot = document.getElementById('sideRecallStepDot');
+          const stepLabel = document.getElementById('sideRecallStepLabel');
 
-        if (shrouded && revealed && s.detailRevealed !== undefined) {
-          if (s.detailRevealed) {
-            shrouded.classList.add('hidden');
-            revealed.classList.remove('hidden');
-            if (stepDot) stepDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
-            if (stepLabel) stepLabel.innerText = '步骤 2/2: 释义与例句已由导师揭晓';
-          } else {
-            shrouded.classList.remove('hidden');
-            revealed.classList.add('hidden');
-            if (stepDot) stepDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
-            if (stepLabel) stepLabel.innerText = '步骤 1/2: 认读泰语单词 (释义遮蔽中)';
+          if (shrouded && revealed && s.detailRevealed !== undefined) {
+            if (s.detailRevealed) {
+              shrouded.classList.add('hidden');
+              shrouded.classList.remove('flex');
+              revealed.classList.remove('hidden');
+              revealed.classList.add('flex');
+              if (stepDot) stepDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+              if (stepLabel) stepLabel.innerText = isZh2Th ? '步骤 2/2: 泰语单词与例句已由导师揭晓' : '步骤 2/2: 释义与例句已由导师揭晓';
+            } else {
+              shrouded.classList.remove('hidden');
+              shrouded.classList.add('flex');
+              revealed.classList.add('hidden');
+              revealed.classList.remove('flex');
+              if (stepDot) stepDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+              if (stepLabel) stepLabel.innerText = isZh2Th ? '步骤 1/2: 看中文答泰语 (泰语答案遮蔽中)' : '步骤 1/2: 认读泰语单词 (释义遮蔽中)';
+            }
           }
-        }
 
-        const thaiEl = document.getElementById('sideRecallThaiWord');
-        if (thaiEl && s.word?.word) thaiEl.innerText = s.word.word;
+          const chineseFrontEl = document.getElementById('sideRecallChineseFront');
+          if (chineseFrontEl && s.word) {
+            chineseFrontEl.innerHTML = this.renderCoreWordChineseFrontHtml(s.word);
+          }
 
-        const ipaEl = document.getElementById('sideRecallIpa');
-        if (ipaEl && s.word?.ipa) {
-          ipaEl.innerText = `/${s.word.ipa}/`;
-          ipaEl.classList.remove('hidden');
-        }
+          const thaiEl = document.getElementById('sideRecallThaiWord');
+          if (thaiEl && s.word) thaiEl.innerText = s.word.word || '--';
 
-        const posEl = document.getElementById('sideRecallPosBadge');
-        if (posEl && s.word?.pos) posEl.innerText = s.word.pos;
+          const ipaEl = document.getElementById('sideRecallIpa');
+          if (ipaEl) {
+            if (s.word?.ipa) {
+              ipaEl.innerText = `/${s.word.ipa}/`;
+              ipaEl.classList.remove('hidden');
+            } else {
+              ipaEl.innerText = '';
+              ipaEl.classList.add('hidden');
+            }
+          }
 
-        const meaningEl = document.getElementById('sideRecallMeaning');
-        if (meaningEl && s.word?.meaning) meaningEl.innerText = s.word.meaning;
+          const posEl = document.getElementById('sideRecallPosBadge');
+          if (posEl && s.word?.pos) posEl.innerText = s.word.pos;
 
-        const roundEl = document.getElementById('sideRecallRound');
-        if (roundEl && s.currentRound) roundEl.innerText = `循环第 ${s.currentRound} 轮`;
+          const meaningEl = document.getElementById('sideRecallMeaning');
+          if (meaningEl && s.word?.meaning) meaningEl.innerText = s.word.meaning;
 
-        const progText = document.getElementById('sideRecallProgressText');
-        if (progText && s.progressText) progText.innerText = s.progressText;
+          const roundEl = document.getElementById('sideRecallRound');
+          if (roundEl && s.currentRound) roundEl.innerText = `循环第 ${s.currentRound} 轮`;
 
-        const progBar = document.getElementById('sideRecallProgressBar');
-        if (progBar && s.progressPercent !== undefined) progBar.style.width = `${s.progressPercent}%`;
+          const progText = document.getElementById('sideRecallProgressText');
+          if (progText && s.progressText) progText.innerText = s.progressText;
 
-        const progPct = document.getElementById('sideRecallProgressPct');
-        if (progPct && s.progressPercent !== undefined) progPct.innerText = `${s.progressPercent}%`;
+          const progBar = document.getElementById('sideRecallProgressBar');
+          if (progBar && s.progressPercent !== undefined) progBar.style.width = `${s.progressPercent}%`;
 
-        const wordIdx = document.getElementById('sideRecallWordIndex');
-        if (wordIdx && s.currentIndex && s.totalWords) wordIdx.innerText = `#${s.currentIndex} / ${s.totalWords}`;
+          const progPct = document.getElementById('sideRecallProgressPct');
+          if (progPct && s.progressPercent !== undefined) progPct.innerText = `${s.progressPercent}%`;
 
-        const meaningsList = document.getElementById('sideRecallMeaningsList');
-        if (meaningsList && s.word) {
-          meaningsList.innerHTML = this.renderCoreWordMeaningsHtml(s.word);
+          const wordIdx = document.getElementById('sideRecallWordIndex');
+          if (wordIdx && s.currentIndex && s.totalWords) wordIdx.innerText = `#${s.currentIndex} / ${s.totalWords}`;
+
+          const meaningsList = document.getElementById('sideRecallMeaningsList');
+          if (meaningsList && s.word) {
+            meaningsList.innerHTML = this.renderCoreWordMeaningsHtml(s.word);
+          }
+
+          const examplesList = document.getElementById('sideRecallExamplesList');
+          if (examplesList && s.word) {
+            examplesList.innerHTML = this.renderCoreWordExamplesOnlyHtml(s.word);
+          }
         }
       }
     }
@@ -1125,6 +1181,7 @@
     // =========================================================================
     renderCoreWordsSelectionView() {
       const s = this.localState || {};
+      const isZh2Th = s.reviewDirection === 'zh2th';
       this.containerEl.innerHTML = `
         <div class="w-full h-full max-w-4xl flex flex-col justify-center gap-3 sm:gap-4 min-h-0 animate-fadeIn">
           <!-- Standby Hero Card -->
@@ -1133,9 +1190,9 @@
               <i class="ph-bold ph-book-open"></i>
             </div>
             <div class="space-y-1 sm:space-y-2 max-w-md mx-auto">
-              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                伴侣屏已就绪 · 核心词汇模式
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full ${isZh2Th ? 'bg-violet-500/20 text-violet-200 border border-violet-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'} text-xs font-semibold">
+                <span class="w-2 h-2 rounded-full ${isZh2Th ? 'bg-violet-400' : 'bg-emerald-400'} animate-pulse"></span>
+                伴侣屏已就绪 · 核心词汇 (${isZh2Th ? '中文 ➔ 泰文' : '泰文 ➔ 中文'})
               </div>
               <h2 class="text-lg sm:text-2xl font-bold text-white pt-1">${s.wordsetTitle ? `已选「${this.escape(s.wordsetTitle)}」` : (s.lessonTitle ? this.escape(s.lessonTitle) : '等待主机开始自测')}</h2>
               <p class="text-xs sm:text-sm text-slate-400">
@@ -1166,11 +1223,92 @@
               <i class="ph-bold ph-lightbulb-filament"></i>
             </div>
             <div class="text-[11px] sm:text-xs text-slate-400 leading-relaxed">
-              自测开始后，伴侣屏将首先显示泰语原词供认读回忆；待导师在主操作台点击「展示解释与例句」后，完整释义与例句精讲将同步揭晓。
+              ${isZh2Th
+                ? '当前为「中文 ➔ 泰文」模式：自测开始后，伴侣屏将首先显示中文释义供思考作答；待导师在主操作台点击「展示泰语单词与例句」后，对应泰语单词、音标与例句将同步揭晓。'
+                : '自测开始后，伴侣屏将首先显示泰语原词供认读回忆；待导师在主操作台点击「展示解释与例句」后，完整释义与例句精讲将同步揭晓。'}
             </div>
           </div>
         </div>
       `;
+    }
+
+    renderCoreWordChineseFrontHtml(word) {
+      if (!word) return `<div class="text-2xl sm:text-4xl font-bold text-white">--</div>`;
+      if (Array.isArray(word.meanings) && word.meanings.length > 0) {
+        const isSingle = word.meanings.length === 1;
+        return `
+          <div class="space-y-2 max-h-[34vh] overflow-y-auto px-1">
+            ${word.meanings.map(m => `
+              <div class="flex items-center justify-center gap-2 flex-wrap">
+                <span class="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-violet-500/25 text-violet-200 border border-violet-400/35 font-mono shrink-0">
+                  ${this.escape(m.part_of_speech || m.pos || '词性')}
+                </span>
+                <span class="${isSingle ? 'text-3xl sm:text-5xl' : 'text-xl sm:text-3xl'} font-black text-white tracking-wide leading-snug select-all">
+                  ${this.escape(m.meaning || m.chinese || m.definition || '')}
+                </span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+      return `
+        <div class="flex items-center justify-center gap-2 flex-wrap">
+          ${word.pos ? `<span class="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-violet-500/25 text-violet-200 border border-violet-400/35 font-mono shrink-0">${this.escape(word.pos)}</span>` : ''}
+          <span class="text-3xl sm:text-5xl font-black text-white tracking-wide leading-snug select-all">
+            ${this.escape(word.meaning || '暂无释义')}
+          </span>
+        </div>
+      `;
+    }
+
+    renderCoreWordExamplesOnlyHtml(word) {
+      if (!word) return '';
+      if (Array.isArray(word.meanings) && word.meanings.length > 0) {
+        const groupsWithExamples = word.meanings.filter(m => Array.isArray(m.examples) && m.examples.length > 0);
+        if (groupsWithExamples.length > 0) {
+          return groupsWithExamples.map(m => `
+            <div class="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+              <div class="flex items-center justify-between gap-2 flex-wrap">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono">
+                    ${this.escape(m.part_of_speech || '词性')}
+                  </span>
+                  <span class="text-xs font-bold text-slate-200">${this.escape(m.meaning || '')}</span>
+                </div>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                  <i class="ph-bold ph-chat-centered-text text-indigo-400"></i>
+                  <span>对照例句</span>
+                </span>
+              </div>
+              <div class="space-y-1.5 border-t border-white/5 pt-2">
+                ${m.examples.map(ex => `
+                  <div class="p-2 rounded-xl bg-white/5 border border-white/5 space-y-0.5">
+                    <div class="font-thai text-sm text-indigo-200 font-medium">${this.escape(ex.sentence || '')}</div>
+                    <div class="text-xs text-slate-300">${this.escape(ex.meaning || '')}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `).join('');
+        }
+      }
+      if (Array.isArray(word.examples) && word.examples.length > 0) {
+        return `
+          <div class="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <i class="ph-bold ph-chat-centered-text text-indigo-400"></i>
+              <span>对照例句</span>
+            </div>
+            ${word.examples.map(ex => `
+              <div class="p-2 rounded-xl bg-white/5 border border-white/5 space-y-0.5">
+                <div class="font-thai text-sm text-indigo-200 font-medium">${this.escape(ex.sentence || '')}</div>
+                <div class="text-xs text-slate-300">${this.escape(ex.meaning || '')}</div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+      return '';
     }
 
     // =========================================================================
@@ -1180,6 +1318,116 @@
       const s = this.localState || {};
       const w = s.word || {};
       const isRevealed = Boolean(s.detailRevealed);
+      const isZh2Th = s.reviewDirection === 'zh2th';
+      const dirKey = isZh2Th ? 'zh2th' : 'th2zh';
+
+      const frontSectionHtml = isZh2Th ? `
+            <!-- Chinese Meaning Front Section (Always visible in zh2th mode) -->
+            <div class="py-2 sm:py-3 text-center space-y-2 shrink-0">
+              <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-violet-500/20 text-violet-200 border border-violet-400/30 text-[10px] sm:text-xs font-bold">
+                <i class="ph-bold ph-arrows-left-right"></i>
+                <span>中文 ➔ 泰文 · 请回答对应的泰语单词</span>
+              </div>
+              <div id="sideCoreChineseFront" class="py-1">
+                ${this.renderCoreWordChineseFrontHtml(w)}
+              </div>
+            </div>
+      ` : `
+            <!-- Thai Word Display Section (Always visible in th2zh mode) -->
+            <div class="py-2 sm:py-3 text-center space-y-2 shrink-0">
+              <div id="sideCoreThaiWord" class="font-thai text-4xl sm:text-6xl md:text-7xl font-black text-white tracking-wider py-1 select-all transition-all duration-300">
+                ${this.escape(w.word || '--')}
+              </div>
+              <div class="flex items-center justify-center gap-2 flex-wrap">
+                <span id="sideCoreIpa" class="${w.ipa ? '' : 'hidden '}px-3 py-1 rounded-xl bg-indigo-500/20 text-indigo-300 font-mono text-xs sm:text-sm font-semibold border border-indigo-500/30">
+                  ${this.escape(w.ipa || '')}
+                </span>
+                <span id="sideCoreSoundWave" class="sound-wave opacity-30 scale-90 transition-all duration-300">
+                  <span class="sound-bar"></span>
+                  <span class="sound-bar"></span>
+                  <span class="sound-bar"></span>
+                  <span class="sound-bar"></span>
+                  <span class="sound-bar"></span>
+                </span>
+              </div>
+            </div>
+      `;
+
+      const shroudedSectionHtml = isZh2Th ? `
+            <!-- Shrouded Placeholder Section (zh2th: Thai word hidden) -->
+            <div id="sideCoreWordShrouded" class="${isRevealed ? 'hidden' : 'flex'} flex-1 min-h-0 py-4 flex-col items-center justify-center text-center space-y-3 sm:space-y-4">
+              <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-xl sm:text-2xl text-amber-400 shadow-inner">
+                <i class="ph-bold ph-eye-slash"></i>
+              </div>
+              <div class="max-w-xs mx-auto p-3.5 sm:p-4 rounded-2xl bg-violet-950/40 border border-violet-500/20 space-y-1.5">
+                <div class="text-xs sm:text-sm font-bold text-violet-200 flex items-center justify-center gap-1.5">
+                  <i class="ph-bold ph-lock-key"></i>
+                  <span>泰语单词与例句遮蔽中</span>
+                </div>
+                <p class="text-[11px] sm:text-xs text-slate-400 leading-relaxed">
+                  请根据上方中文释义，回忆并说出对应的泰语单词。<br>导师在主屏点击<strong>「展示泰语单词与例句」</strong>后将同步揭晓。
+                </p>
+              </div>
+              <div class="text-[11px] text-slate-500 flex items-center gap-1.5">
+                <i class="ph-bold ph-hourglass-high text-amber-400 animate-spin"></i>
+                <span>等待主操作台指令...</span>
+              </div>
+            </div>
+      ` : `
+            <!-- Shrouded Placeholder Section (th2zh: Meanings hidden) -->
+            <div id="sideCoreWordShrouded" class="${isRevealed ? 'hidden' : 'flex'} flex-1 min-h-0 py-4 flex-col items-center justify-center text-center space-y-3 sm:space-y-4">
+              <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-xl sm:text-2xl text-amber-400 shadow-inner">
+                <i class="ph-bold ph-eye-slash"></i>
+              </div>
+              <div class="max-w-xs mx-auto p-3.5 sm:p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/20 space-y-1.5">
+                <div class="text-xs sm:text-sm font-bold text-indigo-200 flex items-center justify-center gap-1.5">
+                  <i class="ph-bold ph-lock-key"></i>
+                  <span>词汇释义与例句遮蔽中</span>
+                </div>
+                <p class="text-[11px] sm:text-xs text-slate-400 leading-relaxed">
+                  请先在脑海中回忆该词词义、词性及搭配。<br>导师在主屏点击<strong>「展示解释与例句」</strong>后将同步揭晓。
+                </p>
+              </div>
+              <div class="text-[11px] text-slate-500 flex items-center gap-1.5">
+                <i class="ph-bold ph-hourglass-high text-amber-400 animate-spin"></i>
+                <span>等待主操作台指令...</span>
+              </div>
+            </div>
+      `;
+
+      const revealedSectionHtml = isZh2Th ? `
+            <!-- Revealed Thai Answer & Examples Section (zh2th) -->
+            <div id="sideCoreWordRevealed" class="${isRevealed ? 'flex' : 'hidden'} flex-1 min-h-0 py-1 sm:py-2 space-y-3 flex-col overflow-hidden animate-fadeIn">
+              <div class="p-3.5 sm:p-5 rounded-2xl bg-indigo-500/15 border border-indigo-400/30 text-center space-y-2 shrink-0">
+                <div class="text-[10px] sm:text-xs font-bold text-indigo-300 uppercase tracking-wider">参考答案 · 泰语单词</div>
+                <div id="sideCoreThaiWord" class="font-thai text-4xl sm:text-6xl font-black text-white tracking-wider py-0.5 select-all transition-all duration-300">
+                  ${this.escape(w.word || '--')}
+                </div>
+                <div class="flex items-center justify-center gap-2 flex-wrap">
+                  <span id="sideCoreIpa" class="${w.ipa ? '' : 'hidden '}px-3 py-1 rounded-xl bg-indigo-500/20 text-indigo-300 font-mono text-xs sm:text-sm font-semibold border border-indigo-500/30">
+                    ${this.escape(w.ipa || '')}
+                  </span>
+                  <span id="sideCoreSoundWave" class="sound-wave opacity-30 scale-90 transition-all duration-300">
+                    <span class="sound-bar"></span>
+                    <span class="sound-bar"></span>
+                    <span class="sound-bar"></span>
+                    <span class="sound-bar"></span>
+                    <span class="sound-bar"></span>
+                  </span>
+                </div>
+              </div>
+              <div id="sideCoreExamplesList" class="space-y-2.5 flex-1 min-h-0 overflow-y-auto pr-1">
+                ${this.renderCoreWordExamplesOnlyHtml(w)}
+              </div>
+            </div>
+      ` : `
+            <!-- Revealed Meanings & Examples Section (th2zh) -->
+            <div id="sideCoreWordRevealed" class="${isRevealed ? 'flex' : 'hidden'} flex-1 min-h-0 py-1 sm:py-2 space-y-3 flex-col overflow-hidden animate-fadeIn">
+              <div id="sideCoreMeaningsList" class="space-y-2.5 sm:space-y-3 flex-1 min-h-0 overflow-y-auto pr-1">
+                ${this.renderCoreWordMeaningsHtml(w)}
+              </div>
+            </div>
+      `;
 
       this.containerEl.innerHTML = `
         <div class="w-full h-full max-w-4xl flex flex-col justify-between gap-2.5 sm:gap-3.5 min-h-0 animate-fadeIn">
@@ -1203,66 +1451,24 @@
           </div>
 
           <!-- Main Interactive Display Card -->
-          <div class="flex-1 min-h-0 w-full glass-panel rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 md:p-7 border border-white/10 shadow-2xl flex flex-col justify-between relative overflow-hidden">
+          <div id="sideCoreSessionCard" data-review-direction="${dirKey}" class="flex-1 min-h-0 w-full glass-panel rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 md:p-7 border border-white/10 shadow-2xl flex flex-col justify-between relative overflow-hidden">
             
             <!-- Header Step Indicator -->
             <div class="flex items-center justify-between text-xs text-slate-400 pb-2 border-b border-white/5 shrink-0">
               <div class="flex items-center gap-2">
                 <span id="sideCoreStepDot" class="w-2 h-2 rounded-full ${isRevealed ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'}"></span>
-                <span id="sideCoreStepLabel" class="font-medium">${isRevealed ? '步骤 2/2: 已翻开释义与例句精读' : '步骤 1/2: 认读泰语单词 (释义遮蔽中)'}</span>
+                <span id="sideCoreStepLabel" class="font-medium">${isRevealed ? (isZh2Th ? '步骤 2/2: 已揭晓泰语单词与例句精读' : '步骤 2/2: 已翻开释义与例句精读') : (isZh2Th ? '步骤 1/2: 看中文答泰语 (泰语答案遮蔽中)' : '步骤 1/2: 认读泰语单词 (释义遮蔽中)')}</span>
               </div>
               <div class="text-[11px] text-slate-400 font-mono shrink-0" id="sideCoreWordIndex">
                 #${s.currentIndex || 1} / ${s.totalWords || 1}
               </div>
             </div>
 
-            <!-- Thai Word Display Section (Always visible) -->
-            <div class="py-2 sm:py-3 text-center space-y-2 shrink-0">
-              <div id="sideCoreThaiWord" class="font-thai text-4xl sm:text-6xl md:text-7xl font-black text-white tracking-wider py-1 select-all transition-all duration-300">
-                ${this.escape(w.word || '--')}
-              </div>
-              <div class="flex items-center justify-center gap-2 flex-wrap">
-                ${w.ipa ? `
-                  <span id="sideCoreIpa" class="px-3 py-1 rounded-xl bg-indigo-500/20 text-indigo-300 font-mono text-xs sm:text-sm font-semibold border border-indigo-500/30">
-                    ${this.escape(w.ipa)}
-                  </span>
-                ` : '<span id="sideCoreIpa" class="hidden"></span>'}
-                <span id="sideCoreSoundWave" class="sound-wave opacity-30 scale-90 transition-all duration-300">
-                  <span class="sound-bar"></span>
-                  <span class="sound-bar"></span>
-                  <span class="sound-bar"></span>
-                  <span class="sound-bar"></span>
-                  <span class="sound-bar"></span>
-                </span>
-              </div>
-            </div>
+            ${frontSectionHtml}
 
-            <!-- Shrouded Placeholder Section (When detailRevealed is false) -->
-            <div id="sideCoreWordShrouded" class="${isRevealed ? 'hidden' : ''} flex-1 min-h-0 py-4 flex flex-col items-center justify-center text-center space-y-3 sm:space-y-4">
-              <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-xl sm:text-2xl text-amber-400 shadow-inner">
-                <i class="ph-bold ph-eye-slash"></i>
-              </div>
-              <div class="max-w-xs mx-auto p-3.5 sm:p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/20 space-y-1.5">
-                <div class="text-xs sm:text-sm font-bold text-indigo-200 flex items-center justify-center gap-1.5">
-                  <i class="ph-bold ph-lock-key"></i>
-                  <span>词汇释义与例句遮蔽中</span>
-                </div>
-                <p class="text-[11px] sm:text-xs text-slate-400 leading-relaxed">
-                  请先在脑海中回忆该词词义、词性及搭配。<br>导师在主屏点击<strong>「展示解释与例句」</strong>后将同步揭晓。
-                </p>
-              </div>
-              <div class="text-[11px] text-slate-500 flex items-center gap-1.5">
-                <i class="ph-bold ph-hourglass-high text-amber-400 animate-spin"></i>
-                <span>等待主操作台指令...</span>
-              </div>
-            </div>
+            ${shroudedSectionHtml}
 
-            <!-- Revealed Meanings & Examples Section (When detailRevealed is true) -->
-            <div id="sideCoreWordRevealed" class="${isRevealed ? '' : 'hidden'} flex-1 min-h-0 py-1 sm:py-2 space-y-3 flex flex-col overflow-hidden animate-fadeIn">
-              <div id="sideCoreMeaningsList" class="space-y-2.5 sm:space-y-3 flex-1 min-h-0 overflow-y-auto pr-1">
-                ${this.renderCoreWordMeaningsHtml(w)}
-              </div>
-            </div>
+            ${revealedSectionHtml}
 
             <!-- Footer Status -->
             <div class="pt-2 text-center text-[10px] sm:text-[11px] text-slate-500 border-t border-white/5 flex items-center justify-center gap-1 shrink-0">
@@ -2172,6 +2378,130 @@
       const s = this.localState || {};
       const w = s.word || {};
       const isRevealed = Boolean(s.detailRevealed);
+      const isZh2Th = s.reviewDirection === 'zh2th';
+      const dirKey = isZh2Th ? 'zh2th' : 'th2zh';
+
+      const frontSectionHtml = isZh2Th ? `
+            <!-- Chinese Meaning Display Section (Always visible in zh2th mode) -->
+            <div class="py-3 sm:py-5 text-center space-y-2 shrink-0">
+              <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-violet-500/20 text-violet-200 border border-violet-400/30 text-[10px] sm:text-xs font-bold">
+                <i class="ph-bold ph-arrows-left-right"></i>
+                <span>中文 ➔ 泰文 · 请回答对应的泰语单词</span>
+              </div>
+              <div id="sideRecallChineseFront" class="py-1">
+                ${this.renderCoreWordChineseFrontHtml(w)}
+              </div>
+            </div>
+      ` : `
+            <!-- Thai Word Display Section (Always visible in th2zh mode) -->
+            <div class="py-3 sm:py-5 text-center space-y-2 shrink-0">
+              <div id="sideRecallThaiWord" class="font-thai text-4xl sm:text-6xl md:text-7xl font-black text-white tracking-wider py-1 select-all transition-all duration-300">
+                ${this.escape(w.word || '--')}
+              </div>
+              <div class="flex items-center justify-center gap-2 flex-wrap">
+                <span id="sideRecallIpa" class="${w.ipa ? '' : 'hidden '}px-3 py-1 rounded-xl bg-amber-500/20 text-amber-300 font-mono text-xs sm:text-sm font-semibold border border-amber-500/30">
+                  ${w.ipa ? `/${this.escape(w.ipa)}/` : ''}
+                </span>
+                <span id="sideRecallSoundWave" class="sound-wave opacity-30 scale-90 transition-all duration-300">
+                  <span class="sound-bar"></span>
+                  <span class="sound-bar"></span>
+                  <span class="sound-bar"></span>
+                  <span class="sound-bar"></span>
+                  <span class="sound-bar"></span>
+                </span>
+              </div>
+            </div>
+      `;
+
+      const shroudedSectionHtml = isZh2Th ? `
+            <!-- Shrouded Placeholder Section (zh2th) -->
+            <div id="sideRecallWordShrouded" class="${isRevealed ? 'hidden' : 'flex'} flex-1 min-h-0 py-3 flex-col items-center justify-center text-center space-y-2.5 sm:space-y-3">
+              <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-xl sm:text-2xl text-amber-400 shadow-inner">
+                <i class="ph-bold ph-lock-key"></i>
+              </div>
+              <div class="max-w-xs mx-auto p-3 sm:p-3.5 rounded-2xl bg-violet-950/40 border border-violet-500/20 space-y-1">
+                <div class="text-xs sm:text-sm font-bold text-violet-200 flex items-center justify-center gap-1.5">
+                  <i class="ph-bold ph-eye-slash"></i>
+                  <span>泰语单词与例句遮蔽中</span>
+                </div>
+                <p class="text-[11px] sm:text-xs text-slate-400 leading-relaxed">
+                  请根据上方中文释义，回忆对应的泰语单词与发音。<br>导师在主屏点击<strong>「向副屏揭晓泰语 (S)」</strong>后将同步呈现。
+                </p>
+              </div>
+              <div class="text-[11px] text-slate-500 flex items-center gap-1.5">
+                <i class="ph-bold ph-hourglass-high text-amber-400 animate-spin"></i>
+                <span>等待主操作台指令...</span>
+              </div>
+            </div>
+      ` : `
+            <!-- Shrouded Placeholder Section (th2zh) -->
+            <div id="sideRecallWordShrouded" class="${isRevealed ? 'hidden' : 'flex'} flex-1 min-h-0 py-3 flex-col items-center justify-center text-center space-y-2.5 sm:space-y-3">
+              <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-xl sm:text-2xl text-amber-400 shadow-inner">
+                <i class="ph-bold ph-lock-key"></i>
+              </div>
+              <div class="max-w-xs mx-auto p-3 sm:p-3.5 rounded-2xl bg-amber-950/40 border border-amber-500/20 space-y-1">
+                <div class="text-xs sm:text-sm font-bold text-amber-200 flex items-center justify-center gap-1.5">
+                  <i class="ph-bold ph-eye-slash"></i>
+                  <span>词汇释义与例句遮蔽中</span>
+                </div>
+                <p class="text-[11px] sm:text-xs text-slate-400 leading-relaxed">
+                  请先在脑海中回忆该词词义、词性及发音。<br>导师在主屏点击<strong>「向副屏揭晓释义 (S)」</strong>后将同步呈现。
+                </p>
+              </div>
+              <div class="text-[11px] text-slate-500 flex items-center gap-1.5">
+                <i class="ph-bold ph-hourglass-high text-amber-400 animate-spin"></i>
+                <span>等待主操作台指令...</span>
+              </div>
+            </div>
+      `;
+
+      const revealedSectionHtml = isZh2Th ? `
+            <!-- Revealed Section (zh2th: Thai word + IPA + Examples) -->
+            <div id="sideRecallWordRevealed" class="${isRevealed ? 'flex' : 'hidden'} flex-1 min-h-0 py-1 space-y-2.5 flex-col overflow-hidden animate-fadeIn">
+              <div class="p-3 sm:p-4 rounded-2xl bg-amber-500/15 border border-amber-400/30 text-center space-y-1.5 shrink-0">
+                <div class="text-[10px] sm:text-[11px] font-bold text-amber-300 uppercase tracking-wider">参考答案 · 泰语单词</div>
+                <div id="sideRecallThaiWord" class="font-thai text-4xl sm:text-5xl font-black text-white tracking-wider select-all">
+                  ${this.escape(w.word || '--')}
+                </div>
+                <div class="flex items-center justify-center gap-2 flex-wrap">
+                  <span id="sideRecallIpa" class="${w.ipa ? '' : 'hidden '}px-3 py-0.5 rounded-xl bg-amber-500/20 text-amber-300 font-mono text-xs sm:text-sm font-semibold border border-amber-500/30">
+                    ${w.ipa ? `/${this.escape(w.ipa)}/` : ''}
+                  </span>
+                  <span id="sideRecallSoundWave" class="sound-wave opacity-30 scale-90 transition-all duration-300">
+                    <span class="sound-bar"></span>
+                    <span class="sound-bar"></span>
+                    <span class="sound-bar"></span>
+                    <span class="sound-bar"></span>
+                    <span class="sound-bar"></span>
+                  </span>
+                </div>
+              </div>
+
+              <div id="sideRecallExamplesList" class="space-y-2 flex-1 min-h-0 overflow-y-auto pr-1">
+                ${this.renderCoreWordExamplesOnlyHtml(w)}
+              </div>
+            </div>
+      ` : `
+            <!-- Revealed Section (th2zh) -->
+            <div id="sideRecallWordRevealed" class="${isRevealed ? 'flex' : 'hidden'} flex-1 min-h-0 py-1 space-y-2.5 flex-col overflow-hidden animate-fadeIn">
+              <div class="p-3 sm:p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1.5 shrink-0">
+                <div class="flex items-center gap-2">
+                  <span id="sideRecallPosBadge" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">
+                    ${this.escape(w.pos || '核心词')}
+                  </span>
+                  <span class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">中文释义</span>
+                </div>
+                <div id="sideRecallMeaning" class="text-lg sm:text-2xl font-bold text-white tracking-wide select-all">
+                  ${this.escape(w.meaning || '暂无释义')}
+                </div>
+              </div>
+
+              <!-- Multi-meanings list (if available) -->
+              <div id="sideRecallMeaningsList" class="space-y-2 flex-1 min-h-0 overflow-y-auto pr-1">
+                ${this.renderCoreWordMeaningsHtml(w)}
+              </div>
+            </div>
+      `;
 
       this.containerEl.innerHTML = `
         <div class="w-full h-full max-w-4xl flex flex-col justify-between gap-2.5 sm:gap-3.5 min-h-0 animate-fadeIn">
@@ -2197,13 +2527,13 @@
           </div>
 
           <!-- Main Interactive Card -->
-          <div class="flex-1 min-h-0 w-full glass-panel rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 border border-white/10 shadow-2xl flex flex-col justify-between relative overflow-hidden">
+          <div id="sideRecallSessionCard" data-review-direction="${dirKey}" class="flex-1 min-h-0 w-full glass-panel rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 border border-white/10 shadow-2xl flex flex-col justify-between relative overflow-hidden">
             
             <!-- Step Indicator -->
             <div class="flex items-center justify-between text-xs text-slate-400 pb-2 border-b border-white/5 shrink-0">
               <div class="flex items-center gap-2">
                 <span id="sideRecallStepDot" class="w-2 h-2 rounded-full ${isRevealed ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'}"></span>
-                <span id="sideRecallStepLabel" class="font-medium">${isRevealed ? '步骤 2/2: 释义与例句已由导师揭晓' : '步骤 1/2: 认读泰语单词 (释义遮蔽中)'}</span>
+                <span id="sideRecallStepLabel" class="font-medium">${isRevealed ? (isZh2Th ? '步骤 2/2: 泰语单词与例句已由导师揭晓' : '步骤 2/2: 释义与例句已由导师揭晓') : (isZh2Th ? '步骤 1/2: 看中文答泰语 (泰语答案遮蔽中)' : '步骤 1/2: 认读泰语单词 (释义遮蔽中)')}</span>
               </div>
               <div class="flex items-center gap-2">
                 ${s.originalScore != null ? `
@@ -2222,66 +2552,11 @@
               </div>
             </div>
 
-            <!-- Thai Word Display Section (Always visible) -->
-            <div class="py-3 sm:py-5 text-center space-y-2 shrink-0">
-              <div id="sideRecallThaiWord" class="font-thai text-4xl sm:text-6xl md:text-7xl font-black text-white tracking-wider py-1 select-all transition-all duration-300">
-                ${this.escape(w.word || '--')}
-              </div>
-              <div class="flex items-center justify-center gap-2 flex-wrap">
-                ${w.ipa ? `
-                  <span id="sideRecallIpa" class="px-3 py-1 rounded-xl bg-amber-500/20 text-amber-300 font-mono text-xs sm:text-sm font-semibold border border-amber-500/30">
-                    /${this.escape(w.ipa)}/
-                  </span>
-                ` : '<span id="sideRecallIpa" class="hidden"></span>'}
-                <span id="sideRecallSoundWave" class="sound-wave opacity-30 scale-90 transition-all duration-300">
-                  <span class="sound-bar"></span>
-                  <span class="sound-bar"></span>
-                  <span class="sound-bar"></span>
-                  <span class="sound-bar"></span>
-                  <span class="sound-bar"></span>
-                </span>
-              </div>
-            </div>
+            ${frontSectionHtml}
 
-            <!-- Shrouded Placeholder Section (When detailRevealed is false) -->
-            <div id="sideRecallWordShrouded" class="${isRevealed ? 'hidden' : ''} flex-1 min-h-0 py-3 flex flex-col items-center justify-center text-center space-y-2.5 sm:space-y-3">
-              <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-xl sm:text-2xl text-amber-400 shadow-inner">
-                <i class="ph-bold ph-lock-key"></i>
-              </div>
-              <div class="max-w-xs mx-auto p-3 sm:p-3.5 rounded-2xl bg-amber-950/40 border border-amber-500/20 space-y-1">
-                <div class="text-xs sm:text-sm font-bold text-amber-200 flex items-center justify-center gap-1.5">
-                  <i class="ph-bold ph-eye-slash"></i>
-                  <span>词汇释义与例句遮蔽中</span>
-                </div>
-                <p class="text-[11px] sm:text-xs text-slate-400 leading-relaxed">
-                  请先在脑海中回忆该词词义、词性及发音。<br>导师在主屏点击<strong>「向副屏揭晓释义 (S)」</strong>后将同步呈现。
-                </p>
-              </div>
-              <div class="text-[11px] text-slate-500 flex items-center gap-1.5">
-                <i class="ph-bold ph-hourglass-high text-amber-400 animate-spin"></i>
-                <span>等待主操作台指令...</span>
-              </div>
-            </div>
+            ${shroudedSectionHtml}
 
-            <!-- Revealed Section (When detailRevealed is true) -->
-            <div id="sideRecallWordRevealed" class="${isRevealed ? '' : 'hidden'} flex-1 min-h-0 py-1 space-y-2.5 flex flex-col overflow-hidden animate-fadeIn">
-              <div class="p-3 sm:p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1.5 shrink-0">
-                <div class="flex items-center gap-2">
-                  <span id="sideRecallPosBadge" class="text-xs font-bold px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">
-                    ${this.escape(w.pos || '核心词')}
-                  </span>
-                  <span class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">中文释义</span>
-                </div>
-                <div id="sideRecallMeaning" class="text-lg sm:text-2xl font-bold text-white tracking-wide select-all">
-                  ${this.escape(w.meaning || '暂无释义')}
-                </div>
-              </div>
-
-              <!-- Multi-meanings list (if available) -->
-              <div id="sideRecallMeaningsList" class="space-y-2 flex-1 min-h-0 overflow-y-auto pr-1">
-                ${this.renderCoreWordMeaningsHtml(w)}
-              </div>
-            </div>
+            ${revealedSectionHtml}
 
             <!-- Footer Status -->
             <div class="pt-2 text-center text-[10px] sm:text-[11px] text-slate-500 border-t border-white/5 flex items-center justify-center gap-1 shrink-0">

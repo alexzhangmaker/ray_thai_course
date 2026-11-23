@@ -335,6 +335,81 @@ test('SideApp Integration: HTTP APIs, WS Connect, Broadcast, Reconnect and Maste
     assert.equal(corePatchMsg.payload.ops[0].path, 'detailRevealed');
     assert.equal(corePatchMsg.payload.ops[0].value, true);
 
+    // 5.6 Test Core Words zh2th direction: Chinese front (Thai hidden), then reveal Thai
+    const zh2thHiddenState = {
+      appType: 'core_words',
+      reviewDirection: 'zh2th',
+      currentIndex: 2,
+      totalWords: 10,
+      detailRevealed: false,
+      word: {
+        id: 'cw_002',
+        word: '',
+        ipa: '',
+        meaning: '大约、大概',
+        meanings: [{ part_of_speech: 'adv.', meaning: '大约、大概', examples: [] }]
+      }
+    };
+    await fetch(`http://127.0.0.1:${TEST_PORT}/sideapp/broadcast`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: sessRes.sessionId,
+        message: {
+          type: 'render.full',
+          payload: {
+            view: 'viewCoreWordsSession',
+            state: zh2thHiddenState,
+            meta: { title: 'ThaiNotes 伴侣屏 · 核心词汇复习' }
+          }
+        }
+      })
+    });
+    await new Promise(r => setTimeout(r, 80));
+    const zh2thFullMsg = receivedMessages.filter(m => m.type === 'render.full').pop();
+    assert.equal(zh2thFullMsg.payload.state.reviewDirection, 'zh2th');
+    assert.equal(zh2thFullMsg.payload.state.detailRevealed, false);
+    assert.equal(zh2thFullMsg.payload.state.word.word, '');
+    assert.equal(zh2thFullMsg.payload.state.word.meaning, '大约、大概');
+
+    const zh2thRevealedState = {
+      ...zh2thHiddenState,
+      detailRevealed: true,
+      word: {
+        ...zh2thHiddenState.word,
+        word: 'ประมาณ',
+        ipa: '/pra˧.maːn˧/',
+        meanings: [{
+          part_of_speech: 'adv.',
+          meaning: '大约、大概',
+          examples: [{ sentence: 'เราเรียนภาษาไทยประมาณ ๘ ชั่วโมง', meaning: '我们大约学8小时泰语' }]
+        }]
+      }
+    };
+    const zh2thPatchOps = computePatch(zh2thHiddenState, zh2thRevealedState);
+    await fetch(`http://127.0.0.1:${TEST_PORT}/sideapp/broadcast`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: sessRes.sessionId,
+        message: {
+          type: 'render.patch',
+          payload: { ops: zh2thPatchOps }
+        }
+      })
+    });
+    await new Promise(r => setTimeout(r, 80));
+    const zh2thPatchMsg = receivedMessages.filter(m => m.type === 'render.patch').pop();
+    assert.ok(zh2thPatchMsg);
+    const zh2thStateCopy = JSON.parse(JSON.stringify(zh2thHiddenState));
+    for (const op of zh2thPatchMsg.payload.ops) {
+      setByPath(zh2thStateCopy, op.path, op.value);
+    }
+    assert.equal(zh2thStateCopy.detailRevealed, true);
+    assert.equal(zh2thStateCopy.word.word, 'ประมาณ');
+    assert.equal(zh2thStateCopy.word.ipa, '/pra˧.maːn˧/');
+    assert.equal(zh2thStateCopy.word.meanings[0].examples.length, 1);
+
     // 5b. Test Course Review PDF loading notification and page flip sync
     const initialCourseReviewState = {
       appType: 'course_review',

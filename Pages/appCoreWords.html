@@ -325,6 +325,18 @@
                 <span id="sideAppStatusText" class="hidden sm:inline">伴侣屏</span>
             </button>
 
+            <!-- Global Review Direction Quick Switch (泰文到中文 / 中文到泰文) -->
+            <div id="globalDirectionSwitch" class="flex items-center p-0.5 rounded-xl bg-slate-100 border border-slate-200 shadow-inner text-[11px] font-bold shrink-0" title="全局复习方向开关：切换 泰文到中文 / 中文到泰文">
+                <button type="button" id="headerDirBtn-th2zh" onclick="setReviewDirection('th2zh', { showToast: true })"
+                    class="px-2.5 py-1 rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1 bg-white text-indigo-700 shadow-xs">
+                    <span>泰➔中</span>
+                </button>
+                <button type="button" id="headerDirBtn-zh2th" onclick="setReviewDirection('zh2th', { showToast: true })"
+                    class="px-2.5 py-1 rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1 text-slate-500 hover:text-slate-700">
+                    <span>中➔泰</span>
+                </button>
+            </div>
+
             <!-- Global Setting Button -->
             <button onclick="openSettingsModal()" type="button" id="globalSettingsBtn" class="px-3.5 py-1.5 text-xs text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 rounded-xl transition duration-150 flex items-center gap-1.5 border border-slate-200 font-medium shadow-sm cursor-pointer" title="全局应用设置 (Settings)">
                 <i class="ph ph-sliders text-sm"></i>
@@ -632,6 +644,50 @@
 
             <!-- Modal Content (Scrollable) -->
             <div class="p-6 overflow-y-auto space-y-5 custom-scrollbar flex-grow">
+                <!-- Section 0: Global Review Direction Switch (泰文到中文 / 中文到泰文) -->
+                <div class="p-4 bg-indigo-50/40 border border-indigo-200/80 rounded-2xl space-y-3">
+                    <div class="flex items-center justify-between gap-2 flex-wrap">
+                        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                            <i class="ph-fill ph-arrows-left-right text-indigo-600"></i>
+                            <span>全局复习方向开关 (中文到泰文 / 泰文到中文)</span>
+                        </h4>
+                        <span id="settingsDirCurrentBadge" class="text-[10px] bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold px-2 py-0.5 rounded-full">
+                            当前：泰文到中文 (默认)
+                        </span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 leading-relaxed">
+                        切换卡片正面与反面展示的内容，整体复习逻辑、评分记录及手机伴侣屏联动保持不变（切换后即时生效并保存）。
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <label id="settingDirCard-th2zh" for="setting-dir-th2zh"
+                            class="cursor-pointer p-3 rounded-xl border-2 border-indigo-500 bg-white shadow-xs transition flex items-start gap-2.5">
+                            <input type="radio" name="setting-review-direction" id="setting-dir-th2zh" value="th2zh" checked onchange="setReviewDirection('th2zh')" class="mt-0.5 accent-indigo-600 cursor-pointer shrink-0">
+                            <div>
+                                <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                    <span>泰文到中文</span>
+                                    <span class="text-[10px] px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-600 font-semibold border border-indigo-100">默认</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-1 leading-snug">
+                                    卡片正面显示<strong>泰语单词</strong>，要求回答中文意思；反面展示中文释义与例句。
+                                </p>
+                            </div>
+                        </label>
+                        <label id="settingDirCard-zh2th" for="setting-dir-zh2th"
+                            class="cursor-pointer p-3 rounded-xl border-2 border-slate-200 bg-white/80 hover:border-violet-300 transition flex items-start gap-2.5">
+                            <input type="radio" name="setting-review-direction" id="setting-dir-zh2th" value="zh2th" onchange="setReviewDirection('zh2th')" class="mt-0.5 accent-violet-600 cursor-pointer shrink-0">
+                            <div>
+                                <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                    <span>中文到泰文</span>
+                                    <span class="text-[10px] px-1.5 py-0.2 rounded bg-violet-50 text-violet-600 font-semibold border border-violet-100">反向考察</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-1 leading-snug">
+                                    卡片正面显示<strong>中文释义</strong>，要求回答对应泰语单词；反面展示泰语单词、音标与例句。
+                                </p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
                 <!-- Section 1: External Deck Service & User ID Configuration -->
                 <div class="p-4 bg-slate-50/90 border border-slate-200 rounded-2xl space-y-3">
                     <div class="flex items-center justify-between">
@@ -1328,6 +1384,7 @@
 
                     window.sideAppBridge.pushState('viewCoreWordsSelection', {
                         appType: 'core_words',
+                        reviewDirection: getReviewDirection(),
                         courseName: course ? course.name : '全部科目',
                         lessonTitle: lesson ? lesson.title : '课时核心词集',
                         wordsetTitle: currentWs ? currentWs.title : (lesson ? `${lesson.title} 核心词` : '全部词集'),
@@ -1347,10 +1404,13 @@
                     const progressPercent = Math.round(((currentWordIndex + 1) / total) * 100);
 
                     const detailRevealed = overrides.detailRevealed !== undefined ? overrides.detailRevealed : isSideAppDetailRevealed;
+                    const reviewDir = getReviewDirection();
+                    const hideThaiAnswer = (reviewDir === 'zh2th' && !detailRevealed);
 
                     const state = {
                         appType: 'core_words',
                         mode: 'core_words_review',
+                        reviewDirection: reviewDir,
                         courseName: course ? course.name : '',
                         lessonTitle: lesson ? lesson.title : '',
                         wordsetTitle: currentWs ? currentWs.title : (lesson ? lesson.title : '核心词集'),
@@ -1361,17 +1421,17 @@
                         detailRevealed: detailRevealed,
                         word: {
                             id: currentWord.id,
-                            word: currentWord.word || currentWord.headword || '',
-                            ipa: currentWord.ipa || '',
+                            word: hideThaiAnswer ? '' : (currentWord.word || currentWord.headword || ''),
+                            ipa: hideThaiAnswer ? '' : (currentWord.ipa || ''),
                             pos: currentWord.pos || '',
-                            meaning: currentWord.meaning || '',
+                            meaning: currentWord.meaning || getCompactChineseSummary(currentWord) || '',
                             meanings: Array.isArray(currentWord.meanings) ? currentWord.meanings.map(m => ({
-                                part_of_speech: m.part_of_speech || '',
-                                meaning: m.meaning || '',
-                                examples: Array.isArray(m.examples) ? m.examples.map(ex => ({
+                                part_of_speech: m.part_of_speech || m.pos || '',
+                                meaning: m.meaning || m.chinese || '',
+                                examples: hideThaiAnswer ? [] : (Array.isArray(m.examples) ? m.examples.map(ex => ({
                                     sentence: ex.sentence || '',
                                     meaning: ex.meaning || ''
-                                })) : []
+                                })) : [])
                             })) : []
                         },
                         masteryScore: coreWordsProgressMap[currentWord.id]?.masteryScore ?? null
@@ -1406,8 +1466,9 @@
         window.syncSideAppState = syncSideAppState;
 
         function revealSideAppDetail() {
+            const wasAlreadyRevealed = isSideAppDetailRevealed;
             isSideAppDetailRevealed = true;
-            syncSideAppState('viewCoreWordsSession', false, { detailRevealed: true });
+            syncSideAppState('viewCoreWordsSession', wasAlreadyRevealed, { detailRevealed: true });
             if (window.sideAppBridge && window.sideAppBridge.enabled) {
                 window.sideAppBridge.playEffect('detail-revealed', '#sideCoreWordRevealed', 800);
             }
@@ -1431,36 +1492,49 @@
             const btnCard = document.getElementById('btnRevealSideAppDetail');
             const btnSide = document.getElementById('btnRevealSideAppDetailSide');
             const syncBadge = document.getElementById('sideAppCardSyncStatus');
+            const zh2th = isZh2ThMode();
 
             if (btnCard) {
-                btnCard.title = '向手机伴侣屏发送指令，揭示词汇的解释与例句 (快捷键: S / R；此操作不影响主屏)';
+                btnCard.title = zh2th
+                    ? '向手机伴侣屏发送指令，揭示对应的泰语单词与例句 (快捷键: S / R；此操作不影响主屏)'
+                    : '向手机伴侣屏发送指令，揭示词汇的解释与例句 (快捷键: S / R；此操作不影响主屏)';
                 if (isRevealed) {
                     btnCard.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-500/20 active:scale-95 cursor-pointer';
-                    btnCard.innerHTML = '<i class="ph-bold ph-check-circle text-sm"></i><span>伴侣屏已展示解释 (点击重发 · S)</span>';
+                    btnCard.innerHTML = zh2th
+                        ? '<i class="ph-bold ph-check-circle text-sm"></i><span>伴侣屏已展示泰语 (点击重发 · S)</span>'
+                        : '<i class="ph-bold ph-check-circle text-sm"></i><span>伴侣屏已展示解释 (点击重发 · S)</span>';
                 } else {
                     btnCard.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-500/20 active:scale-95 cursor-pointer';
-                    btnCard.innerHTML = '<i class="ph-bold ph-eye text-sm"></i><span>展示解释与例句 (发送到伴侣屏 · S)</span>';
+                    btnCard.innerHTML = zh2th
+                        ? '<i class="ph-bold ph-eye text-sm"></i><span>展示泰语单词与例句 (发送到伴侣屏 · S)</span>'
+                        : '<i class="ph-bold ph-eye text-sm"></i><span>展示解释与例句 (发送到伴侣屏 · S)</span>';
                 }
             }
 
             if (btnSide) {
-                btnSide.title = '向手机伴侣屏发送指令，揭示词汇的中文解释和例句 (快捷键: S / R)';
+                btnSide.title = zh2th
+                    ? '向手机伴侣屏发送指令，揭示对应的泰语单词和例句 (快捷键: S / R)'
+                    : '向手机伴侣屏发送指令，揭示词汇的中文解释和例句 (快捷键: S / R)';
                 if (isRevealed) {
                     btnSide.className = 'w-full py-2.5 px-3 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer';
-                    btnSide.innerHTML = '<i class="ph-bold ph-check-circle text-emerald-600"></i><span>伴侣屏已揭晓释义 (点击重发 · S)</span>';
+                    btnSide.innerHTML = zh2th
+                        ? '<i class="ph-bold ph-check-circle text-emerald-600"></i><span>伴侣屏已揭晓泰语 (点击重发 · S)</span>'
+                        : '<i class="ph-bold ph-check-circle text-emerald-600"></i><span>伴侣屏已揭晓释义 (点击重发 · S)</span>';
                 } else {
                     btnSide.className = 'w-full py-2.5 px-3 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer';
-                    btnSide.innerHTML = '<i class="ph-bold ph-device-mobile text-indigo-500"></i><span>展示解释与例句 (伴侣屏 S)</span>';
+                    btnSide.innerHTML = zh2th
+                        ? '<i class="ph-bold ph-device-mobile text-indigo-500"></i><span>展示泰语单词与例句 (伴侣屏 S)</span>'
+                        : '<i class="ph-bold ph-device-mobile text-indigo-500"></i><span>展示解释与例句 (伴侣屏 S)</span>';
                 }
             }
 
             if (syncBadge) {
                 if (isRevealed) {
                     syncBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold border border-emerald-200';
-                    syncBadge.innerText = '伴侣屏：已展示解释与例句';
+                    syncBadge.innerText = zh2th ? '伴侣屏：已展示泰语单词与例句' : '伴侣屏：已展示解释与例句';
                 } else {
                     syncBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-mono font-bold border border-amber-200';
-                    syncBadge.innerText = '伴侣屏：仅显示泰语单词';
+                    syncBadge.innerText = zh2th ? '伴侣屏：仅显示中文释义' : '伴侣屏：仅显示泰语单词';
                 }
             }
         }
@@ -1977,6 +2051,7 @@
                 wordsetId: activeWordsetId || '',
                 lessonId: activeLessonId || '',
                 courseId: (currentLesson && currentLesson.course_id) ? currentLesson.course_id : '',
+                reviewDirection: getReviewDirection(),
                 totalWords: wordsData.length,
                 words: wordsData
             };
@@ -2247,6 +2322,7 @@
         const SETTINGS_STORAGE_BACKUP_KEY = 'ThaiCoreWords_appSettings_backup_v1';
         const DEFAULT_DECK_API_BASE_URL = 'https://ray-dictionary-v2.ai.studio/';
         const DEFAULT_DECK_USER_ID = 'oo9jUBx6ahTmPQ5Dml6yqv6xVcF3';
+        const DEFAULT_REVIEW_DIRECTION = 'th2zh'; // 'th2zh' = 泰文到中文 (默认), 'zh2th' = 中文到泰文
 
         const TAB_INSTANCE_ID = 'tab_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
         let appSyncBroadcastChannel = null;
@@ -2259,11 +2335,146 @@
             console.warn("BroadcastChannel not supported:", e);
         }
 
+        function readInitialReviewDirectionFromStorage() {
+            try {
+                const raw = localStorage.getItem(SETTINGS_STORAGE_BACKUP_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && (parsed.reviewDirection === 'zh2th' || parsed.reviewDirection === 'th2zh')) {
+                        return parsed.reviewDirection;
+                    }
+                }
+            } catch (e) {}
+            return DEFAULT_REVIEW_DIRECTION;
+        }
+
         let appSettings = {
             courseNotebookMap: {},
             deckApiBaseUrl: DEFAULT_DECK_API_BASE_URL,
-            deckUserId: DEFAULT_DECK_USER_ID
+            deckUserId: DEFAULT_DECK_USER_ID,
+            reviewDirection: readInitialReviewDirectionFromStorage()
         };
+
+        function getReviewDirection() {
+            return (appSettings && appSettings.reviewDirection === 'zh2th') ? 'zh2th' : 'th2zh';
+        }
+
+        function isZh2ThMode() {
+            return getReviewDirection() === 'zh2th';
+        }
+
+        function getCompactChineseSummary(word) {
+            if (!word) return '';
+            if (Array.isArray(word.meanings) && word.meanings.length > 0) {
+                const parts = word.meanings
+                    .map(m => (m && m.meaning ? String(m.meaning).trim() : ''))
+                    .filter(Boolean);
+                if (parts.length > 0) return parts.join('；');
+            }
+            return (word.meaning || '').trim();
+        }
+
+        function updateReviewDirectionUI() {
+            const dir = getReviewDirection();
+            const isZh2Th = dir === 'zh2th';
+
+            // Header segmented switch
+            const btnTh2Zh = document.getElementById('headerDirBtn-th2zh');
+            const btnZh2Th = document.getElementById('headerDirBtn-zh2th');
+            if (btnTh2Zh && btnZh2Th) {
+                if (!isZh2Th) {
+                    btnTh2Zh.className = 'px-2.5 py-1 rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1 bg-white text-indigo-700 shadow-xs';
+                    btnZh2Th.className = 'px-2.5 py-1 rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1 text-slate-500 hover:text-slate-700';
+                } else {
+                    btnTh2Zh.className = 'px-2.5 py-1 rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1 text-slate-500 hover:text-slate-700';
+                    btnZh2Th.className = 'px-2.5 py-1 rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1 bg-violet-600 text-white shadow-xs';
+                }
+            }
+
+            // Settings modal radio & cards
+            const radioTh2Zh = document.getElementById('setting-dir-th2zh');
+            const radioZh2Th = document.getElementById('setting-dir-zh2th');
+            if (radioTh2Zh) radioTh2Zh.checked = !isZh2Th;
+            if (radioZh2Th) radioZh2Th.checked = isZh2Th;
+
+            const cardTh2Zh = document.getElementById('settingDirCard-th2zh');
+            const cardZh2Th = document.getElementById('settingDirCard-zh2th');
+            if (cardTh2Zh) {
+                cardTh2Zh.className = !isZh2Th
+                    ? 'cursor-pointer p-3 rounded-xl border-2 border-indigo-500 bg-white shadow-xs transition flex items-start gap-2.5'
+                    : 'cursor-pointer p-3 rounded-xl border-2 border-slate-200 bg-white/80 hover:border-indigo-300 transition flex items-start gap-2.5';
+            }
+            if (cardZh2Th) {
+                cardZh2Th.className = isZh2Th
+                    ? 'cursor-pointer p-3 rounded-xl border-2 border-violet-500 bg-white shadow-xs transition flex items-start gap-2.5'
+                    : 'cursor-pointer p-3 rounded-xl border-2 border-slate-200 bg-white/80 hover:border-violet-300 transition flex items-start gap-2.5';
+            }
+
+            const badge = document.getElementById('settingsDirCurrentBadge');
+            if (badge) {
+                if (isZh2Th) {
+                    badge.className = 'text-[10px] bg-violet-100 text-violet-700 border border-violet-200 font-bold px-2 py-0.5 rounded-full';
+                    badge.textContent = '当前：中文到泰文';
+                } else {
+                    badge.className = 'text-[10px] bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold px-2 py-0.5 rounded-full';
+                    badge.textContent = '当前：泰文到中文 (默认)';
+                }
+            }
+        }
+
+        function updateExerciseProgressTitle(word) {
+            const wordTitleEl = document.getElementById('wordProgressTitle');
+            if (!wordTitleEl || !word) return;
+            const wsOfWord = word.setId ? allWordsets.find(s => s.id === word.setId) : null;
+            if (isZh2ThMode()) {
+                const zhSummary = getCompactChineseSummary(word) || '中文释义';
+                wordTitleEl.innerHTML = `
+                    <span class="font-sans font-bold text-violet-700 truncate max-w-[160px] inline-block align-bottom" title="${escapeHtml(zhSummary)}">${escapeHtml(zhSummary)}</span>
+                    ${wsOfWord ? `<span class="text-[10px] text-slate-400 font-sans ml-1 font-normal">(${escapeHtml(wsOfWord.title)})</span>` : ''}
+                `;
+            } else {
+                wordTitleEl.innerHTML = `
+                    <span class="font-thai font-bold text-indigo-600">${escapeHtml(word.word || word.headword || '')}</span>
+                    ${wsOfWord ? `<span class="text-[10px] text-slate-400 font-sans ml-1 font-normal">(${escapeHtml(wsOfWord.title)})</span>` : ''}
+                `;
+            }
+        }
+
+        function applyReviewDirectionChangeUI() {
+            updateReviewDirectionUI();
+            const viewExercise = document.getElementById('viewExercise');
+            const isInExercise = viewExercise && !viewExercise.classList.contains('hidden');
+            const isSummary = isInExercise &&
+                (document.getElementById('exerciseContent')?.innerHTML.includes('本组核心词汇复习完成') ||
+                 document.getElementById('exerciseContent')?.innerHTML.includes('复习词汇总量'));
+
+            if (isInExercise && !isSummary && currentWord) {
+                isSideAppDetailRevealed = false;
+                updateExerciseProgressTitle(currentWord);
+                if (!currentWord.interactions || currentWord.interactions.length === 0) {
+                    renderWordStudyDetail(currentWord);
+                }
+                syncSideAppState('viewCoreWordsSession', true, { detailRevealed: false });
+            } else if (!isInExercise) {
+                syncSideAppState('viewCoreWordsSelection', true);
+            }
+        }
+
+        async function setReviewDirection(direction, options = {}) {
+            const normalized = direction === 'zh2th' ? 'zh2th' : 'th2zh';
+            const changed = getReviewDirection() !== normalized;
+            appSettings.reviewDirection = normalized;
+            await saveAppSettingToDB('reviewDirection', normalized);
+            applyReviewDirectionChangeUI();
+
+            if (options.showToast && changed && typeof showDeckSyncToast === 'function') {
+                const msg = normalized === 'zh2th'
+                    ? '已切换为「中文到泰文」：正面显示中文释义，反面揭示泰语单词'
+                    : '已切换为「泰文到中文」（默认）：正面显示泰语单词，反面揭示中文释义';
+                showDeckSyncToast(msg, 'info');
+            }
+        }
+        window.setReviewDirection = setReviewDirection;
         let appSettingsLoaded = false;
         const SETTINGS_CACHED_DECKS_KEY = 'ThaiCoreWords_cachedRemoteDecks_v1';
 
@@ -2362,6 +2573,9 @@
             if (!backup || typeof backup !== 'object') return;
             if (backup.deckApiBaseUrl) appSettings.deckApiBaseUrl = backup.deckApiBaseUrl;
             if (backup.deckUserId) appSettings.deckUserId = backup.deckUserId;
+            if (backup.reviewDirection === 'zh2th' || backup.reviewDirection === 'th2zh') {
+                appSettings.reviewDirection = backup.reviewDirection;
+            }
             if (backup.courseNotebookMap && typeof backup.courseNotebookMap === 'object') {
                 appSettings.courseNotebookMap = { ...backup.courseNotebookMap, ...appSettings.courseNotebookMap };
             }
@@ -2392,6 +2606,9 @@
                 if (msg.senderId !== TAB_INSTANCE_ID && msg.key) {
                     appSettings[msg.key] = msg.value;
                     backupAppSettingsToLocalStorage(appSettings);
+                    if (msg.key === 'reviewDirection') {
+                        applyReviewDirectionChangeUI();
+                    }
                     const modal = document.getElementById('settingsModal');
                     if (modal && modal.open) {
                         renderSettingsCourseList();
@@ -2448,6 +2665,7 @@
         }
 
         async function loadAppSettingsFromDB() {
+            const prevDir = getReviewDirection();
             try {
                 const db = await initSettingsDB();
                 return await new Promise((resolve) => {
@@ -2457,6 +2675,11 @@
                         if (backup) {
                             mergeSettingsWithBackup(backup);
                         }
+                        if (getReviewDirection() !== prevDir) {
+                            applyReviewDirectionChangeUI();
+                        } else {
+                            updateReviewDirectionUI();
+                        }
                         resolve(appSettings);
                         return;
                     }
@@ -2465,9 +2688,13 @@
                     const req = store.getAll();
                     req.onsuccess = (e) => {
                         const records = e.target.result || [];
+                        let hasReviewDirectionInDB = false;
                         records.forEach(rec => {
                             if (rec && rec.key !== undefined) {
                                 appSettings[rec.key] = rec.value;
+                                if (rec.key === 'reviewDirection' && (rec.value === 'zh2th' || rec.value === 'th2zh')) {
+                                    hasReviewDirectionInDB = true;
+                                }
                             }
                         });
                         if (!appSettings.courseNotebookMap || typeof appSettings.courseNotebookMap !== 'object') {
@@ -2476,6 +2703,13 @@
 
                         // Compare with localStorage backup to guard against empty DB overwrite
                         const backup = getAppSettingsFromLocalStorageBackup();
+                        if (!hasReviewDirectionInDB && backup && (backup.reviewDirection === 'zh2th' || backup.reviewDirection === 'th2zh')) {
+                            appSettings.reviewDirection = backup.reviewDirection;
+                            saveAppSettingToDB('reviewDirection', appSettings.reviewDirection, false);
+                        }
+                        if (appSettings.reviewDirection !== 'zh2th' && appSettings.reviewDirection !== 'th2zh') {
+                            appSettings.reviewDirection = DEFAULT_REVIEW_DIRECTION;
+                        }
                         if (backup && backup.courseNotebookMap && typeof backup.courseNotebookMap === 'object') {
                             const dbKeysCount = Object.keys(appSettings.courseNotebookMap).filter(k => !!appSettings.courseNotebookMap[k]).length;
                             const backupKeysCount = Object.keys(backup.courseNotebookMap).filter(k => !!backup.courseNotebookMap[k]).length;
@@ -2503,6 +2737,11 @@
                         }
                         backupAppSettingsToLocalStorage(appSettings);
                         appSettingsLoaded = true;
+                        if (getReviewDirection() !== prevDir) {
+                            applyReviewDirectionChangeUI();
+                        } else {
+                            updateReviewDirectionUI();
+                        }
                         resolve(appSettings);
                     };
                     req.onerror = () => {
@@ -2511,6 +2750,11 @@
                             mergeSettingsWithBackup(backup);
                         }
                         appSettingsLoaded = true;
+                        if (getReviewDirection() !== prevDir) {
+                            applyReviewDirectionChangeUI();
+                        } else {
+                            updateReviewDirectionUI();
+                        }
                         resolve(appSettings);
                     };
                 });
@@ -2521,6 +2765,11 @@
                     mergeSettingsWithBackup(backup);
                 }
                 appSettingsLoaded = true;
+                if (getReviewDirection() !== prevDir) {
+                    applyReviewDirectionChangeUI();
+                } else {
+                    updateReviewDirectionUI();
+                }
                 return appSettings;
             }
         }
@@ -3458,6 +3707,7 @@
         }
 
         function renderSettingsCourseList() {
+            updateReviewDirectionUI();
             const listEl = document.getElementById('settingsCourseNotebookList');
             if (!listEl) return;
 
@@ -3575,6 +3825,13 @@
 
             const deckApiBaseUrl = apiUrlInput ? (apiUrlInput.value.trim() || DEFAULT_DECK_API_BASE_URL) : DEFAULT_DECK_API_BASE_URL;
             const deckUserId = userIdInput ? (userIdInput.value.trim() || DEFAULT_DECK_USER_ID) : DEFAULT_DECK_USER_ID;
+            const checkedDirRadio = document.querySelector('input[name="setting-review-direction"]:checked');
+            const selectedReviewDirection = (checkedDirRadio && checkedDirRadio.value === 'zh2th') ? 'zh2th' : 'th2zh';
+
+            // 复习方向为纯本地配置，优先直接持久化（不受外部生词本网络验证阻塞）
+            appSettings.reviewDirection = selectedReviewDirection;
+            await saveAppSettingToDB('reviewDirection', selectedReviewDirection);
+            applyReviewDirectionChangeUI();
 
             const inputs = document.querySelectorAll('#settingsCourseNotebookList input[data-course-id]');
 
@@ -5910,14 +6167,7 @@
             document.getElementById('exProgressIndex').textContent = `进度: ${currentWordIndex + 1} / ${total}`;
             document.getElementById('exProgressBarFill').style.width = `${((currentWordIndex + 1) / total) * 100}%`;
             
-            const wsOfWord = word.setId ? allWordsets.find(s => s.id === word.setId) : null;
-            const wordTitleEl = document.getElementById('wordProgressTitle');
-            if (wordTitleEl) {
-                wordTitleEl.innerHTML = `
-                    <span class="font-thai font-bold text-indigo-600">${word.word || word.headword || ''}</span>
-                    ${wsOfWord ? `<span class="text-[10px] text-slate-400 font-sans ml-1 font-normal">(${wsOfWord.title})</span>` : ''}
-                `;
-            }
+            updateExerciseProgressTitle(word);
 
             if (currentWord.interactions && currentWord.interactions.length > 0) {
                 document.getElementById('btn-exercise-hint').classList.remove('hidden');
@@ -5943,6 +6193,7 @@
             const progress = coreWordsProgressMap[word.id];
             const isReviewed = progress && progress.status === 'reviewed';
             const currentScore = justRatedScore !== null ? justRatedScore : (progress?.masteryScore !== undefined ? progress.masteryScore : null);
+            const zh2th = isZh2ThMode();
 
             const hasPrev = currentWordIndex > 0;
             const hasNext = currentWordIndex < batchWordsQueue.length - 1;
@@ -5984,18 +6235,102 @@
                 `;
             }
 
-            container.innerHTML = `
-                <!-- Core Word Card Header with Prev & Next Navigation Buttons -->
-                <div class="relative bg-white rounded-3xl border border-slate-200 shadow-sm p-6 flex items-center justify-between gap-2">
-                    <!-- Left Prev Button -->
-                    <button id="cardPrevBtn" onclick="navigateWordReview(-1)" 
-                        class="h-12 w-12 rounded-2xl border flex items-center justify-center transition-all duration-200 shrink-0 ${hasPrev ? 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 border-slate-200 shadow-sm active:scale-90 hover:scale-105 cursor-pointer' : 'text-slate-300 border-slate-100 cursor-not-allowed opacity-30'}" 
-                        ${!hasPrev ? 'disabled' : ''} 
-                        title="${hasPrev ? '上一张单词卡 (快捷键: ← 或 [ )' : '已经是第一张'}">
-                        <i class="ph-bold ph-caret-left text-2xl"></i>
-                    </button>
+            // Build Chinese front content & Thai back content when in zh2th mode
+            let cardFrontCenterHtml = '';
+            let cardBackBodyHtml = '';
 
-                    <!-- Center Word Info -->
+            if (zh2th) {
+                let zhFrontMeaningsHtml = '';
+                if (Array.isArray(word.meanings) && word.meanings.length > 0) {
+                    const isSingle = word.meanings.length === 1;
+                    zhFrontMeaningsHtml = `
+                        <div class="space-y-2">
+                            ${word.meanings.map(m => `
+                                <div class="flex items-center justify-center gap-2 flex-wrap">
+                                    <span class="text-xs font-bold px-2 py-0.5 rounded-lg bg-violet-100 text-violet-700 border border-violet-200 font-mono shrink-0">${escapeHtml(m.part_of_speech || '词性')}</span>
+                                    <span class="${isSingle ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'} font-extrabold text-slate-900 select-text">${escapeHtml(m.meaning || '')}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                } else {
+                    zhFrontMeaningsHtml = `
+                        <div class="flex items-center justify-center gap-2 flex-wrap">
+                            ${word.pos ? `<span class="text-xs font-bold px-2 py-0.5 rounded-lg bg-violet-100 text-violet-700 border border-violet-200 font-mono shrink-0">${escapeHtml(word.pos)}</span>` : ''}
+                            <span class="text-2xl md:text-3xl font-extrabold text-slate-900 select-text">${escapeHtml(word.meaning || '暂无中文释义')}</span>
+                        </div>
+                    `;
+                }
+
+                cardFrontCenterHtml = `
+                    <div class="text-center flex-grow px-2">
+                        <div class="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200 mb-2">
+                            <i class="ph-bold ph-arrows-left-right"></i>
+                            <span>中文 ➔ 泰文 · 请回答对应的泰语单词</span>
+                        </div>
+                        ${zhFrontMeaningsHtml}
+                        <div class="pt-2.5 flex justify-center" id="cardMasteryBadge">
+                            ${getMasteryBadgeHtml(progress)}
+                        </div>
+                    </div>
+                `;
+
+                const thaiAnswerCardHtml = `
+                    <div class="bg-white border-2 border-indigo-200/90 rounded-2xl p-5 shadow-sm">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <span class="text-[11px] font-bold text-indigo-600 uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="ph-bold ph-translate text-sm"></i>
+                                <span>参考答案 · 泰语单词</span>
+                            </span>
+                            <span class="text-[10px] text-slate-400 font-mono">快捷键 [空格] 朗读发音</span>
+                        </div>
+                        <div class="flex items-center justify-center gap-3 py-1">
+                            <span class="text-3xl md:text-4xl font-bold font-thai text-indigo-700 tracking-wide select-text">${escapeHtml(displayWord)}</span>
+                            <button onclick="playAudioDirect('${(displayWord || '').replace(/'/g, "\\'")}')" class="p-2 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 rounded-xl transition active:scale-90 cursor-pointer" title="朗读发音 (快捷键: 空格键)">
+                                <i class="ph-bold ph-speaker-high text-2xl"></i>
+                            </button>
+                        </div>
+                        ${word.ipa ? `<span class="text-sm font-mono text-slate-400 block text-center mt-1">${escapeHtml(word.ipa)}</span>` : ''}
+                    </div>
+                `;
+
+                let examplesCardsHtml = '';
+                if (Array.isArray(word.meanings) && word.meanings.length > 0) {
+                    const meaningsWithExamples = word.meanings.filter(m => Array.isArray(m.examples) && m.examples.length > 0);
+                    if (meaningsWithExamples.length > 0) {
+                        examplesCardsHtml = meaningsWithExamples.map(m => `
+                            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
+                                <div class="flex items-center justify-between gap-2 flex-wrap">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-bold px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-200 font-mono">${m.part_of_speech || '词性'}</span>
+                                        <span class="text-sm font-bold text-slate-700">${m.meaning}</span>
+                                    </div>
+                                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                        <i class="ph ph-chat-centered-text text-indigo-500"></i>
+                                        <span>泰中双语对照例句 (支持划选查词)</span>
+                                    </span>
+                                </div>
+                                <div class="border-t border-dashed border-slate-200 pt-3 space-y-2">
+                                    ${m.examples.map(ex => `
+                                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-start justify-between gap-3">
+                                            <div class="select-text">
+                                                <div class="font-thai text-base font-semibold text-slate-800 select-text">${ex.sentence}</div>
+                                                <div class="text-xs text-slate-500 mt-0.5 select-text">${ex.meaning}</div>
+                                            </div>
+                                            <button onclick="playAudioDirect('${(ex.sentence || '').replace(/'/g, "\\'")}')" class="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg shrink-0 transition" title="朗读例句">
+                                                <i class="ph-bold ph-speaker-high text-sm"></i>
+                                            </button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                }
+
+                cardBackBodyHtml = `${thaiAnswerCardHtml}${examplesCardsHtml}`;
+            } else {
+                cardFrontCenterHtml = `
                     <div class="text-center flex-grow px-2">
                         <div class="flex items-center justify-center gap-3">
                             <span class="text-3xl md:text-4xl font-bold font-thai text-indigo-700 tracking-wide select-text">${displayWord}</span>
@@ -6008,6 +6343,39 @@
                             ${getMasteryBadgeHtml(progress)}
                         </div>
                     </div>
+                `;
+                cardBackBodyHtml = meaningsHtml;
+            }
+
+            const sideStatusText = isSideAppDetailRevealed
+                ? (zh2th ? '伴侣屏：已展示泰语单词与例句' : '伴侣屏：已展示解释与例句')
+                : (zh2th ? '伴侣屏：仅显示中文释义' : '伴侣屏：仅显示泰语单词');
+            const sideBtnCardText = isSideAppDetailRevealed
+                ? (zh2th ? '伴侣屏已展示泰语 (点击重发 · S)' : '伴侣屏已展示解释 (点击重发 · S)')
+                : (zh2th ? '展示泰语单词与例句 (发送到伴侣屏 · S)' : '展示解释与例句 (发送到伴侣屏 · S)');
+            const sideBtnCardTitle = zh2th
+                ? '向手机伴侣屏发送指令，揭示对应的泰语单词与例句 (快捷键: S / R；此操作不影响主屏)'
+                : '向手机伴侣屏发送指令，揭示词汇的解释与例句 (快捷键: S / R；此操作不影响主屏)';
+            const sideBtnPanelText = isSideAppDetailRevealed
+                ? (zh2th ? '伴侣屏已揭晓泰语 (点击重发 · S)' : '伴侣屏已揭晓释义 (点击重发 · S)')
+                : (zh2th ? '展示泰语单词与例句 (伴侣屏 S)' : '展示解释与例句 (伴侣屏 S)');
+            const sideBtnPanelTitle = zh2th
+                ? '向手机伴侣屏发送指令，揭示对应的泰语单词和例句 (快捷键: S / R)'
+                : '向手机伴侣屏发送指令，揭示词汇的中文解释和例句 (快捷键: S / R)';
+
+            container.innerHTML = `
+                <!-- Core Word Card Header with Prev & Next Navigation Buttons -->
+                <div class="relative bg-white rounded-3xl border border-slate-200 shadow-sm p-6 flex items-center justify-between gap-2">
+                    <!-- Left Prev Button -->
+                    <button id="cardPrevBtn" onclick="navigateWordReview(-1)" 
+                        class="h-12 w-12 rounded-2xl border flex items-center justify-center transition-all duration-200 shrink-0 ${hasPrev ? 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 border-slate-200 shadow-sm active:scale-90 hover:scale-105 cursor-pointer' : 'text-slate-300 border-slate-100 cursor-not-allowed opacity-30'}" 
+                        ${!hasPrev ? 'disabled' : ''} 
+                        title="${hasPrev ? '上一张单词卡 (快捷键: ← 或 [ )' : '已经是第一张'}">
+                        <i class="ph-bold ph-caret-left text-2xl"></i>
+                    </button>
+
+                    <!-- Center Card Front Info -->
+                    ${cardFrontCenterHtml}
 
                     <!-- Right Next Button -->
                     <button id="cardNextBtn" onclick="navigateWordReview(1)" 
@@ -6024,19 +6392,19 @@
                         <i class="ph-bold ph-device-mobile text-indigo-600 text-base"></i>
                         <span>手机伴侣屏联动</span>
                         <span id="sideAppCardSyncStatus" class="text-[10px] px-2 py-0.5 rounded-full ${isSideAppDetailRevealed ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-amber-100 text-amber-800 border border-amber-200'} font-mono font-bold">
-                            ${isSideAppDetailRevealed ? '伴侣屏：已展示解释与例句' : '伴侣屏：仅显示泰语单词'}
+                            ${sideStatusText}
                         </span>
                     </div>
                     <button id="btnRevealSideAppDetail" onclick="revealSideAppDetail()" type="button" 
                         class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer ${isSideAppDetailRevealed ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-500/20 active:scale-95' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-500/20 active:scale-95'}"
-                        title="向手机伴侣屏发送指令，揭示词汇的解释与例句 (快捷键: S / R；此操作不影响主屏)">
+                        title="${sideBtnCardTitle}">
                         <i class="ph-bold ${isSideAppDetailRevealed ? 'ph-check-circle' : 'ph-eye'} text-sm"></i>
-                        <span>${isSideAppDetailRevealed ? '伴侣屏已展示解释 (点击重发 · S)' : '展示解释与例句 (发送到伴侣屏 · S)'}</span>
+                        <span>${sideBtnCardText}</span>
                     </button>
                 </div>
 
                 <div class="space-y-4">
-                    ${meaningsHtml}
+                    ${cardBackBodyHtml}
                 </div>
             `;
 
@@ -6080,9 +6448,9 @@
 
                         <!-- SideApp Remote Control Button in Rating Side Panel -->
                         <div class="pt-3 border-t border-slate-100">
-                            <button id="btnRevealSideAppDetailSide" onclick="revealSideAppDetail()" type="button" class="w-full py-2.5 px-3 rounded-xl border ${isSideAppDetailRevealed ? 'border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800' : 'border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700'} font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer" title="向手机伴侣屏发送指令，揭示词汇的中文解释和例句 (快捷键: S / R)">
+                            <button id="btnRevealSideAppDetailSide" onclick="revealSideAppDetail()" type="button" class="w-full py-2.5 px-3 rounded-xl border ${isSideAppDetailRevealed ? 'border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800' : 'border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700'} font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer" title="${sideBtnPanelTitle}">
                                 <i class="ph-bold ${isSideAppDetailRevealed ? 'ph-check-circle text-emerald-600' : 'ph-device-mobile text-indigo-500'}"></i>
-                                <span>${isSideAppDetailRevealed ? '伴侣屏已揭晓释义 (点击重发 · S)' : '展示解释与例句 (伴侣屏 S)'}</span>
+                                <span>${sideBtnPanelText}</span>
                             </button>
                         </div>
 
@@ -6138,7 +6506,7 @@
                             <span>·</span>
                             <span>[空格] 朗读</span>
                             <span>·</span>
-                            <span>[S] 伴侣屏释义</span>
+                            <span>[S] 伴侣屏${zh2th ? '泰语' : '释义'}</span>
                         </div>
                     </div>
                 `;

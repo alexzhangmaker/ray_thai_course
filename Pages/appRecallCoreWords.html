@@ -160,6 +160,18 @@
                     </div>
                 </div>
 
+                <!-- Direction Switch Pill (泰文到中文 / 中文到泰文) -->
+                <div id="recallDirectionSwitch" class="flex items-center p-0.5 rounded-xl bg-slate-100 border border-slate-200 text-[11px] font-bold shrink-0" title="切换复习方向：泰文到中文 / 中文到泰文">
+                    <button type="button" id="recallDirBtn-th2zh" onclick="setRecallReviewDirection('th2zh')"
+                        class="px-2 py-1 rounded-lg transition cursor-pointer bg-white text-indigo-700 shadow-xs">
+                        泰➔中
+                    </button>
+                    <button type="button" id="recallDirBtn-zh2th" onclick="setRecallReviewDirection('zh2th')"
+                        class="px-2 py-1 rounded-lg transition cursor-pointer text-slate-500 hover:text-slate-700">
+                        中➔泰
+                    </button>
+                </div>
+
                 <!-- Auto Audio Toggle Button -->
                 <button id="toggle-audio-btn" onclick="toggleAutoAudio()" type="button" class="px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100" title="切换是否在新卡片出现时自动播放泰语发音">
                     <i id="toggle-audio-icon" class="ph-bold ph-speaker-high text-indigo-600"></i>
@@ -231,29 +243,43 @@
                         </div>
                     </div>
 
-                    <!-- Flashcard Center: Thai Word & Audio -->
-                    <div class="flex-grow flex flex-col items-center justify-center py-8 text-center relative z-10 cursor-pointer select-none" onclick="toggleCardReveal()" title="点击卡片翻转显示释义 (快捷键: 空格键)">
+                    <!-- Flashcard Center: Front Prompt & Revealed Answer -->
+                    <div class="flex-grow flex flex-col items-center justify-center py-8 text-center relative z-10 cursor-pointer select-none" onclick="toggleCardReveal()" title="点击卡片翻转显示答案 (快捷键: 空格键)">
                         
-                        <!-- Big Thai Word -->
-                        <h1 id="card-thai-word" class="text-4xl sm:text-5xl font-thai font-black text-slate-900 tracking-wide select-text hover:text-indigo-600 transition">
-                            --
-                        </h1>
+                        <!-- Front Area (th2zh: Thai Word & IPA & Audio) -->
+                        <div id="front-th2zh-area" class="w-full flex flex-col items-center">
+                            <!-- Big Thai Word -->
+                            <h1 id="card-thai-word" class="text-4xl sm:text-5xl font-thai font-black text-slate-900 tracking-wide select-text hover:text-indigo-600 transition">
+                                --
+                            </h1>
 
-                        <!-- IPA & Audio Player -->
-                        <div class="flex items-center justify-center gap-3 mt-3">
-                            <span id="card-ipa-text" class="font-mono text-base sm:text-lg text-slate-400 select-text">
-                                /--/
+                            <!-- IPA & Audio Player -->
+                            <div class="flex items-center justify-center gap-3 mt-3">
+                                <span id="card-ipa-text" class="font-mono text-base sm:text-lg text-slate-400 select-text">
+                                    /--/
+                                </span>
+                                <button onclick="event.stopPropagation(); playCurrentWordAudio()" type="button" class="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 transition active:scale-95 cursor-pointer shadow-xs" title="播放泰语发音 (快捷键: P 或 空格)">
+                                    <i class="ph-bold ph-speaker-high text-xl"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Front Area (zh2th: Chinese Meaning Prompt) -->
+                        <div id="front-zh2th-area" class="hidden w-full flex flex-col items-center">
+                            <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200 mb-3">
+                                <i class="ph-bold ph-arrows-left-right"></i>
+                                <span>中文 ➔ 泰文 · 请回答对应的泰语单词</span>
                             </span>
-                            <button onclick="event.stopPropagation(); playCurrentWordAudio()" type="button" class="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 transition active:scale-95 cursor-pointer shadow-xs" title="播放泰语发音 (快捷键: P 或 空格)">
-                                <i class="ph-bold ph-speaker-high text-xl"></i>
-                            </button>
+                            <div id="card-front-chinese-meaning" class="space-y-2 max-w-2xl">
+                                --
+                            </div>
                         </div>
 
                         <!-- Card Reveal Prompt (Shown when unrevealed) -->
                         <div id="prompt-reveal-area" class="mt-8 transition-all">
                             <button type="button" onclick="event.stopPropagation(); revealCardDetails()" class="px-5 py-2.5 rounded-2xl bg-slate-100 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-slate-600 hover:text-indigo-600 text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer">
                                 <i class="ph-bold ph-eye text-sm"></i>
-                                <span>点击揭晓中文释义与例句</span>
+                                <span id="prompt-reveal-btn-text">点击揭晓中文释义与例句</span>
                                 <span class="kbd-badge ml-1">空格</span>
                             </button>
                         </div>
@@ -261,8 +287,8 @@
                         <!-- Revealed Meaning & Detail Container (Hidden until revealed) -->
                         <div id="revealed-details-area" class="hidden w-full mt-6 text-left space-y-4 pt-4 border-t border-slate-100">
                             
-                            <!-- Main Meaning Banner -->
-                            <div class="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-4">
+                            <!-- Main Meaning Banner (Shown in th2zh mode) -->
+                            <div id="revealed-meaning-banner" class="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-4">
                                 <div class="flex items-center gap-2 mb-1">
                                     <span id="card-pos-badge" class="px-2 py-0.5 rounded-md bg-indigo-600 text-white text-[11px] font-bold font-mono">词性</span>
                                     <span class="text-xs text-indigo-400 font-semibold uppercase tracking-wider">中文释义</span>
@@ -270,6 +296,18 @@
                                 <div id="card-chinese-meaning" class="text-xl sm:text-2xl font-bold text-indigo-950 select-text">
                                     --
                                 </div>
+                            </div>
+
+                            <!-- Revealed Thai Answer Banner (Shown in zh2th mode) -->
+                            <div id="revealed-thai-banner" class="hidden bg-indigo-50/80 border-2 border-indigo-200 rounded-2xl p-4 text-center">
+                                <div class="text-[11px] font-bold text-indigo-500 uppercase tracking-wider mb-1">参考答案 · 泰语单词</div>
+                                <div class="flex items-center justify-center gap-3">
+                                    <span id="card-revealed-thai-word" class="text-3xl sm:text-4xl font-thai font-black text-indigo-900 tracking-wide select-text">--</span>
+                                    <button onclick="event.stopPropagation(); playCurrentWordAudio()" type="button" class="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 transition active:scale-95 cursor-pointer shadow-xs" title="播放泰语发音 (快捷键: P 或 空格)">
+                                        <i class="ph-bold ph-speaker-high text-xl"></i>
+                                    </button>
+                                </div>
+                                <div id="card-revealed-ipa-text" class="font-mono text-sm text-slate-500 mt-1 select-text"></div>
                             </div>
 
                             <!-- Additional Meanings List (if multi-meaning) -->
@@ -566,6 +604,47 @@
 
         // Preferences
         let autoAudioEnabled = true;
+        let reviewDirection = 'th2zh'; // 'th2zh' = 泰文到中文 (默认), 'zh2th' = 中文到泰文
+
+        function getInitialReviewDirection(sessionObj) {
+            if (sessionObj && (sessionObj.reviewDirection === 'zh2th' || sessionObj.reviewDirection === 'th2zh')) {
+                return sessionObj.reviewDirection;
+            }
+            try {
+                const raw = localStorage.getItem('ThaiCoreWords_appSettings_backup_v1');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && (parsed.reviewDirection === 'zh2th' || parsed.reviewDirection === 'th2zh')) {
+                        return parsed.reviewDirection;
+                    }
+                }
+            } catch (e) {}
+            return 'th2zh';
+        }
+
+        function updateRecallDirectionSwitchUI() {
+            const btnTh = document.getElementById('recallDirBtn-th2zh');
+            const btnZh = document.getElementById('recallDirBtn-zh2th');
+            const isZh2Th = reviewDirection === 'zh2th';
+            if (btnTh && btnZh) {
+                if (!isZh2Th) {
+                    btnTh.className = 'px-2 py-1 rounded-lg transition cursor-pointer bg-white text-indigo-700 shadow-xs';
+                    btnZh.className = 'px-2 py-1 rounded-lg transition cursor-pointer text-slate-500 hover:text-slate-700';
+                } else {
+                    btnTh.className = 'px-2 py-1 rounded-lg transition cursor-pointer text-slate-500 hover:text-slate-700';
+                    btnZh.className = 'px-2 py-1 rounded-lg transition cursor-pointer bg-violet-600 text-white shadow-xs';
+                }
+            }
+        }
+
+        function setRecallReviewDirection(dir) {
+            reviewDirection = dir === 'zh2th' ? 'zh2th' : 'th2zh';
+            updateRecallDirectionSwitchUI();
+            if (currentWord && recallQueue.length > 0) {
+                renderNextCard();
+            }
+        }
+        window.setRecallReviewDirection = setRecallReviewDirection;
 
         // ==========================================
         // TTS Pronunciation Audio Player
@@ -641,6 +720,8 @@
 
                 // Session Loaded Successfully!
                 originalWords = sessionData.words;
+                reviewDirection = getInitialReviewDirection(sessionData);
+                updateRecallDirectionSwitchUI();
                 document.getElementById('session-title-badge').textContent = sessionData.title || sessionData.wordsetTitle || '核心低分词强化';
                 document.getElementById('session-date-badge').textContent = sessionData.date || '';
 
@@ -731,6 +812,7 @@
                     window.sideAppBridge.pushState('viewRecallCoreWordsSession', {
                         appType: 'recall_core_words',
                         mode: 'recall_core_words',
+                        reviewDirection: reviewDirection,
                         title: sessionData?.title || sessionData?.wordsetTitle || '核心低分词强化记忆',
                         wordsetTitle: sessionData?.wordsetTitle || sessionData?.title || '核心词集',
                         currentRound: currentRound || 1,
@@ -745,7 +827,7 @@
                         originalScore: 0,
                         word: {
                             id: '',
-                            word: '准备中...',
+                            word: '',
                             ipa: '',
                             pos: '',
                             meaning: '正在初始化错词强化队列...',
@@ -762,19 +844,31 @@
                 const currentIdx = eliminatedWords.length + 1;
                 const progressPercent = Math.round((eliminatedWords.length / total) * 100);
                 const detailRevealed = overrides.detailRevealed !== undefined ? overrides.detailRevealed : isSideAppDetailRevealed;
+                const hideThaiAnswer = (reviewDirection === 'zh2th' && !detailRevealed);
 
                 let wordExamples = [];
-                if (Array.isArray(currentWord.examples) && currentWord.examples.length > 0) {
-                    wordExamples = currentWord.examples;
-                } else if (Array.isArray(currentWord.meanings)) {
-                    currentWord.meanings.forEach(m => {
-                        if (Array.isArray(m.examples)) wordExamples.push(...m.examples);
-                    });
+                if (!hideThaiAnswer) {
+                    if (Array.isArray(currentWord.examples) && currentWord.examples.length > 0) {
+                        wordExamples = currentWord.examples;
+                    } else if (Array.isArray(currentWord.meanings)) {
+                        currentWord.meanings.forEach(m => {
+                            if (Array.isArray(m.examples)) wordExamples.push(...m.examples);
+                        });
+                    }
                 }
+
+                const sanitizedMeanings = Array.isArray(currentWord.meanings)
+                    ? currentWord.meanings.map(m => ({
+                        part_of_speech: m.part_of_speech || m.pos || '',
+                        meaning: m.meaning || m.chinese || m.definition || '',
+                        examples: hideThaiAnswer ? [] : (Array.isArray(m.examples) ? m.examples : [])
+                    }))
+                    : [];
 
                 const state = {
                     appType: 'recall_core_words',
                     mode: 'recall_core_words',
+                    reviewDirection: reviewDirection,
                     title: sessionData?.title || sessionData?.wordsetTitle || '核心低分词强化记忆',
                     wordsetTitle: sessionData?.wordsetTitle || sessionData?.title || '核心词集',
                     currentRound: currentRound,
@@ -789,11 +883,11 @@
                     originalScore: currentWord.masteryScore !== undefined ? currentWord.masteryScore : (currentWord.score !== undefined ? currentWord.score : 1),
                     word: {
                         id: currentWord.id,
-                        word: currentWord.word || currentWord.headword || '',
-                        ipa: currentWord.ipa || '',
+                        word: hideThaiAnswer ? '' : (currentWord.word || currentWord.headword || ''),
+                        ipa: hideThaiAnswer ? '' : (currentWord.ipa || ''),
                         pos: getWordPos(currentWord),
                         meaning: getWordMeaning(currentWord),
-                        meanings: Array.isArray(currentWord.meanings) ? currentWord.meanings : [],
+                        meanings: sanitizedMeanings,
                         examples: wordExamples
                     }
                 };
@@ -823,38 +917,41 @@
             const syncBadge = document.getElementById('sideAppCardSyncStatus');
             const syncBadgeRevealed = document.getElementById('sideAppCardSyncStatusRevealed');
             const btnRevealedText = document.getElementById('btnRevealSideAppDetailRevealedText');
+            const isZh2Th = reviewDirection === 'zh2th';
 
             if (btnText && btn) {
                 if (isRevealed) {
-                    btnText.textContent = '副屏已展示释义 (点击遮蔽 · S)';
+                    btnText.textContent = isZh2Th ? '副屏已展示泰语 (点击遮蔽 · S)' : '副屏已展示释义 (点击遮蔽 · S)';
                     btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 cursor-pointer';
                 } else {
-                    btnText.textContent = '向副屏揭晓释义 (S)';
+                    btnText.textContent = isZh2Th ? '向副屏揭晓泰语 (S)' : '向副屏揭晓释义 (S)';
                     btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm bg-amber-600 text-white hover:bg-amber-700 active:scale-95 cursor-pointer';
                 }
             }
 
             if (btnRevealedText) {
-                btnRevealedText.textContent = isRevealed ? '副屏已展示 (点击遮蔽 · S)' : '向副屏揭晓释义 (S)';
+                btnRevealedText.textContent = isRevealed
+                    ? '副屏已展示 (点击遮蔽 · S)'
+                    : (isZh2Th ? '向副屏揭晓泰语 (S)' : '向副屏揭晓释义 (S)');
             }
 
             if (syncBadge) {
                 if (isRevealed) {
                     syncBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold border border-emerald-200';
-                    syncBadge.textContent = '副屏：已展示释义与例句';
+                    syncBadge.textContent = isZh2Th ? '副屏：已展示泰语与例句' : '副屏：已展示释义与例句';
                 } else {
                     syncBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-mono font-bold border border-amber-200';
-                    syncBadge.textContent = '副屏：释义遮蔽中';
+                    syncBadge.textContent = isZh2Th ? '副屏：泰语答案遮蔽中' : '副屏：释义遮蔽中';
                 }
             }
 
             if (syncBadgeRevealed) {
                 if (isRevealed) {
                     syncBadgeRevealed.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold border border-emerald-200';
-                    syncBadgeRevealed.textContent = '副屏：已展示释义与例句';
+                    syncBadgeRevealed.textContent = isZh2Th ? '副屏：已展示泰语与例句' : '副屏：已展示释义与例句';
                 } else {
                     syncBadgeRevealed.className = 'text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-mono font-bold border border-amber-200';
-                    syncBadgeRevealed.textContent = '副屏：释义遮蔽中';
+                    syncBadgeRevealed.textContent = isZh2Th ? '副屏：泰语答案遮蔽中' : '副屏：释义遮蔽中';
                 }
             }
         }
@@ -938,8 +1035,34 @@
 
             // Render Thai Word & IPA
             const displayWord = currentWord.word || currentWord.headword || '';
+            const isZh2Th = reviewDirection === 'zh2th';
             document.getElementById('card-thai-word').textContent = displayWord;
             document.getElementById('card-ipa-text').textContent = currentWord.ipa ? `/${currentWord.ipa}/` : '';
+
+            // Toggle Front/Back containers based on reviewDirection
+            const frontThArea = document.getElementById('front-th2zh-area');
+            const frontZhArea = document.getElementById('front-zh2th-area');
+            const revealedMeaningBanner = document.getElementById('revealed-meaning-banner');
+            const revealedThaiBanner = document.getElementById('revealed-thai-banner');
+            const promptBtnText = document.getElementById('prompt-reveal-btn-text');
+
+            if (isZh2Th) {
+                if (frontThArea) frontThArea.classList.add('hidden');
+                if (frontZhArea) frontZhArea.classList.remove('hidden');
+                if (revealedMeaningBanner) revealedMeaningBanner.classList.add('hidden');
+                if (revealedThaiBanner) revealedThaiBanner.classList.remove('hidden');
+                if (promptBtnText) promptBtnText.textContent = '点击揭晓泰语单词与例句';
+                const revThaiEl = document.getElementById('card-revealed-thai-word');
+                const revIpaEl = document.getElementById('card-revealed-ipa-text');
+                if (revThaiEl) revThaiEl.textContent = displayWord;
+                if (revIpaEl) revIpaEl.textContent = currentWord.ipa ? `/${currentWord.ipa}/` : '';
+            } else {
+                if (frontThArea) frontThArea.classList.remove('hidden');
+                if (frontZhArea) frontZhArea.classList.add('hidden');
+                if (revealedMeaningBanner) revealedMeaningBanner.classList.remove('hidden');
+                if (revealedThaiBanner) revealedThaiBanner.classList.add('hidden');
+                if (promptBtnText) promptBtnText.textContent = '点击揭晓中文释义与例句';
+            }
 
             // Render Score & Loop Badge
             const score = currentWord.masteryScore !== undefined ? currentWord.masteryScore : (currentWord.score !== undefined ? currentWord.score : 1);
@@ -964,9 +1087,30 @@
             document.getElementById('card-pos-badge').textContent = corePos;
             document.getElementById('card-chinese-meaning').textContent = coreMeaning;
 
-            // Multi-meanings list if present
+            // Populate zh2th front Chinese prompt
+            const frontZhMeaningEl = document.getElementById('card-front-chinese-meaning');
+            if (frontZhMeaningEl) {
+                if (Array.isArray(currentWord.meanings) && currentWord.meanings.length > 0) {
+                    const isSingle = currentWord.meanings.length === 1;
+                    frontZhMeaningEl.innerHTML = currentWord.meanings.map(m => `
+                        <div class="flex items-center justify-center gap-2 flex-wrap">
+                            <span class="px-2 py-0.5 rounded-lg bg-violet-100 text-violet-700 border border-violet-200 font-bold font-mono text-xs">${m.part_of_speech || '释义'}</span>
+                            <span class="${isSingle ? 'text-3xl sm:text-4xl' : 'text-xl sm:text-2xl'} font-black text-slate-900 select-text">${m.meaning || m.chinese || ''}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    frontZhMeaningEl.innerHTML = `
+                        <div class="flex items-center justify-center gap-2 flex-wrap">
+                            ${corePos ? `<span class="px-2 py-0.5 rounded-lg bg-violet-100 text-violet-700 border border-violet-200 font-bold font-mono text-xs">${corePos}</span>` : ''}
+                            <span class="text-3xl sm:text-4xl font-black text-slate-900 select-text">${coreMeaning}</span>
+                        </div>
+                    `;
+                }
+            }
+
+            // Multi-meanings list if present (only needed in th2zh mode since zh2th already displays all meanings on front)
             const meaningsListEl = document.getElementById('card-meanings-list');
-            if (Array.isArray(currentWord.meanings) && currentWord.meanings.length > 1) {
+            if (!isZh2Th && Array.isArray(currentWord.meanings) && currentWord.meanings.length > 1) {
                 meaningsListEl.innerHTML = currentWord.meanings.map(m => `
                     <div class="flex items-center gap-2 text-xs text-slate-700 bg-slate-50 p-2 rounded-xl border border-slate-100">
                         <span class="px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 font-bold font-mono text-[10px]">${m.part_of_speech || '释义'}</span>
@@ -1018,8 +1162,8 @@
             document.getElementById('action-buttons-unrevealed').classList.remove('hidden');
             document.getElementById('action-buttons-revealed').classList.add('hidden');
 
-            // Auto Play Audio if enabled
-            if (autoAudioEnabled) {
+            // Auto Play Audio if enabled (only on front in th2zh mode; in zh2th mode play when revealed)
+            if (autoAudioEnabled && !isZh2Th) {
                 setTimeout(() => {
                     playCurrentWordAudio();
                 }, 150);
@@ -1043,6 +1187,12 @@
             document.getElementById('revealed-details-area').classList.remove('hidden');
             document.getElementById('action-buttons-unrevealed').classList.add('hidden');
             document.getElementById('action-buttons-revealed').classList.remove('hidden');
+
+            if (autoAudioEnabled && reviewDirection === 'zh2th') {
+                setTimeout(() => {
+                    playCurrentWordAudio();
+                }, 120);
+            }
 
             updateRevealSideAppButtonUI(isSideAppDetailRevealed);
             syncSideAppState('viewRecallCoreWordsSession', false, { detailRevealed: isSideAppDetailRevealed });

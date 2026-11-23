@@ -7802,7 +7802,15 @@ app.get('/api/sentence-practice/stats', async (req, res) => {
 });
 
 // Serve static files from parent directory (which hosts the Pages folder)
-app.use(express.static(parentDir));
+app.use(express.static(parentDir, {
+  setHeaders: (res, filePath) => {
+    if (filePath.includes(`${path.sep}sideapp${path.sep}`)) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  }
+}));
 
 
 
