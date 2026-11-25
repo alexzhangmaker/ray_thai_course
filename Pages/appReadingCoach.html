@@ -547,11 +547,75 @@
         // ==========================================
         // 泰语语音播放功能
         // ==========================================
-        window.playAudioDirect = (text) => {
+        let currentAudioPlayer = null;
+        let currentPlayingTriggerEl = null;
+
+        function clearPlayingIndicator() {
+            if (currentPlayingTriggerEl) {
+                currentPlayingTriggerEl.classList.remove('is-playing-audio', 'ring-2', 'ring-blue-400', 'bg-blue-100', 'text-blue-700');
+                const icon = currentPlayingTriggerEl.querySelector('i.fa-volume-up');
+                if (icon) icon.classList.remove('animate-pulse', 'text-blue-600');
+                currentPlayingTriggerEl = null;
+            }
+        }
+
+        window.playAudioDirect = (text, triggerEl = null) => {
             if (!text) return;
-            const url = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(text)}`;
-            new Audio(url).play().catch(err => console.error("Audio playback error:", err));
+            const cleanText = String(text).replace(/\s+/g, ' ').trim();
+            if (!cleanText) return;
+
+            if (currentAudioPlayer) {
+                try {
+                    currentAudioPlayer.pause();
+                    currentAudioPlayer.currentTime = 0;
+                } catch (e) {}
+            }
+            clearPlayingIndicator();
+
+            const url = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(cleanText)}`;
+            const audio = new Audio(url);
+            currentAudioPlayer = audio;
+
+            if (triggerEl && triggerEl.classList) {
+                currentPlayingTriggerEl = triggerEl;
+                triggerEl.classList.add('is-playing-audio');
+                if (triggerEl.classList.contains('quiz-play-thai-btn')) {
+                    triggerEl.classList.add('ring-2', 'ring-blue-400', 'bg-blue-100', 'text-blue-700');
+                }
+                const icon = triggerEl.querySelector('i.fa-volume-up');
+                if (icon) icon.classList.add('animate-pulse', 'text-blue-600');
+            }
+
+            audio.onended = () => {
+                if (currentAudioPlayer === audio) clearPlayingIndicator();
+            };
+            audio.onerror = () => {
+                if (currentAudioPlayer === audio) clearPlayingIndicator();
+            };
+
+            audio.play().catch(err => {
+                console.error("Audio playback error:", err);
+                if (currentAudioPlayer === audio) clearPlayingIndicator();
+            });
         };
+
+        // 从中泰混合文本中提取纯泰语朗读文本（自动去除括号内的中文翻译）
+        function extractThaiForSpeech(rawText) {
+            if (!rawText) return '';
+            const plain = getCleanText(String(rawText));
+            if (!/[\u0e00-\u0e7f]/.test(plain)) return '';
+
+            // 1. 移除括号中的纯中文/非泰语释义，如 "(泰国的历史与王国)"
+            let cleaned = plain.replace(/[（(][^()（）\u0e00-\u0e7f]*[\u4e00-\u9fff][^()（）]*[）)]/g, ' ');
+
+            // 2. 若仍有中文字符，仅提取泰语片段（保留句中数字与常见标点）
+            if (/[\u4e00-\u9fff]/.test(cleaned)) {
+                const matches = cleaned.match(/[\u0e00-\u0e7f]+(?:[\s\d.,!?/%-]*[\u0e00-\u0e7f\u0e50-\u0e590-9]+)*/g);
+                cleaned = matches ? matches.join(' ') : '';
+            }
+
+            return cleaned.replace(/\s+/g, ' ').trim();
+        }
 
         // Helper to get raw plain text from HTML string
         function getCleanText(html) {
@@ -1806,8 +1870,28 @@
         window.switchArticleView = switchArticleView;
 
         // ==========================================
-        // 2. 渲染测试题目
+        // 2. 渲染测试题目（含扩展开放问答题）
         // ==========================================
+        function getExtendedQuestions() {
+            if (!appData || typeof appData !== 'object') return [];
+            const rawList = (appData.comprehension_quiz && Array.isArray(appData.comprehension_quiz.extended_questions))
+                ? appData.comprehension_quiz.extended_questions
+                : (Array.isArray(appData.extended_questions) ? appData.extended_questions : []);
+            return rawList.filter(item => item && typeof item === 'object' && String(item.question || item.question_zh || '').trim());
+        }
+
+        function toggleExtendedRefAnswer(idx) {
+            const box = document.getElementById(`ext-ref-box-${idx}`);
+            const btn = document.getElementById(`ext-ref-toggle-${idx}`);
+            if (!box || !btn) return;
+            const willShow = box.classList.contains('hidden');
+            box.classList.toggle('hidden', !willShow);
+            btn.innerHTML = willShow
+                ? '<i class="fas fa-eye-slash mr-1.5"></i> 隐藏参考答案'
+                : '<i class="fas fa-lightbulb mr-1.5"></i> 查看参考答案';
+        }
+        window.toggleExtendedRefAnswer = toggleExtendedRefAnswer;
+
         function renderQuiz() {
             if (!appData) return;
             const container = document.getElementById('quiz-container');
@@ -1815,29 +1899,47 @@
             const types = ['topic', 'main_idea', 'supporting_details'];
 
             types.forEach(type => {
-                const q = appData.comprehension_quiz[type];
+                const q = appData.comprehension_quiz && appData.comprehension_quiz[type];
+                if (!q) return;
                 const isMultiple = q.type === 'multiple';
                 const inputType = isMultiple ? 'checkbox' : 'radio';
                 const icon = type === 'topic' ? 'bullseye' : (type === 'main_idea' ? 'lightbulb' : 'list-ul');
                 const color = type === 'topic' ? 'text-purple-600 bg-purple-50' : (type === 'main_idea' ? 'text-blue-600 bg-blue-50' : 'text-teal-600 bg-teal-50');
+                const qTitleThai = extractThaiForSpeech(q.question_zh);
 
                 const card = document.createElement('div');
                 card.className = 'p-6 bg-slate-50 rounded-xl border border-slate-200';
                 card.innerHTML = `
-                    <h3 class="font-bold text-gray-800 mb-4 flex items-center text-lg">
-                        <span class="w-8 h-8 rounded-full ${color} flex items-center justify-center mr-3">
+                    <h3 class="font-bold text-gray-800 mb-4 flex items-center flex-wrap gap-y-2 text-lg">
+                        <span class="w-8 h-8 rounded-full ${color} flex items-center justify-center mr-3 flex-shrink-0">
                             <i class="fas fa-${icon} text-sm"></i>
                         </span>
-                        ${q.question_zh}
+                        <span class="${qTitleThai ? 'quiz-thai-playable font-thai-clickable' : ''}" ${qTitleThai ? `data-thai="${escapeHtml(qTitleThai)}" title="点击朗读泰语发音"` : ''}>${q.question_zh}</span>
+                        ${qTitleThai ? `
+                            <button type="button" class="quiz-play-thai-btn ml-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200/80 transition active:scale-95" data-thai="${escapeHtml(qTitleThai)}" title="点击朗读泰语发音">
+                                <i class="fas fa-volume-up text-xs"></i>
+                                <span>朗读</span>
+                            </button>
+                        ` : ''}
                         ${isMultiple ? '<span class="ml-2 text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">多选</span>' : ''}
                     </h3>
                     <div class="space-y-3" id="opts-${type}">
-                        ${q.options.map(opt => `
-                            <label class="quiz-option flex items-center p-4 rounded-lg" data-opt-id="${opt.id}">
-                                <input type="${inputType}" name="quiz-${type}" value="${opt.id}" class="w-5 h-5 text-thaiBlue focus:ring-thaiBlue mr-4 flex-shrink-0">
-                                <span class="thai-text text-gray-700 text-base leading-relaxed">${opt.text}</span>
-                            </label>
-                        `).join('')}
+                        ${q.options.map(opt => {
+                            const optThai = extractThaiForSpeech(opt.text);
+                            return `
+                                <label class="quiz-option flex items-center gap-3 p-4 rounded-lg" data-opt-id="${opt.id}">
+                                    <div class="flex items-center flex-1 min-w-0">
+                                        <input type="${inputType}" name="quiz-${type}" value="${opt.id}" class="w-5 h-5 text-thaiBlue focus:ring-thaiBlue mr-4 flex-shrink-0">
+                                        <span class="thai-text text-gray-700 text-base leading-relaxed ${optThai ? 'quiz-option-thai font-thai-clickable' : ''}" ${optThai ? `data-thai="${escapeHtml(optThai)}" title="点击朗读泰语发音"` : ''}>${opt.text}</span>
+                                    </div>
+                                    ${optThai ? `
+                                        <button type="button" class="quiz-play-thai-btn flex-shrink-0 w-9 h-9 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200/80 flex items-center justify-center transition active:scale-90" data-thai="${escapeHtml(optThai)}" title="点击朗读泰语发音" aria-label="朗读泰语发音">
+                                            <i class="fas fa-volume-up text-sm"></i>
+                                        </button>
+                                    ` : ''}
+                                </label>
+                            `;
+                        }).join('')}
                     </div>
                 `;
                 container.appendChild(card);
@@ -1858,6 +1960,112 @@
                     });
                 });
             });
+
+            // 渲染扩展开放问答练习题
+            const extendedQuestions = getExtendedQuestions();
+            if (extendedQuestions.length > 0) {
+                const extSection = document.createElement('div');
+                extSection.id = 'extended-questions-section';
+                extSection.className = 'pt-6 border-t border-slate-200 space-y-6';
+
+                const headerHtml = `
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+                                <i class="fas fa-pen-nib text-sm"></i>
+                            </span>
+                            <span>扩展问答练习</span>
+                            <span class="text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-full">
+                                开放问答 · 共 ${extendedQuestions.length} 题
+                            </span>
+                        </h3>
+                        <span class="text-xs text-slate-400">作答后可点击“查看参考答案”或提交全部测试查看解析（点击泰语内容可播音）</span>
+                    </div>
+                `;
+
+                const cardsHtml = extendedQuestions.map((q, idx) => {
+                    const qText = String(q.question || q.question_zh || '').trim();
+                    const refText = String(q.reference_answer || q.answer || '').trim();
+                    const refZhText = String(q.reference_answer_zh ?? q['reference_answer——zh'] ?? q.answer_zh ?? '').trim();
+                    const qThai = extractThaiForSpeech(qText);
+                    const refThai = extractThaiForSpeech(refText);
+                    return `
+                        <div class="p-6 bg-amber-50/40 rounded-xl border border-amber-200/80 space-y-4" data-ext-card-idx="${idx}">
+                            <div class="flex items-start justify-between gap-3">
+                                <h4 class="font-bold text-gray-800 flex items-start text-base leading-relaxed">
+                                    <span class="w-7 h-7 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
+                                        ${idx + 1}
+                                    </span>
+                                    <span class="font-thai whitespace-pre-line ${qThai ? 'quiz-thai-playable font-thai-clickable' : ''}" ${qThai ? `data-thai="${escapeHtml(qThai)}" title="点击朗读泰语问题"` : ''}>${escapeHtml(qText)}</span>
+                                </h4>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    ${qThai ? `
+                                        <button type="button" class="quiz-play-thai-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200/80 transition active:scale-95 flex items-center gap-1" data-thai="${escapeHtml(qThai)}" title="点击朗读泰语问题">
+                                            <i class="fas fa-volume-up text-xs"></i>
+                                            <span>朗读</span>
+                                        </button>
+                                    ` : ''}
+                                    <span class="text-[11px] font-semibold bg-white text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-full">
+                                        开放问答
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <textarea
+                                    id="ext-answer-${idx}"
+                                    data-ext-idx="${idx}"
+                                    rows="3"
+                                    placeholder="请在此输入你的回答（支持泰语或中文）..."
+                                    class="w-full bg-white border-2 border-slate-200 rounded-xl p-3.5 text-base text-slate-700 font-thai leading-relaxed focus:outline-none focus:border-thaiBlue focus:ring-2 focus:ring-blue-100 transition resize-y"
+                                ></textarea>
+                            </div>
+
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <span id="ext-status-badge-${idx}" class="hidden text-xs font-semibold px-2.5 py-0.5 rounded-full"></span>
+                                <button
+                                    type="button"
+                                    id="ext-ref-toggle-${idx}"
+                                    onclick="toggleExtendedRefAnswer(${idx})"
+                                    class="ml-auto text-xs font-semibold text-amber-700 hover:text-amber-900 bg-white hover:bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg transition flex items-center"
+                                >
+                                    <i class="fas fa-lightbulb mr-1.5"></i> 查看参考答案
+                                </button>
+                            </div>
+
+                            <div id="ext-ref-box-${idx}" class="hidden p-4 bg-emerald-50/90 border border-emerald-200 rounded-xl space-y-2">
+                                <div class="space-y-1">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <div class="text-xs font-bold text-emerald-700 flex items-center gap-1.5">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>参考答案</span>
+                                        </div>
+                                        ${refThai ? `
+                                            <button type="button" class="quiz-play-thai-btn px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white hover:bg-blue-50 text-blue-600 border border-emerald-200 hover:border-blue-300 transition active:scale-95 flex items-center gap-1" data-thai="${escapeHtml(refThai)}" title="点击朗读参考答案泰语">
+                                                <i class="fas fa-volume-up text-[11px]"></i>
+                                                <span>朗读</span>
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                    <div class="text-sm text-emerald-950 font-thai leading-relaxed whitespace-pre-line ${refThai ? 'quiz-thai-playable font-thai-clickable' : ''}" ${refThai ? `data-thai="${escapeHtml(refThai)}" title="点击朗读参考答案泰语"` : ''}>${refText ? escapeHtml(refText) : '<span class="italic text-emerald-700/70">暂无参考答案</span>'}</div>
+                                </div>
+                                ${refZhText ? `
+                                    <div class="pt-2 border-t border-emerald-200/80 space-y-1">
+                                        <div class="text-xs font-bold text-blue-700 flex items-center gap-1.5">
+                                            <i class="fas fa-language"></i>
+                                            <span>参考答案中文翻译</span>
+                                        </div>
+                                        <div class="text-sm text-slate-700 leading-relaxed whitespace-pre-line">${escapeHtml(refZhText)}</div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                extSection.innerHTML = headerHtml + `<div class="space-y-5">${cardsHtml}</div>`;
+                container.appendChild(extSection);
+            }
         }
 
         // ==========================================
@@ -2131,7 +2339,7 @@
             isSubmitted = true;
             
             let totalScore = 0;
-            const totalQuestions = 3;
+            let objectiveTotal = 0;
             const feedbackSection = document.getElementById('feedback-section');
             const feedbackContent = document.getElementById('feedback-content');
             let detailHtml = '';
@@ -2139,7 +2347,9 @@
             const types = ['topic', 'main_idea', 'supporting_details'];
             
             types.forEach(type => {
-                const q = appData.comprehension_quiz[type];
+                const q = appData.comprehension_quiz && appData.comprehension_quiz[type];
+                if (!q) return;
+                objectiveTotal++;
                 const isMultiple = q.type === 'multiple';
                 const inputs = document.querySelectorAll(`#opts-${type} input`);
                 const correctIds = q.options.filter(o => o.is_correct).map(o => o.id);
@@ -2154,13 +2364,13 @@
                     
                     if (input.checked && correctIds.includes(input.value)) {
                         label.classList.add('correct');
-                        label.insertAdjacentHTML('beforeend', '<i class="fas fa-check-circle text-green-500 ml-auto text-xl"></i>');
+                        label.insertAdjacentHTML('beforeend', '<i class="fas fa-check-circle text-green-500 text-xl flex-shrink-0"></i>');
                     } else if (input.checked && !correctIds.includes(input.value)) {
                         label.classList.add('incorrect');
-                        label.insertAdjacentHTML('beforeend', '<i class="fas fa-times-circle text-red-500 ml-auto text-xl"></i>');
+                        label.insertAdjacentHTML('beforeend', '<i class="fas fa-times-circle text-red-500 text-xl flex-shrink-0"></i>');
                     } else if (!input.checked && correctIds.includes(input.value)) {
                         label.classList.add('missed');
-                        label.insertAdjacentHTML('beforeend', '<i class="fas fa-exclamation-circle text-yellow-500 ml-auto text-xl"></i>');
+                        label.insertAdjacentHTML('beforeend', '<i class="fas fa-exclamation-circle text-yellow-500 text-xl flex-shrink-0"></i>');
                     }
                     input.disabled = true;
                 });
@@ -2185,25 +2395,141 @@
                 `;
             });
 
+            // 处理扩展开放问答题：锁定输入、展开参考答案并生成自评对比报告
+            const extendedQuestions = getExtendedQuestions();
+            let extendedFeedbackHtml = '';
+            let answeredExtendedCount = 0;
+
+            if (extendedQuestions.length > 0) {
+                const extItemsHtml = extendedQuestions.map((q, idx) => {
+                    const qText = String(q.question || q.question_zh || '').trim();
+                    const refText = String(q.reference_answer || q.answer || '').trim();
+                    const refZhText = String(q.reference_answer_zh ?? q['reference_answer——zh'] ?? q.answer_zh ?? '').trim();
+                    const textarea = document.getElementById(`ext-answer-${idx}`);
+                    const refBox = document.getElementById(`ext-ref-box-${idx}`);
+                    const toggleBtn = document.getElementById(`ext-ref-toggle-${idx}`);
+                    const statusBadge = document.getElementById(`ext-status-badge-${idx}`);
+
+                    const userAnswer = textarea ? textarea.value.trim() : '';
+                    const hasAnswer = userAnswer.length > 0;
+                    if (hasAnswer) answeredExtendedCount++;
+
+                    if (textarea) {
+                        textarea.disabled = true;
+                        textarea.classList.add('bg-slate-100', 'text-slate-600', 'cursor-not-allowed');
+                    }
+                    if (refBox) {
+                        refBox.classList.remove('hidden');
+                    }
+                    if (toggleBtn) {
+                        toggleBtn.innerHTML = '<i class="fas fa-eye-slash mr-1.5"></i> 隐藏参考答案';
+                    }
+                    if (statusBadge) {
+                        statusBadge.classList.remove('hidden');
+                        statusBadge.className = hasAnswer
+                            ? 'text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700'
+                            : 'text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-600';
+                        statusBadge.innerHTML = hasAnswer
+                            ? '<i class="fas fa-check mr-1"></i> 已作答 · 请对照参考答案自评'
+                            : '<i class="fas fa-minus-circle mr-1"></i> 未作答 · 已展示参考答案';
+                    }
+
+                    const qThai = extractThaiForSpeech(qText);
+                    const userAnsThai = hasAnswer ? extractThaiForSpeech(userAnswer) : '';
+                    const refThai = extractThaiForSpeech(refText);
+
+                    return `
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="font-bold text-slate-800 text-sm font-thai whitespace-pre-line ${qThai ? 'quiz-thai-playable font-thai-clickable' : ''}" ${qThai ? `data-thai="${escapeHtml(qThai)}" title="点击朗读泰语问题"` : ''}>扩展题 ${idx + 1}：${escapeHtml(qText)}</div>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    ${qThai ? `
+                                        <button type="button" class="quiz-play-thai-btn px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 transition active:scale-95 flex items-center gap-1" data-thai="${escapeHtml(qThai)}" title="点击朗读泰语问题">
+                                            <i class="fas fa-volume-up text-[10px]"></i>
+                                            <span>朗读</span>
+                                        </button>
+                                    ` : ''}
+                                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full ${hasAnswer ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-500'}">
+                                        ${hasAnswer ? '已作答' : '未作答'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                <div class="p-3 bg-white rounded-lg border border-slate-200">
+                                    <div class="flex items-center justify-between gap-2 mb-1">
+                                        <div class="text-xs font-bold text-slate-500">你的回答</div>
+                                        ${userAnsThai ? `
+                                            <button type="button" class="quiz-play-thai-btn px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 transition active:scale-95 flex items-center gap-1" data-thai="${escapeHtml(userAnsThai)}" title="点击朗读你的泰语回答">
+                                                <i class="fas fa-volume-up text-[10px]"></i>
+                                                <span>朗读</span>
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                    <div class="font-thai text-slate-700 whitespace-pre-line leading-relaxed ${userAnsThai ? 'quiz-thai-playable font-thai-clickable' : ''}" ${userAnsThai ? `data-thai="${escapeHtml(userAnsThai)}" title="点击朗读你的泰语回答"` : ''}>${hasAnswer ? escapeHtml(userAnswer) : '<span class="italic text-slate-400">（未填写回答）</span>'}</div>
+                                </div>
+                                <div class="p-3 bg-emerald-50/80 rounded-lg border border-emerald-200 space-y-2">
+                                    <div>
+                                        <div class="flex items-center justify-between gap-2 mb-1">
+                                            <div class="text-xs font-bold text-emerald-700">参考答案</div>
+                                            ${refThai ? `
+                                                <button type="button" class="quiz-play-thai-btn px-2 py-0.5 rounded-full text-[11px] font-semibold bg-white hover:bg-blue-50 text-blue-600 border border-emerald-200 hover:border-blue-300 transition active:scale-95 flex items-center gap-1" data-thai="${escapeHtml(refThai)}" title="点击朗读参考答案泰语">
+                                                    <i class="fas fa-volume-up text-[10px]"></i>
+                                                    <span>朗读</span>
+                                                </button>
+                                            ` : ''}
+                                        </div>
+                                        <div class="font-thai text-emerald-950 whitespace-pre-line leading-relaxed ${refThai ? 'quiz-thai-playable font-thai-clickable' : ''}" ${refThai ? `data-thai="${escapeHtml(refThai)}" title="点击朗读参考答案泰语"` : ''}>${refText ? escapeHtml(refText) : '<span class="italic text-emerald-700/70">暂无参考答案</span>'}</div>
+                                    </div>
+                                    ${refZhText ? `
+                                        <div class="pt-2 border-t border-emerald-200/80">
+                                            <div class="text-xs font-bold text-blue-700 mb-1">中文翻译</div>
+                                            <div class="text-slate-700 whitespace-pre-line leading-relaxed">${escapeHtml(refZhText)}</div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                extendedFeedbackHtml = `
+                    <div class="mt-6 pt-5 border-t border-slate-200">
+                        <h3 class="font-bold text-gray-700 mb-3 flex items-center gap-2">
+                            <i class="fas fa-pen-nib text-amber-500"></i>
+                            <span>扩展问答自评解析（已作答 ${answeredExtendedCount} / ${extendedQuestions.length} 题）：</span>
+                        </h3>
+                        <div class="space-y-3">
+                            ${extItemsHtml}
+                        </div>
+                    </div>
+                `;
+            }
+
             // 渲染最终反馈面板
             feedbackSection.classList.remove('hidden');
-            const scoreColor = totalScore === totalQuestions ? 'text-green-600' : (totalScore > 0 ? 'text-yellow-600' : 'text-red-600');
+            const scoreColor = totalScore === objectiveTotal ? 'text-green-600' : (totalScore > 0 ? 'text-yellow-600' : 'text-red-600');
+            const scoreLabel = extendedQuestions.length > 0 ? '客观题得分' : '最终得分';
+            const extendedNoteHtml = extendedQuestions.length > 0
+                ? `<p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1 inline-flex items-center gap-1 mt-2"><i class="fas fa-pen-nib"></i> 另含 ${extendedQuestions.length} 道扩展问答题（已展开参考答案供自评）</p>`
+                : '';
             
             feedbackContent.innerHTML = `
                 <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
                     <i class="fas fa-chart-pie text-thaiGreen mr-3"></i> 测试报告
                 </h2>
-                <div class="flex items-center justify-between bg-slate-50 p-6 rounded-xl mb-6 border border-slate-200">
+                <div class="flex items-center justify-between flex-wrap gap-4 bg-slate-50 p-6 rounded-xl mb-6 border border-slate-200">
                     <div>
-                        <p class="text-gray-500 text-sm mb-1">最终得分</p>
-                        <p class="text-5xl font-black ${scoreColor}">${totalScore} <span class="text-2xl text-gray-400 font-normal">/ ${totalQuestions}</span></p>
+                        <p class="text-gray-500 text-sm mb-1">${scoreLabel}</p>
+                        <p class="text-5xl font-black ${scoreColor}">${totalScore} <span class="text-2xl text-gray-400 font-normal">/ ${objectiveTotal}</span></p>
+                        ${extendedNoteHtml}
                     </div>
                     <div class="text-right text-sm text-gray-600 max-w-xs">
-                        ${totalScore === totalQuestions ? '🎉 完美！你精准掌握了语篇的核心逻辑与细节。' : '💡 提示：请查看下方标红的选项（选错）和标黄的选项（漏选），结合原文信号词重新思考。'}
+                        ${totalScore === objectiveTotal ? '🎉 完美！你精准掌握了语篇的核心逻辑与细节。' : '💡 提示：请查看下方标红的选项（选错）和标黄的选项（漏选），结合原文信号词重新思考。'}
                     </div>
                 </div>
                 <h3 class="font-bold text-gray-700 mb-3">详细解析：</h3>
                 ${detailHtml}
+                ${extendedFeedbackHtml}
                 <div class="mt-6 pt-4 border-t text-sm text-gray-500">
                     <i class="fas fa-info-circle mr-1"></i> 提示：提交后已禁用生词 Hover 查词功能。请尝试通过上下文和信号词（雷达高亮）来复习错题。
                 </div>
@@ -2643,6 +2969,52 @@
 
         loadArticleList();
         updateSidebarView();
+
+        // 绑定阅读理解测试区与反馈区的泰语点击播音事件（事件委托）
+        function bindQuizThaiAudioDelegation(containerEl) {
+            if (!containerEl) return;
+            containerEl.addEventListener('click', (e) => {
+                // 1. 专属播音按钮：仅播音，不触发外层 label 选项切换
+                const playBtn = e.target.closest('.quiz-play-thai-btn');
+                if (playBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const thaiText = playBtn.dataset.thai;
+                    if (thaiText) {
+                        window.playAudioDirect(thaiText, playBtn);
+                    }
+                    return;
+                }
+
+                // 2. 题目/参考答案等独立泰语文本点击播音（若用户正在划词选中则不打断）
+                const playableText = e.target.closest('.quiz-thai-playable');
+                if (playableText) {
+                    const sel = window.getSelection && window.getSelection().toString().trim();
+                    if (sel) return;
+                    const thaiText = playableText.dataset.thai;
+                    if (thaiText) {
+                        window.playAudioDirect(thaiText, playableText);
+                    }
+                    return;
+                }
+
+                // 3. 选择题选项内的泰语文本：点击播放发音（同时保留正常的选项勾选交互）
+                const optionThai = e.target.closest('.quiz-option-thai');
+                if (optionThai) {
+                    const sel = window.getSelection && window.getSelection().toString().trim();
+                    if (sel) return;
+                    const thaiText = optionThai.dataset.thai;
+                    if (thaiText) {
+                        const label = optionThai.closest('.quiz-option');
+                        const siblingBtn = label ? label.querySelector('.quiz-play-thai-btn') : null;
+                        window.playAudioDirect(thaiText, siblingBtn || optionThai);
+                    }
+                }
+            });
+        }
+
+        bindQuizThaiAudioDelegation(document.getElementById('quiz-container'));
+        bindQuizThaiAudioDelegation(document.getElementById('feedback-content'));
 
         // 绑定翻译列表的句子播放、复制与重点/易错打标签事件监听（事件委托）
         const transContainer = document.getElementById('translation-container');

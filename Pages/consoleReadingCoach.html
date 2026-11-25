@@ -236,6 +236,10 @@
                             <i id="export-article-icon" class="ph ph-file-text"></i>
                             <span id="export-article-btn-text">导出文章</span>
                         </button>
+                        <button type="button" id="manage-ext-questions-btn" onclick="openExtendedQuestionsModal()" class="hidden px-4 py-2 text-xs font-semibold text-violet-400 hover:text-white rounded-xl hover:bg-violet-500/10 border border-violet-500/20 hover:border-violet-500/40 transition duration-200 flex items-center gap-1.5" title="管理当前文章的扩展问答练习问题">
+                            <i class="ph ph-chats-circle"></i>
+                            <span id="manage-ext-questions-btn-text">管理扩展问题</span>
+                        </button>
                     </div>
                 </div>
 
@@ -662,8 +666,10 @@
                 document.getElementById('editor-action-badge').textContent = "编辑";
                 document.getElementById('editor-action-badge').className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-500/20";
                 document.getElementById('delete-article-btn').classList.remove('hidden');
+                document.getElementById('manage-ext-questions-btn').classList.remove('hidden');
                 resetExportVocabButton();
                 resetExportArticleButton();
+                updateManageExtQuestionsButton(data.content);
                 
                 document.getElementById('form-uuid').value = data.uuid;
                 document.getElementById('form-title').value = data.title;
@@ -927,6 +933,7 @@
             document.getElementById('editor-action-badge').textContent = "新建";
             document.getElementById('editor-action-badge').className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-500/20";
             document.getElementById('delete-article-btn').classList.add('hidden');
+            document.getElementById('manage-ext-questions-btn').classList.add('hidden');
             resetExportVocabButton();
             resetExportArticleButton();
 
@@ -985,7 +992,11 @@
                 if (!parsed.comprehension_quiz || typeof parsed.comprehension_quiz !== 'object') {
                     throw new Error("缺失 'comprehension_quiz' 阅读理解问题对象");
                 }
+                if (parsed.comprehension_quiz.extended_questions !== undefined && !Array.isArray(parsed.comprehension_quiz.extended_questions)) {
+                    throw new Error("'comprehension_quiz.extended_questions' 必须为数组");
+                }
 
+                updateManageExtQuestionsButton(parsed);
                 statusBadge.className = "mb-2 p-2 rounded-lg text-xs flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
                 statusBadge.innerHTML = `<i class="ph-bold ph-check-circle"></i><span>JSON 结构格式正确且完整</span>`;
                 return true;
@@ -1304,7 +1315,674 @@
                 updateConnectionStatus('error', '布置任务失败');
             }
         }
+
+        // ==========================================
+        // 管理扩展问题 Modal (开放问答式)
+        // ==========================================
+        let extQuestionsDraft = [];
+        let isSavingExtQuestions = false;
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function normalizeExtendedQuestionItem(item, idx = 0) {
+            return {
+                id: item.id || `ext_${Date.now()}_${idx + 1}`,
+                type: item.type || 'open_ended',
+                question: String(item.question ?? item.question_zh ?? item.q ?? ''),
+                reference_answer: String(item.reference_answer ?? item.answer ?? item.ref_answer ?? ''),
+                reference_answer_zh: String(item.reference_answer_zh ?? item['reference_answer——zh'] ?? item.answer_zh ?? item.reference_answer_cn ?? '')
+            };
+        }
+
+        function getExtendedQuestionsFromContent(contentObj) {
+            if (!contentObj || typeof contentObj !== 'object') return [];
+            const list = (contentObj.comprehension_quiz && Array.isArray(contentObj.comprehension_quiz.extended_questions))
+                ? contentObj.comprehension_quiz.extended_questions
+                : (Array.isArray(contentObj.extended_questions) ? contentObj.extended_questions : []);
+            return list
+                .filter(item => item && typeof item === 'object')
+                .map((item, idx) => normalizeExtendedQuestionItem(item, idx));
+        }
+
+        function updateManageExtQuestionsButton(contentObj) {
+            const btnText = document.getElementById('manage-ext-questions-btn-text');
+            if (!btnText) return;
+            const count = getExtendedQuestionsFromContent(contentObj).length;
+            btnText.textContent = count > 0 ? `管理扩展问题 (${count})` : '管理扩展问题';
+        }
+
+        function openExtendedQuestionsModal() {
+            if (isCreating || !activeArticle || !activeArticle.uuid) {
+                alert("请先在左侧列表选择一篇已存在的阅读文章！");
+                return;
+            }
+
+            let contentObj = null;
+            try {
+                contentObj = parseCurrentArticleContentJson();
+            } catch (err) {
+                alert("当前文章 JSON 格式不正确，请先修正后再管理扩展问题: " + err.message);
+                return;
+            }
+
+            if (!contentObj || typeof contentObj !== 'object') {
+                alert("未读取到有效的文章 JSON 内容！");
+                return;
+            }
+
+            const existing = getExtendedQuestionsFromContent(contentObj);
+            extQuestionsDraft = existing.length > 0
+                ? existing.map(item => ({ ...item }))
+                : [{ id: `ext_${Date.now()}_1`, type: 'open_ended', question: '', reference_answer: '', reference_answer_zh: '' }];
+
+            const articleTitle = document.getElementById('form-title')?.value?.trim() || activeArticle.title || '当前文章';
+            const titleEl = document.getElementById('ext-modal-article-title');
+            if (titleEl) titleEl.textContent = articleTitle;
+
+            // 重置导入面板状态
+            toggleExtImportPanel(false);
+            const importInput = document.getElementById('ext-import-json-textarea');
+            if (importInput) importInput.value = '';
+            setExtImportStatus('', 'idle');
+
+            renderExtendedQuestionsModalList();
+            document.getElementById('extended-questions-modal').classList.remove('hidden');
+
+            // 聚焦首个空白问题输入框
+            requestAnimationFrame(() => {
+                const firstEmpty = document.querySelector('#ext-questions-list .ext-q-question');
+                if (firstEmpty && !firstEmpty.value.trim()) {
+                    firstEmpty.focus();
+                }
+            });
+        }
+
+        function closeExtendedQuestionsModal() {
+            if (isSavingExtQuestions) return;
+            document.getElementById('extended-questions-modal').classList.add('hidden');
+        }
+
+        function toggleExtImportPanel(forceState) {
+            const panel = document.getElementById('ext-import-json-panel');
+            if (!panel) return;
+            const willShow = typeof forceState === 'boolean' ? forceState : panel.classList.contains('hidden');
+            panel.classList.toggle('hidden', !willShow);
+            if (willShow) {
+                setExtImportStatus('', 'idle');
+                requestAnimationFrame(() => {
+                    const ta = document.getElementById('ext-import-json-textarea');
+                    if (ta) ta.focus();
+                });
+            }
+        }
+
+        function setExtImportStatus(message, type = 'idle') {
+            const el = document.getElementById('ext-import-status');
+            if (!el) return;
+            if (!message || type === 'idle') {
+                el.classList.add('hidden');
+                el.innerHTML = '';
+                return;
+            }
+            el.classList.remove('hidden');
+            if (type === 'error') {
+                el.className = 'p-2.5 rounded-xl text-xs flex items-center gap-2 bg-rose-500/10 text-rose-300 border border-rose-500/30';
+                el.innerHTML = `<i class="ph-bold ph-warning-circle text-sm shrink-0"></i><span>${escapeHtml(message)}</span>`;
+            } else if (type === 'success') {
+                el.className = 'p-2.5 rounded-xl text-xs flex items-center gap-2 bg-emerald-500/10 text-emerald-300 border border-emerald-500/30';
+                el.innerHTML = `<i class="ph-bold ph-check-circle text-sm shrink-0"></i><span>${escapeHtml(message)}</span>`;
+            } else {
+                el.className = 'p-2.5 rounded-xl text-xs flex items-center gap-2 bg-sky-500/10 text-sky-300 border border-sky-500/30';
+                el.innerHTML = `<i class="ph-bold ph-info text-sm shrink-0"></i><span>${escapeHtml(message)}</span>`;
+            }
+        }
+
+        function fillExtImportExample() {
+            const example = [
+                {
+                    "type": "open_ended",
+                    "question": "ทำไมอาณาจักรสุโขทัยจึงมีความสำคัญในประวัติศาสตร์ไทย?",
+                    "reference_answer": "เพราะเป็นอาณาจักรแรกของไทย มีการประดิษฐ์อักษรไทย และเริ่มนับถือพระพุทธศาสนา",
+                    "reference_answer_zh": "因为它是泰国的第一个王国，期间发明了泰文并开始信仰佛教。"
+                }
+            ];
+            const ta = document.getElementById('ext-import-json-textarea');
+            if (ta) {
+                ta.value = JSON.stringify(example, null, 2);
+                ta.focus();
+            }
+            setExtImportStatus('已填入示例 JSON，你可以直接修改后点击“追加导入”或“覆盖导入”。', 'info');
+        }
+
+        function triggerExtImportFileSelect() {
+            const fileInput = document.getElementById('ext-import-file-input');
+            if (fileInput) {
+                fileInput.value = '';
+                fileInput.click();
+            }
+        }
+
+        function handleExtImportFile(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const ta = document.getElementById('ext-import-json-textarea');
+                if (ta) ta.value = String(e.target.result || '');
+                setExtImportStatus(`已读取文件「${file.name}」，请选择“追加导入”或“覆盖导入”。`, 'info');
+            };
+            reader.onerror = () => {
+                setExtImportStatus('读取 JSON 文件失败，请检查文件是否有效。', 'error');
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function parseImportedExtendedQuestionsJson(rawText) {
+            let cleaned = String(rawText || '').trim();
+            if (!cleaned) {
+                throw new Error('请先粘贴或选择要导入的扩展问题 JSON 数据');
+            }
+
+            // 兼容从 AI 对话复制的 Markdown 代码块
+            const fenceMatch = cleaned.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+            if (fenceMatch) {
+                cleaned = fenceMatch[1].trim();
+            }
+
+            let parsed = null;
+            try {
+                parsed = JSON.parse(cleaned);
+            } catch (err) {
+                throw new Error('JSON 解析失败: ' + err.message);
+            }
+
+            let rawItems = null;
+            if (Array.isArray(parsed)) {
+                rawItems = parsed;
+            } else if (parsed && typeof parsed === 'object') {
+                if (Array.isArray(parsed.extended_questions)) {
+                    rawItems = parsed.extended_questions;
+                } else if (parsed.comprehension_quiz && Array.isArray(parsed.comprehension_quiz.extended_questions)) {
+                    rawItems = parsed.comprehension_quiz.extended_questions;
+                } else if (parsed.question || parsed.question_zh || parsed.q) {
+                    rawItems = [parsed];
+                }
+            }
+
+            if (!Array.isArray(rawItems) || rawItems.length === 0) {
+                throw new Error('未识别到有效的扩展问题数组。支持格式：[ {...} ]、{ "extended_questions": [...] }、{ "comprehension_quiz": { "extended_questions": [...] } } 或单个问题对象');
+            }
+
+            const baseTs = Date.now();
+            const result = [];
+            rawItems.forEach((item, idx) => {
+                if (!item || typeof item !== 'object') return;
+                const normalized = normalizeExtendedQuestionItem(item, idx);
+                normalized.id = item.id || `ext_${baseTs}_${idx + 1}`;
+                normalized.question = normalized.question.trim();
+                normalized.reference_answer = normalized.reference_answer.trim();
+                normalized.reference_answer_zh = normalized.reference_answer_zh.trim();
+
+                if (normalized.question || normalized.reference_answer || normalized.reference_answer_zh) {
+                    result.push(normalized);
+                }
+            });
+
+            if (result.length === 0) {
+                throw new Error('JSON 中未找到包含有效问题或参考答案的条目');
+            }
+
+            return result;
+        }
+
+        function importExtendedQuestionsJson(mode = 'append') {
+            const ta = document.getElementById('ext-import-json-textarea');
+            const rawText = ta ? ta.value : '';
+
+            let importedItems = [];
+            try {
+                importedItems = parseImportedExtendedQuestionsJson(rawText);
+            } catch (err) {
+                setExtImportStatus(err.message, 'error');
+                return;
+            }
+
+            syncExtQuestionsDraftFromDom();
+
+            if (mode === 'replace') {
+                extQuestionsDraft = importedItems;
+            } else {
+                // 若当前仅有一条尚未填写的空白占位题，追加时先移除该空白行
+                const isSingleBlankRow = extQuestionsDraft.length === 1
+                    && !extQuestionsDraft[0].question.trim()
+                    && !extQuestionsDraft[0].reference_answer.trim()
+                    && !(extQuestionsDraft[0].reference_answer_zh || '').trim();
+                if (isSingleBlankRow) {
+                    extQuestionsDraft = importedItems;
+                } else {
+                    const existingIds = new Set(extQuestionsDraft.map(q => q.id));
+                    const deduped = importedItems.map((item, idx) => {
+                        let id = item.id;
+                        if (!id || existingIds.has(id)) {
+                            id = `ext_${Date.now()}_${extQuestionsDraft.length + idx + 1}`;
+                        }
+                        existingIds.add(id);
+                        return { ...item, id };
+                    });
+                    extQuestionsDraft = extQuestionsDraft.concat(deduped);
+                }
+            }
+
+            renderExtendedQuestionsModalList();
+            if (ta) ta.value = '';
+            toggleExtImportPanel(false);
+
+            const modeLabel = mode === 'replace' ? '覆盖导入' : '追加导入';
+            updateConnectionStatus('connected', `已${modeLabel} ${importedItems.length} 道扩展问题（待保存）`);
+            setTimeout(() => updateConnectionStatus('connected', '服务连接正常'), 2500);
+
+            requestAnimationFrame(() => {
+                const body = document.getElementById('ext-modal-body');
+                if (body) body.scrollTop = body.scrollHeight;
+            });
+        }
+
+        function syncExtQuestionsDraftFromDom() {
+            const cards = document.querySelectorAll('#ext-questions-list .ext-q-card');
+            if (!cards.length) return;
+            extQuestionsDraft = Array.from(cards).map((card, idx) => {
+                const existingId = card.dataset.id || `ext_${Date.now()}_${idx + 1}`;
+                const qVal = card.querySelector('.ext-q-question')?.value ?? '';
+                const aVal = card.querySelector('.ext-q-answer')?.value ?? '';
+                const aZhVal = card.querySelector('.ext-q-answer-zh')?.value ?? '';
+                return {
+                    id: existingId,
+                    type: 'open_ended',
+                    question: qVal,
+                    reference_answer: aVal,
+                    reference_answer_zh: aZhVal
+                };
+            });
+        }
+
+        function updateExtQuestionsCountBadge() {
+            const count = extQuestionsDraft.length;
+            const headerBadge = document.getElementById('ext-modal-count-badge');
+            const footerSummary = document.getElementById('ext-modal-footer-summary');
+            if (headerBadge) headerBadge.textContent = `共 ${count} 题`;
+            if (footerSummary) footerSummary.textContent = count > 0 ? `当前列表共 ${count} 道开放问答扩展题` : '当前暂无扩展问题（保存将清空扩展问题）';
+        }
+
+        function renderExtendedQuestionsModalList() {
+            const container = document.getElementById('ext-questions-list');
+            if (!container) return;
+
+            updateExtQuestionsCountBadge();
+
+            if (extQuestionsDraft.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-10 px-6 border border-dashed border-slate-700/80 rounded-2xl bg-slate-950/40 text-center space-y-3">
+                        <div class="h-12 w-12 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400">
+                            <i class="ph ph-chats-circle text-2xl"></i>
+                        </div>
+                        <div class="text-sm font-semibold text-slate-300">暂无扩展问题</div>
+                        <p class="text-xs text-slate-500 max-w-sm">点击下方“添加扩展问题”按钮或顶部“导入 JSON”即可为当前文章新增开放问答练习；若直接点击保存则会清空已有的扩展问题。</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = extQuestionsDraft.map((item, idx) => `
+                <div class="ext-q-card bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-3 transition hover:border-violet-500/30" data-id="${escapeHtml(item.id)}" data-idx="${idx}">
+                    <div class="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-800/80">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-violet-500/15 text-violet-300 border border-violet-500/30">
+                                扩展问题 #${idx + 1}
+                            </span>
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-800 text-slate-400 border border-slate-700">
+                                开放问答 (open_ended)
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <button type="button" onclick="moveExtendedQuestionRow(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition" title="上移">
+                                <i class="ph ph-arrow-up text-sm"></i>
+                            </button>
+                            <button type="button" onclick="moveExtendedQuestionRow(${idx}, 1)" ${idx === extQuestionsDraft.length - 1 ? 'disabled' : ''} class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition" title="下移">
+                                <i class="ph ph-arrow-down text-sm"></i>
+                            </button>
+                            <button type="button" onclick="removeExtendedQuestionRow(${idx})" class="px-2 py-1 rounded-lg text-xs text-rose-400 hover:text-white hover:bg-rose-500/20 border border-transparent hover:border-rose-500/30 transition flex items-center gap-1" title="删除此题">
+                                <i class="ph ph-trash text-sm"></i>
+                                <span>删除</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                            问题内容 (question) <span class="text-rose-400">*</span>
+                        </label>
+                        <textarea rows="2" placeholder="请输入开放式问题（支持泰语或中文），例如：请用泰语简述本文提到的核心原因..."
+                            class="ext-q-question w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition leading-relaxed custom-scrollbar">${escapeHtml(item.question)}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                            参考答案 (reference_answer) <span class="text-rose-400">*</span>
+                        </label>
+                        <textarea rows="2" placeholder="请输入参考答案或答题要点（例如泰语参考答案）..."
+                            class="ext-q-answer w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition leading-relaxed custom-scrollbar">${escapeHtml(item.reference_answer)}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                            参考答案中文翻译 (reference_answer_zh) <span class="text-slate-500 font-normal normal-case">（可选）</span>
+                        </label>
+                        <textarea rows="2" placeholder="请输入参考答案的中文翻译..."
+                            class="ext-q-answer-zh w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition leading-relaxed custom-scrollbar">${escapeHtml(item.reference_answer_zh || '')}</textarea>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addExtendedQuestionRow() {
+            syncExtQuestionsDraftFromDom();
+            extQuestionsDraft.push({
+                id: `ext_${Date.now()}_${extQuestionsDraft.length + 1}`,
+                type: 'open_ended',
+                question: '',
+                reference_answer: '',
+                reference_answer_zh: ''
+            });
+            renderExtendedQuestionsModalList();
+            requestAnimationFrame(() => {
+                const body = document.getElementById('ext-modal-body');
+                if (body) body.scrollTop = body.scrollHeight;
+                const questionInputs = document.querySelectorAll('#ext-questions-list .ext-q-question');
+                if (questionInputs.length > 0) {
+                    questionInputs[questionInputs.length - 1].focus();
+                }
+            });
+        }
+
+        function removeExtendedQuestionRow(idx) {
+            syncExtQuestionsDraftFromDom();
+            extQuestionsDraft.splice(idx, 1);
+            renderExtendedQuestionsModalList();
+        }
+
+        function moveExtendedQuestionRow(idx, delta) {
+            syncExtQuestionsDraftFromDom();
+            const targetIdx = idx + delta;
+            if (targetIdx < 0 || targetIdx >= extQuestionsDraft.length) return;
+            const temp = extQuestionsDraft[idx];
+            extQuestionsDraft[idx] = extQuestionsDraft[targetIdx];
+            extQuestionsDraft[targetIdx] = temp;
+            renderExtendedQuestionsModalList();
+        }
+
+        async function saveExtendedQuestions() {
+            if (isSavingExtQuestions) return;
+            if (!activeArticle || !activeArticle.uuid) {
+                alert("未选中有效的阅读文章，无法保存！");
+                return;
+            }
+
+            syncExtQuestionsDraftFromDom();
+
+            const normalizedQuestions = [];
+            for (let i = 0; i < extQuestionsDraft.length; i++) {
+                const item = extQuestionsDraft[i];
+                const question = (item.question || '').trim();
+                const referenceAnswer = (item.reference_answer || '').trim();
+                const referenceAnswerZh = (item.reference_answer_zh || '').trim();
+
+                if (!question && !referenceAnswer && !referenceAnswerZh) {
+                    alert(`第 ${i + 1} 道扩展问题尚未填写内容，请填写完整或将其删除后再保存！`);
+                    const qInput = document.querySelectorAll('#ext-questions-list .ext-q-question')[i];
+                    if (qInput) qInput.focus();
+                    return;
+                }
+                if (!question) {
+                    alert(`第 ${i + 1} 道扩展问题的“问题内容”不能为空！`);
+                    const qInput = document.querySelectorAll('#ext-questions-list .ext-q-question')[i];
+                    if (qInput) qInput.focus();
+                    return;
+                }
+                if (!referenceAnswer) {
+                    alert(`第 ${i + 1} 道扩展问题的“参考答案”不能为空！`);
+                    const aInput = document.querySelectorAll('#ext-questions-list .ext-q-answer')[i];
+                    if (aInput) aInput.focus();
+                    return;
+                }
+
+                normalizedQuestions.push({
+                    id: item.id || `ext_${Date.now()}_${i + 1}`,
+                    type: 'open_ended',
+                    question: question,
+                    reference_answer: referenceAnswer,
+                    reference_answer_zh: referenceAnswerZh
+                });
+            }
+
+            let contentObj = null;
+            try {
+                contentObj = parseCurrentArticleContentJson();
+            } catch (err) {
+                alert("当前文章 JSON 格式不正确，无法写入扩展问题: " + err.message);
+                return;
+            }
+
+            if (!contentObj || typeof contentObj !== 'object') {
+                alert("未找到有效的文章 JSON 结构！");
+                return;
+            }
+
+            if (!contentObj.comprehension_quiz || typeof contentObj.comprehension_quiz !== 'object') {
+                contentObj.comprehension_quiz = {};
+            }
+
+            if (normalizedQuestions.length > 0) {
+                contentObj.comprehension_quiz.extended_questions = normalizedQuestions;
+            } else {
+                delete contentObj.comprehension_quiz.extended_questions;
+            }
+            if (Object.prototype.hasOwnProperty.call(contentObj, 'extended_questions')) {
+                delete contentObj.extended_questions;
+            }
+
+            const uuid = document.getElementById('form-uuid')?.value || activeArticle.uuid;
+            const titleVal = document.getElementById('form-title')?.value?.trim() || activeArticle.title;
+            const subjectVal = document.getElementById('form-subject')?.value?.trim() ?? (activeArticle.subject || '');
+            const diffRaw = parseFloat(document.getElementById('form-difficulty')?.value);
+            const wordRaw = parseInt(document.getElementById('form-word-count')?.value, 10);
+
+            const payload = {
+                title: titleVal,
+                subject: subjectVal,
+                difficulty: Number.isNaN(diffRaw) ? (activeArticle.difficulty || 1.0) : diffRaw,
+                word_count: Number.isNaN(wordRaw) ? (activeArticle.word_count || 0) : wordRaw,
+                content: contentObj,
+                courses: activeArticle.courses || []
+            };
+
+            const saveBtn = document.getElementById('ext-modal-save-btn');
+            const origBtnHtml = saveBtn ? saveBtn.innerHTML : '';
+
+            try {
+                isSavingExtQuestions = true;
+                if (saveBtn) {
+                    saveBtn.disabled = true;
+                    saveBtn.innerHTML = '<i class="ph ph-spinner animate-spin"></i><span>正在保存...</span>';
+                }
+                updateConnectionStatus('loading', '正在保存扩展问题...');
+
+                const res = await fetch(`/api/readings/${encodeURIComponent(uuid)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const errRes = await res.json().catch(() => ({}));
+                    throw new Error(errRes.error || `保存失败 (${res.status})`);
+                }
+
+                // 同步本地状态与编辑器 JSON
+                activeArticle.content = contentObj;
+                document.getElementById('form-content-json').value = JSON.stringify(contentObj, null, 2);
+                validateJson();
+                updateManageExtQuestionsButton(contentObj);
+
+                isSavingExtQuestions = false;
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = origBtnHtml;
+                }
+
+                closeExtendedQuestionsModal();
+                const statusMsg = normalizedQuestions.length > 0
+                    ? `扩展问题已保存 (共 ${normalizedQuestions.length} 题)`
+                    : '已清空扩展问题并保存';
+                updateConnectionStatus('connected', statusMsg);
+                setTimeout(() => updateConnectionStatus('connected', '服务连接正常'), 2500);
+                alert(normalizedQuestions.length > 0
+                    ? `✓ 已成功保存 ${normalizedQuestions.length} 道扩展问题并写入数据库！`
+                    : '✓ 已清空当前文章的扩展问题并更新至数据库！');
+            } catch (err) {
+                console.error('Failed to save extended questions:', err);
+                isSavingExtQuestions = false;
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = origBtnHtml;
+                }
+                updateConnectionStatus('error', '保存扩展问题失败');
+                alert("保存扩展问题失败: " + err.message);
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const extModal = document.getElementById('extended-questions-modal');
+                if (extModal && !extModal.classList.contains('hidden')) {
+                    closeExtendedQuestionsModal();
+                }
+            }
+        });
     </script>
+
+    <!-- Extended Questions Management Modal -->
+    <div id="extended-questions-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-filter backdrop-blur-sm p-4 font-sans">
+        <div class="bg-slate-900/95 border border-slate-800 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-800/80 flex justify-between items-center bg-slate-950/60 shrink-0 gap-4">
+                <div class="min-w-0">
+                    <h3 class="text-base font-bold text-slate-100 flex items-center gap-2 flex-wrap">
+                        <i class="ph ph-chats-circle text-violet-400 text-lg"></i>
+                        <span>管理扩展问题</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-500/20 text-violet-300 border border-violet-500/30">开放问答式</span>
+                        <span id="ext-modal-count-badge" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">共 0 题</span>
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1 truncate">
+                        当前文章：<span id="ext-modal-article-title" class="text-slate-200 font-medium"></span>
+                    </p>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" onclick="toggleExtImportPanel()" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-sky-300 hover:text-white bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 transition flex items-center gap-1.5" title="粘贴或上传 JSON 批量导入扩展问题">
+                        <i class="ph ph-file-arrow-down text-sm"></i>
+                        <span>导入 JSON</span>
+                    </button>
+                    <button type="button" onclick="closeExtendedQuestionsModal()" class="text-slate-400 hover:text-white transition p-1 shrink-0" title="关闭">
+                        <i class="ph ph-x text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div id="ext-modal-body" class="p-6 overflow-y-auto custom-scrollbar space-y-4 flex-grow">
+                <div class="p-3.5 rounded-xl bg-violet-500/10 border border-violet-500/20 text-xs text-violet-200/90 flex items-start gap-2.5 leading-relaxed">
+                    <i class="ph ph-info text-violet-400 text-base shrink-0 mt-0.5"></i>
+                    <span>
+                        在此添加的扩展练习将以开放问答形式保存至文章 JSON 的 <code class="px-1.5 py-0.5 rounded bg-slate-950/80 text-violet-300 font-mono">comprehension_quiz.extended_questions</code> 中（支持 <code class="px-1 py-0.5 rounded bg-slate-950/80 text-sky-300 font-mono">reference_answer_zh</code> 中文翻译字段），并同步写入数据库，客户端“阅读理解测试”区域将自动展示。
+                    </span>
+                </div>
+
+                <!-- Collapsible JSON Import Panel -->
+                <div id="ext-import-json-panel" class="hidden rounded-2xl border border-sky-500/30 bg-slate-950/80 p-4 space-y-3">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <div class="flex items-center gap-2 text-xs font-bold text-sky-300">
+                            <i class="ph ph-brackets-curly text-base"></i>
+                            <span>导入扩展问题 JSON 数据</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="file" id="ext-import-file-input" accept=".json,application/json" class="hidden" onchange="handleExtImportFile(event)">
+                            <button type="button" onclick="triggerExtImportFileSelect()" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition flex items-center gap-1">
+                                <i class="ph ph-upload-simple"></i>
+                                <span>选择 .json 文件</span>
+                            </button>
+                            <button type="button" onclick="fillExtImportExample()" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-sky-300 hover:text-white bg-sky-950/60 hover:bg-sky-900/60 border border-sky-500/30 transition flex items-center gap-1">
+                                <i class="ph ph-sparkle"></i>
+                                <span>填入示例格式</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <p class="text-[11px] text-slate-400 leading-relaxed">
+                        支持直接粘贴 JSON 数组 <code class="text-slate-300 font-mono">[{ question, reference_answer, reference_answer_zh }]</code>、包含 <code class="text-slate-300 font-mono">extended_questions</code> 的对象或单题对象（自动兼容 Markdown 代码块包裹）。
+                    </p>
+
+                    <textarea id="ext-import-json-textarea" rows="6" placeholder='[{"type":"open_ended","question":"...","reference_answer":"...","reference_answer_zh":"参考答案中文翻译..."}]'
+                        class="w-full font-mono text-xs bg-slate-900 border border-slate-800 rounded-xl p-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 leading-relaxed custom-scrollbar"></textarea>
+
+                    <div id="ext-import-status" class="hidden"></div>
+
+                    <div class="flex items-center justify-end gap-2 pt-1 flex-wrap">
+                        <button type="button" onclick="toggleExtImportPanel(false)" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white border border-slate-800 hover:bg-slate-800 transition">
+                            收起
+                        </button>
+                        <button type="button" onclick="importExtendedQuestionsJson('replace')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-amber-300 hover:text-white bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition flex items-center gap-1.5">
+                            <i class="ph ph-arrows-clockwise"></i>
+                            <span>覆盖导入</span>
+                        </button>
+                        <button type="button" onclick="importExtendedQuestionsJson('append')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white transition flex items-center gap-1.5">
+                            <i class="ph ph-plus-circle"></i>
+                            <span>追加导入</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dynamic Questions List -->
+                <div id="ext-questions-list" class="space-y-4"></div>
+
+                <!-- Add Question Button -->
+                <button type="button" onclick="addExtendedQuestionRow()" class="w-full py-3 rounded-xl border border-dashed border-violet-500/40 bg-violet-500/5 hover:bg-violet-500/15 hover:border-violet-400 text-violet-300 hover:text-white text-xs font-semibold transition flex items-center justify-center gap-2">
+                    <i class="ph ph-plus-circle text-base"></i>
+                    <span>添加扩展问题</span>
+                </button>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-slate-800/80 bg-slate-950/60 flex items-center justify-between gap-3 shrink-0 flex-wrap">
+                <span id="ext-modal-footer-summary" class="text-xs text-slate-400">当前列表共 0 道开放问答扩展题</span>
+                <div class="flex items-center gap-3">
+                    <button type="button" onclick="closeExtendedQuestionsModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white border border-slate-800 hover:bg-slate-800 transition">
+                        取消
+                    </button>
+                    <button type="button" id="ext-modal-save-btn" onclick="saveExtendedQuestions()" class="px-5 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-violet-500 to-indigo-600 text-white hover:opacity-95 shadow-md shadow-violet-500/20 transition flex items-center gap-1.5">
+                        <i class="ph ph-floppy-disk"></i>
+                        <span>保存并写入数据库</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Prompt Markdown Modal -->
     <div id="prompt-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-filter backdrop-blur-sm p-4">
