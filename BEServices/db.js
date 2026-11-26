@@ -1345,6 +1345,59 @@ export const initDb = async () => {
     )
   `);
 
+  // Create tblTranslateSentenceSM2 table for SM-2 spaced repetition state per translate sentence
+  await run(`
+    CREATE TABLE IF NOT EXISTS tblTranslateSentenceSM2 (
+      sentence_uuid TEXT PRIMARY KEY,
+      repetition INTEGER NOT NULL DEFAULT 0,
+      interval_days INTEGER NOT NULL DEFAULT 0,
+      easiness_factor REAL NOT NULL DEFAULT 2.5,
+      next_review_date TEXT,
+      last_reviewed_at TEXT,
+      last_score INTEGER,
+      review_count INTEGER NOT NULL DEFAULT 0,
+      lapse_count INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now', 'localtime')),
+      updated_at TEXT DEFAULT (datetime('now', 'localtime')),
+      FOREIGN KEY (sentence_uuid) REFERENCES tblTranslateSentence (uuid) ON DELETE CASCADE
+    )
+  `);
+
+  await run(`
+    CREATE INDEX IF NOT EXISTS idx_translate_sm2_next_review
+    ON tblTranslateSentenceSM2(next_review_date)
+  `);
+
+  // Create tblTranslateSentenceSM2Logs table for SM-2 scoring & scheduling history
+  await run(`
+    CREATE TABLE IF NOT EXISTS tblTranslateSentenceSM2Logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sentence_uuid TEXT NOT NULL,
+      course_id TEXT,
+      lesson_id TEXT,
+      score INTEGER NOT NULL,
+      prev_repetition INTEGER,
+      new_repetition INTEGER,
+      prev_interval INTEGER,
+      new_interval INTEGER,
+      prev_easiness_factor REAL,
+      new_easiness_factor REAL,
+      next_review_date TEXT,
+      reviewed_at TEXT NOT NULL,
+      FOREIGN KEY (sentence_uuid) REFERENCES tblTranslateSentence (uuid) ON DELETE CASCADE
+    )
+  `);
+
+  await run(`
+    CREATE INDEX IF NOT EXISTS idx_translate_sm2_logs_sentence
+    ON tblTranslateSentenceSM2Logs(sentence_uuid)
+  `);
+
+  await run(`
+    CREATE INDEX IF NOT EXISTS idx_translate_sm2_logs_reviewed_at
+    ON tblTranslateSentenceSM2Logs(reviewed_at)
+  `);
+
   // Seed default translate sentence if empty
   const translateCount = await get(`SELECT COUNT(*) as count FROM tblTranslateSentence`);
   if (translateCount.count === 0) {

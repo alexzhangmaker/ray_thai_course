@@ -3065,10 +3065,65 @@ app.delete('/api/course_sentence_patterns', async (req, res) => {
 // Translate Sentences APIs (tblTranslateSentence)
 // ========================================================
 
-// 1. GET /api/translate_sentences - Retrieve all translate sentences (with optional tag, search, course, and lesson filtering)
-app.get('/api/translate_sentences', async (req, res) => {
-  const { courseId, lessonId, tag, search } = req.query;
-  let sql = `SELECT DISTINCT ts.* FROM tblTranslateSentence ts`;
+function formatTranslateSentenceSM2(row, nowMs = Date.now()) {
+  const reviewCount = Number(row?.sm2_review_count ?? row?.review_count ?? 0);
+  if (reviewCount <= 0) {
+    return {
+      repetition: 0,
+      interval_days: 0,
+      easiness_factor: 2.5,
+      next_review_date: null,
+      last_reviewed_at: null,
+      last_score: null,
+      review_count: 0,
+      lapse_count: 0,
+      is_due: false,
+      status: 'new'
+    };
+  }
+
+  const repetition = Number(row?.sm2_repetition ?? row?.repetition ?? 0);
+  const intervalDays = Number(row?.sm2_interval_days ?? row?.interval_days ?? 1);
+  const easinessFactor = Number(row?.sm2_easiness_factor ?? row?.easiness_factor ?? 2.5);
+  const nextReviewDate = row?.sm2_next_review_date ?? row?.next_review_date ?? null;
+  const lastReviewedAt = row?.sm2_last_reviewed_at ?? row?.last_reviewed_at ?? null;
+  const lastScoreRaw = row?.sm2_last_score ?? row?.last_score;
+  const lastScore = (lastScoreRaw !== null && lastScoreRaw !== undefined) ? Number(lastScoreRaw) : null;
+  const lapseCount = Number(row?.sm2_lapse_count ?? row?.lapse_count ?? 0);
+
+  const nextMs = nextReviewDate ? Date.parse(nextReviewDate) : NaN;
+  const isDue = !isNaN(nextMs) && nextMs <= nowMs;
+  const isMastered = repetition >= 3 && intervalDays >= 6;
+  const status = isDue ? 'due' : (isMastered ? 'mastered' : 'learning');
+
+  return {
+    repetition,
+    interval_days: intervalDays,
+    easiness_factor: Math.round(easinessFactor * 100) / 100,
+    next_review_date: nextReviewDate,
+    last_reviewed_at: lastReviewedAt,
+    last_score: lastScore,
+    review_count: reviewCount,
+    lapse_count: lapseCount,
+    is_due: isDue,
+    status
+  };
+}
+
+async function fetchTranslateSentencesWithMeta({ courseId, lessonId, tag, search } = {}) {
+  let sql = `
+    SELECT DISTINCT ts.*,
+      sm2.repetition AS sm2_repetition,
+      sm2.interval_days AS sm2_interval_days,
+      sm2.easiness_factor AS sm2_easiness_factor,
+      sm2.next_review_date AS sm2_next_review_date,
+      sm2.last_reviewed_at AS sm2_last_reviewed_at,
+      sm2.last_score AS sm2_last_score,
+      sm2.review_count AS sm2_review_count,
+      sm2.lapse_count AS sm2_lapse_count
+    FROM tblTranslateSentence ts
+    LEFT JOIN tblTranslateSentenceSM2 sm2 ON ts.uuid = sm2.sentence_uuid
+  `;
   const params = [];
   const joins = [];
   const whereClauses = [];
@@ -3108,22 +3163,507 @@ app.get('/api/translate_sentences', async (req, res) => {
     sql += ` ORDER BY CAST(json_extract(ts.jsonContent, '$.order') AS INTEGER) ASC, ts.rowid ASC`;
   }
 
-  try {
-    const rows = await all(sql, params);
-    const result = [];
-    for (const row of rows) {
-      const associations = await all(`SELECT course_id, lesson_id FROM tblCourseTranslateSentence WHERE sentence_uuid = ?`, [row.uuid]);
-      result.push({
-        uuid: row.uuid,
-        tags: row.tags ? row.tags.split(',') : [],
-        jsonContent: JSON.parse(row.jsonContent),
-        created_at: row.created_at,
-        courses: associations.map(a => ({ courseId: a.course_id, lessonId: a.lesson_id }))
-      });
+  const rows = await all(sql, params);
+  const allAssocs = await all(`SELECT sentence_uuid, course_id, lesson_id FROM tblCourseTranslateSentence`);
+  const assocMap = new Map();
+  for (const a of allAssocs) {
+    if (!assocMap.has(a.sentence_uuid)) assocMap.set(a.sentence_uuid, []);
+    assocMap.get(a.sentence_uuid).push({ courseId: a.course_id, lessonId: a.lesson_id });
+  }
+
+  const nowMs = Date.now();
+  return rows.map(row => {
+    let parsedContent = {};
+    try {
+      parsedContent = JSON.parse(row.jsonContent);
+    } catch (e) {
+      parsedContent = {};
     }
+    return {
+      uuid: row.uuid,
+      tags: row.tags ? row.tags.split(',').filter(Boolean) : [],
+      jsonContent: parsedContent,
+      created_at: row.created_at,
+      courses: assocMap.get(row.uuid) || [],
+      sm2: formatTranslateSentenceSM2(row, nowMs)
+    };
+  });
+}
+
+// 1. GET /api/translate_sentences - Retrieve all translate sentences (with optional tag, search, course, lesson filtering + SM-2 state)
+app.get('/api/translate_sentences', async (req, res) => {
+  const { courseId, lessonId, tag, search } = req.query;
+  try {
+    const result = await fetchTranslateSentencesWithMeta({ courseId, lessonId, tag, search });
     res.json(result);
   } catch (err) {
     console.error('Failed to get translate sentences:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 1.1 GET /api/translate_sentences/sm2/overview - Overall SM-2 scheduling overview & statistics
+app.get('/api/translate_sentences/sm2/overview', async (req, res) => {
+  try {
+    const { courseId, lessonId } = req.query;
+    const sentences = await fetchTranslateSentencesWithMeta({ courseId, lessonId });
+    const coursesRows = await all(`SELECT id, name FROM courses ORDER BY name ASC`);
+    const lessonsRows = await all(`SELECT id, course_id, title FROM course_lessons`);
+    const courseNameMap = new Map(coursesRows.map(c => [c.id, c.name || c.id]));
+    const lessonTitleMap = new Map(lessonsRows.map(l => [l.id, l.title || l.id]));
+
+    const now = new Date();
+    const nowMs = now.getTime();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+
+    // Local YYYY-MM-DD helper
+    const toLocalDateKey = (dateObj) => {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    };
+
+    const todayKey = toLocalDateKey(now);
+    const upcomingBuckets = [];
+    const upcomingMap = new Map();
+    for (let offset = 0; offset < 7; offset++) {
+      const dt = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
+      const key = toLocalDateKey(dt);
+      const label = offset === 0 ? '今天(含逾期)' : (offset === 1 ? '明天' : `${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`);
+      const bucket = { date: key, label, count: 0 };
+      upcomingBuckets.push(bucket);
+      upcomingMap.set(key, bucket);
+    }
+
+    let dueCount = 0;
+    let overdueCount = 0;
+    let newCount = 0;
+    let learningCount = 0;
+    let masteredCount = 0;
+    let weakCount = 0;
+    let efSum = 0;
+    let efCount = 0;
+
+    const byCourseMap = new Map();
+    const dueSentences = [];
+
+    for (const s of sentences) {
+      const sm2 = s.sm2;
+      if (sm2.review_count === 0) {
+        newCount++;
+      } else {
+        efSum += sm2.easiness_factor;
+        efCount++;
+        if (sm2.is_due) {
+          dueCount++;
+          const nextMs = Date.parse(sm2.next_review_date);
+          if (!isNaN(nextMs) && (nowMs - nextMs) >= oneDayMs) {
+            overdueCount++;
+          }
+          dueSentences.push(s);
+          upcomingBuckets[0].count++;
+        } else if (sm2.status === 'mastered') {
+          masteredCount++;
+        } else {
+          learningCount++;
+        }
+
+        if (!sm2.is_due && sm2.next_review_date) {
+          const nextDate = new Date(sm2.next_review_date);
+          if (!isNaN(nextDate.getTime())) {
+            const key = toLocalDateKey(nextDate);
+            if (upcomingMap.has(key)) {
+              upcomingMap.get(key).count++;
+            }
+          }
+        }
+
+        if ((sm2.last_score !== null && sm2.last_score <= 2) || sm2.easiness_factor <= 2.0) {
+          weakCount++;
+        }
+      }
+
+      // Per-course aggregation
+      const uniqueCourseIds = new Set((s.courses || []).map(c => c.courseId).filter(Boolean));
+      if (uniqueCourseIds.size === 0) {
+        uniqueCourseIds.add('__unassigned__');
+      }
+      for (const cid of uniqueCourseIds) {
+        if (!byCourseMap.has(cid)) {
+          byCourseMap.set(cid, {
+            courseId: cid === '__unassigned__' ? '' : cid,
+            courseName: cid === '__unassigned__' ? '未归类科目' : (courseNameMap.get(cid) || cid),
+            total: 0,
+            dueCount: 0,
+            newCount: 0,
+            learningCount: 0,
+            masteredCount: 0,
+            weakCount: 0
+          });
+        }
+        const stat = byCourseMap.get(cid);
+        stat.total++;
+        if (sm2.review_count === 0) stat.newCount++;
+        else if (sm2.is_due) stat.dueCount++;
+        else if (sm2.status === 'mastered') stat.masteredCount++;
+        else stat.learningCount++;
+
+        if (sm2.review_count > 0 && ((sm2.last_score !== null && sm2.last_score <= 2) || sm2.easiness_factor <= 2.0)) {
+          stat.weakCount++;
+        }
+      }
+    }
+
+    // Sort due sentences by earliest next_review_date first
+    dueSentences.sort((a, b) => {
+      const ta = a.sm2.next_review_date ? Date.parse(a.sm2.next_review_date) : 0;
+      const tb = b.sm2.next_review_date ? Date.parse(b.sm2.next_review_date) : 0;
+      return ta - tb;
+    });
+
+    const duePreview = dueSentences.slice(0, 12).map(s => {
+      const firstAssoc = (s.courses && s.courses[0]) || {};
+      return {
+        uuid: s.uuid,
+        thai: s.jsonContent?.thai || '',
+        chinese: s.jsonContent?.chinese || '',
+        courseId: firstAssoc.courseId || '',
+        courseName: firstAssoc.courseId ? (courseNameMap.get(firstAssoc.courseId) || firstAssoc.courseId) : '',
+        lessonId: firstAssoc.lessonId || '',
+        lessonTitle: firstAssoc.lessonId ? (lessonTitleMap.get(firstAssoc.lessonId) || firstAssoc.lessonId) : '',
+        sm2: s.sm2
+      };
+    });
+
+    // Today's logs & recent logs
+    const allLogs = await all(
+      `SELECT l.*, ts.jsonContent
+       FROM tblTranslateSentenceSM2Logs l
+       LEFT JOIN tblTranslateSentence ts ON l.sentence_uuid = ts.uuid
+       ORDER BY l.reviewed_at DESC, l.id DESC
+       LIMIT 500`
+    );
+
+    const sentenceUuidSet = new Set(sentences.map(s => s.uuid));
+    const filteredLogs = (courseId || lessonId)
+      ? allLogs.filter(l => sentenceUuidSet.has(l.sentence_uuid))
+      : allLogs;
+
+    let reviewedTodayCount = 0;
+    const reviewedTodayUnique = new Set();
+    let scoreSum = 0;
+    let scoreTotal = 0;
+
+    for (const log of filteredLogs) {
+      if (log.score !== null && log.score !== undefined) {
+        scoreSum += Number(log.score);
+        scoreTotal++;
+      }
+      if (log.reviewed_at) {
+        const dt = new Date(log.reviewed_at);
+        if (!isNaN(dt.getTime()) && toLocalDateKey(dt) === todayKey) {
+          reviewedTodayCount++;
+          reviewedTodayUnique.add(log.sentence_uuid);
+        }
+      }
+    }
+
+    const recentLogs = filteredLogs.slice(0, 15).map(log => {
+      let parsed = {};
+      try { parsed = log.jsonContent ? JSON.parse(log.jsonContent) : {}; } catch (e) {}
+      return {
+        id: log.id,
+        sentence_uuid: log.sentence_uuid,
+        thai: parsed.thai || '',
+        chinese: parsed.chinese || '',
+        courseId: log.course_id || '',
+        courseName: log.course_id ? (courseNameMap.get(log.course_id) || log.course_id) : '',
+        lessonId: log.lesson_id || '',
+        lessonTitle: log.lesson_id ? (lessonTitleMap.get(log.lesson_id) || log.lesson_id) : '',
+        score: log.score,
+        prev_interval: log.prev_interval,
+        new_interval: log.new_interval,
+        prev_easiness_factor: log.prev_easiness_factor,
+        new_easiness_factor: log.new_easiness_factor,
+        next_review_date: log.next_review_date,
+        reviewed_at: log.reviewed_at
+      };
+    });
+
+    const byCourse = [...byCourseMap.values()].sort((a, b) => {
+      if (b.dueCount !== a.dueCount) return b.dueCount - a.dueCount;
+      if (b.weakCount !== a.weakCount) return b.weakCount - a.weakCount;
+      return b.total - a.total;
+    });
+
+    res.json({
+      total_sentences: sentences.length,
+      due_count: dueCount,
+      overdue_count: overdueCount,
+      new_count: newCount,
+      learning_count: learningCount,
+      mastered_count: masteredCount,
+      weak_count: weakCount,
+      scheduled_count: efCount,
+      reviewed_today_count: reviewedTodayCount,
+      reviewed_today_unique_count: reviewedTodayUnique.size,
+      average_easiness: efCount > 0 ? Math.round((efSum / efCount) * 100) / 100 : 2.5,
+      average_score: scoreTotal > 0 ? Math.round((scoreSum / scoreTotal) * 100) / 100 : null,
+      upcoming_7_days: upcomingBuckets,
+      by_course: byCourse,
+      due_preview: duePreview,
+      recent_logs: recentLogs
+    });
+  } catch (err) {
+    console.error('Failed to get translate sentence SM-2 overview:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 1.2 GET /api/translate_sentences/sm2/queue - Build prioritized SM-2 smart review queue
+app.get('/api/translate_sentences/sm2/queue', async (req, res) => {
+  try {
+    const {
+      courseId = '',
+      lessonId = '',
+      mode = 'due_and_new',
+      limit: rawLimit = '20'
+    } = req.query;
+
+    const limitNum = rawLimit === 'all' ? 9999 : Math.max(1, Math.min(200, parseInt(rawLimit, 10) || 20));
+    const allSentences = await fetchTranslateSentencesWithMeta({
+      courseId: courseId || undefined,
+      lessonId: lessonId || undefined
+    });
+
+    const dueList = allSentences
+      .filter(s => s.sm2.review_count > 0 && s.sm2.is_due)
+      .sort((a, b) => {
+        const ta = a.sm2.next_review_date ? Date.parse(a.sm2.next_review_date) : 0;
+        const tb = b.sm2.next_review_date ? Date.parse(b.sm2.next_review_date) : 0;
+        if (ta !== tb) return ta - tb;
+        return (a.sm2.easiness_factor || 2.5) - (b.sm2.easiness_factor || 2.5);
+      });
+
+    const newList = allSentences
+      .filter(s => s.sm2.review_count === 0)
+      .sort((a, b) => (Number(a.jsonContent?.order) || 0) - (Number(b.jsonContent?.order) || 0));
+
+    const weakList = allSentences
+      .filter(s => s.sm2.review_count > 0 && ((s.sm2.last_score !== null && s.sm2.last_score <= 2) || s.sm2.easiness_factor <= 2.0))
+      .sort((a, b) => {
+        const sa = a.sm2.last_score ?? 3;
+        const sb = b.sm2.last_score ?? 3;
+        if (sa !== sb) return sa - sb;
+        return (a.sm2.easiness_factor || 2.5) - (b.sm2.easiness_factor || 2.5);
+      });
+
+    const upcomingList = allSentences
+      .filter(s => s.sm2.review_count > 0 && !s.sm2.is_due)
+      .sort((a, b) => {
+        const ta = a.sm2.next_review_date ? Date.parse(a.sm2.next_review_date) : Infinity;
+        const tb = b.sm2.next_review_date ? Date.parse(b.sm2.next_review_date) : Infinity;
+        return ta - tb;
+      });
+
+    let queued = [];
+    if (mode === 'due') {
+      queued = dueList;
+    } else if (mode === 'new') {
+      queued = newList;
+    } else if (mode === 'weak') {
+      queued = weakList;
+    } else if (mode === 'all') {
+      queued = [...dueList, ...newList, ...upcomingList];
+    } else {
+      // Default 'due_and_new': overdue/due first, then new sentences; if still empty, earliest upcoming
+      queued = [...dueList, ...newList];
+      if (queued.length === 0) {
+        queued = upcomingList;
+      }
+    }
+
+    const sliced = queued.slice(0, limitNum);
+    res.json({
+      mode,
+      due_count: dueList.length,
+      new_count: newList.length,
+      weak_count: weakList.length,
+      total_candidates: queued.length,
+      total_queued: sliced.length,
+      sentences: sliced
+    });
+  } catch (err) {
+    console.error('Failed to get translate sentence SM-2 queue:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 1.3 POST /api/translate_sentences/:uuid/sm2-score (and /api/translate_sentences/sm2/score) - Submit tutor score (1-5) & schedule next SM-2 review
+async function handleTranslateSentenceSM2Score(req, res) {
+  try {
+    const sentenceUuid = req.params.uuid || req.body.sentence_uuid || req.body.uuid;
+    const { score, courseId = null, lessonId = null } = req.body;
+
+    if (!sentenceUuid) {
+      return res.status(400).json({ error: 'sentence_uuid is required' });
+    }
+    const numScore = parseInt(score, 10);
+    if (isNaN(numScore) || numScore < 1 || numScore > 5) {
+      return res.status(400).json({ error: 'score must be an integer between 1 and 5' });
+    }
+
+    const sentenceRow = await get(`SELECT uuid FROM tblTranslateSentence WHERE uuid = ?`, [sentenceUuid]);
+    if (!sentenceRow) {
+      return res.status(404).json({ error: `Translate sentence with UUID ${sentenceUuid} not found` });
+    }
+
+    const existingSm2 = await get(`SELECT * FROM tblTranslateSentenceSM2 WHERE sentence_uuid = ?`, [sentenceUuid]);
+    const prevState = existingSm2 ? {
+      repetition: Number(existingSm2.repetition || 0),
+      interval_days: Number(existingSm2.interval_days || 0),
+      easiness_factor: Number(existingSm2.easiness_factor || 2.5),
+      review_count: Number(existingSm2.review_count || 0),
+      lapse_count: Number(existingSm2.lapse_count || 0)
+    } : {
+      repetition: 0,
+      interval_days: 0,
+      easiness_factor: 2.5,
+      review_count: 0,
+      lapse_count: 0
+    };
+
+    const sm2Result = calculateSentenceSM2({
+      repetition: prevState.repetition,
+      interval_days: prevState.interval_days,
+      easiness_factor: prevState.easiness_factor
+    }, numScore);
+
+    const nowIso = new Date().toISOString();
+    const newReviewCount = prevState.review_count + 1;
+    const newLapseCount = prevState.lapse_count + (numScore < 3 ? 1 : 0);
+
+    // Resolve courseId/lessonId from associations if not provided
+    let resolvedCourseId = courseId;
+    let resolvedLessonId = lessonId;
+    if (!resolvedCourseId || !resolvedLessonId) {
+      const assoc = await get(
+        `SELECT course_id, lesson_id FROM tblCourseTranslateSentence WHERE sentence_uuid = ? LIMIT 1`,
+        [sentenceUuid]
+      );
+      if (assoc) {
+        if (!resolvedCourseId) resolvedCourseId = assoc.course_id;
+        if (!resolvedLessonId) resolvedLessonId = assoc.lesson_id;
+      }
+    }
+
+    if (existingSm2) {
+      await run(
+        `UPDATE tblTranslateSentenceSM2
+         SET repetition = ?,
+             interval_days = ?,
+             easiness_factor = ?,
+             next_review_date = ?,
+             last_reviewed_at = ?,
+             last_score = ?,
+             review_count = ?,
+             lapse_count = ?,
+             updated_at = ?
+         WHERE sentence_uuid = ?`,
+        [
+          sm2Result.repetition,
+          sm2Result.interval_days,
+          sm2Result.easiness_factor,
+          sm2Result.next_review_date,
+          nowIso,
+          numScore,
+          newReviewCount,
+          newLapseCount,
+          nowIso,
+          sentenceUuid
+        ]
+      );
+    } else {
+      await run(
+        `INSERT INTO tblTranslateSentenceSM2 (
+           sentence_uuid, repetition, interval_days, easiness_factor,
+           next_review_date, last_reviewed_at, last_score,
+           review_count, lapse_count, created_at, updated_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          sentenceUuid,
+          sm2Result.repetition,
+          sm2Result.interval_days,
+          sm2Result.easiness_factor,
+          sm2Result.next_review_date,
+          nowIso,
+          numScore,
+          newReviewCount,
+          newLapseCount,
+          nowIso,
+          nowIso
+        ]
+      );
+    }
+
+    await run(
+      `INSERT INTO tblTranslateSentenceSM2Logs (
+         sentence_uuid, course_id, lesson_id, score,
+         prev_repetition, new_repetition,
+         prev_interval, new_interval,
+         prev_easiness_factor, new_easiness_factor,
+         next_review_date, reviewed_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        sentenceUuid,
+        resolvedCourseId,
+        resolvedLessonId,
+        numScore,
+        prevState.repetition,
+        sm2Result.repetition,
+        prevState.interval_days,
+        sm2Result.interval_days,
+        prevState.easiness_factor,
+        sm2Result.easiness_factor,
+        sm2Result.next_review_date,
+        nowIso
+      ]
+    );
+
+    const updatedRow = await get(`SELECT * FROM tblTranslateSentenceSM2 WHERE sentence_uuid = ?`, [sentenceUuid]);
+    res.json({
+      success: true,
+      sentence_uuid: sentenceUuid,
+      score: numScore,
+      prev_sm2: prevState,
+      sm2: formatTranslateSentenceSM2(updatedRow, Date.now())
+    });
+  } catch (err) {
+    console.error('Failed to score translate sentence SM-2:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+app.post('/api/translate_sentences/sm2/score', handleTranslateSentenceSM2Score);
+app.post('/api/translate_sentences/:uuid/sm2-score', handleTranslateSentenceSM2Score);
+
+// 1.4 POST /api/translate_sentences/:uuid/sm2-reset - Reset SM-2 state for a single translate sentence
+app.post('/api/translate_sentences/:uuid/sm2-reset', async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const existing = await get(`SELECT uuid FROM tblTranslateSentence WHERE uuid = ?`, [uuid]);
+    if (!existing) {
+      return res.status(404).json({ error: `Translate sentence with UUID ${uuid} not found` });
+    }
+    await run(`DELETE FROM tblTranslateSentenceSM2 WHERE sentence_uuid = ?`, [uuid]);
+    res.json({
+      success: true,
+      sentence_uuid: uuid,
+      sm2: formatTranslateSentenceSM2(null, Date.now())
+    });
+  } catch (err) {
+    console.error('Failed to reset translate sentence SM-2:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -3132,17 +3672,32 @@ app.get('/api/translate_sentences', async (req, res) => {
 app.get('/api/translate_sentences/:uuid', async (req, res) => {
   const { uuid } = req.params;
   try {
-    const row = await get(`SELECT * FROM tblTranslateSentence WHERE uuid = ?`, [uuid]);
+    const row = await get(
+      `SELECT ts.*,
+         sm2.repetition AS sm2_repetition,
+         sm2.interval_days AS sm2_interval_days,
+         sm2.easiness_factor AS sm2_easiness_factor,
+         sm2.next_review_date AS sm2_next_review_date,
+         sm2.last_reviewed_at AS sm2_last_reviewed_at,
+         sm2.last_score AS sm2_last_score,
+         sm2.review_count AS sm2_review_count,
+         sm2.lapse_count AS sm2_lapse_count
+       FROM tblTranslateSentence ts
+       LEFT JOIN tblTranslateSentenceSM2 sm2 ON ts.uuid = sm2.sentence_uuid
+       WHERE ts.uuid = ?`,
+      [uuid]
+    );
     if (!row) {
       return res.status(404).json({ error: `Translate sentence with UUID ${uuid} not found` });
     }
     const associations = await all(`SELECT course_id, lesson_id FROM tblCourseTranslateSentence WHERE sentence_uuid = ?`, [uuid]);
     res.json({
       uuid: row.uuid,
-      tags: row.tags ? row.tags.split(',') : [],
+      tags: row.tags ? row.tags.split(',').filter(Boolean) : [],
       jsonContent: JSON.parse(row.jsonContent),
       created_at: row.created_at,
-      courses: associations.map(a => ({ courseId: a.course_id, lessonId: a.lesson_id }))
+      courses: associations.map(a => ({ courseId: a.course_id, lessonId: a.lesson_id })),
+      sm2: formatTranslateSentenceSM2(row, Date.now())
     });
   } catch (err) {
     console.error(`Failed to get translate sentence ${uuid}:`, err);
@@ -3277,6 +3832,8 @@ app.delete('/api/translate_sentences/:uuid', async (req, res) => {
     }
     await run(`DELETE FROM tblTranslateSentence WHERE uuid = ?`, [uuid]);
     await run(`DELETE FROM tblCourseTranslateSentence WHERE sentence_uuid = ?`, [uuid]);
+    await run(`DELETE FROM tblTranslateSentenceSM2 WHERE sentence_uuid = ?`, [uuid]);
+    await run(`DELETE FROM tblTranslateSentenceSM2Logs WHERE sentence_uuid = ?`, [uuid]);
     res.json({ success: true, message: `Translate sentence with UUID ${uuid} and its course associations deleted successfully.` });
   } catch (err) {
     console.error(`Failed to delete translate sentence ${uuid}:`, err);

@@ -1580,6 +1580,36 @@
             color: #64748b;
             flex-shrink: 0;
         }
+        .left-nav-footer-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .left-nav-copy-btn {
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s ease;
+        }
+        .left-nav-copy-btn:hover {
+            background: #eff6ff;
+            border-color: #93c5fd;
+            color: #2563eb;
+        }
+        .left-nav-copy-btn.copied {
+            background: #dcfce7;
+            border-color: #86efac;
+            color: #15803d;
+        }
         .left-nav-reset-btn {
             border: 1px solid #c7d2fe;
             background: #eef2ff;
@@ -1714,6 +1744,688 @@
                 max-width: 120px;
             }
         }
+
+        /* ==========================================
+           SM-2 智能复习入口、卡片评分(1-5)与调度总览样式
+           ========================================== */
+        .nav-smart-review-wrap {
+            padding: 10px 14px;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+        .nav-smart-review-btn {
+            width: 100%;
+            border: 1px solid #c7d2fe;
+            background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%);
+            color: #3730a3;
+            border-radius: 13px;
+            padding: 10px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            transition: all 0.18s ease;
+            text-align: left;
+        }
+        .nav-smart-review-btn:hover {
+            border-color: #818cf8;
+            background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.12);
+        }
+        .nav-smart-review-btn.active {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            border-color: #4338ca;
+            color: #ffffff;
+            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.28);
+        }
+        .nav-smart-review-main {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            min-width: 0;
+        }
+        .nav-smart-review-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 9px;
+            background: rgba(79, 70, 229, 0.12);
+            color: #4f46e5;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .nav-smart-review-btn.active .nav-smart-review-icon {
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+        }
+        .nav-smart-review-text {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .nav-smart-review-title {
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.25;
+        }
+        .nav-smart-review-sub {
+            font-size: 11px;
+            color: #6366f1;
+            font-weight: 500;
+            margin-top: 1px;
+        }
+        .nav-smart-review-btn.active .nav-smart-review-sub {
+            color: rgba(255, 255, 255, 0.85);
+        }
+        .nav-smart-review-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #ffffff;
+            color: #4f46e5;
+            border: 1px solid #c7d2fe;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .nav-smart-review-badge.has-due {
+            background: #fef2f2;
+            color: #dc2626;
+            border-color: #fecaca;
+        }
+        .nav-smart-review-btn.active .nav-smart-review-badge {
+            background: rgba(255, 255, 255, 0.22);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.35);
+        }
+
+        /* SM-2 Active Session Banner */
+        .sm2-session-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px 16px;
+            margin-bottom: 14px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%);
+            border: 1px solid #c7d2fe;
+            color: #312e81;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .sm2-session-banner-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .sm2-session-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            background: #4f46e5;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .sm2-session-back-btn {
+            border: 1px solid #c7d2fe;
+            background: #ffffff;
+            color: #4338ca;
+            padding: 5px 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.15s ease;
+        }
+        .sm2-session-back-btn:hover {
+            background: #4f46e5;
+            color: #ffffff;
+            border-color: #4f46e5;
+        }
+
+        /* 卡片内辅导员 SM-2 评分组件 (1-5) */
+        .card-sm2-score-panel {
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px dashed #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .card-sm2-score-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .card-sm2-score-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .card-sm2-meta-right {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .sm2-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 999px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #475569;
+        }
+        .sm2-status-pill.status-due {
+            background: #fef2f2;
+            color: #b91c1c;
+            border-color: #fecaca;
+        }
+        .sm2-status-pill.status-mastered {
+            background: #ecfdf5;
+            color: #047857;
+            border-color: #a7f3d0;
+        }
+        .sm2-status-pill.status-learning {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-color: #bfdbfe;
+        }
+        .sm2-status-pill.status-new {
+            background: #f5f3ff;
+            color: #6d28d9;
+            border-color: #ddd6fe;
+        }
+        .sm2-autonext-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+        }
+        .sm2-autonext-label input {
+            accent-color: #4f46e5;
+            cursor: pointer;
+        }
+        .sm2-score-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .sm2-score-btn {
+            border: 1.5px solid #e2e8f0;
+            background: #ffffff;
+            border-radius: 13px;
+            padding: 9px 6px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            transition: all 0.16s ease;
+            color: #334155;
+            user-select: none;
+        }
+        .sm2-score-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+        }
+        .sm2-score-btn:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+        .sm2-score-num {
+            font-size: 17px;
+            font-weight: 800;
+            line-height: 1.15;
+        }
+        .sm2-score-label {
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .sm2-score-sub {
+            font-size: 10px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        .sm2-score-btn[data-score="1"]:hover,
+        .sm2-score-btn[data-score="1"].selected {
+            border-color: #f43f5e;
+            background: #fff1f2;
+            color: #be123c;
+        }
+        .sm2-score-btn[data-score="1"].selected {
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.16);
+        }
+        .sm2-score-btn[data-score="2"]:hover,
+        .sm2-score-btn[data-score="2"].selected {
+            border-color: #f97316;
+            background: #fff7ed;
+            color: #c2410c;
+        }
+        .sm2-score-btn[data-score="2"].selected {
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.16);
+        }
+        .sm2-score-btn[data-score="3"]:hover,
+        .sm2-score-btn[data-score="3"].selected {
+            border-color: #eab308;
+            background: #fefce8;
+            color: #a16207;
+        }
+        .sm2-score-btn[data-score="3"].selected {
+            box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.18);
+        }
+        .sm2-score-btn[data-score="4"]:hover,
+        .sm2-score-btn[data-score="4"].selected {
+            border-color: #10b981;
+            background: #ecfdf5;
+            color: #047857;
+        }
+        .sm2-score-btn[data-score="4"].selected {
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
+        }
+        .sm2-score-btn[data-score="5"]:hover,
+        .sm2-score-btn[data-score="5"].selected {
+            border-color: #2563eb;
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+        .sm2-score-btn[data-score="5"].selected {
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+        }
+        .sm2-score-btn.selected .sm2-score-sub {
+            color: currentColor;
+            opacity: 0.85;
+        }
+        .sm2-score-feedback {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 8px 12px;
+            border-radius: 10px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+        .sm2-score-feedback.is-lapse {
+            background: #fff1f2;
+            border-color: #fecdd3;
+            color: #9f1239;
+        }
+
+        /* 卡片列表中的 SM-2 标签 */
+        .card-sm2-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #475569;
+        }
+        .card-sm2-badge.status-due {
+            background: #fef2f2;
+            color: #b91c1c;
+            border-color: #fecaca;
+        }
+        .card-sm2-badge.status-mastered {
+            background: #ecfdf5;
+            color: #047857;
+            border-color: #a7f3d0;
+        }
+        .card-sm2-badge.status-learning {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-color: #bfdbfe;
+        }
+
+        /* ==========================================
+           SM-2 智能复习总览面板 (Dashboard)
+           ========================================== */
+        #smartReviewDashboardContainer {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .sm2-hero-card {
+            background: linear-gradient(135deg, #312e81 0%, #4f46e5 55%, #7c3aed 100%);
+            color: #ffffff;
+            border-radius: 22px;
+            padding: 24px 28px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            box-shadow: 0 12px 28px rgba(79, 70, 229, 0.22);
+        }
+        .sm2-hero-info {
+            max-width: 560px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .sm2-hero-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.16);
+            width: fit-content;
+            letter-spacing: 0.3px;
+        }
+        .sm2-hero-title {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            line-height: 1.3;
+        }
+        .sm2-hero-desc {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.86);
+            line-height: 1.55;
+        }
+        .sm2-hero-controls {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            backdrop-filter: blur(6px);
+            border-radius: 16px;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 280px;
+        }
+        .sm2-hero-select-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .sm2-hero-select {
+            flex: 1;
+            min-width: 118px;
+            padding: 7px 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(15, 23, 42, 0.28);
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+        }
+        .sm2-hero-select option {
+            background: #1e293b;
+            color: #ffffff;
+        }
+        .sm2-start-primary-btn {
+            border: none;
+            background: #ffffff;
+            color: #4338ca;
+            padding: 11px 18px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.16s ease;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+        }
+        .sm2-start-primary-btn:hover {
+            background: #f8fafc;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.25);
+        }
+        .sm2-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+        .sm2-kpi-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .sm2-kpi-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sm2-kpi-value {
+            font-size: 26px;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.15;
+        }
+        .sm2-kpi-sub {
+            font-size: 11px;
+            color: #94a3b8;
+        }
+        .sm2-dashboard-two-col {
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            gap: 16px;
+        }
+        .sm2-panel-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .sm2-panel-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .sm2-forecast-bars {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 8px;
+            align-items: end;
+            height: 140px;
+            padding-top: 12px;
+        }
+        .sm2-bar-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            height: 100%;
+        }
+        .sm2-bar-count {
+            font-size: 11px;
+            font-weight: 700;
+            color: #475569;
+        }
+        .sm2-bar-track {
+            width: 100%;
+            max-width: 34px;
+            flex: 1;
+            background: #f1f5f9;
+            border-radius: 8px;
+            display: flex;
+            align-items: flex-end;
+            overflow: hidden;
+        }
+        .sm2-bar-fill {
+            width: 100%;
+            border-radius: 8px 8px 0 0;
+            background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%);
+            transition: height 0.3s ease;
+            min-height: 4px;
+        }
+        .sm2-bar-fill.is-today {
+            background: linear-gradient(180deg, #f43f5e 0%, #e11d48 100%);
+        }
+        .sm2-bar-label {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 600;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .sm2-course-list {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+        .sm2-course-row {
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .sm2-course-row-info {
+            min-width: 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .sm2-course-row-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .sm2-course-row-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .sm2-mini-start-btn {
+            border: 1px solid #c7d2fe;
+            background: #ffffff;
+            color: #4f46e5;
+            padding: 5px 11px;
+            border-radius: 9px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.15s ease;
+        }
+        .sm2-mini-start-btn:hover {
+            background: #4f46e5;
+            color: #ffffff;
+            border-color: #4f46e5;
+        }
+        .sm2-preview-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+        .sm2-preview-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 10px 12px;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .sm2-preview-text {
+            min-width: 0;
+            flex: 1;
+        }
+        .sm2-preview-thai {
+            font-size: 14px;
+            font-weight: 600;
+            color: #0b1e33;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .sm2-preview-zh {
+            font-size: 12px;
+            color: #64748b;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-top: 2px;
+        }
+
+        @media (max-width: 900px) {
+            .sm2-dashboard-two-col {
+                grid-template-columns: 1fr;
+            }
+            .sm2-score-grid {
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+                gap: 5px;
+            }
+            .sm2-score-sub {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1798,6 +2510,22 @@
                 </button>
             </div>
 
+            <!-- 智能复习 (SM-2) 专属入口按钮 -->
+            <div class="nav-smart-review-wrap">
+                <button type="button" id="navSmartReviewBtn" class="nav-smart-review-btn" onclick="openSmartReviewDashboard()" title="查看 SM-2 智能复习调度总览并开始间隔重复复习">
+                    <div class="nav-smart-review-main">
+                        <span class="nav-smart-review-icon">
+                            <i class="ph-bold ph-brain"></i>
+                        </span>
+                        <div class="nav-smart-review-text">
+                            <span class="nav-smart-review-title">智能复习</span>
+                            <span class="nav-smart-review-sub">SM-2 遗忘曲线调度</span>
+                        </div>
+                    </div>
+                    <span id="navSmartReviewDueBadge" class="nav-smart-review-badge">加载中</span>
+                </button>
+            </div>
+
             <div class="left-nav-controls">
                 <div>
                     <label for="navCourseSelect" class="left-nav-field-label">
@@ -1832,9 +2560,15 @@
                     <span style="color: #cbd5e1; margin: 0 3px;">/</span>
                     <span>共 <span id="navBankTotal">0</span> 题</span>
                 </div>
-                <button type="button" id="navResetScopeBtn" class="left-nav-reset-btn hidden" onclick="resetNavScope()" title="重置为全部科目与全部课时">
-                    全部
-                </button>
+                <div class="left-nav-footer-actions">
+                    <button type="button" id="navCopyLinkBtn" class="left-nav-copy-btn" onclick="copyCurrentScopeLink(this)" title="复制当前科目/课时的直达复习链接">
+                        <i class="ph-bold ph-link"></i>
+                        <span>链接</span>
+                    </button>
+                    <button type="button" id="navResetScopeBtn" class="left-nav-reset-btn hidden" onclick="resetNavScope()" title="重置为全部科目与全部课时">
+                        全部
+                    </button>
+                </div>
             </div>
         </div>
     </aside>
@@ -1844,6 +2578,23 @@
         <div class="app" id="app">
             <!-- 视图 1: 顺序逐步复习视图 -->
             <div id="sequentialViewContainer">
+
+        <!-- SM-2 智能复习会话状态条（仅在智能复习模式下显示） -->
+        <div id="sm2SessionBanner" class="sm2-session-banner hidden">
+            <div class="sm2-session-banner-left">
+                <span class="sm2-session-pill">
+                    <i class="ph-bold ph-brain"></i>
+                    <span>SM-2 智能复习模式</span>
+                </span>
+                <span id="sm2SessionScopeText">到期优先 + 新句巩固</span>
+                <span style="color: #94a3b8;">·</span>
+                <span id="sm2SessionScoredText" style="color: #4338ca;">本轮已评分 0 / 0 题</span>
+            </div>
+            <button type="button" class="sm2-session-back-btn" onclick="openSmartReviewDashboard()">
+                <i class="ph-bold ph-chart-bar"></i>
+                <span>返回调度总览</span>
+            </button>
+        </div>
 
         <div class="control-bar">
             <div id="stepProgressIndicator" style="display: flex; gap: 8px; flex-grow: 1; max-width: 480px; align-items: center; font-size: 13px; font-weight: 600;">
@@ -1892,6 +2643,51 @@
                 <div id="quizItemsContainer" style="display:flex; flex-direction:column; gap:16px;">
                     <!-- Dynamic quiz input rows -->
                 </div>
+            </div>
+
+            <!-- 辅导员复习效果评分 (SM-2 Score 1-5) -->
+            <div id="sm2CardScorePanel" class="card-sm2-score-panel">
+                <div class="card-sm2-score-header">
+                    <div class="card-sm2-score-title">
+                        <i class="ph-bold ph-star-four" style="color: #4f46e5; font-size: 16px;"></i>
+                        <span>复习效果评分 (SM-2 · 快捷键 1-5)</span>
+                    </div>
+                    <div class="card-sm2-meta-right">
+                        <span id="sm2CardStatusPill" class="sm2-status-pill status-new">新句未复习</span>
+                        <label class="sm2-autonext-label" title="勾选后，每次打分完成将自动切换到下一句">
+                            <input type="checkbox" id="sm2AutoNextToggle" onchange="onSm2AutoNextToggle(this.checked)">
+                            <span>评分后自动下一题</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="sm2-score-grid" id="sm2ScoreBtnGroup" role="group" aria-label="SM-2 复习效果评分 1 到 5 分">
+                    <button type="button" class="sm2-score-btn" data-score="1" onclick="submitSentenceSm2Score(1)" title="1分：完全遗忘 / 严重错误（重置间隔为1天）">
+                        <span class="sm2-score-num">1</span>
+                        <span class="sm2-score-label">完全遗忘</span>
+                        <span class="sm2-score-sub">重学 · 1天后</span>
+                    </button>
+                    <button type="button" class="sm2-score-btn" data-score="2" onclick="submitSentenceSm2Score(2)" title="2分：模糊困难 / 较多错误（重置间隔为1天）">
+                        <span class="sm2-score-num">2</span>
+                        <span class="sm2-score-label">模糊困难</span>
+                        <span class="sm2-score-sub">强化 · 1天后</span>
+                    </button>
+                    <button type="button" class="sm2-score-btn" data-score="3" onclick="submitSentenceSm2Score(3)" title="3分：勉强通过 / 稍有迟疑（SM-2 推进）">
+                        <span class="sm2-score-num">3</span>
+                        <span class="sm2-score-label">勉强通过</span>
+                        <span class="sm2-score-sub">合格 · 巩固</span>
+                    </button>
+                    <button type="button" class="sm2-score-btn" data-score="4" onclick="submitSentenceSm2Score(4)" title="4分：掌握良好 / 较流畅（SM-2 正常拉长间隔）">
+                        <span class="sm2-score-num">4</span>
+                        <span class="sm2-score-label">掌握良好</span>
+                        <span class="sm2-score-sub">良好 · 稳步</span>
+                    </button>
+                    <button type="button" class="sm2-score-btn" data-score="5" onclick="submitSentenceSm2Score(5)" title="5分：完全掌握 / 脱口而出（SM-2 提高熟练因子）">
+                        <span class="sm2-score-num">5</span>
+                        <span class="sm2-score-label">完全掌握</span>
+                        <span class="sm2-score-sub">完美 · 长间隔</span>
+                    </button>
+                </div>
+                <div id="sm2ScoreFeedback" class="sm2-score-feedback hidden"></div>
             </div>
         </div>
 
@@ -1991,8 +2787,173 @@
             </button>
         </div>
     </div>
+
+    <!-- 视图 3: SM-2 智能复习调度总览视图 -->
+    <div id="smartReviewDashboardContainer" class="hidden">
+        <!-- Hero 行动卡片与智能复习启动入口 -->
+        <div class="sm2-hero-card">
+            <div class="sm2-hero-info">
+                <span class="sm2-hero-kicker">
+                    <i class="ph-bold ph-sparkle"></i>
+                    <span>SuperMemo SM-2 间隔重复调度引擎</span>
+                </span>
+                <div class="sm2-hero-title" id="sm2HeroTitle">智能复习调度中心</div>
+                <div class="sm2-hero-desc" id="sm2HeroDesc">
+                    根据辅导员在主屏幕对每句翻译给出的 1–5 分评价，自动计算遗忘曲线间隔（EF 与复习周期），优先安排到期与薄弱句子进行精准复习。
+                </div>
+            </div>
+            <div class="sm2-hero-controls">
+                <div class="sm2-hero-select-row">
+                    <select id="sm2LaunchModeSelect" class="sm2-hero-select" title="选择智能复习队列策略">
+                        <option value="due_and_new">到期优先 + 新句巩固</option>
+                        <option value="due">仅复习已到期句子</option>
+                        <option value="weak">专攻薄弱句 (1-2分/低EF)</option>
+                        <option value="new">仅学习未调度新句</option>
+                        <option value="all">全局按紧急度排序</option>
+                    </select>
+                    <select id="sm2LaunchLimitSelect" class="sm2-hero-select" style="max-width: 112px;" title="本轮复习题量上限">
+                        <option value="10">本轮 10 题</option>
+                        <option value="20" selected>本轮 20 题</option>
+                        <option value="30">本轮 30 题</option>
+                        <option value="50">本轮 50 题</option>
+                        <option value="all">全部题目</option>
+                    </select>
+                </div>
+                <select id="sm2LaunchCourseSelect" class="sm2-hero-select" onchange="loadSmartReviewOverview()" title="按科目查看 SM-2 调度情况并启动智能复习">
+                    <option value="">全部科目 (全局调度)</option>
+                </select>
+                <button type="button" id="btnStartSm2Review" class="sm2-start-primary-btn" onclick="startSmartReviewSession()">
+                    <i class="ph-bold ph-play-circle" style="font-size: 18px;"></i>
+                    <span id="btnStartSm2ReviewText">开始 SM-2 智能复习</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 核心指标 KPI 卡片 -->
+        <div class="sm2-kpi-grid">
+            <div class="sm2-kpi-card">
+                <div class="sm2-kpi-label"><i class="ph-bold ph-alarm" style="color:#e11d48;"></i><span>当前待复习 (到期)</span></div>
+                <div class="sm2-kpi-value" id="sm2KpiDue" style="color:#e11d48;">--</div>
+                <div class="sm2-kpi-sub" id="sm2KpiOverdueSub">含逾期 -- 句</div>
+            </div>
+            <div class="sm2-kpi-card">
+                <div class="sm2-kpi-label"><i class="ph-bold ph-sparkle" style="color:#7c3aed;"></i><span>未调度新句</span></div>
+                <div class="sm2-kpi-value" id="sm2KpiNew" style="color:#7c3aed;">--</div>
+                <div class="sm2-kpi-sub">尚未进行首次评分</div>
+            </div>
+            <div class="sm2-kpi-card">
+                <div class="sm2-kpi-label"><i class="ph-bold ph-arrows-clockwise" style="color:#2563eb;"></i><span>学习巩固中</span></div>
+                <div class="sm2-kpi-value" id="sm2KpiLearning" style="color:#2563eb;">--</div>
+                <div class="sm2-kpi-sub" id="sm2KpiWeakSub">薄弱需强化 -- 句</div>
+            </div>
+            <div class="sm2-kpi-card">
+                <div class="sm2-kpi-label"><i class="ph-bold ph-check-circle" style="color:#059669;"></i><span>已熟练掌握</span></div>
+                <div class="sm2-kpi-value" id="sm2KpiMastered" style="color:#059669;">--</div>
+                <div class="sm2-kpi-sub" id="sm2KpiTotalSub">总题库 -- 句</div>
+            </div>
+            <div class="sm2-kpi-card">
+                <div class="sm2-kpi-label"><i class="ph-bold ph-calendar-check" style="color:#0284c7;"></i><span>今日已完成评分</span></div>
+                <div class="sm2-kpi-value" id="sm2KpiReviewedToday" style="color:#0284c7;">--</div>
+                <div class="sm2-kpi-sub" id="sm2KpiTodayUniqueSub">覆盖 -- 句</div>
+            </div>
+            <div class="sm2-kpi-card">
+                <div class="sm2-kpi-label"><i class="ph-bold ph-gauge" style="color:#d97706;"></i><span>平均熟练因子 (EF)</span></div>
+                <div class="sm2-kpi-value" id="sm2KpiAvgEf" style="color:#d97706;">--</div>
+                <div class="sm2-kpi-sub" id="sm2KpiAvgScoreSub">平均得分 --</div>
+            </div>
+        </div>
+
+        <!-- 未来 7 天到期负载 + 按科目分布 -->
+        <div class="sm2-dashboard-two-col">
+            <div class="sm2-panel-card">
+                <div class="sm2-panel-title">
+                    <span style="display:inline-flex; align-items:center; gap:7px;">
+                        <i class="ph-bold ph-chart-bar text-indigo-600"></i>
+                        <span>未来 7 天 SM-2 调度分布</span>
+                    </span>
+                    <button type="button" class="left-nav-copy-btn" onclick="loadSmartReviewOverview(true)" title="刷新 SM-2 调度统计">
+                        <i class="ph-bold ph-arrows-clockwise"></i>
+                        <span>刷新</span>
+                    </button>
+                </div>
+                <div id="sm2ForecastChart" class="sm2-forecast-bars">
+                    <!-- Dynamic bars -->
+                </div>
+            </div>
+
+            <div class="sm2-panel-card">
+                <div class="sm2-panel-title">
+                    <span style="display:inline-flex; align-items:center; gap:7px;">
+                        <i class="ph-bold ph-books text-indigo-600"></i>
+                        <span>各科目 SM-2 调度概况</span>
+                    </span>
+                    <span style="font-size:11px; color:#94a3b8; font-weight:500;">点击可单科智能复习</span>
+                </div>
+                <div id="sm2CourseBreakdownList" class="sm2-course-list custom-scrollbar">
+                    <!-- Dynamic per-course rows -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 优先待复习句子预览 + 最近评分调度日志 -->
+        <div class="sm2-dashboard-two-col">
+            <div class="sm2-panel-card">
+                <div class="sm2-panel-title">
+                    <span style="display:inline-flex; align-items:center; gap:7px;">
+                        <i class="ph-bold ph-clock-countdown text-rose-500"></i>
+                        <span>优先到期句子队列预览</span>
+                    </span>
+                    <span id="sm2DuePreviewBadge" style="font-size:11px; color:#64748b; font-weight:600;">--</span>
+                </div>
+                <div id="sm2DuePreviewList" class="sm2-preview-list custom-scrollbar">
+                    <!-- Dynamic due sentences -->
+                </div>
+            </div>
+
+            <div class="sm2-panel-card">
+                <div class="sm2-panel-title">
+                    <span style="display:inline-flex; align-items:center; gap:7px;">
+                        <i class="ph-bold ph-clock-counter-clockwise text-emerald-600"></i>
+                        <span>最近 SM-2 评分与调度记录</span>
+                    </span>
+                    <span style="font-size:11px; color:#94a3b8; font-weight:500;">最新 15 条</span>
+                </div>
+                <div id="sm2RecentLogsList" class="sm2-preview-list custom-scrollbar">
+                    <!-- Dynamic recent logs -->
+                </div>
+            </div>
+        </div>
+    </div>
         </div>
     </main>
+</div>
+
+<!-- SM-2 智能复习本轮总结 Modal -->
+<div id="sm2SummaryModal" class="hidden" style="position: fixed; inset: 0; z-index: 100001; display: flex; align-items: center; justify-content: center; background: rgba(15,23,42,0.52); backdrop-filter: blur(4px); padding: 20px;">
+    <div style="background: white; border-radius: 24px; max-width: 520px; width: 100%; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.2); margin: auto;">
+        <div style="padding: 22px 24px; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <i class="ph-bold ph-confetti" style="font-size: 24px;"></i>
+                <div>
+                    <div style="font-size: 18px; font-weight: 800;">本轮 SM-2 智能复习完成！</div>
+                    <div style="font-size: 12px; opacity: 0.88;">所有评分已写入 SM-2 调度数据库</div>
+                </div>
+            </div>
+            <button type="button" onclick="closeSm2SummaryModal()" style="border:none; background:rgba(255,255,255,0.18); color:white; width:30px; height:30px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                <i class="ph-bold ph-x"></i>
+            </button>
+        </div>
+        <div id="sm2SummaryModalBody" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 14px;">
+            <!-- Dynamic summary content -->
+        </div>
+        <div style="padding: 16px 24px; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-outline" onclick="closeSm2SummaryModal()">留在此页</button>
+            <button type="button" class="btn btn-primary" onclick="closeSm2SummaryModal(); openSmartReviewDashboard();">
+                <i class="ph-bold ph-chart-bar"></i>
+                <span>查看 SM-2 调度总览</span>
+            </button>
+        </div>
+    </div>
 </div>
 
 <!-- 自测 Quiz 历史记录 Modal -->
@@ -2273,10 +3234,252 @@
             }
         ];
 
+        // ---------- URL 参数解析与同步 ----------
+        const COURSE_URL_PARAM_KEYS = ['courseId', 'course_id', 'courseID', 'course', 'subjectId', 'subject_id', 'subject'];
+        const LESSON_URL_PARAM_KEYS = ['lessonId', 'lesson_id', 'lessonID', 'lesson'];
+        const SENTENCE_URL_PARAM_KEYS = ['sentenceId', 'sentence_id', 'sentenceID', 'uuid', 'id'];
+
+        function getCombinedUrlSearchParams() {
+            const combined = new URLSearchParams(window.location.search);
+            try {
+                if (window.location.hash) {
+                    const hash = window.location.hash.startsWith('#') ? window.location.hash.substring(1) : window.location.hash;
+                    const qIndex = hash.indexOf('?');
+                    const hashQuery = qIndex !== -1 ? hash.substring(qIndex + 1) : (hash.includes('=') ? hash : '');
+                    if (hashQuery) {
+                        const hashParams = new URLSearchParams(hashQuery);
+                        hashParams.forEach((value, key) => {
+                            if (!combined.has(key) && value !== '') {
+                                combined.set(key, value);
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.warn('解析 Hash URL 参数失败:', e);
+            }
+            return combined;
+        }
+
+        function getFirstUrlParam(params, keys) {
+            for (const key of keys) {
+                const val = params.get(key);
+                if (val !== null && val.trim() !== '') {
+                    return val.trim();
+                }
+            }
+            return '';
+        }
+
+        function parseReviewUrlParams() {
+            const params = getCombinedUrlSearchParams();
+            const course = getFirstUrlParam(params, COURSE_URL_PARAM_KEYS);
+            const lesson = getFirstUrlParam(params, LESSON_URL_PARAM_KEYS);
+            const sentenceId = getFirstUrlParam(params, SENTENCE_URL_PARAM_KEYS);
+            const viewRaw = (params.get('view') || params.get('mode') || '').trim().toLowerCase();
+            const view = (viewRaw === 'list' || viewRaw === 'sequential' || viewRaw === 'sm2' || viewRaw === 'smart' || viewRaw === 'smartreview')
+                ? ((viewRaw === 'sm2' || viewRaw === 'smart' || viewRaw === 'smartreview') ? 'smartReview' : viewRaw)
+                : '';
+
+            const cardRaw = (params.get('card') || params.get('index') || '').trim();
+            let cardNum = null;
+            if (cardRaw !== '' && /^\d+$/.test(cardRaw)) {
+                const parsed = parseInt(cardRaw, 10);
+                if (parsed >= 1) {
+                    cardNum = parsed;
+                }
+            }
+
+            const resetRaw = (params.get('reset') || '').trim().toLowerCase();
+            const reset = resetRaw === '1' || resetRaw === 'true';
+
+            return {
+                course,
+                lesson,
+                sentenceId,
+                view,
+                cardNum,
+                reset,
+                hasScopeParam: Boolean(course || lesson)
+            };
+        }
+
+        function buildReviewScopeUrl(courseId, lessonId) {
+            try {
+                const url = new URL(window.location.href);
+                // 清理冗余别名参数
+                COURSE_URL_PARAM_KEYS.forEach(k => url.searchParams.delete(k));
+                LESSON_URL_PARAM_KEYS.forEach(k => url.searchParams.delete(k));
+                url.searchParams.delete('reset');
+
+                if (courseId) {
+                    url.searchParams.set('courseId', courseId);
+                }
+                if (lessonId) {
+                    url.searchParams.set('lessonId', lessonId);
+                }
+                if (url.hash) {
+                    const hashBody = url.hash.startsWith('#') ? url.hash.substring(1) : url.hash;
+                    const hasScopeInHash = [...COURSE_URL_PARAM_KEYS, ...LESSON_URL_PARAM_KEYS].some(
+                        k => hashBody.includes(`${k}=`)
+                    );
+                    if (hasScopeInHash) {
+                        url.hash = '';
+                    }
+                }
+                return url.toString();
+            } catch (e) {
+                console.warn('构造复习范围 URL 失败:', e);
+                return window.location.href;
+            }
+        }
+
+        function syncScopeToUrl(courseId, lessonId, pushHistory = false) {
+            try {
+                const nextUrl = buildReviewScopeUrl(courseId, lessonId);
+                if (nextUrl === window.location.href) return;
+                const stateObj = { courseId: courseId || '', lessonId: lessonId || '' };
+                if (pushHistory) {
+                    window.history.pushState(stateObj, '', nextUrl);
+                } else {
+                    window.history.replaceState(stateObj, '', nextUrl);
+                }
+            } catch (e) {
+                console.warn('同步浏览器地址栏 URL 参数失败:', e);
+            }
+        }
+
+        function resolveScopeFromParams(rawCourse, rawLesson) {
+            const cleanCourse = (rawCourse || '').trim();
+            const cleanLesson = (rawLesson || '').trim();
+            let resolvedCourseId = '';
+            let resolvedLessonId = '';
+            let courseMatched = !cleanCourse;
+            let lessonMatched = !cleanLesson;
+
+            if (cleanCourse) {
+                const lowerCourse = cleanCourse.toLowerCase();
+                const matchedCourse =
+                    coursesData.find(c => String(c.id) === cleanCourse) ||
+                    coursesData.find(c => String(c.id).toLowerCase() === lowerCourse) ||
+                    coursesData.find(c => (c.name || '').trim() === cleanCourse) ||
+                    coursesData.find(c => (c.name || '').trim().toLowerCase() === lowerCourse);
+
+                if (matchedCourse) {
+                    resolvedCourseId = matchedCourse.id;
+                    courseMatched = true;
+                } else if (allRawSentences.some(s => Array.isArray(s.courses) && s.courses.some(c => String(c.courseId) === cleanCourse))) {
+                    resolvedCourseId = cleanCourse;
+                    courseMatched = true;
+                } else {
+                    resolvedCourseId = cleanCourse;
+                    courseMatched = false;
+                }
+            }
+
+            if (cleanLesson) {
+                const lowerLesson = cleanLesson.toLowerCase();
+                const courseLessons = resolvedCourseId
+                    ? lessonsData.filter(l => l.course_id === resolvedCourseId)
+                    : [];
+
+                const findLessonInPool = (pool) => (
+                    pool.find(l => String(l.id) === cleanLesson) ||
+                    pool.find(l => String(l.id).toLowerCase() === lowerLesson) ||
+                    pool.find(l => (l.title || '').trim() === cleanLesson) ||
+                    pool.find(l => (l.title || '').trim().toLowerCase() === lowerLesson)
+                );
+
+                const matchedLesson = findLessonInPool(courseLessons) || findLessonInPool(lessonsData);
+                if (matchedLesson) {
+                    resolvedLessonId = matchedLesson.id;
+                    lessonMatched = true;
+
+                    if (!resolvedCourseId && matchedLesson.course_id) {
+                        resolvedCourseId = matchedLesson.course_id;
+                    } else if (resolvedCourseId && matchedLesson.course_id && matchedLesson.course_id !== resolvedCourseId) {
+                        const hasDirectPair = allRawSentences.some(s =>
+                            Array.isArray(s.courses) && s.courses.some(c => c.courseId === resolvedCourseId && c.lessonId === resolvedLessonId)
+                        );
+                        if (!hasDirectPair) {
+                            resolvedCourseId = matchedLesson.course_id;
+                        }
+                    }
+                } else {
+                    let matchedAssoc = null;
+                    for (const s of allRawSentences) {
+                        if (!Array.isArray(s.courses)) continue;
+                        const found = s.courses.find(c => String(c.lessonId) === cleanLesson);
+                        if (found) {
+                            matchedAssoc = found;
+                            break;
+                        }
+                    }
+                    if (matchedAssoc) {
+                        resolvedLessonId = matchedAssoc.lessonId;
+                        lessonMatched = true;
+                        if (!resolvedCourseId && matchedAssoc.courseId) {
+                            resolvedCourseId = matchedAssoc.courseId;
+                        }
+                    } else {
+                        resolvedLessonId = cleanLesson;
+                        lessonMatched = false;
+                    }
+                }
+            }
+
+            return {
+                courseId: resolvedCourseId,
+                lessonId: resolvedLessonId,
+                courseMatched,
+                lessonMatched
+            };
+        }
+
+        async function copyCurrentScopeLink(btnElement) {
+            let linkCourseId = activeCourseId;
+            if (!linkCourseId && activeLessonId) {
+                const matchedLesson = lessonsData.find(l => l.id === activeLessonId);
+                if (matchedLesson && matchedLesson.course_id) {
+                    linkCourseId = matchedLesson.course_id;
+                }
+            }
+            const shareUrl = buildReviewScopeUrl(linkCourseId, activeLessonId);
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(shareUrl);
+                } else {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = shareUrl;
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                }
+
+                if (btnElement) {
+                    const originalHtml = btnElement.innerHTML;
+                    btnElement.classList.add('copied');
+                    btnElement.innerHTML = '<i class="ph-bold ph-check"></i><span>已复制</span>';
+                    setTimeout(() => {
+                        btnElement.classList.remove('copied');
+                        btnElement.innerHTML = originalHtml;
+                    }, 1800);
+                }
+                showToast(`已复制直达复习链接：${getActiveScopeTitle()}`);
+            } catch (err) {
+                console.error('复制直达复习链接失败:', err);
+                showToast('复制链接失败，请直接从浏览器地址栏复制');
+            }
+        }
+        window.copyCurrentScopeLink = copyCurrentScopeLink;
+
         // ---------- 状态 ----------
-        const urlParams = new URLSearchParams(window.location.search);
-        let lessonID = urlParams.get('lessonId') || urlParams.get('lesson_id') || urlParams.get('lessonID');
-        let initialCourseId = urlParams.get('courseId') || urlParams.get('course_id') || '';
+        const initialUrlScope = parseReviewUrlParams();
+        let lessonID = initialUrlScope.lesson || null;
+        let initialCourseId = initialUrlScope.course || '';
 
         let coursesData = [];
         let lessonsData = [];
@@ -2291,9 +3494,39 @@
         let currentStep = 1;
         let quizSubmitted = false;
 
-        let currentView = 'sequential'; // 'sequential' | 'list'
+        let currentView = 'sequential'; // 'sequential' | 'list' | 'smartReview'
         let cardListSearchQuery = '';
         let selectedCardCategory = 'all';
+
+        // ---------- SM-2 智能复习状态 ----------
+        const SM2_AUTONEXT_STORAGE_KEY = 'translate_sm2_auto_next';
+        const SM2_SCORE_META = {
+            1: { label: '完全遗忘', shortDesc: '重置间隔为 1 天后重学', isLapse: true },
+            2: { label: '模糊困难', shortDesc: '重置间隔为 1 天后强化', isLapse: true },
+            3: { label: '勉强通过', shortDesc: '达标推进 SM-2 复习周期', isLapse: false },
+            4: { label: '掌握良好', shortDesc: '稳步拉长下次复习间隔', isLapse: false },
+            5: { label: '完全掌握', shortDesc: '提升熟练因子并延长间隔', isLapse: false }
+        };
+        const SM2_MODE_LABELS = {
+            due_and_new: '到期优先 + 新句巩固',
+            due: '仅复习已到期句子',
+            weak: '专攻薄弱句 (1-2分)',
+            new: '未调度新句初学',
+            all: '全局紧急度排序'
+        };
+
+        let isSmartReviewSession = false;
+        let sm2SessionMeta = {
+            mode: 'due_and_new',
+            modeLabel: SM2_MODE_LABELS.due_and_new,
+            courseId: '',
+            courseName: '全部科目',
+            scores: {}
+        };
+        let sm2CurrentCardScoredMap = {};
+        let sm2AutoNext = localStorage.getItem(SM2_AUTONEXT_STORAGE_KEY) === '1';
+        let sm2ScoreSubmitting = false;
+        let sm2OverviewCache = null;
 
         let appSettings = {
             doStep2: true,
@@ -2330,6 +3563,11 @@
         window.getActiveLessonTitle = getActiveLessonTitle;
 
         function getActiveScopeTitle() {
+            if (isSmartReviewSession) {
+                return sm2SessionMeta.courseId
+                    ? `智能复习 · ${sm2SessionMeta.courseName}`
+                    : `智能复习 · ${sm2SessionMeta.modeLabel}`;
+            }
             if (!activeCourseId && !activeLessonId) {
                 return '全部科目 · 全部课时';
             }
@@ -2839,6 +4077,10 @@
             }
 
             container.innerHTML = parts.join('');
+            const activeItemEl = container.querySelector('.nav-lesson-item.active');
+            if (activeItemEl && typeof activeItemEl.scrollIntoView === 'function') {
+                activeItemEl.scrollIntoView({ block: 'nearest' });
+            }
         }
 
         function populateLessonDropdowns(courseId) {
@@ -2872,10 +4114,34 @@
             const listBadgeText = document.getElementById('listScopeBadgeText');
             if (listBadgeText) listBadgeText.textContent = scopeTitle;
 
+            if (activeCourseId || activeLessonId) {
+                document.title = `${scopeTitle} - 翻译练习 - vCourse.ThaiNotes`;
+            } else {
+                document.title = '翻译练习 - vCourse.ThaiNotes';
+            }
+
             updateHeaderProgress();
         }
 
-        function applyReviewScope(courseId, lessonId, resetToStart = true, savedProgress = null) {
+        function applySavedPreferences(savedProgress) {
+            if (!savedProgress) return;
+            if (savedProgress.displayMode) {
+                displayMode = savedProgress.displayMode;
+                document.querySelectorAll('input[name="displayMode"]').forEach(radio => {
+                    radio.checked = (radio.value === displayMode);
+                });
+            }
+        }
+
+        function applyReviewScope(courseId, lessonId, resetToStart = true, savedProgress = null, options = {}) {
+            const {
+                updateUrl = true,
+                pushHistory = false,
+                targetSentenceId = '',
+                targetCardNum = null
+            } = options;
+
+            const requestedScope = Boolean(courseId || lessonId);
             activeCourseId = courseId || '';
             activeLessonId = lessonId || '';
             lessonID = activeLessonId || null;
@@ -2896,7 +4162,11 @@
                 );
             }
 
+            let didFallback = false;
             if (sentencesList.length === 0) {
+                if (requestedScope) {
+                    didFallback = true;
+                }
                 if (allRawSentences.length > 0) {
                     console.warn(`Scope ${activeCourseId}/${activeLessonId} is empty, falling back to all sentences`);
                     sentencesList = [...allRawSentences];
@@ -2911,19 +4181,72 @@
             // 保持科目/课时内按 order 升序排列
             sentencesList.sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
 
-            // 处理复习卡片指针
-            if (savedProgress) {
+            // 若切换范围后当前分类筛选在列表中不存在，则自动重置分类筛选
+            if (selectedCardCategory !== 'all' && !sentencesList.some(s => s.category === selectedCardCategory)) {
+                selectedCardCategory = 'all';
+            }
+
+            let restoredProgress = false;
+
+            // 处理复习卡片指针与学习步骤状态
+            if (targetSentenceId) {
+                const foundIdx = sentencesList.findIndex(s => String(s.id) === targetSentenceId || String(s.uuid) === targetSentenceId);
+                currentIndex = foundIdx !== -1 ? foundIdx : 0;
+                currentStep = 1;
+                currentMode = 'th2zh';
+                revealed = Boolean(appSettings.assistMode);
+                quizSubmitted = false;
+                isSideAppAnswerRevealed = false;
+                updateRevealSideAppButtonUI(false);
+            } else if (targetCardNum && targetCardNum >= 1 && targetCardNum <= sentencesList.length) {
+                currentIndex = targetCardNum - 1;
+                currentStep = 1;
+                currentMode = 'th2zh';
+                revealed = Boolean(appSettings.assistMode);
+                quizSubmitted = false;
+                isSideAppAnswerRevealed = false;
+                updateRevealSideAppButtonUI(false);
+            } else if (savedProgress && !didFallback) {
                 const foundIdx = sentencesList.findIndex(s => s.id === savedProgress.currentSentenceId);
                 if (foundIdx !== -1) {
                     currentIndex = foundIdx;
-                } else if (savedProgress.currentIndex < sentencesList.length) {
+                } else if (typeof savedProgress.currentIndex === 'number' && savedProgress.currentIndex >= 0 && savedProgress.currentIndex < sentencesList.length) {
                     currentIndex = savedProgress.currentIndex;
                 } else {
                     currentIndex = 0;
                 }
-            } else if (resetToStart) {
+
+                currentStep = savedProgress.currentStep || 1;
+                if (!appSettings.doStep2 && currentStep > 1) {
+                    currentStep = 1;
+                    revealed = Boolean(appSettings.assistMode);
+                    quizSubmitted = false;
+                } else if (!appSettings.doQuiz && currentStep === 3) {
+                    currentStep = 1;
+                    revealed = Boolean(appSettings.assistMode);
+                    quizSubmitted = false;
+                } else {
+                    revealed = Boolean(savedProgress.revealed);
+                    quizSubmitted = Boolean(savedProgress.quizSubmitted);
+                }
+
+                if (savedProgress.currentMode) {
+                    currentMode = savedProgress.currentMode;
+                    const modeBtns = document.querySelectorAll('.mode-btn');
+                    if (modeBtns && modeBtns.length > 0) {
+                        modeBtns.forEach(btn => {
+                            btn.classList.toggle('active', btn.dataset.mode === currentMode);
+                        });
+                    }
+                }
+                applySavedPreferences(savedProgress);
+                isSideAppAnswerRevealed = false;
+                updateRevealSideAppButtonUI(false);
+                restoredProgress = true;
+            } else if (resetToStart || didFallback) {
                 currentIndex = 0;
                 currentStep = 1;
+                currentMode = 'th2zh';
                 revealed = Boolean(appSettings.assistMode);
                 quizSubmitted = false;
                 isSideAppAnswerRevealed = false;
@@ -2936,6 +4259,11 @@
 
             syncScopeDropdowns();
             updateScopeDisplay();
+
+            if (updateUrl) {
+                syncScopeToUrl(activeCourseId, activeLessonId, pushHistory);
+            }
+
             renderStepFlow();
 
             if (currentView === 'list') {
@@ -2944,14 +4272,24 @@
 
             saveProgressToIndexedDB();
             syncSideAppState(null, true);
+
+            return {
+                didFallback,
+                restoredProgress,
+                count: sentencesList.length
+            };
         }
         window.applyReviewScope = applyReviewScope;
 
         function onNavCourseChange(courseId) {
+            exitSmartReviewSession();
             navLessonSearchQuery = '';
             const searchInput = document.getElementById('navLessonSearchInput');
             if (searchInput) searchInput.value = '';
-            applyReviewScope(courseId, '', true);
+            if (currentView === 'smartReview') {
+                switchView('sequential');
+            }
+            applyReviewScope(courseId, '', true, null, { updateUrl: true, pushHistory: true });
             showToast(`已切换复习范围：${getActiveScopeTitle()}（共 ${sentencesList.length} 题）`);
         }
         window.onNavCourseChange = onNavCourseChange;
@@ -2959,7 +4297,11 @@
         window.onCardListCourseChange = onNavCourseChange;
 
         function onNavLessonSelect(lessonId) {
-            applyReviewScope(activeCourseId, lessonId, true);
+            exitSmartReviewSession();
+            if (currentView === 'smartReview') {
+                switchView('sequential');
+            }
+            applyReviewScope(activeCourseId, lessonId, true, null, { updateUrl: true, pushHistory: true });
             if (isMobileNavViewport()) {
                 toggleLeftNav(false);
             }
@@ -2976,10 +4318,14 @@
         window.onNavLessonSearch = onNavLessonSearch;
 
         function resetNavScope() {
+            exitSmartReviewSession();
             navLessonSearchQuery = '';
             const searchInput = document.getElementById('navLessonSearchInput');
             if (searchInput) searchInput.value = '';
-            applyReviewScope('', '', true);
+            if (currentView === 'smartReview') {
+                switchView('sequential');
+            }
+            applyReviewScope('', '', true, null, { updateUrl: true, pushHistory: true });
             showToast(`已重置为全部范围（共 ${sentencesList.length} 题）`);
         }
         window.resetNavScope = resetNavScope;
@@ -3016,6 +4362,26 @@
         }
         window.startSequentialReviewForCurrentScope = startSequentialReviewForCurrentScope;
 
+        function normalizeSentenceItem(item) {
+            const s = Object.assign({}, item.jsonContent || item);
+            s.uuid = item.uuid || s.id;
+            s.courses = item.courses || [];
+            s.tags = item.tags || [];
+            s.sm2 = item.sm2 || {
+                repetition: 0,
+                interval_days: 0,
+                easiness_factor: 2.5,
+                next_review_date: null,
+                last_reviewed_at: null,
+                last_score: null,
+                review_count: 0,
+                lapse_count: 0,
+                is_due: false,
+                status: 'new'
+            };
+            return s;
+        }
+
         async function loadSentences() {
             try {
                 await initQuizDB();
@@ -3050,13 +4416,7 @@
                 if (resSentences.ok) {
                     const rawData = await resSentences.json();
                     if (Array.isArray(rawData) && rawData.length > 0) {
-                        allRawSentences = rawData.map(item => {
-                            const s = Object.assign({}, item.jsonContent || item);
-                            s.uuid = item.uuid || s.id;
-                            s.courses = item.courses || [];
-                            s.tags = item.tags || [];
-                            return s;
-                        });
+                        allRawSentences = rawData.map(normalizeSentenceItem);
                         allRawSentences.sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
                     }
                 }
@@ -3066,82 +4426,96 @@
 
             if (allRawSentences.length === 0) {
                 allRawSentences = DEFAULT_SENTENCES.map(s => {
-                    const copy = Object.assign({}, s);
+                    const copy = normalizeSentenceItem(s);
                     copy.courses = [];
+                    copy._isLocalFallback = true;
                     return copy;
                 });
             }
 
             populateCourseAndLessonDropdowns();
+            populateSm2LaunchCourseDropdown();
+            updateNavSmartReviewBadgeFromLocal();
 
-            // 确定目标范围 (URL 参数优先，其次为上次保存的范围)
-            let targetCourseId = initialCourseId || '';
-            let targetLessonId = lessonID || '';
+            // 保留用户的泰语显示偏好设置
+            applySavedPreferences(savedProgress);
 
-            if (!targetCourseId && !targetLessonId && savedProgress) {
-                if (savedProgress.courseId) {
-                    targetCourseId = savedProgress.courseId;
+            // 解析当前 URL 参数 (支持 courseId/course_id/course/subject 与 lessonId/lesson_id/lessonID/lesson)
+            const urlScope = parseReviewUrlParams();
+            const savedCourseId = (savedProgress && savedProgress.courseId) || '';
+            const savedLessonId = (savedProgress && (savedProgress.lessonID || savedProgress.lessonId)) || '';
+
+            let targetCourseId = '';
+            let targetLessonId = '';
+            let progressToRestore = null;
+
+            if (urlScope.hasScopeParam) {
+                const resolved = resolveScopeFromParams(urlScope.course, urlScope.lesson);
+                targetCourseId = resolved.courseId;
+                targetLessonId = resolved.lessonId;
+
+                // 仅当 URL 指定的科目/课时与上次保存的进度完全一致、且未指定跳转题号/重置时，才恢复上次进度
+                const isSameScopeAsSaved = Boolean(
+                    savedProgress &&
+                    !urlScope.reset &&
+                    !urlScope.sentenceId &&
+                    !urlScope.cardNum &&
+                    savedCourseId === targetCourseId &&
+                    savedLessonId === targetLessonId
+                );
+                if (isSameScopeAsSaved) {
+                    progressToRestore = savedProgress;
                 }
-                if (savedProgress.lessonID || savedProgress.lessonId) {
-                    targetLessonId = savedProgress.lessonID || savedProgress.lessonId;
+            } else if (savedProgress) {
+                targetCourseId = savedCourseId;
+                targetLessonId = savedLessonId;
+                if (targetLessonId && !targetCourseId && lessonsData.length > 0) {
+                    const matchedLesson = lessonsData.find(l => l.id === targetLessonId);
+                    if (matchedLesson && matchedLesson.course_id) {
+                        targetCourseId = matchedLesson.course_id;
+                    }
                 }
-            }
-
-            // 若仅指定了 lessonId，自动反查其所属 courseId
-            if (targetLessonId && !targetCourseId && lessonsData.length > 0) {
-                const matchedLesson = lessonsData.find(l => l.id === targetLessonId);
-                if (matchedLesson && matchedLesson.course_id) {
-                    targetCourseId = matchedLesson.course_id;
+                if (!urlScope.reset && !urlScope.sentenceId && !urlScope.cardNum) {
+                    progressToRestore = savedProgress;
                 }
             }
 
             populateLessonDropdowns(targetCourseId);
-            applyReviewScope(targetCourseId, targetLessonId, false, savedProgress);
 
-            if (savedProgress) {
-                currentStep = savedProgress.currentStep || 1;
-                if (!appSettings.doStep2 && currentStep > 1) {
-                    currentStep = 1;
-                    revealed = Boolean(appSettings.assistMode);
-                    quizSubmitted = false;
-                } else if (!appSettings.doQuiz && currentStep === 3) {
-                    currentStep = 1;
-                    revealed = Boolean(appSettings.assistMode);
-                    quizSubmitted = false;
+            const applyResult = applyReviewScope(
+                targetCourseId,
+                targetLessonId,
+                !progressToRestore,
+                progressToRestore,
+                {
+                    updateUrl: true,
+                    pushHistory: false,
+                    targetSentenceId: urlScope.sentenceId,
+                    targetCardNum: urlScope.cardNum
                 }
-                revealed = savedProgress.revealed || false;
-                quizSubmitted = savedProgress.quizSubmitted || false;
+            );
 
-                if (savedProgress.currentMode) {
-                    currentMode = savedProgress.currentMode;
-                    const modeBtns = document.querySelectorAll('.mode-btn');
-                    if (modeBtns && modeBtns.length > 0) {
-                        modeBtns.forEach(btn => {
-                            btn.classList.toggle('active', btn.dataset.mode === currentMode);
-                        });
-                    }
+            if (urlScope.view === 'smartReview') {
+                openSmartReviewDashboard();
+            } else if (urlScope.view === 'list') {
+                switchView('list');
+            } else if (urlScope.view === 'sequential') {
+                switchView('sequential');
+            }
+
+            if (urlScope.view === 'smartReview') {
+                // SM-2 总览页面直接加载统计数据，无需显示旧进度 Toast
+            } else if (urlScope.hasScopeParam) {
+                if (applyResult.didFallback) {
+                    showToast('未找到 URL 指定的科目/课时或该范围内暂无翻译题目，已为您展示全部范围');
+                } else if (applyResult.restoredProgress) {
+                    showToast(`已进入复习：${getActiveScopeTitle()}（已恢复至第 ${currentIndex + 1} / ${sentencesList.length} 题）`);
+                } else {
+                    showToast(`已直接进入复习：${getActiveScopeTitle()}（共 ${sentencesList.length} 题）`);
                 }
-                if (savedProgress.displayMode) {
-                    displayMode = savedProgress.displayMode;
-                    document.querySelectorAll('input[name="displayMode"]').forEach(radio => {
-                        radio.checked = (radio.value === displayMode);
-                    });
-                }
-                
+            } else if (applyResult.restoredProgress) {
                 showToast(`已为你自动恢复至上次的学习进度：第 ${currentIndex + 1} / ${sentencesList.length} 张卡片`);
-            } else {
-                currentIndex = 0;
-                revealed = false;
-                currentStep = 1;
-                quizSubmitted = false;
             }
-            
-            renderStepFlow();
-            if (currentView === 'list') {
-                renderCardList();
-            }
-            saveProgressToIndexedDB();
-            syncSideAppState(null, true);
         }
 
         // DOM
@@ -3274,14 +4648,19 @@
                 }
             }
 
+            // 同步渲染当前卡片的 SM-2 状态与 1-5 评分组件
+            renderCardSm2ScoreUI();
+
             const footerNote = document.querySelector('.footer-note');
             if (footerNote) {
-                if (appSettings.assistMode && currentStep === 1) {
+                if (isSmartReviewSession) {
+                    footerNote.innerHTML = '🧠 <strong style="color:#4f46e5;">SM-2 智能复习进行中</strong>：按键盘 <strong>1–5</strong> 或点击卡片下方评分按钮记录掌握度并自动安排下次复习时间';
+                } else if (appSettings.assistMode && currentStep === 1) {
                     footerNote.innerHTML = '⚡ <strong style="color:#10b981;">辅助模式已开启</strong>：已自动呈现中文翻译，点击“下一题”或按空格键快速进入下一题';
                 } else if (appSettings.doStep2 === false) {
                     footerNote.innerHTML = '🔹 当前仅练习：泰➔中（Step 2 拼写练习已关闭，完成后直接进入下一题）';
                 } else {
-                    footerNote.innerHTML = '🔹 卡片自测包含：泰➔中、中➔泰及自测Quiz三步流程';
+                    footerNote.innerHTML = '🔹 卡片自测包含：泰➔中、中➔泰及自测Quiz三步流程 · 支持主屏 1–5 分 SM-2 调度评分';
                 }
             }
 
@@ -3332,14 +4711,22 @@
             container.innerHTML = html;
         }
 
+        function handleReviewRoundFinished() {
+            if (isSmartReviewSession) {
+                showSm2SummaryModal();
+                return;
+            }
+            clearProgressRecord();
+            alert("🎉 恭喜你，已完成本次翻译复习！");
+            nextSentence();
+        }
+
         function handleNextClick() {
             if (currentStep === 1) {
                 if (appSettings.assistMode || appSettings.doStep2 === false) {
                     // 辅助模式下或关闭 Step 2 时，Step 1 结束后直接进入下一个句子翻译练习
                     if (currentIndex === sentencesList.length - 1) {
-                        clearProgressRecord();
-                        alert("🎉 恭喜你，已完成本次翻译复习！");
-                        nextSentence();
+                        handleReviewRoundFinished();
                     } else {
                         nextSentence();
                     }
@@ -3363,9 +4750,7 @@
                     syncSideAppState('viewTranslateSession', true, { answerRevealed: false });
                 } else {
                     if (currentIndex === sentencesList.length - 1) {
-                        clearProgressRecord();
-                        alert("🎉 恭喜你，已完成本次翻译复习！");
-                        nextSentence();
+                        handleReviewRoundFinished();
                     } else {
                         nextSentence();
                     }
@@ -3375,11 +4760,9 @@
                     submitQuiz();
                 } else {
                     if (currentIndex === sentencesList.length - 1) {
-                        clearProgressRecord();
-                        alert("🎉 恭喜你，已完成本次翻译复习！");
                         currentStep = 1;
                         quizSubmitted = false;
-                        nextSentence();
+                        handleReviewRoundFinished();
                     } else {
                         currentStep = 1;
                         quizSubmitted = false;
@@ -3849,27 +5232,624 @@
         }
 
         // ==========================================
+        // SM-2 智能复习：卡片评分 (1-5)、调度总览与会话引擎
+        // ==========================================
+        function formatSm2ShortDate(isoStr) {
+            if (!isoStr) return '--';
+            const dt = new Date(isoStr);
+            if (isNaN(dt.getTime())) return '--';
+            const now = new Date();
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+            const targetStart = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate()).getTime();
+            const diffDays = Math.round((targetStart - todayStart) / (24 * 60 * 60 * 1000));
+            const mm = String(dt.getMonth() + 1).padStart(2, '0');
+            const dd = String(dt.getDate()).padStart(2, '0');
+            if (diffDays < 0) return `逾期 ${Math.abs(diffDays)} 天 (${mm}-${dd})`;
+            if (diffDays === 0) return `今天 (${mm}-${dd})`;
+            if (diffDays === 1) return `明天 (${mm}-${dd})`;
+            return `${diffDays} 天后 (${mm}-${dd})`;
+        }
+
+        function getSm2StatusMeta(sm2) {
+            if (!sm2 || !sm2.review_count || sm2.review_count <= 0) {
+                return { label: '新句未复习', shortLabel: '新句', className: 'status-new' };
+            }
+            const efStr = Number(sm2.easiness_factor || 2.5).toFixed(2);
+            const nextText = formatSm2ShortDate(sm2.next_review_date);
+            if (sm2.is_due) {
+                return {
+                    label: `已到期 · 已评 ${sm2.review_count} 次 · EF ${efStr}`,
+                    shortLabel: `已到期 (上次 ${sm2.last_score ?? '-'}分)`,
+                    className: 'status-due'
+                };
+            }
+            if (sm2.status === 'mastered') {
+                return {
+                    label: `已掌握 · 间隔 ${sm2.interval_days} 天 · EF ${efStr} · 下次 ${nextText}`,
+                    shortLabel: `已掌握 · ${sm2.interval_days}天`,
+                    className: 'status-mastered'
+                };
+            }
+            return {
+                label: `巩固中 · 间隔 ${sm2.interval_days} 天 · EF ${efStr} · 下次 ${nextText}`,
+                shortLabel: `巩固中 · ${sm2.interval_days}天`,
+                className: 'status-learning'
+            };
+        }
+
+        function updateNavSmartReviewBadge(dueCount, newCount) {
+            const badge = document.getElementById('navSmartReviewDueBadge');
+            if (!badge) return;
+            if (dueCount > 0) {
+                badge.textContent = `${dueCount} 待复习`;
+                badge.classList.add('has-due');
+            } else if (newCount > 0) {
+                badge.textContent = `${newCount} 新句`;
+                badge.classList.remove('has-due');
+            } else {
+                badge.textContent = '已完成';
+                badge.classList.remove('has-due');
+            }
+        }
+
+        function updateNavSmartReviewBadgeFromLocal() {
+            const nowMs = Date.now();
+            let dueCount = 0;
+            let newCount = 0;
+            for (const s of allRawSentences) {
+                const sm2 = s.sm2;
+                if (!sm2 || !sm2.review_count) {
+                    newCount++;
+                } else {
+                    const nextMs = sm2.next_review_date ? Date.parse(sm2.next_review_date) : NaN;
+                    if (sm2.is_due || (!isNaN(nextMs) && nextMs <= nowMs)) {
+                        dueCount++;
+                    }
+                }
+            }
+            updateNavSmartReviewBadge(dueCount, newCount);
+        }
+
+        function populateSm2LaunchCourseDropdown() {
+            const sel = document.getElementById('sm2LaunchCourseSelect');
+            if (!sel) return;
+            const prevVal = sel.value;
+            const options = [`<option value="">全部科目 (全局调度 · ${allRawSentences.length}题)</option>`];
+            const sorted = [...coursesData].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            sorted.forEach(c => {
+                const count = allRawSentences.filter(s => Array.isArray(s.courses) && s.courses.some(item => item.courseId === c.id)).length;
+                if (count > 0) {
+                    options.push(`<option value="${escapeNavHtml(c.id)}">${escapeNavHtml(c.name || c.id)} (${count}题)</option>`);
+                }
+            });
+            sel.innerHTML = options.join('');
+            if (prevVal && [...sel.options].some(o => o.value === prevVal)) {
+                sel.value = prevVal;
+            }
+        }
+
+        function updateSm2SessionBannerUI() {
+            const banner = document.getElementById('sm2SessionBanner');
+            const scopeTextEl = document.getElementById('sm2SessionScopeText');
+            const scoredTextEl = document.getElementById('sm2SessionScoredText');
+            if (!banner) return;
+
+            if (!isSmartReviewSession) {
+                banner.classList.add('hidden');
+                return;
+            }
+            banner.classList.remove('hidden');
+            const scoredCount = Object.keys(sm2SessionMeta.scores || {}).length;
+            if (scopeTextEl) {
+                scopeTextEl.textContent = sm2SessionMeta.courseId
+                    ? `${sm2SessionMeta.courseName} · ${sm2SessionMeta.modeLabel}`
+                    : sm2SessionMeta.modeLabel;
+            }
+            if (scoredTextEl) {
+                scoredTextEl.textContent = `本轮已评分 ${scoredCount} / ${sentencesList.length} 题`;
+            }
+        }
+
+        function exitSmartReviewSession() {
+            if (!isSmartReviewSession) return;
+            isSmartReviewSession = false;
+            updateSm2SessionBannerUI();
+        }
+
+        function onSm2AutoNextToggle(checked) {
+            sm2AutoNext = Boolean(checked);
+            try {
+                localStorage.setItem(SM2_AUTONEXT_STORAGE_KEY, sm2AutoNext ? '1' : '0');
+            } catch (e) {}
+            showToast(sm2AutoNext ? '已开启：评分后自动进入下一题' : '已关闭：评分后停留当前卡片');
+        }
+        window.onSm2AutoNextToggle = onSm2AutoNextToggle;
+
+        function renderCardSm2ScoreUI() {
+            const panel = document.getElementById('sm2CardScorePanel');
+            if (!panel) return;
+
+            const autoNextEl = document.getElementById('sm2AutoNextToggle');
+            if (autoNextEl) autoNextEl.checked = sm2AutoNext;
+
+            updateSm2SessionBannerUI();
+
+            const data = sentencesList[currentIndex];
+            if (!data) {
+                panel.classList.add('hidden');
+                return;
+            }
+            panel.classList.remove('hidden');
+
+            const uuid = data.uuid || data.id;
+            const sm2 = data.sm2 || null;
+            const statusMeta = getSm2StatusMeta(sm2);
+
+            const statusPill = document.getElementById('sm2CardStatusPill');
+            if (statusPill) {
+                statusPill.textContent = statusMeta.label;
+                statusPill.className = `sm2-status-pill ${statusMeta.className}`;
+            }
+
+            const sessionScoreEntry = sm2CurrentCardScoredMap[uuid] || null;
+            const selectedScore = sessionScoreEntry ? sessionScoreEntry.score : null;
+
+            const btns = panel.querySelectorAll('.sm2-score-btn');
+            btns.forEach(btn => {
+                const btnScore = Number(btn.getAttribute('data-score'));
+                btn.classList.toggle('selected', selectedScore === btnScore);
+                btn.disabled = sm2ScoreSubmitting;
+            });
+
+            const feedbackEl = document.getElementById('sm2ScoreFeedback');
+            if (feedbackEl) {
+                if (sessionScoreEntry && sessionScoreEntry.sm2) {
+                    const meta = SM2_SCORE_META[sessionScoreEntry.score] || { label: '', isLapse: false };
+                    const nextSm2 = sessionScoreEntry.sm2;
+                    const nextDateStr = formatSm2ShortDate(nextSm2.next_review_date);
+                    feedbackEl.classList.remove('hidden');
+                    feedbackEl.classList.toggle('is-lapse', Boolean(meta.isLapse));
+                    feedbackEl.innerHTML = `
+                        <span>${meta.isLapse ? '⚠️' : '✅'} 已评 <strong>${sessionScoreEntry.score} 分（${meta.label}）</strong> → 下次复习：<strong>${nextDateStr}</strong>（间隔 ${nextSm2.interval_days} 天）</span>
+                        <span>EF ${Number(nextSm2.easiness_factor || 2.5).toFixed(2)} · 连续熟练 ${nextSm2.repetition} 次</span>
+                    `;
+                } else if (sm2 && sm2.review_count > 0 && sm2.last_score) {
+                    const prevMeta = SM2_SCORE_META[sm2.last_score] || { label: '' };
+                    feedbackEl.classList.remove('hidden');
+                    feedbackEl.classList.toggle('is-lapse', sm2.last_score < 3);
+                    feedbackEl.innerHTML = `
+                        <span>📌 上次评分：<strong>${sm2.last_score} 分（${prevMeta.label}）</strong> · 已累计复习 ${sm2.review_count} 次</span>
+                        <span>点击上方 1–5 分更新本次 SM-2 调度安排</span>
+                    `;
+                } else {
+                    feedbackEl.classList.add('hidden');
+                    feedbackEl.innerHTML = '';
+                }
+            }
+        }
+
+        async function submitSentenceSm2Score(score) {
+            if (sm2ScoreSubmitting) return;
+            const numScore = parseInt(score, 10);
+            if (isNaN(numScore) || numScore < 1 || numScore > 5) return;
+
+            const data = sentencesList[currentIndex];
+            if (!data) return;
+
+            const uuid = data.uuid || data.id;
+            if (!uuid || data._isLocalFallback) {
+                showToast('当前为本地示例句子，无法写入后台 SM-2 数据库');
+                return;
+            }
+
+            sm2ScoreSubmitting = true;
+            renderCardSm2ScoreUI();
+
+            const firstAssoc = (Array.isArray(data.courses) && data.courses[0]) || {};
+            const payload = {
+                score: numScore,
+                courseId: activeCourseId || firstAssoc.courseId || null,
+                lessonId: activeLessonId || firstAssoc.lessonId || null
+            };
+
+            try {
+                const res = await fetch(`/api/translate_sentences/${encodeURIComponent(uuid)}/sm2-score`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const errBody = await res.json().catch(() => ({}));
+                    throw new Error(errBody.error || `HTTP ${res.status}`);
+                }
+
+                const result = await res.json();
+                const updatedSm2 = result.sm2;
+
+                // 同步更新当前队列与全量题库中的 SM-2 状态
+                data.sm2 = updatedSm2;
+                const rawTarget = allRawSentences.find(s => (s.uuid || s.id) === uuid);
+                if (rawTarget) rawTarget.sm2 = updatedSm2;
+
+                sm2CurrentCardScoredMap[uuid] = { score: numScore, sm2: updatedSm2 };
+                if (isSmartReviewSession) {
+                    sm2SessionMeta.scores[uuid] = { score: numScore, sm2: updatedSm2 };
+                }
+
+                sm2ScoreSubmitting = false;
+                renderCardSm2ScoreUI();
+                updateNavSmartReviewBadgeFromLocal();
+
+                const meta = SM2_SCORE_META[numScore] || { label: '' };
+                showToast(`已评 ${numScore} 分（${meta.label}）· 下次复习：${updatedSm2.interval_days} 天后（EF ${Number(updatedSm2.easiness_factor).toFixed(2)}）`);
+
+                if (sm2AutoNext) {
+                    setTimeout(() => {
+                        if (currentView !== 'sequential') return;
+                        if (currentIndex === sentencesList.length - 1) {
+                            handleReviewRoundFinished();
+                        } else {
+                            nextSentence();
+                        }
+                    }, 450);
+                }
+            } catch (err) {
+                console.error('提交 SM-2 评分失败:', err);
+                sm2ScoreSubmitting = false;
+                renderCardSm2ScoreUI();
+                showToast(`SM-2 评分保存失败：${err.message}`);
+            }
+        }
+        window.submitSentenceSm2Score = submitSentenceSm2Score;
+
+        function openSmartReviewDashboard() {
+            switchView('smartReview');
+            if (isMobileNavViewport()) {
+                toggleLeftNav(false);
+            }
+            populateSm2LaunchCourseDropdown();
+            loadSmartReviewOverview();
+            scrollMainToTop();
+        }
+        window.openSmartReviewDashboard = openSmartReviewDashboard;
+
+        async function loadSmartReviewOverview(showRefreshToast = false) {
+            const courseSel = document.getElementById('sm2LaunchCourseSelect');
+            const selectedCourseId = courseSel ? courseSel.value : '';
+            const query = selectedCourseId ? `?courseId=${encodeURIComponent(selectedCourseId)}` : '';
+
+            try {
+                const res = await fetch(`/api/translate_sentences/sm2/overview${query}`);
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+                const data = await res.json();
+                sm2OverviewCache = data;
+                renderSmartReviewDashboard(data);
+
+                if (!selectedCourseId) {
+                    updateNavSmartReviewBadge(data.due_count || 0, data.new_count || 0);
+                }
+                if (showRefreshToast) {
+                    showToast('SM-2 调度数据已刷新');
+                }
+            } catch (err) {
+                console.error('加载 SM-2 调度总览失败:', err);
+                showToast(`加载 SM-2 调度数据失败：${err.message}`);
+            }
+        }
+        window.loadSmartReviewOverview = loadSmartReviewOverview;
+
+        function renderSmartReviewDashboard(data) {
+            if (!data) return;
+
+            const setText = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = val;
+            };
+
+            setText('sm2KpiDue', data.due_count ?? 0);
+            setText('sm2KpiOverdueSub', `含逾期超过1天 ${data.overdue_count ?? 0} 句`);
+            setText('sm2KpiNew', data.new_count ?? 0);
+            setText('sm2KpiLearning', data.learning_count ?? 0);
+            setText('sm2KpiWeakSub', `薄弱需强化 ${data.weak_count ?? 0} 句`);
+            setText('sm2KpiMastered', data.mastered_count ?? 0);
+            setText('sm2KpiTotalSub', `总题库 ${data.total_sentences ?? 0} 句`);
+            setText('sm2KpiReviewedToday', data.reviewed_today_count ?? 0);
+            setText('sm2KpiTodayUniqueSub', `覆盖 ${data.reviewed_today_unique_count ?? 0} 句`);
+            setText('sm2KpiAvgEf', Number(data.average_easiness || 2.5).toFixed(2));
+            setText('sm2KpiAvgScoreSub', data.average_score !== null && data.average_score !== undefined ? `历史均分 ${data.average_score} / 5` : '暂无评分记录');
+
+            const heroTitle = document.getElementById('sm2HeroTitle');
+            const heroDesc = document.getElementById('sm2HeroDesc');
+            const startBtnText = document.getElementById('btnStartSm2ReviewText');
+            if (heroTitle) {
+                if (data.due_count > 0) {
+                    heroTitle.textContent = `当前有 ${data.due_count} 句到期，建议立即开始智能复习`;
+                } else if (data.new_count > 0) {
+                    heroTitle.textContent = `今日到期已清空！还有 ${data.new_count} 句新句待纳入调度`;
+                } else {
+                    heroTitle.textContent = `太棒了！全部句子均已按 SM-2 规划复习周期`;
+                }
+            }
+            if (heroDesc) {
+                heroDesc.textContent = `共纳入 ${data.scheduled_count ?? 0} / ${data.total_sentences ?? 0} 句进入 SM-2 调度，今日已完成 ${data.reviewed_today_count ?? 0} 次辅导员评分。点击右侧按钮按遗忘曲线优先级开始复习。`;
+            }
+            if (startBtnText) {
+                const candidateCount = data.due_count > 0 ? data.due_count : (data.new_count > 0 ? data.new_count : data.total_sentences);
+                startBtnText.textContent = candidateCount > 0 ? `开始 SM-2 智能复习` : `暂无可复习句子`;
+            }
+
+            // 1. 未来 7 天预测柱状图
+            const chartEl = document.getElementById('sm2ForecastChart');
+            if (chartEl) {
+                const buckets = Array.isArray(data.upcoming_7_days) ? data.upcoming_7_days : [];
+                const maxCount = Math.max(1, ...buckets.map(b => Number(b.count || 0)));
+                chartEl.innerHTML = buckets.map((b, idx) => {
+                    const cnt = Number(b.count || 0);
+                    const pct = cnt > 0 ? Math.max(10, Math.round((cnt / maxCount) * 100)) : 4;
+                    return `
+                        <div class="sm2-bar-col" title="${escapeNavHtml(b.date)}：${cnt} 句到期">
+                            <span class="sm2-bar-count">${cnt}</span>
+                            <div class="sm2-bar-track">
+                                <div class="sm2-bar-fill ${idx === 0 ? 'is-today' : ''}" style="height: ${pct}%; ${cnt === 0 ? 'opacity:0.25;' : ''}"></div>
+                            </div>
+                            <span class="sm2-bar-label">${escapeNavHtml(b.label)}</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // 2. 各科目分布列表
+            const courseListEl = document.getElementById('sm2CourseBreakdownList');
+            if (courseListEl) {
+                const rows = Array.isArray(data.by_course) ? data.by_course : [];
+                if (rows.length === 0) {
+                    courseListEl.innerHTML = `<div style="text-align:center; color:#94a3b8; font-size:12px; padding:28px 12px;">暂无科目数据</div>`;
+                } else {
+                    courseListEl.innerHTML = rows.map(c => {
+                        const safeCid = String(c.courseId || '').replace(/'/g, "\\'");
+                        return `
+                            <div class="sm2-course-row">
+                                <div class="sm2-course-row-info">
+                                    <div class="sm2-course-row-name" title="${escapeNavHtml(c.courseName)}">${escapeNavHtml(c.courseName)}</div>
+                                    <div class="sm2-course-row-tags">
+                                        <span style="color:#dc2626;">到期 ${c.dueCount}</span>
+                                        <span style="color:#cbd5e1;">·</span>
+                                        <span style="color:#7c3aed;">新句 ${c.newCount}</span>
+                                        <span style="color:#cbd5e1;">·</span>
+                                        <span style="color:#2563eb;">巩固 ${c.learningCount}</span>
+                                        <span style="color:#cbd5e1;">·</span>
+                                        <span style="color:#059669;">掌握 ${c.masteredCount}</span>
+                                        <span style="color:#94a3b8;">(共 ${c.total})</span>
+                                    </div>
+                                </div>
+                                <button type="button" class="sm2-mini-start-btn" onclick="startSmartReviewSession({ courseId: '${safeCid}', mode: '${c.dueCount > 0 ? 'due_and_new' : 'all'}' })" title="仅针对该科目启动 SM-2 智能复习">
+                                    <i class="ph-bold ph-play"></i> 复习
+                                </button>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+
+            // 3. 优先到期句子预览
+            const duePreviewEl = document.getElementById('sm2DuePreviewList');
+            const dueBadgeEl = document.getElementById('sm2DuePreviewBadge');
+            if (dueBadgeEl) {
+                dueBadgeEl.textContent = `共 ${data.due_count ?? 0} 句已到期`;
+            }
+            if (duePreviewEl) {
+                const items = Array.isArray(data.due_preview) ? data.due_preview : [];
+                if (items.length === 0) {
+                    duePreviewEl.innerHTML = `
+                        <div style="text-align:center; color:#94a3b8; font-size:12px; padding:32px 12px;">
+                            <i class="ph-bold ph-check-circle" style="font-size:28px; color:#10b981; display:block; margin-bottom:6px;"></i>
+                            当前没有已到期的句子，可直接点击上方“开始 SM-2 智能复习”学习新句！
+                        </div>
+                    `;
+                } else {
+                    duePreviewEl.innerHTML = items.map(item => {
+                        const nextText = formatSm2ShortDate(item.sm2?.next_review_date);
+                        const lastScore = item.sm2?.last_score ? `${item.sm2.last_score}分` : '-';
+                        return `
+                            <div class="sm2-preview-item">
+                                <div class="sm2-preview-text">
+                                    <div class="sm2-preview-thai">${escapeNavHtml(item.thai || '')}</div>
+                                    <div class="sm2-preview-zh">${escapeNavHtml(item.chinese || '')} ${item.courseName ? `· ${escapeNavHtml(item.courseName)}` : ''}</div>
+                                </div>
+                                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:3px; flex-shrink:0;">
+                                    <span class="card-sm2-badge status-due">${escapeNavHtml(nextText)}</span>
+                                    <span style="font-size:11px; color:#64748b;">上次 ${lastScore} · EF ${Number(item.sm2?.easiness_factor || 2.5).toFixed(2)}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+
+            // 4. 最近评分调度日志
+            const logsEl = document.getElementById('sm2RecentLogsList');
+            if (logsEl) {
+                const logs = Array.isArray(data.recent_logs) ? data.recent_logs : [];
+                if (logs.length === 0) {
+                    logsEl.innerHTML = `
+                        <div style="text-align:center; color:#94a3b8; font-size:12px; padding:32px 12px;">
+                            暂无评分调度记录，在句子复习卡片中点击 1–5 分即可生成 SM-2 调度记录。
+                        </div>
+                    `;
+                } else {
+                    logsEl.innerHTML = logs.map(log => {
+                        const scoreColor = log.score <= 2 ? '#e11d48' : (log.score === 3 ? '#d97706' : '#059669');
+                        const scoreBg = log.score <= 2 ? '#fff1f2' : (log.score === 3 ? '#fefce8' : '#ecfdf5');
+                        const timeStr = log.reviewed_at ? new Date(log.reviewed_at).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+                        return `
+                            <div class="sm2-preview-item">
+                                <div class="sm2-preview-text">
+                                    <div class="sm2-preview-thai">${escapeNavHtml(log.thai || log.sentence_uuid)}</div>
+                                    <div class="sm2-preview-zh">${escapeNavHtml(log.chinese || '')} · ${timeStr}</div>
+                                </div>
+                                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:3px; flex-shrink:0;">
+                                    <span style="font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px; background:${scoreBg}; color:${scoreColor}; border:1px solid currentColor;">${log.score} 分</span>
+                                    <span style="font-size:11px; color:#64748b;">间隔 → ${log.new_interval}天 · EF ${Number(log.new_easiness_factor || 2.5).toFixed(2)}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+        }
+
+        async function startSmartReviewSession(overrideOptions = {}) {
+            const modeSel = document.getElementById('sm2LaunchModeSelect');
+            const limitSel = document.getElementById('sm2LaunchLimitSelect');
+            const courseSel = document.getElementById('sm2LaunchCourseSelect');
+
+            const mode = overrideOptions.mode || (modeSel ? modeSel.value : 'due_and_new');
+            const limit = overrideOptions.limit || (limitSel ? limitSel.value : '20');
+            const courseId = overrideOptions.courseId !== undefined ? overrideOptions.courseId : (courseSel ? courseSel.value : '');
+
+            const qs = new URLSearchParams();
+            qs.set('mode', mode);
+            qs.set('limit', String(limit));
+            if (courseId) qs.set('courseId', courseId);
+
+            try {
+                const res = await fetch(`/api/translate_sentences/sm2/queue?${qs.toString()}`);
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+                const data = await res.json();
+                const items = Array.isArray(data.sentences) ? data.sentences : [];
+
+                if (items.length === 0) {
+                    showToast('当前策略下暂无可复习的句子，请切换其他队列策略或科目');
+                    return;
+                }
+
+                const mappedQueue = items.map(normalizeSentenceItem);
+                const courseObj = courseId ? coursesData.find(c => c.id === courseId) : null;
+
+                isSmartReviewSession = true;
+                sm2SessionMeta = {
+                    mode,
+                    modeLabel: SM2_MODE_LABELS[mode] || mode,
+                    courseId: courseId || '',
+                    courseName: courseObj ? (courseObj.name || courseObj.id) : '全部科目',
+                    scores: {}
+                };
+
+                sentencesList = mappedQueue;
+                currentIndex = 0;
+                currentStep = 1;
+                currentMode = 'th2zh';
+                revealed = Boolean(appSettings.assistMode);
+                quizSubmitted = false;
+                isSideAppAnswerRevealed = false;
+                updateRevealSideAppButtonUI(false);
+
+                updateScopeDisplay();
+                switchView('sequential');
+                scrollMainToTop();
+                showToast(`已启动 SM-2 智能复习：${sm2SessionMeta.modeLabel}（共 ${sentencesList.length} 题）`);
+            } catch (err) {
+                console.error('启动 SM-2 智能复习失败:', err);
+                showToast(`启动智能复习失败：${err.message}`);
+            }
+        }
+        window.startSmartReviewSession = startSmartReviewSession;
+
+        function showSm2SummaryModal() {
+            const modal = document.getElementById('sm2SummaryModal');
+            const body = document.getElementById('sm2SummaryModalBody');
+            if (!modal || !body) return;
+
+            const scoreEntries = Object.values(sm2SessionMeta.scores || {});
+            const scoredTotal = scoreEntries.length;
+            const totalInQueue = sentencesList.length;
+            const avgScore = scoredTotal > 0
+                ? (scoreEntries.reduce((acc, item) => acc + item.score, 0) / scoredTotal).toFixed(2)
+                : '--';
+
+            const dist = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+            let lapseCount = 0;
+            scoreEntries.forEach(item => {
+                if (dist[item.score] !== undefined) dist[item.score]++;
+                if (item.score < 3) lapseCount++;
+            });
+
+            body.innerHTML = `
+                <div style="display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px;">
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:12px; text-align:center;">
+                        <div style="font-size:11px; color:#64748b; font-weight:600;">本轮评分</div>
+                        <div style="font-size:22px; font-weight:800; color:#4f46e5; margin-top:4px;">${scoredTotal} / ${totalInQueue}</div>
+                    </div>
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:12px; text-align:center;">
+                        <div style="font-size:11px; color:#64748b; font-weight:600;">本轮均分</div>
+                        <div style="font-size:22px; font-weight:800; color:#059669; margin-top:4px;">${avgScore}</div>
+                    </div>
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:12px; text-align:center;">
+                        <div style="font-size:11px; color:#64748b; font-weight:600;">需次日重学</div>
+                        <div style="font-size:22px; font-weight:800; color:#e11d48; margin-top:4px;">${lapseCount}</div>
+                    </div>
+                </div>
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:14px;">
+                    <div style="font-size:12px; font-weight:700; color:#334155; margin-bottom:8px;">评分分布 (1–5分)</div>
+                    <div style="display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:8px; text-align:center;">
+                        ${[1, 2, 3, 4, 5].map(s => `
+                            <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:8px 4px;">
+                                <div style="font-size:11px; color:#64748b; font-weight:700;">${s} 分</div>
+                                <div style="font-size:17px; font-weight:800; color:${s <= 2 ? '#e11d48' : (s === 3 ? '#d97706' : '#059669')}; margin-top:2px;">${dist[s]}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        function closeSm2SummaryModal() {
+            const modal = document.getElementById('sm2SummaryModal');
+            if (modal) modal.classList.add('hidden');
+        }
+        window.closeSm2SummaryModal = closeSm2SummaryModal;
+
+        // ==========================================
         // 视图切换与卡片列表逻辑
         // ==========================================
         function switchView(viewName) {
             currentView = viewName;
             const seqContainer = document.getElementById('sequentialViewContainer');
             const listContainer = document.getElementById('cardListViewContainer');
+            const smartContainer = document.getElementById('smartReviewDashboardContainer');
             const seqBtn = document.getElementById('viewSequentialBtn');
             const listBtn = document.getElementById('viewListBtn');
+            const navSmartBtn = document.getElementById('navSmartReviewBtn');
 
-            if (viewName === 'list') {
+            if (viewName === 'smartReview') {
                 if (seqContainer) seqContainer.classList.add('hidden');
+                if (listContainer) listContainer.classList.add('hidden');
+                if (smartContainer) smartContainer.classList.remove('hidden');
+                if (seqBtn) seqBtn.classList.remove('active');
+                if (listBtn) listBtn.classList.remove('active');
+                if (navSmartBtn) navSmartBtn.classList.add('active');
+            } else if (viewName === 'list') {
+                if (seqContainer) seqContainer.classList.add('hidden');
+                if (smartContainer) smartContainer.classList.add('hidden');
                 if (listContainer) listContainer.classList.remove('hidden');
                 if (seqBtn) seqBtn.classList.remove('active');
                 if (listBtn) listBtn.classList.add('active');
+                if (navSmartBtn) navSmartBtn.classList.remove('active');
                 renderCardList();
                 syncSideAppState('viewTranslateList', true);
             } else {
                 if (listContainer) listContainer.classList.add('hidden');
+                if (smartContainer) smartContainer.classList.add('hidden');
                 if (seqContainer) seqContainer.classList.remove('hidden');
                 if (listBtn) listBtn.classList.remove('active');
                 if (seqBtn) seqBtn.classList.add('active');
+                if (navSmartBtn) navSmartBtn.classList.toggle('active', isSmartReviewSession);
                 renderStepFlow();
                 syncSideAppState('viewTranslateSession', true);
             }
@@ -4101,12 +6081,17 @@
                     difficultyHtml = `<span class="difficulty-badge" title="难度: ${diffNum}/5">${stars}</span>`;
                 }
 
+                // SM-2 status badge on card list
+                const sm2Meta = getSm2StatusMeta(item.sm2);
+                const sm2BadgeHtml = `<span class="card-sm2-badge ${sm2Meta.className}" title="${escapeNavHtml(sm2Meta.label)}"><i class="ph-bold ph-brain"></i> ${escapeNavHtml(sm2Meta.shortLabel)}</span>`;
+
                 return `
                     <div class="exercise-card ${isCurrent ? 'is-current' : ''} ${isPast ? 'is-past' : ''}" id="exercise-card-${originalIndex}" onclick="selectSentenceAndStartReview(${originalIndex})">
                         <div class="exercise-card-header">
                             <div class="header-left">
                                 <span class="exercise-num-badge">第 ${originalIndex + 1} 题</span>
                                 ${courseLessonBadgeHtml}
+                                ${sm2BadgeHtml}
                                 ${isCurrent ? `<span class="badge-current"><i class="ph-fill ph-play-circle"></i> 当前进度</span>` : ''}
                                 ${isPast ? `<span class="badge-past"><i class="ph-bold ph-check"></i> 已学</span>` : ''}
                             </div>
@@ -4663,11 +6648,18 @@
             document.addEventListener('keydown', (e) => {
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
-                if (currentView === 'list') {
+                if (currentView === 'list' || currentView === 'smartReview') {
                     if (e.key === 'Escape') {
                         e.preventDefault();
                         switchView('sequential');
                     }
+                    return;
+                }
+
+                // 快捷键 1-5：辅导员快速对当前句子进行 SM-2 复习效果评分
+                if (!e.ctrlKey && !e.metaKey && !e.altKey && ['1', '2', '3', '4', '5'].includes(e.key)) {
+                    e.preventDefault();
+                    submitSentenceSm2Score(Number(e.key));
                     return;
                 }
 
@@ -4690,6 +6682,33 @@
                     }
                 }
             });
+
+            // 监听浏览器前进/后退，按 URL 参数切换复习范围
+            window.addEventListener('popstate', () => {
+                if (allRawSentences.length === 0) return;
+                exitSmartReviewSession();
+                const urlScope = parseReviewUrlParams();
+                if (urlScope.hasScopeParam) {
+                    const resolved = resolveScopeFromParams(urlScope.course, urlScope.lesson);
+                    applyReviewScope(resolved.courseId, resolved.lessonId, true, null, {
+                        updateUrl: false,
+                        targetSentenceId: urlScope.sentenceId,
+                        targetCardNum: urlScope.cardNum
+                    });
+                } else {
+                    applyReviewScope('', '', true, null, { updateUrl: false });
+                }
+                if (urlScope.view === 'smartReview') {
+                    openSmartReviewDashboard();
+                } else if (urlScope.view === 'list') {
+                    switchView('list');
+                } else if (urlScope.view === 'sequential') {
+                    switchView('sequential');
+                }
+            });
+
+            const sm2AutoNextEl = document.getElementById('sm2AutoNextToggle');
+            if (sm2AutoNextEl) sm2AutoNextEl.checked = sm2AutoNext;
 
             document.getElementById('displayNative').checked = true;
             setDisplayMode('native');
