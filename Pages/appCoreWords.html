@@ -453,6 +453,10 @@
                         <i class="ph-bold ph-play text-sm"></i>
                         <span>开始完整自测</span>
                     </button>
+                    <button id="btn-wordset-quiz" onclick="launchWordsetQuiz()" type="button" class="hidden px-4 py-2 text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl shadow-md shadow-emerald-500/15 hover:shadow-emerald-500/25 transition duration-150 flex items-center gap-1.5 cursor-pointer" title="在新标签页开启当前词汇集合的 Quiz 测试复习">
+                        <i class="ph-bold ph-exam text-sm"></i>
+                        <span>词汇集合Quiz</span>
+                    </button>
                 </div>
             </div>
 
@@ -2180,6 +2184,30 @@
                 console.error("写入 IndexedDB 失败:", err);
                 alert("写入本地低分词汇句子翻译训练记录失败，请检查浏览器权限。");
             }
+        }
+
+        function launchWordsetQuiz() {
+            const vocabs = getCurrentLessonVocabs();
+            if (!vocabs || vocabs.length === 0) {
+                alert("当前词汇集合暂无可测验词汇！");
+                return;
+            }
+
+            const params = new URLSearchParams();
+            if (activeWordsetId) {
+                params.set('setId', activeWordsetId);
+            }
+            if (activeLessonId) {
+                params.set('lessonId', activeLessonId);
+            }
+            const currentLesson = lessons.find(l => l.id === activeLessonId);
+            if (currentLesson && currentLesson.course_id) {
+                params.set('courseId', currentLesson.course_id);
+            }
+
+            const queryStr = params.toString();
+            const targetUrl = queryStr ? `appCoreWordsQuiz.html?${queryStr}` : 'appCoreWordsQuiz.html';
+            window.open(targetUrl, '_blank');
         }
 
         // ==========================================
@@ -5939,6 +5967,17 @@
             const btnResetText = document.getElementById('btn-reset-text');
             if (btnResetText) {
                 btnResetText.textContent = currentWs ? '重置本词集复习' : '重置本课复习';
+            }
+
+            const btnWordsetQuiz = document.getElementById('btn-wordset-quiz');
+            if (btnWordsetQuiz) {
+                if (activeWordsetId || activeLessonId) {
+                    const quizScopeTitle = currentWs ? currentWs.title : (lesson ? `${lesson.title}（全部词集）` : '当前词汇集合');
+                    btnWordsetQuiz.classList.remove('hidden');
+                    btnWordsetQuiz.title = `在新标签页开启「${quizScopeTitle}」(共 ${totalInSet} 词) 的词汇集合 Quiz 测试复习`;
+                } else {
+                    btnWordsetQuiz.classList.add('hidden');
+                }
             }
 
             const lowScoreBadge = document.getElementById('low-score-badge');

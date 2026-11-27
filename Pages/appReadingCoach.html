@@ -677,6 +677,126 @@
             return successful;
         }
 
+        // 根据泰语句子构造用于指导 AI 生成泰语句子讲解 JSON 数据结构的 Prompt
+        function buildSentenceExplanationPrompt(thaiSentence) {
+            const cleanSentence = String(thaiSentence || '').replace(/\s+/g, ' ').trim();
+            const exampleJson = `{
+  "input": {
+    "thai_sentence": "แม้ว่าฝนจะตกหนัก แต่เขาก็ยังมาทำงานตรงเวลา",
+    "native_language": "zh-CN"
+  },
+  "sentence_structure": {
+    "clauses": [
+      {
+        "clause_id": "c1",
+        "role": "concession",
+        "thai": "แม้ว่าฝนจะตกหนัก",
+        "meaning_zh": "尽管雨下得很大"
+      },
+      {
+        "clause_id": "c2",
+        "role": "main",
+        "thai": "แต่เขาก็ยังมาทำงานตรงเวลา",
+        "meaning_zh": "但他依然准时来上班"
+      }
+    ],
+    "core_skeleton": {
+      "thai": "แม้ว่า... แต่...ก็ยัง...",
+      "meaning_zh": "尽管……，但是……仍然……"
+    }
+  },
+  "chunks": [
+    {
+      "chunk_id": "ck1",
+      "thai": "แม้ว่าฝนจะตกหนัก",
+      "literal_zh": "尽管雨将落重",
+      "natural_zh": "尽管雨下得很大",
+      "grammar_note_zh": "แม้ว่า 引导让步状语从句，常与主句的 แต่...ก็... 呼应",
+      "important_words": [
+        {
+          "thai": "แม้ว่า",
+          "part_of_speech": "conjunction",
+          "level": "B1",
+          "meaning_zh": "尽管、虽然",
+          "note_zh": "用于书面及正式口语让步复句"
+        }
+      ]
+    }
+  ],
+  "translations": {
+    "literal_translation_zh": "尽管雨下得重，但是他也仍然来工作准时。",
+    "natural_translation_zh": "尽管下着大雨，他还是准时来上班了。"
+  },
+  "pattern": {
+    "pattern_th": "แม้ว่า + [从句], แต่ + [主语] + ก็ยัง + [谓语]",
+    "pattern_zh": "尽管……，但是……仍然……",
+    "explanation_zh": "泰语高频让步转折句型，注意主句中的 ก็ 不可省略。",
+    "reusable_examples": [
+      {
+        "thai": "แม้ว่างานจะยุ่ง แต่เธอก็ยังออกกำลังกายทุกวัน",
+        "zh": "尽管工作很忙，但她依然每天坚持锻炼。"
+      }
+    ]
+  },
+  "meta": {
+    "difficulty": "B1",
+    "sentence_type": "concessive_complex",
+    "key_learning_points": [
+      "แม้ว่า...แต่...ก็ยัง 让步转折框架"
+    ]
+  }
+}`;
+
+            return `# Role
+你是一位资深的泰语教学专家兼语言学结构分析师，擅长面向母语为简体中文（zh-CN）的泰语学习者进行精准的句法拆解、意群切分、重点词汇讲解与可复用句型提炼。
+
+# Task
+请针对下方【待分析泰语句子】生成一份结构严谨、内容详实的泰语句子讲解 JSON 数据。
+
+# 输出字段与内容规范
+1. \`input\`
+   - \`thai_sentence\`：严格填写入参泰语原句（即 ${JSON.stringify(cleanSentence)}），不得擅自改写。
+   - \`native_language\`：固定填写 \`"zh-CN"\`。
+2. \`sentence_structure\`
+   - \`clauses\`：按句法分句拆解句子（\`clause_id\` 依次为 \`"c1"\`、\`"c2"\`...；若为简单句也至少保留 1 个 \`role\` 为 \`"main"\` 的分句），每个分句包含 \`clause_id\`、\`role\`（英文语法角色，如 \`main\` / \`concession\` / \`cause\` / \`result\` / \`condition\` / \`contrast\` / \`time\` / \`purpose\` / \`relative\` / \`complement\` / \`coordinate\`）、\`thai\`（对应原句泰语片段）和 \`meaning_zh\`（准确中文释义）。
+   - \`core_skeleton\`：提炼全句核心语法骨架，包含 \`thai\` 与 \`meaning_zh\`。
+3. \`chunks\`
+   - 按泰语自然意群依次完整覆盖整句（\`chunk_id\` 依次为 \`"ck1"\`、\`"ck2"\`...），切分后的 \`thai\` 拼接应覆盖完整原句，不可遗漏。
+   - 每个 chunk 必须包含：
+     - \`chunk_id\`：如 \`"ck1"\`
+     - \`thai\`：该意群的泰语原文
+     - \`literal_zh\`：保留泰语语序与字面结构的直译
+     - \`natural_zh\`：符合中文表达习惯的自然译文
+     - \`grammar_note_zh\`：针对该意群的语法结构、虚词用法、语序或固定搭配讲解
+     - \`important_words\`：该意群中值得重点掌握的核心词/功能词数组，每项包含 \`thai\`、\`part_of_speech\`（英文词性，如 \`noun\` / \`verb\` / \`adjective\` / \`adverb\` / \`conjunction\` / \`preposition\` / \`particle\` / \`classifier\` / \`pronoun\` / \`phrase\`）、\`level\`（CEFR 级别：\`A1\`-\`C1\`）、\`meaning_zh\`、\`note_zh\`（用法、语体或搭配提示）。
+4. \`translations\`
+   - \`literal_translation_zh\`：整句直译（体现泰语原始语序与成分结构）。
+   - \`natural_translation_zh\`：整句自然流畅的中文意译。
+5. \`pattern\`
+   - 提炼本句最具迁移学习价值的泰语核心句型：
+     - \`pattern_th\`：泰语句型公式（使用 \`+\` 与中文槽位占位符，如 \`แม้ว่า + [从句], แต่ + [主语] + ก็ยัง + [谓语]\`）
+     - \`pattern_zh\`：对应中文句型框架
+     - \`explanation_zh\`：句型用法、语体场景与易错注意点
+     - \`reusable_examples\`：提供 2~3 个贴近真实生活、自然地道的可复用例句数组，每项包含 \`thai\` 与 \`zh\`。
+6. \`meta\`
+   - \`difficulty\`：整句 CEFR 难度等级（如 \`"A2"\`、\`"B1"\`、\`"B2"\`）。
+   - \`sentence_type\`：英文下划线命名的句子类型（如 \`"simple"\`、\`"concessive_complex"\`、\`"causal_complex"\`、\`"conditional_complex"\`、\`"contrastive_compound"\`、\`"relative_complex"\` 等）。
+   - \`key_learning_points\`：2~4 条精炼的中文核心学习要点数组。
+
+# JSON 格式参考示例
+\`\`\`json
+${exampleJson}
+\`\`\`
+
+# 严格输出要求
+- 只输出合法的纯 JSON 对象，不要输出任何开场白、解释性文字或 Markdown 代码块包裹符号（不要包含 \`\`\`json 和 \`\`\`）。
+- 所有键名和嵌套结构必须与参考示例完全一致，不可增删字段名，所有字符串使用标准双引号。
+- 所有泰语文本保持规范 Unicode NFC 编码，不得编造不存在的词义。
+
+# 待分析泰语句子
+${cleanSentence}`;
+        }
+
         // ==========================================
         // IndexedDB 存储逻辑 (查词历史 & 句子重点/易错标签)
         // ==========================================
@@ -1767,7 +1887,7 @@
                              id="trans-item-${pid}-${sid}" 
                              data-paragraph-id="${pid}" 
                              data-sentence-id="${sid}">
-                            <div class="flex items-center justify-between gap-2 mb-1.5 pb-1.5 border-b border-slate-100">
+                            <div class="flex items-center justify-between flex-wrap gap-2 mb-1.5 pb-1.5 border-b border-slate-100">
                                 <div class="flex items-center gap-2 flex-wrap">
                                     <span class="font-bold text-xs text-slate-500 bg-slate-50 border border-slate-200/60 px-1.5 py-0.5 rounded min-w-[28px] text-center">[${sentenceIndex}]</span>
                                     <!-- 显著标记符号徽章区域 -->
@@ -1775,11 +1895,12 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-1 bg-slate-50 p-0.5 rounded-lg border border-slate-200/50">
-                                    <button class="play-sentence-btn text-slate-400 hover:text-blue-600 transition active:scale-90 p-1 px-1.5 rounded flex items-center justify-center text-xs" data-text="${escapedThai}" title="播放发音">
+                                    <button type="button" class="play-sentence-btn text-slate-400 hover:text-blue-600 transition active:scale-90 p-1 px-1.5 rounded flex items-center justify-center text-xs" data-text="${escapedThai}" title="播放发音">
                                         <i class="fas fa-volume-up"></i>
                                     </button>
-                                    <button class="copy-sentence-btn text-slate-400 hover:text-blue-600 transition active:scale-90 p-1 px-1.5 rounded flex items-center justify-center text-xs" data-text="${escapedThai}" title="复制原文">
-                                        <i class="fas fa-copy"></i>
+                                    <button type="button" class="copy-sentence-prompt-btn text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition duration-150 active:scale-95 p-1 px-2 rounded-md flex items-center gap-1 text-xs border border-transparent" data-text="${escapedThai}" title="复制句子Prompt">
+                                        <i class="fas fa-wand-magic-sparkles text-xs"></i>
+                                        <span class="copy-prompt-label text-xs font-medium">复制句子Prompt</span>
                                     </button>
                                     <span class="w-[1px] h-3 bg-slate-200 mx-0.5"></span>
                                     <!-- 重点标签按钮：点击一次打标签，已标签再次点击则取消 -->
@@ -3040,22 +3161,35 @@
                     }
                     return;
                 }
-                // 3. 复制原文
-                const copyBtn = e.target.closest('.copy-sentence-btn');
-                if (copyBtn) {
-                    let text = copyBtn.dataset.text;
-                    if (text) {
-                        text = text.replace(/\s+/g, '');
-                        copyTextToClipboard(text).then(() => {
-                            const icon = copyBtn.querySelector('i');
-                            const originalClass = icon.className;
-                            icon.className = "fas fa-check text-green-600";
-                            copyBtn.title = "已复制";
-                            setTimeout(() => {
-                                icon.className = originalClass;
-                                copyBtn.title = "复制原文";
-                            }, 1500);
-                        }).catch(err => console.error("Copy failed", err));
+                // 3. 复制句子讲解 Prompt
+                const copyPromptBtn = e.target.closest('.copy-sentence-prompt-btn');
+                if (copyPromptBtn) {
+                    const sentenceText = (copyPromptBtn.dataset.text || '').replace(/\s+/g, ' ').trim();
+                    if (sentenceText) {
+                        const promptText = buildSentenceExplanationPrompt(sentenceText);
+                        copyTextToClipboard(promptText).then(() => {
+                            const icon = copyPromptBtn.querySelector('i');
+                            const label = copyPromptBtn.querySelector('.copy-prompt-label');
+                            if (copyPromptBtn._resetTimer) {
+                                clearTimeout(copyPromptBtn._resetTimer);
+                            }
+                            if (icon) icon.className = "fas fa-check text-emerald-600 text-xs";
+                            if (label) label.textContent = "已复制Prompt";
+                            copyPromptBtn.classList.add('text-emerald-600', 'bg-emerald-50');
+                            copyPromptBtn.title = "已复制句子Prompt";
+                            showToast('已复制该句子的 AI 讲解 Prompt 到剪贴板', 'success');
+
+                            copyPromptBtn._resetTimer = setTimeout(() => {
+                                if (icon) icon.className = "fas fa-wand-magic-sparkles text-xs";
+                                if (label) label.textContent = "复制句子Prompt";
+                                copyPromptBtn.classList.remove('text-emerald-600', 'bg-emerald-50');
+                                copyPromptBtn.title = "复制句子Prompt";
+                                copyPromptBtn._resetTimer = null;
+                            }, 1800);
+                        }).catch(err => {
+                            console.error("Copy prompt failed", err);
+                            showToast('复制句子 Prompt 失败，请重试', 'error');
+                        });
                     }
                 }
             });
